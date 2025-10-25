@@ -1,0 +1,55 @@
+
+/* Herda variáveis de style.css */
+
+body {
+  background-color: #f7f6f4;
+}
+
+/*  HEADER  */
+header {
+  background: linear-gradient(to right, var(--cor-primaria), #d1c3b2);
+  color: var(--cor-branca);
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+header h1 {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/*  SEÇÕES  */
+section {
+  padding: 3rem 0;
+}
+
+h2 {
+  color: var(--cor-secundaria);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+/*  LISTAS  */
+ul {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+}
+
+/*  IMAGENS  */
+.img-section {
+  text-align: center;
+}
+
+.img-section img {
+  max-width: 350px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+/*  FOOTER (sobrescreve estilo global)  */
+footer {
+  background-color: var(--cor-secundaria);
+  color: var(--cor-branca);
+  text-align: center;
+  padding: 1rem;
+}
