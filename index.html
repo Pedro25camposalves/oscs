@@ -357,6 +357,63 @@ hr {
     height: 250px;
   }
 }
+hr {
+  border: none;
+  height: 2px;
+  background-color: #ddd; /* cor da linha */
+  margin: 40px 0; /* espaçamento acima e abaixo */
+}
+
+
+
+ .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .info-block {
+      padding: 10px 0;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .info-block strong {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .map-card {
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+    }
+
+    .map-card .endereco {
+      flex: 1;
+    }
+
+    .map-card iframe {
+      width: 300px;
+      height: 180px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    @media (max-width: 768px) {
+      .map-card {
+        flex-direction: column;
+      }
+
+      .map-card iframe {
+        width: 100%;
+      }
+    }
 
 
   </style>
@@ -447,7 +504,8 @@ document.addEventListener("DOMContentLoaded", () => {
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-light shadow-sm sticky-top" style="background-color: #F9E8E8;">
     <div class="container">
-      <img src="/assets/images/assocest-nolabel-nobg.png" class="img-fluid" style="max-width: 75px;" alt="Logo ASSOCEST">
+      <img src="/assets/images/assocest-flor-nobg.png" class="img-fluid" style="max-width: 80px;" alt="Logo ASSOCEST">
+      <div style="margin-left: 8px;"><h7><strong>ASSOCEST</strong></h7></div>
 
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
@@ -474,7 +532,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <section class="hero">
       <div class="carousel" id="carousel">
         <div class="carousel-inner">
-          <img src="/assets/images/30-anos-v2.png" alt="Banner 1" class="img-hero active">
+          <img src="/assets/images/banner-1.png" alt="Banner 1" class="img-hero active">
           <img src="/assets/images/inst-5.webp" alt="Banner 2" class="img-hero">
           <img src="/assets/images/inst-6.webp" alt="Banner 3" class="img-hero">
         </div>
@@ -483,6 +541,7 @@ document.addEventListener("DOMContentLoaded", () => {
     </section>
     <div class="simple-divider comic-relief-regular">
   Transformando comunidades com ações que fazem a diferença.
+  
 </div>
     
     <main class="container my-5">
@@ -605,35 +664,6 @@ document.addEventListener("DOMContentLoaded", () => {
   </section>
 
 
-  <section class="container my-5">
-    <h2 class="text-center mb-5" style="font-family: 'Georgia', cursive;">Venha nos conhecer!</h2>
-    <div class="row bg-light rounded shadow-sm p-3">
-
-      <!-- Coluna de informações -->
-      <div class="col-md-6">
-        <h5><strong>Endereço:</strong></h5>
-        <p>
-          AVENIDA TEREZA ANSELMO MASSARI<br>
-          PARQUE BRASIL, Jacareí - SP<br>
-          <strong>CEP:</strong> 12328-430
-        </p>
-
-        <hr>
-
-        <p><i class="bi bi-telephone me-2"></i> (12) 3948-5753</p>
-        <p><i class="bi bi-envelope me-2"></i> contato@osc.org.br</p>
-      </div>
-
-      <!-- Coluna do mapa -->
-      <!-- <div class="col-md-6">
-        <div id="map" style="height: 250px; border-radius: 8px;"></div>
-      </div> -->
-
-    </div>
-  </section>
-
-
-
 
   <section class="local">
   <h2>Venha nos conhecer!</h2>
@@ -671,7 +701,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   <!-- Sobre -->
   <div id="sobre" class="section">
-    <h1 class="mb-3" style="background-color: #aaaaaaff;padding: 20px;"> Sobre Nós</h1>
+
+<h1 class="mb-3" style="background-color: rgb(247, 159, 159);padding: 23px 23px 23px 310px;">Sobre Nós</h1>
+
+    <div class="container my-5"> 
+    
     <p>Nossa OSC atua desde 2010, buscando fortalecer comunidades por meio de projetos de capacitação, apoio social e desenvolvimento sustentável.</p>
     <p>Nosso time é formado por profissionais e voluntários comprometidos com a transparência, ética e eficiência na gestão dos recursos.</p>
     <p>🏛️ Como Surgiu a OSC
@@ -721,6 +755,28 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       </div>
 
+
+
+      <section id="apoiadores" class="section">
+  <h2 class="section-title">Nossos Apoiadores</h2>
+  <div class="carousel-logos">
+    <div class="carousel-track">
+      <div class="carousel-item"><img src="logo1.png" alt="Empresa 1"></div>
+      <div class="carousel-item"><img src="logo2.png" alt="Empresa 2"></div>
+      <div class="carousel-item"><img src="logo3.png" alt="Empresa 3"></div>
+      <div class="carousel-item"><img src="logo4.png" alt="Empresa 4"></div>
+      <div class="carousel-item"><img src="logo5.png" alt="Empresa 5"></div>
+      <!-- Repete para criar efeito infinito -->
+      <div class="carousel-item"><img src="logo1.png" alt="Empresa 1"></div>
+      <div class="carousel-item"><img src="logo2.png" alt="Empresa 2"></div>
+    </div>
+  </div>
+</section>
+
+
+
+
+
       <div class="card shadow-sm border-0 my-3">
         <div class="card-body bg-light">
           <div class="d-flex justify-content-between align-items-start">
@@ -756,11 +812,12 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       </div>
     </section>
+    </div>
   </div>
 
   <!-- Transparência -->
   <div id="transparencia" class="section">
-    <h2 class="mb-3">Transparência</h2>
+    <h1 class="mb-3" style="background-color: rgb(247, 159, 159);padding: 23px 23px 23px 310px;">Transparência</h1>
     <p>Prezamos pela clareza na aplicação dos recursos e prestação de contas públicas. Aqui estão alguns dados de exemplo:</p>
 
     <div class="row mt-4">
@@ -792,6 +849,76 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       </div>
     </div>
+
+    <hr>
+<div class="container my-5"> 
+    <div class="osc-detalhes">
+  <h3><strong>Nome fantasia:</strong> AMACS-GAMELEIRA-PE</h3>
+  <div class="info-grid">
+    <div class="info-block">
+      <strong><i class="bi bi-database"></i> Sigla OSC:</strong>
+      <span>Não informado</span>
+    </div>
+    <div class="info-block">
+      <strong><i class="bi bi-person"></i> Situação cadastral:</strong>
+      <span>Ativas</span>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="map-card">
+    <div class="endereco">
+      <strong>Endereço:</strong>
+      <p>
+        RUA DR ANTONIO RIGUEIRA<br>
+        CENTRO, Gameleira - PE<br>
+        <strong>CEP:</strong> 55530000
+      </p>
+      <p><i class="bi bi-telephone"></i> 8103679115</p>
+      <p><i class="bi bi-envelope"></i> contabilidademap@hotmail.com</p>
+    </div>
+
+    <iframe 
+      src="https://www.openstreetmap.org/export/embed.html?bbox=-35.386%2C-8.583%2C-35.381%2C-8.578&layer=mapnik&marker=-8.581%2C-35.384" 
+      title="Mapa Gameleira">
+    </iframe>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-block">
+      <strong><i class="bi bi-house"></i> Situação do imóvel:</strong>
+      <span>Não informado</span>
+    </div>
+    <div class="info-block">
+      <strong><i class="bi bi-calendar"></i> Ano de cadastro de CNPJ:</strong>
+      <span>2000</span>
+    </div>
+    <div class="info-block">
+      <strong><i class="bi bi-building"></i> Ano de fundação:</strong>
+      <span>2000</span>
+    </div>
+    <div class="info-block">
+      <strong><i class="bi bi-person"></i> Responsável legal:</strong>
+      <span>Não informado</span>
+    </div>
+    <div class="info-block">
+      <strong><i class="bi bi-envelope-at"></i> E-mail:</strong>
+      <span>contabilidademap@hotmail.com</span>
+    </div>
+    <div class="info-block">
+      <strong><i class="bi bi-globe"></i> Website:</strong>
+      <span>Não informado</span>
+    </div>
+    <div class="info-block" style="grid-column: 1 / -1;">
+      <strong><i class="bi bi-info-circle"></i> O que a OSC faz:</strong>
+      <span>Não informado</span>
+    </div>
+  </div>
+</div>
+
+
+  </div>
   </div>
 
   <!-- Projetos -->
@@ -850,7 +977,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-  <footer>
+  <footer style="background-color: #E0A93B;">
     <p>© 2025 OSC Exemplo - Todos os direitos reservados.</p>
   </footer>
 
