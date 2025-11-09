@@ -1,4 +1,3 @@
-
 <?php
 
 
@@ -7,10 +6,11 @@ $cor2 = '#C8702E';
 $cor3 = '#D08A4E';
 $cor4 = '#F5C2A4';
 $cor_font = '#4B2E23';
-$background = '#FFF7F2';  
+$background = '#FFF7F2';
 ?>
 
-<?php #echo $cor_font; ?>
+<?php #echo $cor_font; 
+?>
 
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -44,7 +44,7 @@ $background = '#FFF7F2';
 
     footer {
       background-color: <?php echo $cor3; ?>;
-      border-top: 1px solid #ddd; 
+      border-top: 1px solid #ddd;
       padding: 15px;
       text-align: center;
       color: #666;
@@ -322,7 +322,7 @@ $background = '#FFF7F2';
       text-align: center;
       padding: 20px;
       background-color: <?php echo $cor3 ?>;
-      color: <?php echo $cor_font; ?> ;
+      color: <?php echo $cor_font; ?>;
       font-size: 1.2rem;
       font-weight: 500;
     }

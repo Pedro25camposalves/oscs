@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Projeto Casulo | OSC</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Poppins", sans-serif;
+            font-weight: 400;
+            margin: 0;
+            padding: 0;
+            background-color: #fafafa;
+            color: #333;
+            scroll-behavior: smooth;
+        }
+
+        header {
+            background-color: #004aad;
+        }
+
+        header .navbar-brand {
+            color: #fff !important;
+            font-weight: 600;
+        }
+
+        header .nav-link {
+            color: #fff !important;
+            font-weight: 500;
+        }
+
+        section {
+            padding: 60px 20px;
+        }
+
+        h2 {
+            color: #004aad;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        footer {
+            background-color: #004aad;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .nav-link {
+            font-size: 1.2rem;
+            color: black;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-dark shadow-sm sticky-top px-4">
+                <img src="/assets/images/assocest-logo5-nobg.png" class="img-fluid" style="max-width: 80px;" alt="Logo ASSOCEST">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="menu">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a href="#descricao" class="nav-link">Descrição</a></li>
+                        <li class="nav-item"><a href="#oficinas" class="nav-link">Oficinas</a></li>
+                        <li class="nav-item"><a href="#eventos" class="nav-link">Eventos</a></li>
+                        <li class="nav-item"><a href="#informacoes" class="nav-link">Informações</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- DESCRIÇÃO -->
+    <section id="descricao" class="container mt-5">
+        <h2>Sobre o Projeto Casulo</h2>
+        <p>
+            O <strong>Projeto Casulo</strong>, proposto pela <strong>Associação Esther Siqueira Tillmann (ASSOCEST)</strong>,
+            tem como objetivo preservar, valorizar e transmitir o Patrimônio Cultural Imaterial do Modo de Tecer e Fiar de Paracatu (MG) —
+            um saber tradicional repassado por gerações de mulheres artesãs.
+        </p>
+        <p>
+            Criado há 19 anos, o projeto nasceu no bairro Alto do Açude e vem sendo executado anualmente,
+            fortalecendo os laços comunitários e promovendo a inclusão social e a geração de renda para mulheres em situação de vulnerabilidade.
+        </p>
+        <p>
+            Em 2020, a Associação obteve junto ao COMPHAP o registro do Modo de Fiar e Tecer como Patrimônio Imaterial de Paracatu,
+            consolidando a relevância cultural desse ofício.
+        </p>
+        <hr>
+        <h5>Objetivos</h5>
+        <ul>
+            <li>Preservar e difundir o modo de tecer e fiar de Paracatu como patrimônio imaterial.</li>
+            <li>Oferecer oficinas permanentes de tecelagem manual em teares de pente liço.</li>
+            <li>Promover a inclusão e autonomia de mulheres em situação de vulnerabilidade social.</li>
+            <li>Fortalecer o Centro de Tecelagem de Paracatu como espaço de convivência e produção artesanal.</li>
+            <li>Realizar eventos culturais e de intercâmbio de saberes.</li>
+        </ul>
+    </section>
+
+    <!-- OFICINAS -->
+    <section id="oficinas" class="container">
+        <h2>Oficinas do Projeto</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <img src="https://picsum.photos/400/250?random=1" class="card-img-top" alt="Oficina de Tecelagem">
+                    <div class="card-body">
+                        <h5 class="card-title">Oficina de Tecelagem</h5>
+                        <p class="card-text">Aprendizado das técnicas tradicionais de tecelagem manual em teares.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalOficina1">Ver detalhes</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <img src="https://picsum.photos/400/250?random=2" class="card-img-top" alt="Oficina de Fiação">
+                    <div class="card-body">
+                        <h5 class="card-title">Oficina de Fiação</h5>
+                        <p class="card-text">Ensino do processo artesanal de fiação com rocas e fusos.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalOficina2">Ver detalhes</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <img src="https://picsum.photos/400/250?random=3" class="card-img-top" alt="Oficina de Tingimento Natural">
+                    <div class="card-body">
+                        <h5 class="card-title">Oficina de Tingimento Natural</h5>
+                        <p class="card-text">Uso de pigmentos naturais na coloração dos fios de algodão.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalOficina3">Ver detalhes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODAIS DE OFICINAS -->
+    <!-- Oficina 1 -->
+    <div class="modal fade" id="modalOficina1" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Oficina de Tecelagem</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Data:</strong> Setembro de 2025 a Junho de 2026</p>
+                    <p><strong>Objetivo:</strong> Ensinar técnicas de tecelagem manual e valorizar o modo tradicional de tecer de Paracatu.</p>
+
+                    <div id="carousel1" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            <div class="carousel-item active">
+                                <img src="https://picsum.photos/800/400?random=4" class="d-block w-100">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="https://picsum.photos/800/400?random=5" class="d-block w-100">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="https://picsum.photos/800/400?random=6" class="d-block w-100">
+                            </div>
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carousel1" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carousel1" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Oficina 2 -->
+    <div class="modal fade" id="modalOficina2" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Oficina de Fiação</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Data:</strong> Agosto a Dezembro de 2025</p>
+                    <p><strong>Objetivo:</strong> Resgatar e difundir o processo artesanal de fiação tradicional.</p>
+
+                    <div id="carousel2" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            <div class="carousel-item active">
+                                <img src="https://picsum.photos/800/400?random=7" class="d-block w-100">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="https://picsum.photos/800/400?random=8" class="d-block w-100">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="https://picsum.photos/800/400?random=9" class="d-block w-100">
+                            </div>
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carousel2" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carousel2" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Oficina 3 -->
+    <div class="modal fade" id="modalOficina3" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Oficina de Tingimento Natural</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Data:</strong> Outubro de 2025</p>
+                    <p><strong>Objetivo:</strong> Ensinar tingimento de fios com pigmentos naturais como açafrão e urucum.</p>
+
+                    <div id="carousel3" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            <div class="carousel-item active">
+                                <img src="https://picsum.photos/800/400?random=10" class="d-block w-100">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="https://picsum.photos/800/400?random=11" class="d-block w-100">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="https://picsum.photos/800/400?random=12" class="d-block w-100">
+                            </div>
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carousel3" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carousel3" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EVENTOS -->
+    <section id="eventos" class="container">
+        <h2>Eventos</h2>
+        <ul class="list-group">
+            <li class="list-group-item">
+                <strong>Mostra Cultural de Tecelagem</strong> — Março de 2026
+                <br>Exposição de peças criadas nas oficinas e apresentações de artistas locais.
+            </li>
+            <li class="list-group-item">
+                <strong>Encontro de Artesãs do Cerrado</strong> — Abril de 2026
+                <br>Evento de troca de experiências entre tecedeiras de diferentes regiões.
+            </li>
+            <li class="list-group-item">
+                <strong>Feira do Patrimônio Vivo</strong> — Junho de 2026
+                <br>Encerramento do projeto com feira cultural e palestras públicas.
+            </li>
+        </ul>
+    </section>
+
+    <section id="informacoes" class="container mt-5">
+        <h2>Informações Complementares</h2>
+
+        <!-- PÚBLICO-ALVO -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-primary">Público-alvo</h5>
+                <p class="card-text">
+                    Mulheres de diferentes faixas etárias em situação de vulnerabilidade social, acompanhadas pela rede socioassistencial
+                    (<strong>CRAS, CREAS, CRAM</strong>). As ações abertas ao público, como eventos e exposições, são voltadas a toda a comunidade paracatuense.
+                </p>
+            </div>
+        </div>
+
+        <!-- PERÍODO E LOCAL -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-primary">Período e Local de Execução</h5>
+                <p><strong>Local:</strong> Centro de Tecelagem – Rua Temístocles Rocha, nº 102, Centro, Paracatu/MG.</p>
+                <p><strong>Período:</strong> Agosto de 2025 a Junho de 2026.</p>
+            </div>
+        </div>
+
+        <!-- EQUIPE -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-primary">Equipe</h5>
+                <ul class="mb-0">
+                    <li>Coordenadora</li>
+                    <li>Auxiliar administrativo</li>
+                    <li>Oficineiras</li>
+                    <li>Mestres em tecelagem</li>
+                    <li>Contador</li>
+                    <li>Assessoria jurídica e presidente da ASSOCEST (Mércia Vasconcelos Souto)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ORÇAMENTO -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-primary">Orçamento</h5>
+                <p>
+                    O projeto prevê investimento total de <strong>R$ 150.000,00</strong>, destinados à remuneração da equipe,
+                    compra de materiais, manutenção de equipamentos e apoio financeiro às beneficiárias.
+                </p>
+            </div>
+        </div>
+
+        <!-- RESULTADOS ESPERADOS -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-primary">Resultados Esperados</h5>
+                <ul>
+                    <li>Manutenção ativa do Centro de Tecelagem de Paracatu.</li>
+                    <li>Transmissão intergeracional dos saberes da fiação e tecelagem.</li>
+                    <li>Valorização da identidade cultural local e fortalecimento do turismo cultural.</li>
+                    <li>Empoderamento e autonomia econômica das participantes.</li>
+                    <li>Consolidação do Modo de Tecer e Fiar como patrimônio vivo da cidade.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        © 2025 Associação Esther Siqueira Tillmann — Todos os direitos reservados.
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
