@@ -1,0 +1,222 @@
+   /* ===========================================================
+   2️⃣ SEÇÕES / ANIMAÇÕES
+=========================================================== */
+    .section {
+      display: none;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  /* ===========================================================
+   3️⃣ HERO / CARROSSEL
+  =========================================================== */
+    .hero {
+      width: 100%;
+      height: 70vh;
+      overflow: hidden;
+      object-fit: cover;
+      object-position: center 25%;
+      position: relative;
+    }
+
+    .carousel {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      display: block;
+    }
+
+    .carousel-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .img-hero {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 0.7s ease;
+      will-change: opacity, transform;
+    }
+
+    .img-hero.active {
+      opacity: 1;
+    }
+
+    .carousel-control {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.4);
+      color: #fff;
+      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 20;
+      font-size: 1.6rem;
+    }
+
+    .carousel-control.prev {
+      left: 12px;
+    }
+
+    .carousel-control.next {
+      right: 12px;
+    }
+
+    .carousel-indicators {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 18px;
+      display: flex;
+      gap: 8px;
+      z-index: 25;
+    }
+
+    .carousel-indicators button {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .carousel-indicators button.active {
+      background: #f28b00;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: #fff;
+    }
+
+    .hero-overlay h1 {
+      font-size: 3rem;
+      font-weight: bold;
+    }
+
+    .hero-overlay p {
+      font-size: 1.3rem;
+    }
+
+    /* ===========================================================
+   5️⃣ SIDEBAR / HELP BOX
+=========================================================== */
+    .help-box {
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .help-option {
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s;
+    }
+
+    .help-option:hover {
+      transform: scale(1.03);
+      filter: brightness(1.1);
+    }
+
+    .bg-teal {
+      background-color: #5ac0b3;
+    }
+
+
+        /* ===========================================================
+   8️⃣ FONTES ALTERNATIVAS
+=========================================================== */
+    .comic-relief-regular {
+      font-family: "Comic Relief", system-ui;
+      font-weight: 400;
+    }
+
+    .comic-relief-bold {
+      font-family: "Comic Relief", system-ui;
+      font-weight: 700;
+    }
+
+    .tinos-regular {
+      font-family: "Tinos", serif;
+      font-weight: 400;
+    }
+
+    .tinos-bold {
+      font-family: "Tinos", serif;
+      font-weight: 700;
+    }
+
+
+        /* ===========================================================
+   8️⃣ CARD MAPA
+    =========================================================== */
+
+    .map-card {
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+    }
+
+    .map-card .endereco {
+      flex: 1;
+    }
+
+    .map-card iframe {
+      width: 300px;
+      height: 180px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    @media (max-width: 768px) {
+      .map-card {
+        flex-direction: column;
+      }
+
+      .map-card iframe {
+        width: 100%;
+      }
+    }
+
+
+

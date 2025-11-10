@@ -3,7 +3,7 @@
 // --------------------------
 // ESTILIZAÇÃO / CSS
 // --------------------------
-$cor1 = 'linear-gradient(to bottom, #f6bdb0ff, #fef7f5ff)';
+$cor1 = '#fef7f5ff';
 $cor2 = '#C8702E';
 $cor3 = '#D08A4E';
 $cor4 = '#F5C2A4';
@@ -26,7 +26,6 @@ $historia =  "Nossa OSC atua desde 2010, buscando fortalecer comunidades por mei
         A Associação Esther Siqueira Tillmann (ASSOCEST) nasceu do sonho de um grupo de pessoas comprometidas com a valorização da cultura, da educação e do desenvolvimento social. Inspiradas pelo legado de Esther Siqueira Tillmann — uma mulher reconhecida por seu trabalho comunitário e dedicação à preservação das tradições locais —, essas pessoas decidiram transformar a admiração em ação.
         O projeto começou de forma simples, com encontros em espaços comunitários e pequenas oficinas voltadas à transmissão de saberes artesanais e culturais. Com o tempo, o impacto positivo dessas iniciativas chamou a atenção de parceiros, voluntários e instituições públicas, permitindo que a associação se estruturasse oficialmente como uma Organização da Sociedade Civil (OSC).
         Desde então, a ASSOCEST vem ampliando suas ações e consolidando-se como referência em projetos que unem patrimônio cultural, educação e transformação social. Hoje, a entidade atua em diversas frentes, fortalecendo vínculos comunitários, incentivando a economia criativa e promovendo o reconhecimento das práticas culturais como instrumentos de identidade e cidadania.";
-
 $area_atuacao1 = "Cultura e recreação";
 $subarea1 = "Não Informado";
 $area_atuacao2 = "Cultura e recreação";
@@ -51,9 +50,8 @@ $email = "contato@osc.org.br";
 $tel = "(12) 3948-5753";
 
 
-?>
 
-<?php #echo $cor_font; 
+include 'conexao.php';
 ?>
 
 <!DOCTYPE html>
@@ -65,7 +63,10 @@ $tel = "(12) 3948-5753";
   <title>Assocest</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Relief:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   <style>
     /* ===========================================================
    1️⃣ RESET / GLOBAL
@@ -76,16 +77,9 @@ $tel = "(12) 3948-5753";
       font-weight: 400;
       margin: 0;
       padding: 0;
-
-
       background: <?php echo $cor1; ?>;
-      /* fundo neutro */
       color: <?php echo $cor_font; ?>;
-      /* texto escuro para contraste */
-
-
     }
-
     footer {
       background-color: <?php echo $cor3; ?>;
       border-top: 1px solid #ddd;
@@ -94,158 +88,16 @@ $tel = "(12) 3948-5753";
       color: #666;
       margin-top: 50px;
     }
-
     hr {
       margin: 0.5rem 0 1rem 0;
     }
-
     .text-primary {
       color: #f28b00 !important;
       /* apenas uma definição */
     }
-
     .nav-link {
       font-size: 1.2rem;
       color: black;
-    }
-
-    /* ===========================================================
-   2️⃣ SEÇÕES / ANIMAÇÕES
-=========================================================== */
-    .section {
-      display: none;
-      animation: fadeIn 0.4s ease-in-out;
-    }
-
-    .section.active {
-      display: block;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* ===========================================================
-   3️⃣ HERO / CARROSSEL
-=========================================================== */
-    .hero {
-      width: 100%;
-      height: 70vh;
-      overflow: hidden;
-      object-fit: cover;
-      object-position: center 25%;
-      position: relative;
-    }
-
-    .carousel {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      display: block;
-    }
-
-    .carousel-inner {
-      position: relative;
-      width: 100%;
-      height: 100%;
-    }
-
-    .img-hero {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0;
-      transition: opacity 0.7s ease;
-      will-change: opacity, transform;
-    }
-
-    .img-hero.active {
-      opacity: 1;
-    }
-
-    .carousel-control {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      background: rgba(0, 0, 0, 0.4);
-      color: #fff;
-      border: none;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      z-index: 20;
-      font-size: 1.6rem;
-    }
-
-    .carousel-control.prev {
-      left: 12px;
-    }
-
-    .carousel-control.next {
-      right: 12px;
-    }
-
-    .carousel-indicators {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: 18px;
-      display: flex;
-      gap: 8px;
-      z-index: 25;
-    }
-
-    .carousel-indicators button {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      border: none;
-      background: rgba(255, 255, 255, 0.6);
-      cursor: pointer;
-      padding: 0;
-    }
-
-    .carousel-indicators button.active {
-      background: #f28b00;
-    }
-
-    .hero-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      color: #fff;
-    }
-
-    .hero-overlay h1 {
-      font-size: 3rem;
-      font-weight: bold;
-    }
-
-    .hero-overlay p {
-      font-size: 1.3rem;
     }
 
     /* ===========================================================
@@ -255,45 +107,19 @@ $tel = "(12) 3948-5753";
       background: <?php echo $background ?>;
       border-radius: 6px;
     }
-
     #acontecimentos .card img {
       height: 180px;
       object-fit: cover;
       border-radius: 8px 8px 0 0;
     }
-
     #acontecimentos .card {
       border-radius: 80px;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-
     #acontecimentos .card:hover {
       transform: translateY(-5px);
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
     }
-
-    /* ===========================================================
-   5️⃣ SIDEBAR / HELP BOX
-=========================================================== */
-    .help-box {
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    .help-option {
-      cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.2s;
-    }
-
-    .help-option:hover {
-      transform: scale(1.03);
-      filter: brightness(1.1);
-    }
-
-    .bg-teal {
-      background-color: #5ac0b3;
-    }
-
     /* ===========================================================
    6️⃣ BOTÕES
 =========================================================== */
@@ -301,15 +127,13 @@ $tel = "(12) 3948-5753";
       color: #f28b00;
       border-color: #f28b00;
     }
-
     .btn-outline-warning:hover {
       background-color: #f28b00;
       color: #fff;
     }
-
     /* ===========================================================
    7️⃣ IMAGENS REDONDAS
-=========================================================== */
+  =========================================================== */
     .img-wrapper {
       width: 250px;
       height: 250px;
@@ -319,49 +143,17 @@ $tel = "(12) 3948-5753";
       display: flex;
       align-items: center;
       justify-content: center;
+      border: 6px solid #f28b00;
     }
-
     .img-wrapper img {
       width: 100%;
       height: 100%;
       object-fit: contain;
       background-color: #fff;
     }
-
-    .border-blue {
-      border: 6px solid #0d6efd;
-    }
-
-    .border-yellow {
-      border: 6px solid #f28b00;
-    }
-
-    /* ===========================================================
-   8️⃣ FONTES ALTERNATIVAS
-=========================================================== */
-    .comic-relief-regular {
-      font-family: "Comic Relief", system-ui;
-      font-weight: 400;
-    }
-
-    .comic-relief-bold {
-      font-family: "Comic Relief", system-ui;
-      font-weight: 700;
-    }
-
-    .tinos-regular {
-      font-family: "Tinos", serif;
-      font-weight: 400;
-    }
-
-    .tinos-bold {
-      font-family: "Tinos", serif;
-      font-weight: 700;
-    }
-
     /* ===========================================================
    9️⃣ DIVISOR SIMPLES
-=========================================================== */
+    =========================================================== */
     .simple-divider {
       text-align: center;
       padding: 20px;
@@ -370,51 +162,33 @@ $tel = "(12) 3948-5753";
       font-size: 1.2rem;
       font-weight: 500;
     }
-
-
-
-
-
-
-
     .section-title {
       text-align: center;
       font-size: 1.8rem;
       margin-bottom: 20px;
-
     }
-
     .section-title::after {
       content: "";
       display: block;
       width: 60px;
-      /* comprimento da linha */
       height: 3px;
-      /* espessura da linha */
       background-color: #333;
-      /* cor da linha */
       margin: 8px auto 0;
-      /* espaço entre texto e linha, e centraliza */
       border-radius: 2px;
-      /* cantos arredondados */
     }
-
     .card-news .card-body {
       background-color: <?php echo $background; ?>;
     }
-
     .local {
       text-align: center;
       padding: 60px 0;
       background: <?php echo $cor1 ?>;
       color: <?php echo $cor_font; ?>;
     }
-
     .local h2 {
       font-size: 2rem;
       margin-bottom: 40px;
     }
-
     .local-container {
       display: flex;
       justify-content: center;
@@ -426,8 +200,6 @@ $tel = "(12) 3948-5753";
       box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
       background: #fff;
     }
-
-    /* Lado esquerdo (informações) */
     .local-container .info {
       flex: 1;
       background: #fff;
@@ -437,108 +209,57 @@ $tel = "(12) 3948-5753";
       flex-direction: column;
       justify-content: center;
     }
-
     .local-container .info h3 {
       font-size: 1.3rem;
       color: #4b3d3d;
       margin-bottom: 10px;
     }
-
     .local-container .info hr {
       border: none;
       height: 1px;
       background-color: #e6d4d1;
       margin: 20px 0;
     }
-
-    /* Lado direito (mapa) */
     .local-container .map {
       flex: 1;
       position: relative;
       min-height: 300px;
     }
-
     .local-container .map #map {
       width: 100%;
       height: 100%;
     }
-
-    /* Responsivo */
     @media (max-width: 768px) {
       .local-container {
         flex-direction: column;
       }
-
       .local-container .map {
         height: 250px;
       }
     }
-
     hr {
       border: none;
       height: 2px;
       background-color: #ddd;
-      /* cor da linha */
       margin: 40px 0;
-      /* espaçamento acima e abaixo */
     }
-
-
-
     .info-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 20px;
       margin-top: 20px;
     }
-
     .info-block {
       padding: 10px 0;
       border-bottom: 1px solid #ccc;
     }
-
     .info-block strong {
       display: block;
       font-weight: 600;
       margin-bottom: 5px;
     }
 
-    .map-card {
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      padding: 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 20px;
-    }
-
-    .map-card .endereco {
-      flex: 1;
-    }
-
-    .map-card iframe {
-      width: 300px;
-      height: 180px;
-      border: none;
-      border-radius: 5px;
-    }
-
-    @media (max-width: 768px) {
-      .map-card {
-        flex-direction: column;
-      }
-
-      .map-card iframe {
-        width: 100%;
-      }
-    }
   </style>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Comic+Relief:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -616,9 +337,6 @@ $tel = "(12) 3948-5753";
       resetTimer();
     });
   </script>
-
-
-
 </head>
 
 <body>
@@ -1038,7 +756,10 @@ $tel = "(12) 3948-5753";
             O projeto <strong>"Criança Presente"</strong> tem como objetivo promover o desenvolvimento cognitivo e emocional de crianças em fase escolar.
             Por meio de atividades lúdicas e oficinas criativas, a iniciativa busca fortalecer vínculos, estimular a imaginação e favorecer o aprendizado.
           </p>
-          <button class="btn btn-outline-primary mt-2 px-4 rounded-pill fw-semibold">Lei de Incentivo</button>
+          <div class="d-flex gap-3 mt-3">
+            <button class="btn btn-outline-warning rounded-pill"><i class="bi bi-chat-dots"></i> Entre em Contato</button>
+            <button class="btn btn-outline-warning rounded-pill"><i class="bi bi-heart"></i> Nossos Apoiadores</button>
+          </div>
         </div>
       </div>
     </section>
