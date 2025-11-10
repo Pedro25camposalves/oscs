@@ -49,8 +49,6 @@ $endereco =  "AVENIDA TEREZA ANSELMO MASSARI <br> PARQUE BRASIL, Jacareí - SP<b
 $email = "contato@osc.org.br";
 $tel = "(12) 3948-5753";
 
-
-
 include 'conexao.php';
 ?>
 
@@ -80,6 +78,7 @@ include 'conexao.php';
       background: <?php echo $cor1; ?>;
       color: <?php echo $cor_font; ?>;
     }
+
     footer {
       background-color: <?php echo $cor3; ?>;
       border-top: 1px solid #ddd;
@@ -88,13 +87,16 @@ include 'conexao.php';
       color: #666;
       margin-top: 50px;
     }
+
     hr {
       margin: 0.5rem 0 1rem 0;
     }
+
     .text-primary {
       color: #f28b00 !important;
       /* apenas uma definição */
     }
+
     .nav-link {
       font-size: 1.2rem;
       color: black;
@@ -107,19 +109,23 @@ include 'conexao.php';
       background: <?php echo $background ?>;
       border-radius: 6px;
     }
+
     #acontecimentos .card img {
       height: 180px;
       object-fit: cover;
       border-radius: 8px 8px 0 0;
     }
+
     #acontecimentos .card {
       border-radius: 80px;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
+
     #acontecimentos .card:hover {
       transform: translateY(-5px);
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
     }
+
     /* ===========================================================
    6️⃣ BOTÕES
 =========================================================== */
@@ -127,10 +133,12 @@ include 'conexao.php';
       color: #f28b00;
       border-color: #f28b00;
     }
+
     .btn-outline-warning:hover {
       background-color: #f28b00;
       color: #fff;
     }
+
     /* ===========================================================
    7️⃣ IMAGENS REDONDAS
   =========================================================== */
@@ -145,12 +153,14 @@ include 'conexao.php';
       justify-content: center;
       border: 6px solid #f28b00;
     }
+
     .img-wrapper img {
       width: 100%;
       height: 100%;
       object-fit: contain;
       background-color: #fff;
     }
+
     /* ===========================================================
    9️⃣ DIVISOR SIMPLES
     =========================================================== */
@@ -162,11 +172,13 @@ include 'conexao.php';
       font-size: 1.2rem;
       font-weight: 500;
     }
+
     .section-title {
       text-align: center;
       font-size: 1.8rem;
       margin-bottom: 20px;
     }
+
     .section-title::after {
       content: "";
       display: block;
@@ -176,19 +188,23 @@ include 'conexao.php';
       margin: 8px auto 0;
       border-radius: 2px;
     }
+
     .card-news .card-body {
       background-color: <?php echo $background; ?>;
     }
+
     .local {
       text-align: center;
       padding: 60px 0;
       background: <?php echo $cor1 ?>;
       color: <?php echo $cor_font; ?>;
     }
+
     .local h2 {
       font-size: 2rem;
       margin-bottom: 40px;
     }
+
     .local-container {
       display: flex;
       justify-content: center;
@@ -200,6 +216,7 @@ include 'conexao.php';
       box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
       background: #fff;
     }
+
     .local-container .info {
       flex: 1;
       background: #fff;
@@ -209,56 +226,65 @@ include 'conexao.php';
       flex-direction: column;
       justify-content: center;
     }
+
     .local-container .info h3 {
       font-size: 1.3rem;
       color: #4b3d3d;
       margin-bottom: 10px;
     }
+
     .local-container .info hr {
       border: none;
       height: 1px;
       background-color: #e6d4d1;
       margin: 20px 0;
     }
+
     .local-container .map {
       flex: 1;
       position: relative;
       min-height: 300px;
     }
+
     .local-container .map #map {
       width: 100%;
       height: 100%;
     }
+
     @media (max-width: 768px) {
       .local-container {
         flex-direction: column;
       }
+
       .local-container .map {
         height: 250px;
       }
     }
+
     hr {
       border: none;
       height: 2px;
       background-color: #ddd;
       margin: 40px 0;
     }
+
     .info-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 20px;
       margin-top: 20px;
     }
+
     .info-block {
       padding: 10px 0;
       border-bottom: 1px solid #ccc;
     }
+
     .info-block strong {
       display: block;
       font-weight: 600;
       margin-bottom: 5px;
     }
-
   </style>
 
   <script>
@@ -336,13 +362,83 @@ include 'conexao.php';
       show(current);
       resetTimer();
     });
+
+
+
+    function gerarSubtonsMaisClaros(hex, quantidade = 3) {
+  // converte HEX → RGB
+  let r = parseInt(hex.substr(1, 2), 16);
+  let g = parseInt(hex.substr(3, 2), 16);
+  let b = parseInt(hex.substr(5, 2), 16);
+
+  // converte RGB → HSL
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+
+  // gera subtons clareando a luminosidade
+  const subtons = [];
+  for (let i = 1; i <= quantidade; i++) {
+    let novaL = Math.min(1, l + (i * 0.1)); // aumenta L em 10% por passo
+    subtons.push(hslToHex(h * 360, s, novaL));
+  }
+
+  return subtons;
+}
+
+// converte HSL → HEX
+function hslToHex(h, s, l) {
+  h /= 360;
+  const hue2rgb = (p, q, t) => {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const r = hue2rgb(p, q, h + 1 / 3);
+  const g = hue2rgb(p, q, h);
+  const b = hue2rgb(p, q, h - 1 / 3);
+  return '#' + [r, g, b].map(x => Math.round(x * 255).toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  const corBase = <?php echo json_encode($cor2); ?>;
+  const tons = gerarSubtonsMaisClaros(corBase, 3);
+
+  const divs = document.querySelectorAll('#help-section > div');
+  if (divs.length >= 4) {
+    divs[0].style.setProperty("background-color", corBase, "important");
+divs[1].style.setProperty("background-color", tons[0], "important");
+divs[2].style.setProperty("background-color", tons[1], "important");
+divs[3].style.setProperty("background-color", tons[2], "important");
+  }
+  console.log(tons);
+})
+
+// → ["#DC8E52", "#E3A976", "#E9C49A"
   </script>
 </head>
 
 <body>
 
   <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-light shadow-sm sticky-top" style="background-color: #fff;">
+  <nav class="navbar navbar-expand-lg navbar-light shadow-sm sticky-top" style="background-color: <?php echo $cor1; ?>;">
     <div class="container">
       <img src="<?php echo $logo_nobg; ?>" class="img-fluid" style="max-width: 80px;" alt="Logo ASSOCEST">
       <!-- <div style="margin-left: 8px;">
@@ -438,21 +534,23 @@ include 'conexao.php';
             <!-- Coluna direita: ações -->
             <div class="col-lg-4 mt-4 mt-lg-0">
               <div class="help-box text-center text-white">
-                <div class="help-header bg-warning py-3 fw-bold">
-                  COMO VOCÊ PODE AJUDAR?
-                </div>
-                <div class="help-option bg-info py-4">
-                  <i class="bi bi-heart-fill fs-2"></i>
-                  <h5 class="mt-2">DOAÇÕES</h5>
-                </div>
-                <div class="help-option bg-teal py-4">
-                  <i class="bi bi-people-fill fs-2"></i>
-                  <h5 class="mt-2">COLABORADORES</h5>
-                </div>
-                <div class="help-option bg-secondary py-4">
-                  <i class="bi bi-cart-fill fs-2"></i>
-                  <h5 class="mt-2">BAZAR</h5>
-                </div>
+                <div id="help-section">
+  <div class="help-header py-3 fw-bold">
+    COMO VOCÊ PODE AJUDAR?
+  </div>
+  <div class="help-option py-4">
+    <i class="bi bi-heart-fill fs-2"></i>
+    <h5 class="mt-2">DOAÇÕES</h5>
+  </div>
+  <div class="help-option py-4">
+    <i class="bi bi-people-fill fs-2"></i>
+    <h5 class="mt-2">COLABORADORES</h5>
+  </div>
+  <div class="help-option py-4">
+    <i class="bi bi-cart-fill fs-2"></i>
+    <h5 class="mt-2">BAZAR</h5>
+  </div>
+</div>
               </div>
             </div>
           </div>
@@ -521,7 +619,7 @@ include 'conexao.php';
 
   <!-- Sobre -->
   <div id="sobre" class="section">
-    <h1 class="mb-3" style="background-color: rgb(247, 159, 159);padding: 23px 23px 23px 310px;">Sobre Nós</h1>
+    <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px;">Sobre Nós</h1>
     <div class="container my-5">
       <p> <?php echo $historia; ?> </p>
       <ul>
@@ -621,7 +719,7 @@ include 'conexao.php';
 
   <!-- Transparência -->
   <div id="transparencia" class="section">
-    <h1 class="mb-3" style="background-color: rgb(247, 159, 159);padding: 23px 23px 23px 310px;">Transparência</h1>
+    <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px;">Transparência</h1>
 
     <div class="row mt-4">
       <div class="col-md-4">
