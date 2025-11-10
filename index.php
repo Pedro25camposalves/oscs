@@ -8,7 +8,7 @@ $cor2 = '#C8702E';
 $cor3 = '#D08A4E';
 $cor4 = '#F5C2A4';
 $cor_font = '#4B2E23';
-$background = '#FFF7F2';
+$background = '#f6dfcbff';
 // --------------------------
 // INICIO
 // --------------------------
@@ -366,72 +366,86 @@ include 'conexao.php';
 
 
     function gerarSubtonsMaisClaros(hex, quantidade = 3) {
-  // converte HEX → RGB
-  let r = parseInt(hex.substr(1, 2), 16);
-  let g = parseInt(hex.substr(3, 2), 16);
-  let b = parseInt(hex.substr(5, 2), 16);
+      // converte HEX → RGB
+      let r = parseInt(hex.substr(1, 2), 16);
+      let g = parseInt(hex.substr(3, 2), 16);
+      let b = parseInt(hex.substr(5, 2), 16);
 
-  // converte RGB → HSL
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h, s, l = (max + min) / 2;
-  if (max === min) {
-    h = s = 0;
-  } else {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      case b: h = (r - g) / d + 4; break;
+      // converte RGB → HSL
+      r /= 255;
+      g /= 255;
+      b /= 255;
+      const max = Math.max(r, g, b),
+        min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+      if (max === min) {
+        h = s = 0;
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r:
+            h = (g - b) / d + (g < b ? 6 : 0);
+            break;
+          case g:
+            h = (b - r) / d + 2;
+            break;
+          case b:
+            h = (r - g) / d + 4;
+            break;
+        }
+        h /= 6;
+      }
+
+      // gera subtons clareando a luminosidade
+      const subtons = [];
+      for (let i = 1; i <= quantidade; i++) {
+        let novaL = Math.min(1, l + (i * 0.1)); // aumenta L em 10% por passo
+        subtons.push(hslToHex(h * 360, s, novaL));
+      }
+
+      return subtons;
     }
-    h /= 6;
-  }
 
-  // gera subtons clareando a luminosidade
-  const subtons = [];
-  for (let i = 1; i <= quantidade; i++) {
-    let novaL = Math.min(1, l + (i * 0.1)); // aumenta L em 10% por passo
-    subtons.push(hslToHex(h * 360, s, novaL));
-  }
+    // converte HSL → HEX
+    function hslToHex(h, s, l) {
+      h /= 360;
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+      };
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      const r = hue2rgb(p, q, h + 1 / 3);
+      const g = hue2rgb(p, q, h);
+      const b = hue2rgb(p, q, h - 1 / 3);
+      return '#' + [r, g, b].map(x => Math.round(x * 255).toString(16).padStart(2, '0')).join('').toUpperCase();
+    }
 
-  return subtons;
-}
+    document.addEventListener("DOMContentLoaded", function() {
+      const corBase = <?php echo json_encode($cor2); ?>;
+      const tons = gerarSubtonsMaisClaros(corBase, 3);
 
-// converte HSL → HEX
-function hslToHex(h, s, l) {
-  h /= 360;
-  const hue2rgb = (p, q, t) => {
-    if (t < 0) t += 1;
-    if (t > 1) t -= 1;
-    if (t < 1 / 6) return p + (q - p) * 6 * t;
-    if (t < 1 / 2) return q;
-    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-    return p;
-  };
-  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-  const p = 2 * l - q;
-  const r = hue2rgb(p, q, h + 1 / 3);
-  const g = hue2rgb(p, q, h);
-  const b = hue2rgb(p, q, h - 1 / 3);
-  return '#' + [r, g, b].map(x => Math.round(x * 255).toString(16).padStart(2, '0')).join('').toUpperCase();
-}
+      const divs = document.querySelectorAll('#help-section > div');
+      if (divs.length >= 4) {
+        divs[0].style.setProperty("background-color", corBase, "important");
+        divs[1].style.setProperty("background-color", tons[0], "important");
+        divs[2].style.setProperty("background-color", tons[1], "important");
+        divs[3].style.setProperty("background-color", tons[2], "important");
+      }
+      const divs2 = document.querySelectorAll('.card-mvv');
+      console.log(divs2);
+        divs2[0].style.setProperty("background-color", tons[0], "important");
+        divs2[1].style.setProperty("background-color", tons[1], "important");
+        divs2[2].style.setProperty("background-color", tons[2], "important");
+      console.log(tons);
+    })
 
-document.addEventListener("DOMContentLoaded", function() {
-  const corBase = <?php echo json_encode($cor2); ?>;
-  const tons = gerarSubtonsMaisClaros(corBase, 3);
-
-  const divs = document.querySelectorAll('#help-section > div');
-  if (divs.length >= 4) {
-    divs[0].style.setProperty("background-color", corBase, "important");
-divs[1].style.setProperty("background-color", tons[0], "important");
-divs[2].style.setProperty("background-color", tons[1], "important");
-divs[3].style.setProperty("background-color", tons[2], "important");
-  }
-  console.log(tons);
-})
-
-// → ["#DC8E52", "#E3A976", "#E9C49A"
+    // → ["#DC8E52", "#E3A976", "#E9C49A"
   </script>
 </head>
 
@@ -535,22 +549,22 @@ divs[3].style.setProperty("background-color", tons[2], "important");
             <div class="col-lg-4 mt-4 mt-lg-0">
               <div class="help-box text-center text-white">
                 <div id="help-section">
-  <div class="help-header py-3 fw-bold">
-    COMO VOCÊ PODE AJUDAR?
-  </div>
-  <div class="help-option py-4">
-    <i class="bi bi-heart-fill fs-2"></i>
-    <h5 class="mt-2">DOAÇÕES</h5>
-  </div>
-  <div class="help-option py-4">
-    <i class="bi bi-people-fill fs-2"></i>
-    <h5 class="mt-2">COLABORADORES</h5>
-  </div>
-  <div class="help-option py-4">
-    <i class="bi bi-cart-fill fs-2"></i>
-    <h5 class="mt-2">BAZAR</h5>
-  </div>
-</div>
+                  <div class="help-header py-3 fw-bold">
+                    COMO VOCÊ PODE AJUDAR?
+                  </div>
+                  <div class="help-option py-4">
+                    <i class="bi bi-heart-fill fs-2"></i>
+                    <h5 class="mt-2">DOAÇÕES</h5>
+                  </div>
+                  <div class="help-option py-4">
+                    <i class="bi bi-people-fill fs-2"></i>
+                    <h5 class="mt-2">COLABORADORES</h5>
+                  </div>
+                  <div class="help-option py-4">
+                    <i class="bi bi-cart-fill fs-2"></i>
+                    <h5 class="mt-2">BAZAR</h5>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -567,27 +581,27 @@ divs[3].style.setProperty("background-color", tons[2], "important");
           </div>
 
           <!-- Coluna do texto -->
-          <div class="col-md-6">
+          <div class="col-md-6" style="margin-bottom: 40px;">
             <h2 class="text-center mb-4" style="margin: 30px;">Missão, Visão e Valores</h2>
 
-            <div class="card mb-3 shadow-sm">
-              <div class="card-body text-center bg-light">
+            <div class="card mb-3 shadow-sm card-mvv">
+              <div class="card-body text-center bg-light" style="background: <?php echo $cor1 ; ?> !important;">
                 <i class="bi bi-bullseye text-warning fs-2 mb-2"></i>
                 <h5 class="fw-bold">Missão</h5>
                 <p><?php echo $missao ?></p>
               </div>
             </div>
 
-            <div class="card mb-3 shadow-sm">
-              <div class="card-body text-center bg-light">
+            <div class="card mb-3 shadow-sm card-mvv">
+              <div class="card-body text-center bg-light" style="background: <?php echo $cor1 ; ?> !important;">
                 <i class="bi bi-eye text-success fs-2 mb-2"></i>
                 <h5 class="fw-bold">Visão</h5>
                 <p><?php echo $visao ?></p>
               </div>
             </div>
 
-            <div class="card mb-3 shadow-sm">
-              <div class="card-body text-center bg-light">
+            <div class="card mb-3 shadow-sm card-mvv">
+              <div class="card-body text-center bg-light" style="background: <?php echo $cor1 ; ?> !important;">
                 <i class="bi bi-heart-fill text-danger fs-2 mb-2"></i>
                 <h5 class="fw-bold">Valores</h5>
                 <p><?php echo $valores ?></p>
