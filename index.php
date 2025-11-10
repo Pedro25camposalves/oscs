@@ -1,12 +1,56 @@
 <?php
 
-
+// --------------------------
+// ESTILIZAÇÃO / CSS
+// --------------------------
 $cor1 = 'linear-gradient(to bottom, #f6bdb0ff, #fef7f5ff)';
 $cor2 = '#C8702E';
 $cor3 = '#D08A4E';
 $cor4 = '#F5C2A4';
 $cor_font = '#4B2E23';
 $background = '#FFF7F2';
+// --------------------------
+// INICIO
+// --------------------------
+$label_banner = "Transformando comunidades com ações que fazem a diferença.";
+$missao = "Promover o desenvolvimento humano e social através de projetos que incentivam a educação, a sustentabilidade e a inclusão, contribuindo para uma sociedade mais justa e solidária.";
+$visao = "Ser referência no terceiro setor pela eficiência dos nossos projetos e pelo impacto positivo nas comunidades onde atuamos, inspirando novas iniciativas sociais.";
+$valores = "Ética, transparência, empatia, compromisso social e respeito às pessoas e ao meio ambiente.";
+// --------------------------
+// SOBRE
+// --------------------------
+$cnae = "Atividades de recreação e lazer não especificadas anteriormente";
+$historia =  "Nossa OSC atua desde 2010, buscando fortalecer comunidades por meio de projetos de capacitação, apoio social e desenvolvimento sustentável.
+      Nosso time é formado por profissionais e voluntários comprometidos com a transparência, ética e eficiência na gestão dos recursos.
+      🏛️ Como Surgiu a OSC
+        A Associação Esther Siqueira Tillmann (ASSOCEST) nasceu do sonho de um grupo de pessoas comprometidas com a valorização da cultura, da educação e do desenvolvimento social. Inspiradas pelo legado de Esther Siqueira Tillmann — uma mulher reconhecida por seu trabalho comunitário e dedicação à preservação das tradições locais —, essas pessoas decidiram transformar a admiração em ação.
+        O projeto começou de forma simples, com encontros em espaços comunitários e pequenas oficinas voltadas à transmissão de saberes artesanais e culturais. Com o tempo, o impacto positivo dessas iniciativas chamou a atenção de parceiros, voluntários e instituições públicas, permitindo que a associação se estruturasse oficialmente como uma Organização da Sociedade Civil (OSC).
+        Desde então, a ASSOCEST vem ampliando suas ações e consolidando-se como referência em projetos que unem patrimônio cultural, educação e transformação social. Hoje, a entidade atua em diversas frentes, fortalecendo vínculos comunitários, incentivando a economia criativa e promovendo o reconhecimento das práticas culturais como instrumentos de identidade e cidadania.";
+
+$area_atuacao1 = "Cultura e recreação";
+$subarea1 = "Não Informado";
+$area_atuacao2 = "Cultura e recreação";
+$subarea2 = "Não Informado";
+// --------------------------
+// TRANSPARENCIA
+// --------------------------
+$nome_fantasia = "AMACS-GAMELEIRA-PE";
+$sigla = "ASSOCEST";
+$situacao_cad = "Ativa";
+$situacao_imo = "Não informado";
+$ano_cadastro = "2000";
+$ano_fundacao = "2000";
+$responsavel = "Não informado";
+$oq_faz = "Não informado";
+// --------------------------
+// INFORMAÇÕES GERAIS
+// --------------------------
+$logo_nobg = "/assets/images/assocest-logo5-nobg.png";
+$endereco =  "AVENIDA TEREZA ANSELMO MASSARI <br> PARQUE BRASIL, Jacareí - SP<br> <strong>CEP:</strong> 12328-430";
+$email = "contato@osc.org.br";
+$tel = "(12) 3948-5753";
+
+
 ?>
 
 <?php #echo $cor_font; 
@@ -582,7 +626,7 @@ $background = '#FFF7F2';
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-light shadow-sm sticky-top" style="background-color: #fff;">
     <div class="container">
-      <img src="/assets/images/assocest-logo5-nobg.png" class="img-fluid" style="max-width: 80px;" alt="Logo ASSOCEST">
+      <img src="<?php echo $logo_nobg; ?>" class="img-fluid" style="max-width: 80px;" alt="Logo ASSOCEST">
       <!-- <div style="margin-left: 8px;">
         <h7><strong>ASSOCEST</strong></h7>
       </div> -->
@@ -602,11 +646,7 @@ $background = '#FFF7F2';
     </div>
   </nav>
 
-
-
   <!-- Conteúdo -->
-
-
   <!-- Home -->
   <div id="home" class="section active">
     <section class="hero">
@@ -707,7 +747,7 @@ $background = '#FFF7F2';
         <div class="row align-items-center">
           <!-- Coluna da imagem -->
           <div class="col-md-6 mb-4 mb-md-0">
-            <img src="/assets/images/assocest-logo5-nobg.png" class="img-fluid" alt="Imagem Institucional">
+            <img src="<?php echo $logo_nobg; ?>" class="img-fluid" alt="Imagem Institucional">
           </div>
 
           <!-- Coluna do texto -->
@@ -718,7 +758,7 @@ $background = '#FFF7F2';
               <div class="card-body text-center bg-light">
                 <i class="bi bi-bullseye text-warning fs-2 mb-2"></i>
                 <h5 class="fw-bold">Missão</h5>
-                <p>Promover o desenvolvimento humano e social através de projetos que incentivam a educação, a sustentabilidade e a inclusão, contribuindo para uma sociedade mais justa e solidária.</p>
+                <p><?php echo $missao ?></p>
               </div>
             </div>
 
@@ -726,7 +766,7 @@ $background = '#FFF7F2';
               <div class="card-body text-center bg-light">
                 <i class="bi bi-eye text-success fs-2 mb-2"></i>
                 <h5 class="fw-bold">Visão</h5>
-                <p>Ser referência no terceiro setor pela eficiência dos nossos projetos e pelo impacto positivo nas comunidades onde atuamos, inspirando novas iniciativas sociais.</p>
+                <p><?php echo $visao ?></p>
               </div>
             </div>
 
@@ -734,7 +774,7 @@ $background = '#FFF7F2';
               <div class="card-body text-center bg-light">
                 <i class="bi bi-heart-fill text-danger fs-2 mb-2"></i>
                 <h5 class="fw-bold">Valores</h5>
-                <p>Ética, transparência, empatia, compromisso social e respeito às pessoas e ao meio ambiente.</p>
+                <p><?php echo $valores ?></p>
               </div>
             </div>
           </div>
@@ -742,21 +782,15 @@ $background = '#FFF7F2';
       </div>
     </section>
 
-
-
     <section class="local">
       <h2>Venha nos conhecer!</h2>
       <div class="local-container">
         <div class="info">
           <h3>Endereço:</h3>
-          <p>
-            AVENIDA TEREZA ANSELMO MASSARI<br>
-            PARQUE BRASIL, Jacareí - SP<br>
-            <strong>CEP:</strong> 12328-430
-          </p>
+          <p> <?php echo $endereco; ?> </p>
           <hr>
-          <p>📞 (12) 3948-5753</p>
-          <p>✉️ contato@osc.org.br</p>
+          <p>📞 <?php echo $tel ?></p>
+          <p>✉️ <?php echo $email ?></p>
         </div>
         <div class="map">
           <!-- Coloca aqui o iframe ou div do Leaflet -->
@@ -764,35 +798,16 @@ $background = '#FFF7F2';
         </div>
       </div>
     </section>
-
   </div>
-
-
-
-
   </div>
-
-
-
-
-
-
 
   <!-- Sobre -->
   <div id="sobre" class="section">
-
     <h1 class="mb-3" style="background-color: rgb(247, 159, 159);padding: 23px 23px 23px 310px;">Sobre Nós</h1>
-
     <div class="container my-5">
-
-      <p>Nossa OSC atua desde 2010, buscando fortalecer comunidades por meio de projetos de capacitação, apoio social e desenvolvimento sustentável.</p>
-      <p>Nosso time é formado por profissionais e voluntários comprometidos com a transparência, ética e eficiência na gestão dos recursos.</p>
-      <p>🏛️ Como Surgiu a OSC
-        A Associação Esther Siqueira Tillmann (ASSOCEST) nasceu do sonho de um grupo de pessoas comprometidas com a valorização da cultura, da educação e do desenvolvimento social. Inspiradas pelo legado de Esther Siqueira Tillmann — uma mulher reconhecida por seu trabalho comunitário e dedicação à preservação das tradições locais —, essas pessoas decidiram transformar a admiração em ação.
-        O projeto começou de forma simples, com encontros em espaços comunitários e pequenas oficinas voltadas à transmissão de saberes artesanais e culturais. Com o tempo, o impacto positivo dessas iniciativas chamou a atenção de parceiros, voluntários e instituições públicas, permitindo que a associação se estruturasse oficialmente como uma Organização da Sociedade Civil (OSC).
-        Desde então, a ASSOCEST vem ampliando suas ações e consolidando-se como referência em projetos que unem patrimônio cultural, educação e transformação social. Hoje, a entidade atua em diversas frentes, fortalecendo vínculos comunitários, incentivando a economia criativa e promovendo o reconhecimento das práticas culturais como instrumentos de identidade e cidadania. </p>
+      <p> <?php echo $historia; ?> </p>
       <ul>
-        <li><strong>Missão:</strong> Promover o desenvolvimento humano e social através de projetos que incentivam a educação, a sustentabilidade e a inclusão, contribuindo para uma sociedade mais justa e solidária.</li>
+        <li><strong>Missão: </strong><?php echo $missao; ?></li>
       </ul>
       <section id="equipe" class="my-5">
         <div class="container">
@@ -834,8 +849,6 @@ $background = '#FFF7F2';
           </div>
         </div>
 
-
-
         <section id="apoiadores" class="section">
           <h2 class="section-title">Nossos Apoiadores</h2>
           <div class="carousel-logos">
@@ -852,40 +865,34 @@ $background = '#FFF7F2';
           </div>
         </section>
 
-
-
-
-
         <div class="card shadow-sm border-0 my-3">
           <div class="card-body bg-light">
             <div class="d-flex justify-content-between align-items-start">
               <h6 class="fw-bold mb-3">Atividade Econômica (CNAE):</h6>
               <i class="bi bi-database fs-4 text-primary"></i>
             </div>
-            <p class="text-muted mb-3">Atividades de recreação e lazer não especificadas anteriormente</p>
+            <p class="text-muted mb-3"><?php echo $cnae; ?></p>
             <hr>
 
             <div class="row mb-3">
               <div class="col-md-6">
                 <p class="fw-semibold mb-1">Área de Atuação:</p>
-                <p class="text-muted">Cultura e recreação</p>
+                <p class="text-muted"><?php echo $area_atuacao1; ?></p>
               </div>
               <div class="col-md-6">
                 <p class="fw-semibold mb-1">Subárea:</p>
-                <p class="text-muted">Esporte e recreação</p>
+                <p class="text-muted"><?php echo $subarea1; ?></p>
               </div>
             </div>
-
             <hr>
-
             <div class="row">
               <div class="col-md-6">
                 <p class="fw-semibold mb-1">Área de Atuação:</p>
-                <p class="text-muted">Cultura e recreação</p>
+                <p class="text-muted"><?php echo $area_atuacao2; ?></p>
               </div>
               <div class="col-md-6">
                 <p class="fw-semibold mb-1">Subárea:</p>
-                <p class="text-muted">Não informado</p>
+                <p class="text-muted"><?php echo $subarea2; ?></p>
               </div>
             </div>
           </div>
@@ -931,15 +938,15 @@ $background = '#FFF7F2';
     <hr>
     <div class="container my-5">
       <div class="osc-detalhes">
-        <h3><strong>Nome fantasia:</strong> AMACS-GAMELEIRA-PE</h3>
+        <h3><strong>Nome fantasia: </strong><?php echo $nome_fantasia; ?></h3>
         <div class="info-grid">
           <div class="info-block">
             <strong><i class="bi bi-database"></i> Sigla OSC:</strong>
-            <span>Não informado</span>
+            <span><?php echo $sigla; ?></span>
           </div>
           <div class="info-block">
             <strong><i class="bi bi-person"></i> Situação cadastral:</strong>
-            <span>Ativas</span>
+            <span><?php echo $situacao_cad; ?></span>
           </div>
         </div>
 
@@ -948,13 +955,9 @@ $background = '#FFF7F2';
         <div class="map-card">
           <div class="endereco">
             <strong>Endereço:</strong>
-            <p>
-              RUA DR ANTONIO RIGUEIRA<br>
-              CENTRO, Gameleira - PE<br>
-              <strong>CEP:</strong> 55530000
-            </p>
-            <p><i class="bi bi-telephone"></i> 8103679115</p>
-            <p><i class="bi bi-envelope"></i> contabilidademap@hotmail.com</p>
+            <p><?php echo $endereco ?></p>
+            <p><i class="bi bi-telephone"></i><?php echo $tel ?></p>
+            <p><i class="bi bi-envelope"></i><?php echo $email ?></p>
           </div>
 
           <iframe
@@ -966,36 +969,30 @@ $background = '#FFF7F2';
         <div class="info-grid">
           <div class="info-block">
             <strong><i class="bi bi-house"></i> Situação do imóvel:</strong>
-            <span>Não informado</span>
+            <span><?php echo $situacao_imo; ?></span>
           </div>
           <div class="info-block">
             <strong><i class="bi bi-calendar"></i> Ano de cadastro de CNPJ:</strong>
-            <span>2000</span>
+            <span><?php echo $ano_cadastro; ?></span>
           </div>
           <div class="info-block">
             <strong><i class="bi bi-building"></i> Ano de fundação:</strong>
-            <span>2000</span>
+            <span><?php echo $ano_fundacao; ?></span>
           </div>
           <div class="info-block">
             <strong><i class="bi bi-person"></i> Responsável legal:</strong>
-            <span>Não informado</span>
+            <span><?php echo $responsavel; ?></span>
           </div>
           <div class="info-block">
             <strong><i class="bi bi-envelope-at"></i> E-mail:</strong>
-            <span>contabilidademap@hotmail.com</span>
-          </div>
-          <div class="info-block">
-            <strong><i class="bi bi-globe"></i> Website:</strong>
-            <span>Não informado</span>
+            <span><?php echo $email; ?></span>
           </div>
           <div class="info-block" style="grid-column: 1 / -1;">
             <strong><i class="bi bi-info-circle"></i> O que a OSC faz:</strong>
-            <span>Não informado</span>
+            <span><?php echo $oq_faz; ?></span>
           </div>
         </div>
       </div>
-
-
     </div>
   </div>
 
@@ -1026,7 +1023,6 @@ $background = '#FFF7F2';
           </div>
         </div>
       </div>
-
       <hr>
 
       <!-- Projeto 2 -->
@@ -1046,14 +1042,7 @@ $background = '#FFF7F2';
         </div>
       </div>
     </section>
-
-
-
-
-
   </div>
-
-
 
   <footer style="background-color: <?php echo $cor3; ?>;">
     <p>© 2025 OSC Exemplo - Todos os direitos reservados.</p>

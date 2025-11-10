@@ -754,6 +754,30 @@
             dl.download = (qs("#nomeOsc").value || "osc") + ".json";
 
             alert("Dados preparados. As imagens foram salvas no servidor.");
+
+            // --- 🚀 Enviar JSON para o PHP ---
+            try {
+                const response = await fetch("ajax_criar_osc.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                console.log("✅ Resposta do servidor:", result);
+
+                if (result.success) {
+                    alert("OSC criada com sucesso!");
+                } else {
+                    alert("Erro ao criar OSC: " + (result.error || "desconhecido"));
+                }
+
+            } catch (error) {
+                console.error("❌ Erro ao enviar dados:", error);
+                alert("Erro ao enviar dados ao servidor.");
+            }
         }
 
         function resetForm() {
