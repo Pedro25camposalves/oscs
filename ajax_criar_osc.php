@@ -5,20 +5,10 @@ include 'conexao.php';
 $json = file_get_contents('php://input');
 $data = json_decode($json, true);
 
-// error_log(str_repeat("-", 60));
-// error_log("📦 NOVA REQUISIÇÃO ajax_criar_osc.php — " . date("Y-m-d H:i:s"));
-// error_log("JSON recebido:" . PHP_EOL . $json);
-// error_log("Array decodificado:" . PHP_EOL . print_r($data, true));
-// error_log(str_repeat("-", 60));
-
-
 if (!$data) {
     echo json_encode(['success' => false, 'error' => 'JSON inválido']);
     exit;
 }
-
-
-
 // --- 1️⃣ Salva os dados principais na tabela OSC ---
 $nomeOsc = mysqli_real_escape_string($conn, $data['nomeOsc']);
 $email = mysqli_real_escape_string($conn, $data['email']);
@@ -34,17 +24,30 @@ $missao = mysqli_real_escape_string($conn, $data['missao']);
 $visao = mysqli_real_escape_string($conn, $data['visao']);
 $valores = mysqli_real_escape_string($conn, $data['valores']);
 
+$cnpj = mysqli_real_escape_string($conn, $data['cnpj']);
+$razao_social = mysqli_real_escape_string($conn, $data['razao_social']);
+$telefone = mysqli_real_escape_string($conn, $data['telefone']);
+$instagram = mysqli_real_escape_string($conn, $data['instagram']);
+$status = mysqli_real_escape_string($conn, $data['status']);
+
+// data.cnpj = qs("#cnpj").value;
+//             data.razao_social = qs("#razao_social");
+//             nome_fantasia = qs("nome_fantasia");
+//             telefone = qs("telefone");
+//             instagram = qs("instagram");
+//             status = qs("status");
+
 // Campos obrigatórios que não vêm no JSON
-$cnpj = '00000000000000'; // coloque o real se tiver
-$telefone = '00000000000'; // idem
+// $cnpj = '00000000000000'; // coloque o real se tiver
+// $telefone = '00000000000'; // idem
 
 $sql_osc = "
 INSERT INTO osc (
     nome, cnpj, telefone, email, nome_fantasia, sigla, situacao_cadastral,
-    ano_cnpj, ano_fundacao, abreviacao, cnae, subarea, missao, visao, valores
+    ano_cnpj, ano_fundacao, abreviacao, cnae, subarea, missao, visao, valores, instagram, status
 ) VALUES (
     '$nomeOsc', '$cnpj', '$telefone', '$email', '$nomeFantasia', '$sigla', '$situacaoCadastral',
-    '$anoCNPJ', '$anoFundacao', '$abreviacao', '$cnae', '$subarea', '$missao', '$visao', '$valores'
+    '$anoCNPJ', '$anoFundacao', '$abreviacao', '$cnae', '$subarea', '$missao', '$visao', '$valores', '$instagram', '$status'
 )";
 
 if (!mysqli_query($conn, $sql_osc)) {

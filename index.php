@@ -1,5 +1,4 @@
 <?php
-
 // --------------------------
 // ESTILIZAÇÃO / CSS
 // --------------------------
@@ -68,7 +67,7 @@ include 'conexao.php';
   <style>
     /* ===========================================================
    1️⃣ RESET / GLOBAL
-=========================================================== */
+    =========================================================== */
     body {
       /* font-family: "Comic Relief", system-ui; font-weight: 400; */
       font-family: 'Poppins', sans-serif;
@@ -104,7 +103,7 @@ include 'conexao.php';
 
     /* ===========================================================
    4️⃣ CARDS / CONTEÚDO
-=========================================================== */
+    =========================================================== */
     .card-body {
       background: <?php echo $background ?>;
       border-radius: 6px;
@@ -128,7 +127,7 @@ include 'conexao.php';
 
     /* ===========================================================
    6️⃣ BOTÕES
-=========================================================== */
+    =========================================================== */
     .btn-outline-warning {
       color: #f28b00;
       border-color: #f28b00;
@@ -141,7 +140,7 @@ include 'conexao.php';
 
     /* ===========================================================
    7️⃣ IMAGENS REDONDAS
-  =========================================================== */
+    =========================================================== */
     .img-wrapper {
       width: 250px;
       height: 250px;
@@ -439,9 +438,9 @@ include 'conexao.php';
       }
       const divs2 = document.querySelectorAll('.card-mvv');
       console.log(divs2);
-        divs2[0].style.setProperty("background-color", tons[0], "important");
-        divs2[1].style.setProperty("background-color", tons[1], "important");
-        divs2[2].style.setProperty("background-color", tons[2], "important");
+      divs2[0].style.setProperty("background-color", tons[0], "important");
+      divs2[1].style.setProperty("background-color", tons[1], "important");
+      divs2[2].style.setProperty("background-color", tons[2], "important");
       console.log(tons);
     })
 
@@ -585,7 +584,7 @@ include 'conexao.php';
             <h2 class="text-center mb-4" style="margin: 30px;">Missão, Visão e Valores</h2>
 
             <div class="card mb-3 shadow-sm card-mvv">
-              <div class="card-body text-center bg-light" style="background: <?php echo $cor1 ; ?> !important;">
+              <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
                 <i class="bi bi-bullseye text-warning fs-2 mb-2"></i>
                 <h5 class="fw-bold">Missão</h5>
                 <p><?php echo $missao ?></p>
@@ -593,7 +592,7 @@ include 'conexao.php';
             </div>
 
             <div class="card mb-3 shadow-sm card-mvv">
-              <div class="card-body text-center bg-light" style="background: <?php echo $cor1 ; ?> !important;">
+              <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
                 <i class="bi bi-eye text-success fs-2 mb-2"></i>
                 <h5 class="fw-bold">Visão</h5>
                 <p><?php echo $visao ?></p>
@@ -601,7 +600,7 @@ include 'conexao.php';
             </div>
 
             <div class="card mb-3 shadow-sm card-mvv">
-              <div class="card-body text-center bg-light" style="background: <?php echo $cor1 ; ?> !important;">
+              <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
                 <i class="bi bi-heart-fill text-danger fs-2 mb-2"></i>
                 <h5 class="fw-bold">Valores</h5>
                 <p><?php echo $valores ?></p>

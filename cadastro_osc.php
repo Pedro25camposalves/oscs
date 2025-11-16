@@ -442,15 +442,32 @@
                         <input id="oQueFaz" type="text" />
                     </div>
                     <div>
-                        <label for="nomeOsc">Nome da OSC</label>
-                        <input id="nomeOsc" type="text" />
-                    </div>
-
-                    <div>
                         <label for="abreviacao">Abreviação do nome</label>
                         <input id="abreviacao" type="text" />
                     </div>
 
+
+
+                    <div>
+                        <label for="CNPJ">CNPJ</label>
+                        <input id="CNPJ" type="text" />
+                    </div>
+                    <div>
+                        <label for="razao_social">Razão Social</label>
+                        <input id="razao_social" type="text" />
+                    </div>
+                    <div>
+                        <label for="telefone">Telefone</label>
+                        <input id="telefone" type="text" />
+                    </div>
+                    <div>
+                        <label for="instagram">Instagram</label>
+                        <input id="instagram" type="text" />
+                    </div>
+                    <div>
+                        <label for="status">Status</label>
+                        <input id="status" type="text" />
+                    </div>
                 </div>
             </div>
 
@@ -737,6 +754,12 @@
             data.oQueFaz = qs("#oQueFaz").value;
             data.nomeOsc = qs("#nomeOsc").value;
             data.abreviacao = qs("#abreviacao").value;
+            data.cnpj = qs("#cnpj").value;
+            data.razao_social = qs("#razao_social");
+            nome_fantasia = qs("nome_fantasia");
+            telefone = qs("telefone");
+            instagram = qs("instagram");
+            status = qs("status");
 
 
             data.diretores = directors;
