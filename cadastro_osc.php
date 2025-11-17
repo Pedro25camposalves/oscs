@@ -395,6 +395,10 @@
                 <h2>Transparência</h2>
                 <div class="grid cols-3">
                     <div>
+                        <label for="nomeOsc">Nome da OSC</label>
+                        <input id="nomeOsc" type="text" />
+                    </div>
+                    <div>
                         <label for="recursos">Recursos recebidos</label>
                         <input id="recursos" type="text" />
                     </div>
@@ -440,10 +444,6 @@
                     <div>
                         <label for="oQueFaz">O que a OSC faz</label>
                         <input id="oQueFaz" type="text" />
-                    </div>
-                    <div>
-                        <label for="abreviacao">Abreviação do nome</label>
-                        <input id="abreviacao" type="text" />
                     </div>
 
 
@@ -736,6 +736,7 @@
 
             // ------------------------------------------
 
+            data.nomeOsc = qs("#nomeOsc").value;
             data.historia = qs("#historia").value;
             data.cnae = qs("#cnae").value;
             data.area = qs("#area").value;
@@ -752,14 +753,11 @@
             data.responsavelLegal = qs("#responsavelLegal").value;
             data.email = qs("#email").value;
             data.oQueFaz = qs("#oQueFaz").value;
-            data.nomeOsc = qs("#nomeOsc").value;
-            data.abreviacao = qs("#abreviacao").value;
-            data.cnpj = qs("#cnpj").value;
-            data.razao_social = qs("#razao_social");
-            nome_fantasia = qs("nome_fantasia");
-            telefone = qs("telefone");
-            instagram = qs("instagram");
-            status = qs("status");
+            data.cnpj = qs("#CNPJ").value;
+            data.razao_social = qs("#razao_social").value;
+            data.telefone = qs("#telefone").value;
+            data.instagram = qs("#instagram").value;
+            data.status = qs("#status").value;
 
 
             data.diretores = directors;

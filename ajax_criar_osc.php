@@ -1,5 +1,6 @@
 <?php
 include 'conexao.php';
+error_log("teste",0,"error.log");   
 
 // Lê o JSON vindo do JavaScript
 $json = file_get_contents('php://input');
@@ -17,12 +18,14 @@ $sigla = mysqli_real_escape_string($conn, $data['sigla']);
 $situacaoCadastral = mysqli_real_escape_string($conn, $data['situacaoCadastral']);
 $anoCNPJ = mysqli_real_escape_string($conn, $data['anoCNPJ']);
 $anoFundacao = mysqli_real_escape_string($conn, $data['anoFundacao']);
-$abreviacao = mysqli_real_escape_string($conn, $data['abreviacao']);
 $cnae = mysqli_real_escape_string($conn, $data['cnae']);
 $subarea = mysqli_real_escape_string($conn, $data['subarea']);
 $missao = mysqli_real_escape_string($conn, $data['missao']);
 $visao = mysqli_real_escape_string($conn, $data['visao']);
 $valores = mysqli_real_escape_string($conn, $data['valores']);
+$historia = mysqli_real_escape_string($conn, $data['historia']);
+$oQueFaz = mysqli_real_escape_string($conn, $data['oQueFaz']);
+$endereco = mysqli_real_escape_string($conn, $data['endereco']);
 
 $cnpj = mysqli_real_escape_string($conn, $data['cnpj']);
 $razao_social = mysqli_real_escape_string($conn, $data['razao_social']);
@@ -30,24 +33,14 @@ $telefone = mysqli_real_escape_string($conn, $data['telefone']);
 $instagram = mysqli_real_escape_string($conn, $data['instagram']);
 $status = mysqli_real_escape_string($conn, $data['status']);
 
-// data.cnpj = qs("#cnpj").value;
-//             data.razao_social = qs("#razao_social");
-//             nome_fantasia = qs("nome_fantasia");
-//             telefone = qs("telefone");
-//             instagram = qs("instagram");
-//             status = qs("status");
-
-// Campos obrigatórios que não vêm no JSON
-// $cnpj = '00000000000000'; // coloque o real se tiver
-// $telefone = '00000000000'; // idem
 
 $sql_osc = "
 INSERT INTO osc (
     nome, cnpj, telefone, email, nome_fantasia, sigla, situacao_cadastral,
-    ano_cnpj, ano_fundacao, abreviacao, cnae, subarea, missao, visao, valores, instagram, status
+    ano_cnpj, ano_fundacao, cnae, subarea, missao, visao, valores, instagram, status, historia, oque_faz, endereco
 ) VALUES (
     '$nomeOsc', '$cnpj', '$telefone', '$email', '$nomeFantasia', '$sigla', '$situacaoCadastral',
-    '$anoCNPJ', '$anoFundacao', '$abreviacao', '$cnae', '$subarea', '$missao', '$visao', '$valores', '$instagram', '$status'
+    '$anoCNPJ', '$anoFundacao', '$cnae', '$subarea', '$missao', '$visao', '$valores', '$instagram', '$status', '$historia', '$oQueFaz', '$endereco'
 )";
 
 if (!mysqli_query($conn, $sql_osc)) {
@@ -85,10 +78,10 @@ $labelBanner = mysqli_real_escape_string($conn, $data['banners']['labelBanner'])
 
 $sql_template = "
 INSERT INTO template_web (
-    osc_id, descricao, caminho, cores_id,
+    osc_id, descricao, cores_id,
     logo_simples, logo_completa, banner1, banner2, banner3, label_banner
 ) VALUES (
-    '$osc_id', 'Template Padrão', '/assets/images/oscs/', '$cores_id',
+    '$osc_id', 'Template Padrão', '$cores_id',
     '$logoSimples', '$logoCompleta', '$banner1', '$banner2', '$banner3', '$labelBanner'
 )
 ";

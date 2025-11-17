@@ -1,4 +1,19 @@
 <?php
+include 'conexao.php';
+
+$osc = $_GET['OSC'];
+$sql = "SELECT nome, cnpj, telefone, email, nome_fantasia, sigla, situacao_cadastral,
+    ano_cnpj, ano_fundacao, abreviacao, cnae, subarea, missao, visao, valores, instagram, 'status' FROM oscs";
+$result = $mysqli->query($sql);
+
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        echo $row["id"] . " - " . $row["nome"] . " - " . $row["cnpj"] . "<br>";
+    }
+} else {
+    echo "Nenhum registro encontrado";
+}
+
 // --------------------------
 // ESTILIZAÇÃO / CSS
 // --------------------------
@@ -13,7 +28,7 @@ $background = '#f6dfcbff';
 // --------------------------
 $label_banner = "Transformando comunidades com ações que fazem a diferença.";
 $missao = "Promover o desenvolvimento humano e social através de projetos que incentivam a educação, a sustentabilidade e a inclusão, contribuindo para uma sociedade mais justa e solidária.";
-$visao = "Ser referência no terceiro setor pela eficiência dos nossos projetos e pelo impacto positivo nas comunidades onde atuamos, inspirando novas iniciativas sociais.";
+$visao = "Ser referência no terceiro   setor pela eficiência dos nossos projetos e pelo impacto positivo nas comunidades onde atuamos, inspirando novas iniciativas sociais.";
 $valores = "Ética, transparência, empatia, compromisso social e respeito às pessoas e ao meio ambiente.";
 // --------------------------
 // SOBRE
