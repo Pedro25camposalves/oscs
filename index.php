@@ -2,8 +2,7 @@
 include 'conexao.php';
 
 $osc = $_GET['OSC'];
-$sql = "SELECT nome, cnpj, telefone, email, nome_fantasia, sigla, situacao_cadastral,
-    ano_cnpj, ano_fundacao, abreviacao, cnae, subarea, missao, visao, valores, instagram, 'status' FROM oscs";
+$sql = "SELECT * FROM osc WHERE id = $osc";
 $result = $mysqli->query($sql);
 
 if ($result->num_rows > 0) {
@@ -13,7 +12,6 @@ if ($result->num_rows > 0) {
 } else {
     echo "Nenhum registro encontrado";
 }
-
 // --------------------------
 // ESTILIZAÇÃO / CSS
 // --------------------------
@@ -753,7 +751,7 @@ include 'conexao.php';
       <div class="col-md-4">
         <div class="card shadow-sm">
           <div class="card-body text-center">
-            <h5 class="card-title">Recursos Recebidos</h5>
+            <h5 class="card-title">Recursos Recebidos</h5>  
             <p class="display-6 text-success">R$ 250.000</p>
             <p class="text-muted">em 2024</p>
           </div>

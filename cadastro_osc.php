@@ -399,10 +399,6 @@
                         <input id="nomeOsc" type="text" />
                     </div>
                     <div>
-                        <label for="recursos">Recursos recebidos</label>
-                        <input id="recursos" type="text" />
-                    </div>
-                    <div>
                         <label for="nomeFantasia">Nome fantasia</label>
                         <input id="nomeFantasia" type="text" />
                     </div>
@@ -452,10 +448,7 @@
                         <label for="CNPJ">CNPJ</label>
                         <input id="CNPJ" type="text" />
                     </div>
-                    <div>
-                        <label for="razao_social">Razão Social</label>
-                        <input id="razao_social" type="text" />
-                    </div>
+
                     <div>
                         <label for="telefone">Telefone</label>
                         <input id="telefone" type="text" />
@@ -742,7 +735,6 @@
             data.area = qs("#area").value;
             data.subarea = qs("#subarea").value;
 
-            data.recursos = qs("#recursos").value;
             data.nomeFantasia = qs("#nomeFantasia").value;
             data.sigla = qs("#sigla").value;
             data.situacaoCadastral = qs("#situacaoCadastral").value;
@@ -754,7 +746,6 @@
             data.email = qs("#email").value;
             data.oQueFaz = qs("#oQueFaz").value;
             data.cnpj = qs("#CNPJ").value;
-            data.razao_social = qs("#razao_social").value;
             data.telefone = qs("#telefone").value;
             data.instagram = qs("#instagram").value;
             data.status = qs("#status").value;

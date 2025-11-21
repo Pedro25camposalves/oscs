@@ -39,10 +39,8 @@ $valores = mysqli_real_escape_string($conn, $data['valores']);
 $historia = mysqli_real_escape_string($conn, $data['historia']);
 $oQueFaz = mysqli_real_escape_string($conn, $data['oQueFaz']);
 
-error_log("razao social : " . $data['razao_social'],0,"error.log");
 
 $cnpj = mysqli_real_escape_string($conn, $data['cnpj']);
-$razao_social = mysqli_real_escape_string($conn, $data['razao_social']);
 $telefone = mysqli_real_escape_string($conn, $data['telefone']);
 $instagram = mysqli_real_escape_string($conn, $data['instagram']);
 $status = mysqli_real_escape_string($conn, $data['status']);

@@ -400,10 +400,6 @@
                         <input id="nomeOsc" type="text" />
                     </div>
                     <div>
-                        <label for="recursos">Recursos recebidos</label>
-                        <input id="recursos" type="text" />
-                    </div>
-                    <div>
                         <label for="nomeFantasia">Nome fantasia</label>
                         <input id="nomeFantasia" type="text" />
                     </div>
@@ -456,10 +452,6 @@
                     <div>
                         <label for="CNPJ">CNPJ</label>
                         <input id="CNPJ" type="text" />
-                    </div>
-                    <div>
-                        <label for="razao_social">Razão Social</label>
-                        <input id="razao_social" type="text" />
                     </div>
                     <div>
                         <label for="telefone">Telefone</label>
@@ -592,7 +584,6 @@
                     // Preencher campos de Transparência
                     console.log(osc.nomeOsc);
                     if (osc.nomeOsc) qs('#nomeOsc').value = osc.nomeOsc;
-                    if (osc.recursos) qs('#recursos').value = osc.recursos;
                     if (osc.nomeFantasia) qs('#nomeFantasia').value = osc.nomeFantasia;
                     if (osc.sigla) qs('#sigla').value = osc.sigla;
                     if (osc.situacaoCadastral) qs('#situacaoCadastral').value = osc.situacaoCadastral;
@@ -606,7 +597,6 @@
                     if (osc.oQueFaz) qs('#oQueFaz').value = osc.oQueFaz;
                     if (osc.abreviacao) qs('#abreviacao').value = osc.abreviacao;
                     if (osc.cnpj) qs('#CNPJ').value = osc.cnpj;
-                    if (osc.razao_social) qs('#razao_social').value = osc.razao_social;
                     if (osc.telefone) qs('#telefone').value = osc.telefone;
                     if (osc.instagram) qs('#instagram').value = osc.instagram;
                     if (osc.status) qs('#status').value = osc.status;
@@ -833,7 +823,6 @@
             data.area = qs("#area").value;
             data.subarea = qs("#subarea").value;
 
-            data.recursos = qs("#recursos").value;
             data.nomeFantasia = qs("#nomeFantasia").value;
             data.sigla = qs("#sigla").value;
             data.situacaoCadastral = qs("#situacaoCadastral").value;
@@ -847,7 +836,6 @@
             data.nomeOsc = qs("#nomeOsc").value;
             data.abreviacao = qs("#abreviacao").value;
             data.cnpj = qs("#CNPJ").value;
-            data.razao_social = qs("#razao_social").value;
             data.nomeFantasia = qs("#nomeFantasia").value;
             data.telefone = qs("#telefone").value;
             data.instagram = qs("#instagram").value;

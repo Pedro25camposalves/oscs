@@ -28,7 +28,6 @@ $oQueFaz = mysqli_real_escape_string($conn, $data['oQueFaz']);
 $endereco = mysqli_real_escape_string($conn, $data['endereco']);
 
 $cnpj = mysqli_real_escape_string($conn, $data['cnpj']);
-$razao_social = mysqli_real_escape_string($conn, $data['razao_social']);
 $telefone = mysqli_real_escape_string($conn, $data['telefone']);
 $instagram = mysqli_real_escape_string($conn, $data['instagram']);
 $status = mysqli_real_escape_string($conn, $data['status']);

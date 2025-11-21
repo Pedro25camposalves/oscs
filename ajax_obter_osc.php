@@ -100,12 +100,10 @@ try {
         'nomeOsc' => $osc['nome'],
         'historia' => $osc['historia'],
         'area' => $osc['area_atuacao'],
-        'recursos' => null,
         'responsavelLegal' => null,
         'oQueFaz' => $osc['oque_faz'],
         'instagram' => $osc['instagram'],
         'status' => $osc['status'],
-        'razao_social' => $osc['razao_social'],
 
         'cnae' => $osc['cnae'],
         'subarea' => $osc['subarea'],
