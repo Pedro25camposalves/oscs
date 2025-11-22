@@ -1,17 +1,17 @@
 <?php
-include 'conexao.php';
+// include 'conexao.php';
 
-$osc = $_GET['OSC'];
-$sql = "SELECT * FROM osc WHERE id = $osc";
-$result = $mysqli->query($sql);
+// $osc = $_GET['OSC'];
+// $sql = "SELECT * FROM osc WHERE id = $osc";
+// $result = $mysqli->query($sql);
 
-if ($result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        echo $row["id"] . " - " . $row["nome"] . " - " . $row["cnpj"] . "<br>";
-    }
-} else {
-    echo "Nenhum registro encontrado";
-}
+// if ($result->num_rows > 0) {
+//     while ($row = $result->fetch_assoc()) {
+//         echo $row["id"] . " - " . $row["nome"] . " - " . $row["cnpj"] . "<br>";
+//     }
+// } else {
+//     echo "Nenhum registro encontrado";
+// }
 // --------------------------
 // ESTILIZAÇÃO / CSS
 // --------------------------

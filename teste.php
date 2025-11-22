@@ -8,8 +8,9 @@ if (!$osc || !is_numeric($osc)) {
     exit;
 }
 
-$stmt = $conn->prepare("SELECT * FROM osc WHERE id = ?");
-$stmt->bind_param("i", $osc);
+$stmt = $conn->prepare("SELECT osc.*, template_web.* FROM osc
+LEFT JOIN template_web ON template_web.osc_id = osc.id WHERE osc.id = ?;");
+$stmt->bind_param("i", $osc); 
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -31,41 +32,36 @@ $background = '#f6dfcbff';
 // INICIO
 // --------------------------
 $label_banner = "Transformando comunidades com ações que fazem a diferença.";
-$missao = "Promover o desenvolvimento humano e social através de projetos que incentivam a educação, a sustentabilidade e a inclusão, contribuindo para uma sociedade mais justa e solidária.";
-$visao = "Ser referência no terceiro   setor pela eficiência dos nossos projetos e pelo impacto positivo nas comunidades onde atuamos, inspirando novas iniciativas sociais.";
-$valores = "Ética, transparência, empatia, compromisso social e respeito às pessoas e ao meio ambiente.";
+$missao = $row["missao"];
+$visao = $row["visao"];
+$valores = $row["valores"];
 // --------------------------
 // SOBRE
 // --------------------------
-$cnae = "Atividades de recreação e lazer não especificadas anteriormente";
-$historia =  "Nossa OSC atua desde 2010, buscando fortalecer comunidades por meio de projetos de capacitação, apoio social e desenvolvimento sustentável.
-      Nosso time é formado por profissionais e voluntários comprometidos com a transparência, ética e eficiência na gestão dos recursos.
-      🏛️ Como Surgiu a OSC
-        A Associação Esther Siqueira Tillmann (ASSOCEST) nasceu do sonho de um grupo de pessoas comprometidas com a valorização da cultura, da educação e do desenvolvimento social. Inspiradas pelo legado de Esther Siqueira Tillmann — uma mulher reconhecida por seu trabalho comunitário e dedicação à preservação das tradições locais —, essas pessoas decidiram transformar a admiração em ação.
-        O projeto começou de forma simples, com encontros em espaços comunitários e pequenas oficinas voltadas à transmissão de saberes artesanais e culturais. Com o tempo, o impacto positivo dessas iniciativas chamou a atenção de parceiros, voluntários e instituições públicas, permitindo que a associação se estruturasse oficialmente como uma Organização da Sociedade Civil (OSC).
-        Desde então, a ASSOCEST vem ampliando suas ações e consolidando-se como referência em projetos que unem patrimônio cultural, educação e transformação social. Hoje, a entidade atua em diversas frentes, fortalecendo vínculos comunitários, incentivando a economia criativa e promovendo o reconhecimento das práticas culturais como instrumentos de identidade e cidadania.";
-$area_atuacao1 = "Cultura e recreação";
-$subarea1 = "Não Informado";
+$cnae = $row["cnae"];
+$historia = $row["historia"];
+$area_atuacao1 = $row["area_atuacao"];
+$subarea1 = $row["subarea"];
 $area_atuacao2 = "Cultura e recreação";
 $subarea2 = "Não Informado";
 // --------------------------
 // TRANSPARENCIA
 // --------------------------
-$nome_fantasia = "AMACS-GAMELEIRA-PE";
+$nome_fantasia = $row["nome_fantasia"];
 $sigla = "ASSOCEST";
-$situacao_cad = "Ativa";
+$situacao_cad = $row["situacao_cadastral"];
 $situacao_imo = "Não informado";
-$ano_cadastro = "2000";
-$ano_fundacao = "2000";
+$ano_cadastro = $row["ano_cnpj"];
+$ano_fundacao = $row["ano_fundacao"];
 $responsavel = "Não informado";
-$oq_faz = "Não informado";
+$oq_faz = $row["oque_faz"];
 // --------------------------
 // INFORMAÇÕES GERAIS
 // --------------------------
-$logo_nobg = "/assets/images/assocest-logo5-nobg.png";
+$logo_nobg = $row["logo_simples"];
 $endereco =  "AVENIDA TEREZA ANSELMO MASSARI <br> PARQUE BRASIL, Jacareí - SP<br> <strong>CEP:</strong> 12328-430";
-$email = "contato@osc.org.br";
-$tel = "(12) 3948-5753";
+$email = $row["email"];
+$tel = $row["telefone"];
 
 ?>
 

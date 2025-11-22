@@ -244,8 +244,7 @@
 
 <body>
     <header>
-        <h1>Admin — Cadastro de OSC</h1>
-        <div class="muted">Página de administração (HTML / CSS / JS puro)</div>
+        <h1>Admin — Editar OSC</h1>
     </header>
 
     <main>
