@@ -1,7 +1,7 @@
 <?php
 return [
-    'host' => '',
-    'user' => '',
+    'host' => 'localhost',
+    'user' => 'root',
     'pass' => '',
-    'name' => '',
+    'name' => 'oscs_bd03',
 ];

@@ -519,6 +519,10 @@
                     <input id="dirNome" type="text" />
                 </div>
                 <div>
+                    <label for="dirTelefone">Telefone</label>
+                    <input id="dirTelefone" type="text" />
+                </div>
+                <div>
                     <label for="dirFunc">Função</label>
                     <input id="dirFunc" type="text" />
                 </div>
@@ -634,6 +638,7 @@
         async function addDirector() {
             const foto = qs('#dirFoto').files[0];
             const nome = qs('#dirNome').value.trim();
+            const telefone = qs('#dirTelefone').value.trim();
             const func = qs('#dirFunc').value.trim();
             if (!nome || !func) {
                 alert('Preencha nome e função do diretor');
@@ -643,6 +648,7 @@
             const dir = {
                 foto: fotoData,
                 nome,
+                telefone,
                 func
             };
             directors.push(dir);
@@ -650,6 +656,7 @@
             // reset modal fields
             qs('#dirFoto').value = '';
             qs('#dirNome').value = '';
+            qs('#dirTelefone').value = '';
             qs('#dirFunc').value = '';
             modalBackdrop.style.display = 'none';
         }
@@ -699,7 +706,6 @@
             const formData = new FormData();
             formData.append("image", file);
 
-            // Luiz: Alterado o diretorio de upload
             const response = await fetch("/oscs/upload.php", {
                 method: "POST",
                 body: formData,
@@ -795,6 +801,7 @@
 
             // --- 🚀 Enviar JSON para o PHP ---
             try {
+
                 const response = await fetch("ajax_criar_osc.php", {
                     method: "POST",
                     headers: {
@@ -803,7 +810,18 @@
                     body: JSON.stringify(data)
                 });
 
-                const result = await response.json();
+                const text = await response.text();
+                console.log("Resposta bruta do servidor:", text);
+
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (e) {
+                    console.error("Erro ao parsear JSON:", e);
+                    alert("Resposta do servidor não é JSON válido. Veja o console.");
+                    return;
+                }
+
                 console.log("✅ Resposta do servidor:", result);
 
                 if (result.success) {
