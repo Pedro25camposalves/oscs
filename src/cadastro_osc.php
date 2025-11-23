@@ -394,7 +394,7 @@
                     <!-- LADO DIREITO -->
                     <div>
                         <div style="margin-top:14px" class="card">
-                            <h2>Envolvidos</h2>
+                            <h2>Envolvidos (*)</h2>
                             <div class="small">Clique em "Adicionar" para incluir as pessoas envolvidas com a OSC.</div>
                             <div class="directors-list" id="directorsList"></div>
                             <div style="margin-top:10px">
@@ -406,54 +406,6 @@
             </div>
 
             <!-- SEÇÃO 3 -->
-            <div style="margin-top:16px" class="card">
-                <h2>Imóvel</h2>
-                <div class="grid cols-3">
-                    <div>
-                        <label for="situacaoImovel">Situação do imóvel</label>
-                        <input id="situacaoImovel" type="text" />
-                    </div>
-                    <div>
-                        <label for="cep">CEP (*)</label>
-                        <input id="cep" inputmode="numeric" type="text" />
-                    </div>
-                    <div>
-                        <label for="cidade">Cidade</label>
-                        <input id="cidade" type="text" />
-                    </div>
-                    <div>
-                        <label for="bairro">Bairro</label>
-                        <input id="bairro" type="text" />
-                    </div>
-                    <div>
-                        <label for="logradouro">Logradouro</label>
-                        <input id="logradouro" type="text" />
-                    </div>
-                    <div>
-                        <label for="numero">Numero</label>
-                        <input id="numero" inputmode="numeric" type="text" />
-                    </div>
-                </div>
-            </div>
-            
-            <!-- SEÇÃO 4 -->
-            <div style="margin-top:16px" class="card">
-                <h2>Área e Subárea de Atuação</h2>
-                <div style="margin-top: 10px;">
-                    <label for="cnae">Atividade econômica (CNAE)</label>
-                    <input id="cnae" type="text" />
-                </div>
-                <div style="margin-top: 10px;">
-                    <label for="area">Área de atuação</label>
-                    <input id="area" type="text" />
-                </div>    
-                <div style="margin-top: 10px;">
-                    <label for="subarea">Subárea</label>
-                    <input id="subarea" type="text" />
-                </div>
-            </div>
-
-            <!-- SEÇÃO 5 -->
             <div style="margin-top:16px" class="card">
                 <h2>Transparência</h2>
                 <div class="grid cols-3">
@@ -500,6 +452,54 @@
                 </div>
             </div>
 
+            <!-- SEÇÃO 4 -->
+            <div style="margin-top:16px" class="card">
+                <h2>Imóvel</h2>
+                <div class="grid cols-3">
+                    <div>
+                        <label for="situacaoImovel">Situação do imóvel</label>
+                        <input id="situacaoImovel" type="text" />
+                    </div>
+                    <div>
+                        <label for="cep">CEP (*)</label>
+                        <input id="cep" inputmode="numeric" type="text" required/>
+                    </div>
+                    <div>
+                        <label for="cidade">Cidade</label>
+                        <input id="cidade" type="text" />
+                    </div>
+                    <div>
+                        <label for="bairro">Bairro</label>
+                        <input id="bairro" type="text" />
+                    </div>
+                    <div>
+                        <label for="logradouro">Logradouro</label>
+                        <input id="logradouro" type="text" />
+                    </div>
+                    <div>
+                        <label for="numero">Numero</label>
+                        <input id="numero" inputmode="numeric" type="text" />
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SEÇÃO 5 -->
+            <div style="margin-top:16px" class="card">
+                <h2>Área e Subárea de Atuação</h2>
+                <div style="margin-top: 10px;">
+                    <label for="cnae">Atividade econômica (CNAE)</label>
+                    <input id="cnae" type="text" />
+                </div>
+                <div style="margin-top: 10px;">
+                    <label for="area">Área de atuação</label>
+                    <input id="area" type="text" />
+                </div>    
+                <div style="margin-top: 10px;">
+                    <label for="subarea">Subárea</label>
+                    <input id="subarea" type="text" />
+                </div>
+            </div>
+
             <!-- BOTÕES -->
             <div style="margin-top:16px" class="card">
                 <footer>
@@ -514,7 +514,7 @@
 
         <!-- EXIBIÇÃO DO JSON PARA TESTE -->
         <div style="margin-top:16px" class="card">
-            <h2>JSON DE CADASTRO GERADO</h2>
+            <h2>JSON DO CADASTRO</h2>
             <div class="divider"></div>
             <pre id="jsonOut" class="json-out">{}</pre>
             <div style="margin-top:8px; display:flex; gap:8px">
@@ -534,16 +534,16 @@
                     <input id="dirFoto" type="file" accept="image/*" />
                 </div>
                 <div>
-                    <label for="dirNome">Nome</label>
-                    <input id="dirNome" type="text" />
+                    <label for="dirNome">Nome (*)</label>
+                    <input id="dirNome" type="text" required/>
                 </div>
                 <div>
                     <label for="dirTelefone">Telefone</label>
                     <input id="dirTelefone" inputmode="numeric" type="text" />
                 </div>
                 <div>
-                    <label for="dirFunc">Função</label>
-                    <input id="dirFunc" type="text" />
+                    <label for="dirFunc">Função (*)</label>
+                    <input id="dirFunc" type="text" required/>
                 </div>
             </div>
             <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
@@ -653,14 +653,14 @@
             if (e.target === modalBackdrop) modalBackdrop.style.display = 'none'
         });
 
-        // ADICIONAR DIRETOR
+        // ADICIONAR ENVOLVIDO
         async function addDirector() {
             const foto = qs('#dirFoto').files[0];
             const nome = qs('#dirNome').value.trim();
             const telefone = qs('#dirTelefone').value.trim();
             const func = qs('#dirFunc').value.trim();
             if (!nome || !func) {
-                alert('Preencha nome e função do diretor');
+                alert('Preencha nome e função do envolvido');
                 return
             }
             const fotoData = foto ? await readFileAsDataURL(foto) : null;
@@ -725,7 +725,7 @@
             const formData = new FormData();
             formData.append("image", file);
 
-            const response = await fetch("/oscs/upload.php", {
+            const response = await fetch("/oscs/src/upload.php", {
                 method: "POST",
                 body: formData,
             });
