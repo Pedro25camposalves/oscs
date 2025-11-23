@@ -700,7 +700,7 @@
             formData.append("image", file);
 
             // Luiz: Alterado o diretorio de upload
-            const response = await fetch("/oscs/src/upload.php", {
+            const response = await fetch("/src/upload.php", {
                 method: "POST",
                 body: formData,
             });
