@@ -60,7 +60,7 @@
         }
 
         .card h2 {
-            margin: 0 0 12px 0;
+            margin: 10px 0 12px 0;
             font-size: 16px
         }
 
@@ -256,6 +256,14 @@
                     <h2>Configurações Gerais</h2>
                     <div class="grid">
                         <div>
+                            <label for="nomeOsc">Nome da OSC</label>
+                            <input id="nomeOsc" type="text" />
+                        </div>
+                        <div>
+                            <label for="sigla">Sigla da OSC</label>
+                            <input id="sigla" type="text" />
+                        </div>
+                        <div>
                             <label for="logoSimples">Logo simples (obrigatório)</label>
                             <input id="logoSimples" type="file" accept="image/*" required />
                         </div>
@@ -395,63 +403,40 @@
                 <h2>Transparência</h2>
                 <div class="grid cols-3">
                     <div>
-                        <label for="nomeOsc">Nome da OSC</label>
-                        <input id="nomeOsc" type="text" />
+                        <label for="CNPJ">CNPJ</label>
+                        <input id="CNPJ" type="text" />
+                    </div>
+                    <div>
+                        <label for="razaoSocial">Razão Social</label>
+                        <input id="razaoSocial" type="text" />
                     </div>
                     <div>
                         <label for="nomeFantasia">Nome fantasia</label>
                         <input id="nomeFantasia" type="text" />
                     </div>
                     <div>
-                        <label for="sigla">Sigla da OSC</label>
-                        <input id="sigla" type="text" />
+                        <label for="responsavelLegal">Responsável legal</label>
+                        <input id="responsavelLegal" type="text" />
+                    </div>
+                    <div>
+                        <label for="anoCNPJ">Ano do cadastro do CNPJ</label>
+                        <input id="anoCNPJ" type="text" />
+                    </div>
+                    <div>
+                        <label for="anoFundacao">Ano da fundação da OSC</label>
+                        <input id="anoFundacao" type="text" />
                     </div>
                     <div>
                         <label for="situacaoCadastral">Situação cadastral</label>
                         <input id="situacaoCadastral" type="text" />
                     </div>
-
                     <div>
-                        <label for="endereco">Endereço</label>
-                        <input id="endereco" type="text" />
-                    </div>
-                    <div>
-                        <label for="situacaoImovel">Situação do imóvel</label>
-                        <input id="situacaoImovel" type="text" />
-                    </div>
-                    <div>
-                        <label for="anoCNPJ">Ano de cadastro do CNPJ</label>
-                        <input id="anoCNPJ" type="text" />
-                    </div>
-
-                    <div>
-                        <label for="anoFundacao">Ano de fundação</label>
-                        <input id="anoFundacao" type="text" />
-                    </div>
-                    <div>
-                        <label for="responsavelLegal">Responsável legal</label>
-                        <input id="responsavelLegal" type="text" />
+                        <label for="telefone">Telefone</label>
+                        <input id="telefone" type="text" />
                     </div>
                     <div>
                         <label for="email">E-mail</label>
                         <input id="email" type="text" />
-                    </div>
-
-                    <div>
-                        <label for="oQueFaz">O que a OSC faz</label>
-                        <input id="oQueFaz" type="text" />
-                    </div>
-
-
-
-                    <div>
-                        <label for="CNPJ">CNPJ</label>
-                        <input id="CNPJ" type="text" />
-                    </div>
-
-                    <div>
-                        <label for="telefone">Telefone</label>
-                        <input id="telefone" type="text" />
                     </div>
                     <div>
                         <label for="instagram">Instagram</label>
@@ -460,6 +445,39 @@
                     <div>
                         <label for="status">Status</label>
                         <input id="status" type="text" />
+                    </div>
+                    <div>
+                        <label for="oQueFaz">O que a OSC faz?</label>
+                        <input id="oQueFaz" type="text" />
+                    </div>
+                </div>
+
+                <!-- DADOS DO IMÓVEL -->
+                <h2>Imóvel</h2>
+                <div class="grid cols-3">
+                    <div>
+                        <label for="situacaoImovel">Situação do imóvel</label>
+                        <input id="situacaoImovel" type="text" />
+                    </div>
+                    <div>
+                        <label for="cep">CEP</label>
+                        <input id="cep" type="text" />
+                    </div>
+                    <div>
+                        <label for="cidade">Cidade</label>
+                        <input id="cidade" type="text" />
+                    </div>
+                    <div>
+                        <label for="bairro">Bairro</label>
+                        <input id="bairro" type="text" />
+                    </div>
+                    <div>
+                        <label for="logradouro">Logradouro</label>
+                        <input id="logradouro" type="text" />
+                    </div>
+                    <div>
+                        <label for="numero">Numero</label>
+                        <input id="numero" type="text" />
                     </div>
                 </div>
             </div>
@@ -612,6 +630,7 @@
             if (e.target === modalBackdrop) modalBackdrop.style.display = 'none'
         });
 
+        // ADICIONAR DIRETOR
         async function addDirector() {
             const foto = qs('#dirFoto').files[0];
             const nome = qs('#dirNome').value.trim();
@@ -680,7 +699,8 @@
             const formData = new FormData();
             formData.append("image", file);
 
-            const response = await fetch("/upload.php", {
+            // Luiz: Alterado o diretorio de upload
+            const response = await fetch("/oscs/upload.php", {
                 method: "POST",
                 body: formData,
             });
@@ -694,6 +714,7 @@
             return result.path;
         }
 
+        // REALIZA O CADASTRO (ao clicar no botão 'Salvar informações da OSC')
         async function saveData() {
             if (!logoSimples.files[0] || !logoCompleta.files[0]) {
                 alert("Os logos simples e completa são obrigatórios.");
@@ -735,11 +756,10 @@
             data.area = qs("#area").value;
             data.subarea = qs("#subarea").value;
 
+            data.razaoSocial = qs("#razaoSocial").value;
             data.nomeFantasia = qs("#nomeFantasia").value;
             data.sigla = qs("#sigla").value;
             data.situacaoCadastral = qs("#situacaoCadastral").value;
-            data.endereco = qs("#endereco").value;
-            data.situacaoImovel = qs("#situacaoImovel").value;
             data.anoCNPJ = qs("#anoCNPJ").value;
             data.anoFundacao = qs("#anoFundacao").value;
             data.responsavelLegal = qs("#responsavelLegal").value;
@@ -750,6 +770,12 @@
             data.instagram = qs("#instagram").value;
             data.status = qs("#status").value;
 
+            data.situacaoImovel = qs("#situacaoImovel").value;
+            data.cep = qs("#cep").value;
+            data.cidade = qs("#cidade").value;
+            data.bairro = qs("#bairro").value;
+            data.logradouro = qs("#logradouro").value;
+            data.numero = qs("#numero").value;
 
             data.diretores = directors;
 
