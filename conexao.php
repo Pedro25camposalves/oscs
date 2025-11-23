@@ -1,5 +1,10 @@
 <?php
-$config = include __DIR__ . '/config.php';
+
+if (file_exists(__DIR__ . '/config.php')) {
+    $config = require __DIR__ . '/config.php';
+} else {
+    $config = require __DIR__ . '/config.example.php';
+}
 
 $host = $config['DB_HOST'];
 $user = $config['DB_USER'];
