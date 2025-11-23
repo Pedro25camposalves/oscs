@@ -21,7 +21,7 @@ jobs:
           password: ${{ secrets.FTP_PASS }}
           server-dir: ${{ secrets.FTP_DIR }}
           protocol: ftp
-          local-dir: src
+          local-dir: src/
           dangerous-clean-slate: true
           exclude: |
             README_EDITAR_OSC.md
