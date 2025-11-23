@@ -22,6 +22,5 @@ jobs:
           server-dir: ${{ secrets.FTP_DIR }}
           protocol: ftp
           local-dir: src/
-          dangerous-clean-slate: true
           exclude: |
             README_EDITAR_OSC.md
