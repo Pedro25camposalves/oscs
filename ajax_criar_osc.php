@@ -13,6 +13,7 @@ if (!$data) {
 // --- 1️⃣ Salva os dados principais na tabela OSC ---
 $nomeOsc = mysqli_real_escape_string($conn, $data['nomeOsc']);
 $email = mysqli_real_escape_string($conn, $data['email']);
+$razaoSocial = mysqli_real_escape_string($conn, $data['razaoSocial']);
 $nomeFantasia = mysqli_real_escape_string($conn, $data['nomeFantasia']);
 $sigla = mysqli_real_escape_string($conn, $data['sigla']);
 $situacaoCadastral = mysqli_real_escape_string($conn, $data['situacaoCadastral']);
@@ -26,21 +27,18 @@ $visao = mysqli_real_escape_string($conn, $data['visao']);
 $valores = mysqli_real_escape_string($conn, $data['valores']);
 $historia = mysqli_real_escape_string($conn, $data['historia']);
 $oQueFaz = mysqli_real_escape_string($conn, $data['oQueFaz']);
-$endereco = mysqli_real_escape_string($conn, $data['endereco']);
-
 $cnpj = mysqli_real_escape_string($conn, $data['cnpj']);
 $telefone = mysqli_real_escape_string($conn, $data['telefone']);
 $instagram = mysqli_real_escape_string($conn, $data['instagram']);
 $status = mysqli_real_escape_string($conn, $data['status']);
 
-
 $sql_osc = "
 INSERT INTO osc (
-    nome, cnpj, telefone, email, nome_fantasia, sigla, situacao_cadastral,
-    ano_cnpj, ano_fundacao, cnae, area_atuacao, subarea, missao, visao, valores, instagram, status, historia, oque_faz, endereco
+    nome, razao_social, cnpj, telefone, email, nome_fantasia, sigla, situacao_cadastral,
+    ano_cnpj, ano_fundacao, cnae, area_atuacao, subarea, missao, visao, valores, instagram, status, historia, oque_faz
 ) VALUES (
-    '$nomeOsc', '$cnpj', '$telefone', '$email', '$nomeFantasia', '$sigla', '$situacaoCadastral',
-    '$anoCNPJ', '$anoFundacao', '$cnae', '$area', '$subarea', '$missao', '$visao', '$valores', '$instagram', '$status', '$historia', '$oQueFaz', '$endereco'
+    '$nomeOsc', '$razaoSocial', '$cnpj', '$telefone', '$email', '$nomeFantasia', '$sigla', '$situacaoCadastral',
+    '$anoCNPJ', '$anoFundacao', '$cnae', '$area', '$subarea', '$missao', '$visao', '$valores', '$instagram', '$status', '$historia', '$oQueFaz'
 )";
 
 if (!mysqli_query($conn, $sql_osc)) {
@@ -49,6 +47,28 @@ if (!mysqli_query($conn, $sql_osc)) {
 }
 
 $osc_id = mysqli_insert_id($conn);
+
+// --- 3️⃣ Salva os dados do imovel da OSC ---
+$situacaoImovel = mysqli_real_escape_string($conn, $data['situacaoImovel']);
+$cep = mysqli_real_escape_string($conn, $data['cep']);
+$cidade = mysqli_real_escape_string($conn, $data['cidade']);
+$bairro = mysqli_real_escape_string($conn, $data['bairro']);
+$logradouro = mysqli_real_escape_string($conn, $data['logradouro']);
+$numero = mysqli_real_escape_string($conn, $data['numero']);
+
+$sql_imovel = "
+INSERT INTO imovel (
+    osc_id, cep, cidade, logradouro, bairro, numero, situacao
+) VALUES (
+    '$osc_id', '$cep', '$cidade', '$logradouro', '$bairro', '$numero', '$situacaoImovel'
+)";
+
+if (!mysqli_query($conn, $sql_imovel)) {
+    echo json_encode(['success' => false, 'error' => 'Erro ao salvar Imovel: ' . mysqli_error($conn)]);
+    exit;
+}
+
+$imovel_id = mysqli_insert_id($conn);
 
 // --- 2️⃣ Salva as cores na tabela `cores` ---
 $cor1 = mysqli_real_escape_string($conn, $data['cores']['bg']);
@@ -95,6 +115,7 @@ if (!mysqli_query($conn, $sql_template)) {
 echo json_encode([
     'success' => true,
     'osc_id' => $osc_id,
+    'imovel_id' => $imovel_id,
     'cores_id' => $cores_id,
     'template_id' => mysqli_insert_id($conn)
 ]);
