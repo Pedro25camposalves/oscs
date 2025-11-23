@@ -1,11 +1,10 @@
 <?php
 $config = include __DIR__ . '/config.php';
 
-
-$host = $config['host'];
-$user = $config['user'];
-$pass = $config['pass'];
-$name = $config['name'];
+$host = $config['DB_HOST'];
+$user = $config['DB_USER'];
+$pass = $config['DB_PASS'];
+$name = $config['DB_NAME'];
 
 // Conecta ao MySQL com mysqli
 $conn = mysqli_connect($host, $user, $pass, $name);
