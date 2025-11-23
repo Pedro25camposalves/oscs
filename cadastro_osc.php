@@ -60,7 +60,7 @@
         }
 
         .card h2 {
-            margin: 10px 0 12px 0;
+            margin: 0 0 12px 0;
             font-size: 16px
         }
 
@@ -244,215 +244,169 @@
 
 <body>
     <header>
-        <h1>Admin — Cadastro de OSC</h1>
-        <div class="muted">Página de administração (HTML / CSS / JS puro)</div>
+        <h1>Painel de Controle — Cadastro de OSC</h1>
+        <div class="muted">Administração</div>
     </header>
 
     <main>
-        <form id="oscForm" class="card" onsubmit="event.preventDefault();saveData()">
-
-            <div class="grid cols-2">
-                <div>
-                    <h2>Configurações Gerais</h2>
-                    <div class="grid">
-                        <div>
-                            <label for="nomeOsc">Nome da OSC</label>
-                            <input id="nomeOsc" type="text" />
-                        </div>
-                        <div>
-                            <label for="sigla">Sigla da OSC</label>
-                            <input id="sigla" type="text" />
-                        </div>
-                        <div>
-                            <label for="logoSimples">Logo simples (obrigatório)</label>
-                            <input id="logoSimples" type="file" accept="image/*" required />
-                        </div>
-                        <div>
-                            <label for="logoCompleta">Logo completa (obrigatório)</label>
-                            <input id="logoCompleta" type="file" accept="image/*" required />
-                        </div>
-                        <div>
-                            <label for="labelBanner">Label do banner</label>
-                            <input id="labelBanner" type="text" placeholder="Texto do banner" />
-                        </div>
-                        <div class="row">
-                            <div style="flex:1">
-                                <label for="bgColor">Cor de fundo</label>
-                                <input id="bgColor" type="color" value="#f7f7f8" />
-                            </div>
-                            <div style="flex:1">
-                                <label for="secColor">Cor secundária</label>
-                                <input id="secColor" type="color" value="#0a6" />
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div style="flex:1">
-                                <label for="terColor">Cor terciária</label>
-                                <input id="terColor" type="color" value="#ff8a65" />
-                            </div>
-                            <div style="flex:1">
-                                <label for="quaColor">Cor quaternária</label>
-                                <input id="quaColor" type="color" value="#6c5ce7" />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label for="banner1">Banner principal (imagem)</label>
-                            <input id="banner1" type="file" accept="image/*" />
-                        </div>
-                        <div>
-                            <label for="banner2">Banner 2 (imagem)</label>
-                            <input id="banner2" type="file" accept="image/*" />
-                        </div>
-                        <div>
-                            <label for="banner3">Banner 3 (imagem)</label>
-                            <input id="banner3" type="file" accept="image/*" />
-                        </div>
-
-                        <div>
-                            <label for="missao">Missão da OSC</label>
-                            <textarea id="missao" placeholder="Missão"></textarea>
-                        </div>
-                        <div>
-                            <label for="visao">Visão da OSC</label>
-                            <textarea id="visao" placeholder="Visão"></textarea>
-                        </div>
-                        <div>
-                            <label for="valores">Valores da OSC</label>
-                            <textarea id="valores" placeholder="Valores"></textarea>
-                        </div>
-
-                    </div>
-                </div>
-
-                <div>
-                    <h2 class="section-title">Visualização / Previews</h2>
-                    <div class="card">
-                        <div class="small">Previews automáticos das imagens e cores selecionadas</div>
-                        <div class="divider"></div>
-                        <div id="previewArea">
-                            <div class="row" style="align-items:center">
-                                <div>
-                                    <div class="small">Logo simples</div>
-                                    <div class="images-preview" id="previewLogoSimples"></div>
-                                </div>
-                                <div style="margin-left:12px">
-                                    <div class="small">Logo completa</div>
-                                    <div class="images-preview" id="previewLogoCompleta"></div>
-                                </div>
-                            </div>
-
-                            <div style="margin-top:12px">
-                                <div class="small">Banners</div>
-                                <div class="images-preview" id="previewBanners"></div>
-                            </div>
-
-                            <div style="margin-top:12px">
-                                <div class="small">Paleta</div>
-                                <div class="row" id="colorSwatches">
-                                    <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">BG<br>
-                                        <div id="swBg">&nbsp;</div>
-                                    </div>
-                                    <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Sec<br>
-                                        <div id="swSec">&nbsp;</div>
-                                    </div>
-                                    <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Ter<br>
-                                        <div id="swTer">&nbsp;</div>
-                                    </div>
-                                    <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Qua<br>
-                                        <div id="swQua">&nbsp;</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div style="margin-top:14px" class="card">
-                        <h2>Diretores adicionados</h2>
-                        <div class="small">Use o botão "Adicionar Diretor" para abrir o modal.</div>
-                        <div class="directors-list" id="directorsList"></div>
-                        <div style="margin-top:10px">
-                            <button type="button" class="btn btn-ghost" id="openDirectorModal">Adicionar Diretor</button>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>Sobre Nós</h2>
+        
+        <form id="oscForm" onsubmit="event.preventDefault();saveData()">
+            <!-- SEÇÃO 1 -->
+            <div style="margin-top:16px" class="card">  
                 <div class="grid cols-2">
+                    <!-- LADO ESQUERDO -->
                     <div>
-                        <label for="historia">História da OSC</label>
-                        <textarea id="historia"></textarea>
+                        <h2>Exibição do site</h2>
+                        <div class="grid">
+                            <div class="row">
+                               <div style="flex:1">
+                                    <label for="bgColor">Cor de fundo (*)</label>
+                                   <input id="bgColor" type="color" value="#f7f7f8" required />
+                                </div>
+                                <div style="flex:1">
+                                    <label for="secColor">Cor secundária (*)</label>
+                                    <input id="secColor" type="color" value="#0a6" required />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div style="flex:1">
+                                    <label for="terColor">Cor terciária (*)</label>
+                                    <input id="terColor" type="color" value="#ff8a65" required />
+                                </div>
+                                <div style="flex:1">
+                                    <label for="quaColor">Cor quaternária (*)</label>
+                                    <input id="quaColor" type="color" value="#6c5ce7" required />
+                                </div>
+                            </div>
+                            <div>
+                                <label for="logoCompleta">Logo completa (*)</label>
+                                <input id="logoCompleta" type="file" accept="image/*" required />
+                            </div>
+                            <div>
+                                <label for="logoSimples">Logo simples (*)</label>
+                                <input id="logoSimples" type="file" accept="image/*" required />
+                            </div>
+                            <div>
+                                <label for="banner1">Banner principal (imagem) (*)</label>
+                                <input id="banner1" type="file" accept="image/*" required />
+                            </div>
+                            <div>
+                                <label for="labelBanner">Texto do banner (*)</label>
+                                <input id="labelBanner" type="text" placeholder="Texto do banner" required />
+                            </div>
+                            <div>
+                                <label for="banner2">Banner 2 (imagem)</label>
+                                <input id="banner2" type="file" accept="image/*" />
+                            </div>
+                            <div>
+                                <label for="banner3">Banner 3 (imagem)</label>
+                                <input id="banner3" type="file" accept="image/*" />
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- LADO DIREITO -->
+                    <div> 
+                        <h2 class="section-title">Visualização</h2>
+                        <div class="card">
+                            <div class="small">Previews automáticos das imagens e cores selecionadas</div>
+                            <div class="divider"></div>
+                            <div id="previewArea">
+                                <div class="row" style="align-items:center">
+                                    <div>
+                                        <div class="small">Logo simples</div>
+                                        <div class="images-preview" id="previewLogoSimples"></div>
+                                    </div>
+                                    <div style="margin-left:12px">
+                                        <div class="small">Logo completa</div>
+                                        <div class="images-preview" id="previewLogoCompleta"></div>
+                                    </div>
+                                </div>
+                                <div style="margin-top:12px">
+                                    <div class="small">Banners</div>
+                                    <div class="images-preview" id="previewBanners"></div>
+                                </div>
+                                <div style="margin-top:12px">
+                                    <div class="small">Paleta</div>
+                                    <div class="row" id="colorSwatches">
+                                        <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">BG<br>
+                                            <div id="swBg">&nbsp;</div>
+                                        </div>
+                                        <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Sec<br>
+                                            <div id="swSec">&nbsp;</div>
+                                        </div>
+                                        <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Ter<br>
+                                            <div id="swTer">&nbsp;</div>
+                                        </div>
+                                        <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Qua<br>
+                                            <div id="swQua">&nbsp;</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SEÇÃO 2 -->
+            <div style="margin-top:16px" class="card">
+                <div class="grid cols-2">
+                    <!-- LADO ESQUERDO -->
                     <div>
-                        <label for="cnae">Atividade econômica (CNAE)</label>
-                        <input id="cnae" type="text" />
-                        <label for="area">Área de atuação</label>
-                        <input id="area" type="text" />
-                        <label for="subarea">Subárea</label>
-                        <input id="subarea" type="text" />
+                        <h2>Informações da OSC</h2>
+                        <div class="grid">
+                            <div>
+                                <label for="nomeOsc">Nome (*)</label>
+                                <input id="nomeOsc" type="text" required />
+                            </div>
+                            <div>
+                                <label for="sigla">Sigla (*)</label>
+                                <input id="sigla" type="text" required />
+                            </div>
+                            <div>
+                                <label for="anoFundacao">Ano de fundação</label>
+                                <input id="anoFundacao" inputmode="numeric" type="text" />
+                            </div>
+                            <div>
+                                <label for="instagram">Instagram</label>
+                                <input id="instagram" type="text" />
+                            </div>
+                            <div>
+                                <label for="historia">História</label>
+                                <textarea id="historia" placeholder="Conte a história da OSC"></textarea>
+                            </div>
+                            <div>
+                                <label for="missao">Missão</label>
+                                <textarea id="missao" placeholder="Descreva a missão da OSC"></textarea>
+                            </div>
+                            <div>
+                                <label for="visao">Visão</label>
+                                <textarea id="visao" placeholder="Descreva a visão da OSC"></textarea>
+                            </div>
+                            <div>
+                                <label for="valores">Valores</label>
+                                <textarea id="valores" placeholder="Descreva os valores da OSC"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LADO DIREITO -->
+                    <div>
+                        <div style="margin-top:14px" class="card">
+                            <h2>Envolvidos</h2>
+                            <div class="small">Clique em "Adicionar" para incluir as pessoas envolvidas com a OSC.</div>
+                            <div class="directors-list" id="directorsList"></div>
+                            <div style="margin-top:10px">
+                                <button type="button" class="btn btn-ghost" id="openDirectorModal">Adicionar</button>
+                            </div>
+                        </div>                
                     </div>
                 </div>
             </div>
 
-            <div class="card">
-                <h2>Transparência</h2>
-                <div class="grid cols-3">
-                    <div>
-                        <label for="CNPJ">CNPJ</label>
-                        <input id="CNPJ" type="text" />
-                    </div>
-                    <div>
-                        <label for="razaoSocial">Razão Social</label>
-                        <input id="razaoSocial" type="text" />
-                    </div>
-                    <div>
-                        <label for="nomeFantasia">Nome fantasia</label>
-                        <input id="nomeFantasia" type="text" />
-                    </div>
-                    <div>
-                        <label for="responsavelLegal">Responsável legal</label>
-                        <input id="responsavelLegal" type="text" />
-                    </div>
-                    <div>
-                        <label for="anoCNPJ">Ano do cadastro do CNPJ</label>
-                        <input id="anoCNPJ" type="text" />
-                    </div>
-                    <div>
-                        <label for="anoFundacao">Ano da fundação da OSC</label>
-                        <input id="anoFundacao" type="text" />
-                    </div>
-                    <div>
-                        <label for="situacaoCadastral">Situação cadastral</label>
-                        <input id="situacaoCadastral" type="text" />
-                    </div>
-                    <div>
-                        <label for="telefone">Telefone</label>
-                        <input id="telefone" type="text" />
-                    </div>
-                    <div>
-                        <label for="email">E-mail</label>
-                        <input id="email" type="text" />
-                    </div>
-                    <div>
-                        <label for="instagram">Instagram</label>
-                        <input id="instagram" type="text" />
-                    </div>
-                    <div>
-                        <label for="status">Status</label>
-                        <input id="status" type="text" />
-                    </div>
-                    <div>
-                        <label for="oQueFaz">O que a OSC faz?</label>
-                        <input id="oQueFaz" type="text" />
-                    </div>
-                </div>
-
-                <!-- DADOS DO IMÓVEL -->
+            <!-- SEÇÃO 3 -->
+            <div style="margin-top:16px" class="card">
                 <h2>Imóvel</h2>
                 <div class="grid cols-3">
                     <div>
@@ -460,8 +414,8 @@
                         <input id="situacaoImovel" type="text" />
                     </div>
                     <div>
-                        <label for="cep">CEP</label>
-                        <input id="cep" type="text" />
+                        <label for="cep">CEP (*)</label>
+                        <input id="cep" inputmode="numeric" type="text" />
                     </div>
                     <div>
                         <label for="cidade">Cidade</label>
@@ -477,25 +431,90 @@
                     </div>
                     <div>
                         <label for="numero">Numero</label>
-                        <input id="numero" type="text" />
+                        <input id="numero" inputmode="numeric" type="text" />
                     </div>
                 </div>
             </div>
-
-            <footer>
-                <div class="small muted">Os campos de logo simples e logo completa são obrigatórios.</div>
-                <div style="display:flex; gap:8px">
-                    <button type="button" class="btn" onclick="resetForm()">Limpar</button>
-                    <button type="submit" class="btn btn-primary">Salvar informações da OSC</button>
+            
+            <!-- SEÇÃO 4 -->
+            <div style="margin-top:16px" class="card">
+                <h2>Área e Subárea de Atuação</h2>
+                <div style="margin-top: 10px;">
+                    <label for="cnae">Atividade econômica (CNAE)</label>
+                    <input id="cnae" type="text" />
                 </div>
-            </footer>
+                <div style="margin-top: 10px;">
+                    <label for="area">Área de atuação</label>
+                    <input id="area" type="text" />
+                </div>    
+                <div style="margin-top: 10px;">
+                    <label for="subarea">Subárea</label>
+                    <input id="subarea" type="text" />
+                </div>
+            </div>
 
-        </form>
+            <!-- SEÇÃO 5 -->
+            <div style="margin-top:16px" class="card">
+                <h2>Transparência</h2>
+                <div class="grid cols-3">
+                    <div>
+                        <label for="CNPJ">CNPJ (*)</label>
+                        <input id="CNPJ" inputmode="numeric" type="text" required />
+                    </div>
+                    <div>
+                        <label for="razaoSocial">Razão Social</label>
+                        <input id="razaoSocial" type="text" />
+                    </div>
+                    <div>
+                        <label for="nomeFantasia">Nome fantasia</label>
+                        <input id="nomeFantasia" type="text" />
+                    </div>
+                    <div>
+                        <label for="anoCNPJ">Ano de cadastro do CNPJ</label>
+                        <input id="anoCNPJ" inputmode="numeric" type="text" />
+                    </div>
+                    <div>
+                        <label for="responsavelLegal">Responsável legal</label>
+                        <input id="responsavelLegal" type="text" />
+                    </div>
+                    <div>
+                        <label for="situacaoCadastral">Situação cadastral</label>
+                        <input id="situacaoCadastral" type="text" />
+                    </div>
+                    <div>
+                        <label for="telefone">Telefone</label>
+                        <input id="telefone" inputmode="numeric" type="text" />
+                    </div>
+                    <div>
+                        <label for="email">E-mail</label>
+                        <input id="email" type="text" />
+                    </div>
+                    <div>
+                        <label for="status">Status</label>
+                        <input id="status" type="text" />
+                    </div>
+                </div>
+                <div style="margin-top: 10px;">
+                    <label for="oQueFaz">O que a OSC faz?</label>
+                    <textarea id="oQueFaz" placeholder="Descreva a finalidade da OSC"></textarea>
+                </div>
+            </div>
 
-        <!-- output area -->
+            <!-- BOTÕES -->
+            <div style="margin-top:16px" class="card">
+                <footer>
+                    <div class="small muted">Certifique-se de preencher todos os campos obrigatórios (*) antes de cadastrar</div>
+                    <div style="display:flex; gap:8px">
+                        <button type="button" class="btn" onclick="resetForm()">LIMPAR</button>
+                        <button type="submit" class="btn btn-primary">CADASTRAR OSC</button>
+                    </div>
+                </footer>
+            </div>
+        </form>        
+
+        <!-- EXIBIÇÃO DO JSON PARA TESTE -->
         <div style="margin-top:16px" class="card">
-            <h2>JSON gerado</h2>
-            <div class="small">Ao salvar, os dados são agregados em um JSON. Você pode baixar ou copiar.</div>
+            <h2>JSON DE CADASTRO GERADO</h2>
             <div class="divider"></div>
             <pre id="jsonOut" class="json-out">{}</pre>
             <div style="margin-top:8px; display:flex; gap:8px">
@@ -505,13 +524,13 @@
 
     </main>
 
-    <!-- modal director -->
+    <!-- MODAL DOS ENVOLVIDOS -->
     <div id="modalBackdrop" class="modal-backdrop">
-        <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Diretor">
-            <h3>Adicionar Diretor</h3>
+        <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Envolvido">
+            <h3>Adicionar Envolvido</h3>
             <div style="margin-top:8px" class="grid">
                 <div>
-                    <label for="dirFoto">Foto do diretor</label>
+                    <label for="dirFoto">Foto</label>
                     <input id="dirFoto" type="file" accept="image/*" />
                 </div>
                 <div>
@@ -520,7 +539,7 @@
                 </div>
                 <div>
                     <label for="dirTelefone">Telefone</label>
-                    <input id="dirTelefone" type="text" />
+                    <input id="dirTelefone" inputmode="numeric" type="text" />
                 </div>
                 <div>
                     <label for="dirFunc">Função</label>
