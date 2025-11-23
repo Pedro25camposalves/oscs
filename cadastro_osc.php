@@ -612,6 +612,7 @@
             if (e.target === modalBackdrop) modalBackdrop.style.display = 'none'
         });
 
+        // ADICIONAR DIRETOR
         async function addDirector() {
             const foto = qs('#dirFoto').files[0];
             const nome = qs('#dirNome').value.trim();
@@ -680,7 +681,8 @@
             const formData = new FormData();
             formData.append("image", file);
 
-            const response = await fetch("/upload.php", {
+            // Luiz: Alterado o diretorio de upload
+            const response = await fetch("/oscs/upload.php", {
                 method: "POST",
                 body: formData,
             });
@@ -694,6 +696,7 @@
             return result.path;
         }
 
+        // REALIZA O CADASTRO (ao clicar no botão 'Salvar informações da OSC')
         async function saveData() {
             if (!logoSimples.files[0] || !logoCompleta.files[0]) {
                 alert("Os logos simples e completa são obrigatórios.");
