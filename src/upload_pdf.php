@@ -2,7 +2,7 @@
 
 require_once 'conexao.php';
 
-const CAMINHO = 'assets/oscs/assocest/';  // puxar do jwt
+const CAMINHO = 'assets/oscs/assocest/document/';  // puxar do jwt
 $id_osc = 4;  // puxar do jwt
 
 if (isset($_FILES['arquivo'])) {
