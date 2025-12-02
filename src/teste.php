@@ -8,8 +8,8 @@ if (!$osc || !is_numeric($osc)) {
     exit;
 }
 
-$stmt = $conn->prepare("SELECT osc.*, template_web.* FROM osc
-LEFT JOIN template_web ON template_web.osc_id = osc.id WHERE osc.id = ?;");
+$stmt = $conn->prepare("SELECT osc.*, template_web.*, cores.* FROM osc
+LEFT JOIN template_web ON template_web.osc_id = osc.id LEFT JOIN cores ON cores.id_cores = osc.id WHERE osc.id = ?;");
 $stmt->bind_param("i", $osc); 
 $stmt->execute();
 $result = $stmt->get_result();
@@ -22,16 +22,16 @@ if ($row = $result->fetch_assoc()) {
 // --------------------------
 // ESTILIZAÇÃO / CSS
 // --------------------------
-$cor1 = '#fef7f5ff';
-$cor2 = '#C8702E';
-$cor3 = '#D08A4E';
-$cor4 = '#F5C2A4';
+$cor1 = $row["cor1"];
+$cor2 = $row["cor2"];
+$cor3 = $row["cor3"];
+$cor4 = $row["cor4"];
 $cor_font = '#4B2E23';
 $background = '#f6dfcbff';
 // --------------------------
 // INICIO
 // --------------------------
-$label_banner = "Transformando comunidades com ações que fazem a diferença.";
+$label_banner = $row["label_banner"];
 $missao = $row["missao"];
 $visao = $row["visao"];
 $valores = $row["valores"];
