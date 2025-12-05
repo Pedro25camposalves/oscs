@@ -1,2 +1,7 @@
 config.php
 conexao.php
+.gitignore
+.env
+./src/config.php
+docker-compose.yml
+error.log
