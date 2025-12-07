@@ -2,6 +2,7 @@
 
 require_once 'conexao.php';
 
+// verificar melhor como atribuir aqui
 const CAMINHO = 'assets/oscs/assocest/document/';  // puxar do jwt
 $id_osc = 4;  // puxar do jwt
 
@@ -27,7 +28,7 @@ if (isset($_FILES['arquivo'])) {
     $caminhoCompleto = $pastaDestino . $nomeArquivo;
 
     if (move_uploaded_file($arquivo['tmp_name'], $caminhoCompleto)) {
-        $sql = "INSERT INTO documento (id_osc, documento) VALUES (?, ?)";
+        $sql = "INSERT INTO documento (osc_id, documento) VALUES (?, ?)";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("is", $id_osc, $caminhoCompleto);
 

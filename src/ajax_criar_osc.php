@@ -2,6 +2,37 @@
 include 'conexao.php';
 error_log("teste",0,"error.log");   
 
+// Cria a estrutura de diretórios de documentos/imagens da OSC:
+function criarDiretoriosOsc(int $oscId): bool
+{
+    // __DIR__ = .../OSCS/src
+    // baseDir = .../OSCS/src/assets/oscs
+    $baseDir = __DIR__ . '/assets/oscs';
+
+    if (!is_dir($baseDir) && !mkdir($baseDir, 0777, true)) {
+        return false;
+    }
+
+    // Raiz da OSC
+    $oscRoot = $baseDir . '/osc-' . $oscId;
+
+    // Pastas que precisam existir para cada OSC
+    $dirs = [
+        $oscRoot,                
+        $oscRoot . '/documentos',        
+        $oscRoot . '/imagens',           
+        $oscRoot . '/projetos',          
+    ];
+
+    foreach ($dirs as $dir) {
+        if (!is_dir($dir) && !mkdir($dir, 0777, true)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 // Lê o JSON vindo do JavaScript
 $json = file_get_contents('php://input');
 $data = json_decode($json, true);
@@ -10,6 +41,7 @@ if (!$data) {
     echo json_encode(['success' => false, 'error' => 'JSON inválido']);
     exit;
 }
+
 // --- 1️⃣ Salva os dados principais na tabela OSC ---
 $nomeOsc           = mysqli_real_escape_string($conn, $data['nomeOsc']);
 $email             = mysqli_real_escape_string($conn, $data['email']);
@@ -47,6 +79,15 @@ if (!mysqli_query($conn, $sql_osc)) {
 }
 
 $osc_id = mysqli_insert_id($conn);
+
+// Cria diretórios de documentos da OSC
+if (!criarDiretoriosOsc((int)$osc_id)) {
+    echo json_encode([
+        'success' => false,
+        'error' => 'OSC criada no banco, mas falha ao criar diretórios de documentos no servidor.'
+    ]);
+    exit;
+}
 
 // --- 2️⃣ Salva os dados do ator (Diretor da OSC) ---
 $diretores = $data['diretores'] ?? [];
@@ -116,8 +157,8 @@ $cor3 = mysqli_real_escape_string($conn, $data['cores']['ter']);
 $cor4 = mysqli_real_escape_string($conn, $data['cores']['qua']);
 
 $sql_cores = "
-    INSERT INTO cores (cor1, cor2, cor3, cor4)
-    VALUES ('$cor1', '$cor2', '$cor3', '$cor4')
+    INSERT INTO cores (osc_id, cor1, cor2, cor3, cor4)
+    VALUES ('$osc_id', '$cor1', '$cor2', '$cor3', '$cor4')
     ";
 
 if (!mysqli_query($conn, $sql_cores)) {
