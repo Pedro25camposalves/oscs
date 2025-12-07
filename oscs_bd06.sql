@@ -14,6 +14,7 @@ USE `osc` ;
 CREATE TABLE IF NOT EXISTS `osc`.`ator` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `nome` VARCHAR(60) NULL DEFAULT NULL,
+  `telefone` VARCHAR(11) NULL DEFAULT NULL,
   `email` VARCHAR(100) NULL DEFAULT NULL,
   PRIMARY KEY (`id`))
 ENGINE = InnoDB
@@ -35,9 +36,6 @@ CREATE TABLE IF NOT EXISTS `osc`.`osc` (
   `ano_fundacao` VARCHAR(45) NULL DEFAULT NULL,
   `ano_cnpj` VARCHAR(45) NULL DEFAULT NULL,
   `situacao_cadastral` VARCHAR(30) NULL DEFAULT NULL,
-  `cnae` VARCHAR(120) NULL DEFAULT NULL,
-  `area_atuacao` LONGTEXT NULL DEFAULT NULL,
-  `subarea` VARCHAR(45) NULL DEFAULT NULL,
   `missao` LONGTEXT NULL DEFAULT NULL,
   `visao` LONGTEXT NULL DEFAULT NULL,
   `valores` LONGTEXT NULL DEFAULT NULL,
@@ -46,10 +44,32 @@ CREATE TABLE IF NOT EXISTS `osc`.`osc` (
   `status` VARCHAR(45) NULL DEFAULT NULL,
   `nome` VARCHAR(45) NULL DEFAULT NULL,
   `instagram` VARCHAR(45) NULL DEFAULT NULL,
-  `endereco` VARCHAR(200) NULL DEFAULT NULL,
-  PRIMARY KEY (`id`))
+  PRIMARY KEY (`id`)
+)
 ENGINE = InnoDB
 AUTO_INCREMENT = 5
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_general_ci;
+
+
+-- -----------------------------------------------------
+-- Table `osc`.`osc_atividade`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `osc`.`osc_atividade` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `osc_id` INT NOT NULL,
+  `cnae` VARCHAR(120) NULL DEFAULT NULL,
+  `area_atuacao` LONGTEXT NULL DEFAULT NULL,
+  `subarea` VARCHAR(120) NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_osc_atividade_osc1_idx` (`osc_id` ASC),
+  CONSTRAINT `fk_osc_atividade_osc1`
+    FOREIGN KEY (`osc_id`)
+    REFERENCES `osc`.`osc` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+)
+ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_general_ci;
 

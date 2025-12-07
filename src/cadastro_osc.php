@@ -486,17 +486,15 @@
             <!-- SEÇÃO 5 -->
             <div style="margin-top:16px" class="card">
                 <h2>Área e Subárea de Atuação</h2>
-                <div style="margin-top: 10px;">
-                    <label for="cnae">Atividade econômica (CNAE)</label>
-                    <input id="cnae" type="text" />
+                <div class="small">
+                    Clique em "Adicionar" para incluir as atividades econômicas, áreas e subáreas de atuação.
                 </div>
-                <div style="margin-top: 10px;">
-                    <label for="area">Área de atuação</label>
-                    <input id="area" type="text" />
-                </div>    
-                <div style="margin-top: 10px;">
-                    <label for="subarea">Subárea</label>
-                    <input id="subarea" type="text" />
+                <!-- Lista de atividades -->
+                <div class="directors-list" id="atividadesList"></div>
+                <div style="margin-top:10px">
+                    <button type="button" class="btn btn-ghost" id="openAtividadeModal">
+                        Adicionar
+                    </button>
                 </div>
             </div>
 
@@ -542,6 +540,10 @@
                     <input id="dirTelefone" inputmode="numeric" type="text" />
                 </div>
                 <div>
+                    <label for="dirEmail">E-mail</label>
+                    <input id="dirEmail" type="text" />
+                </div>
+                <div>
                     <label for="dirFunc">Função (*)</label>
                     <input id="dirFunc" type="text" required/>
                 </div>
@@ -553,8 +555,32 @@
         </div>
     </div>
 
+        <!-- MODAL DAS ATIVIDADES -->
+    <div id="modalAtividadeBackdrop" class="modal-backdrop">
+        <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Atividade">
+            <h3>Adicionar Atividade</h3>
+            <div style="margin-top:8px" class="grid">
+                <div>
+                    <label for="atvCnae">Atividade econômica (CNAE)</label>
+                    <input id="atvCnae" type="text" required />
+                </div>
+                <div>
+                    <label for="atvArea">Área de atuação</label>
+                    <input id="atvArea" type="text" required />
+                </div>
+                <div>
+                    <label for="atvSubarea">Subárea</label>
+                    <input id="atvSubarea" type="text" />
+                </div>
+            </div>
+            <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+                <button type="button" class="btn btn-ghost" id="closeAtividadeModal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="addAtividadeBtn">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // helpers
         const qs = s => document.querySelector(s);
         const qsa = s => document.querySelectorAll(s);
 
@@ -579,6 +605,7 @@
         const swQua = qs('#swQua');
 
         const directors = [];
+        const atividades = [];
 
         function readFileAsDataURL(file) {
             return new Promise((res, rej) => {
@@ -658,24 +685,27 @@
             const foto = qs('#dirFoto').files[0];
             const nome = qs('#dirNome').value.trim();
             const telefone = qs('#dirTelefone').value.trim();
+            const email = qs('#dirEmail').value.trim();
             const func = qs('#dirFunc').value.trim();
             if (!nome || !func) {
                 alert('Preencha nome e função do envolvido');
                 return
             }
             const fotoData = foto ? await readFileAsDataURL(foto) : null;
-            const dir = {
+            const envolvido = {
                 foto: fotoData,
                 nome,
                 telefone,
+                email,
                 func
             };
-            directors.push(dir);
+            directors.push(envolvido);
             renderDirectors();
             // reset modal fields
             qs('#dirFoto').value = '';
             qs('#dirNome').value = '';
             qs('#dirTelefone').value = '';
+            qs('#dirEmail').value = '';
             qs('#dirFunc').value = '';
             modalBackdrop.style.display = 'none';
         }
@@ -707,6 +737,82 @@
             })
         }
 
+        // modal atividades
+        const modalAtividadeBackdrop = qs('#modalAtividadeBackdrop');
+        const openAtividadeModal = qs('#openAtividadeModal');
+        const closeAtividadeModal = qs('#closeAtividadeModal');
+        const addAtividadeBtn = qs('#addAtividadeBtn');
+            
+        openAtividadeModal.addEventListener('click', () => {
+            modalAtividadeBackdrop.style.display = 'flex';
+        });
+        
+        closeAtividadeModal.addEventListener('click', () => {
+            modalAtividadeBackdrop.style.display = 'none';
+        });
+        
+        modalAtividadeBackdrop.addEventListener('click', (e) => {
+            if (e.target === modalAtividadeBackdrop) modalAtividadeBackdrop.style.display = 'none';
+        });
+        
+        function limparCamposAtividade() {
+            qs('#atvCnae').value = '';
+            qs('#atvArea').value = '';
+            qs('#atvSubarea').value = '';
+        }
+        
+        // ADICIONAR ATIVIDADE
+        function addAtividade() {
+            const cnae = qs('#atvCnae').value.trim();
+            const area = qs('#atvArea').value.trim();
+            const subarea = qs('#atvSubarea').value.trim();
+        
+            if (!cnae || !area) {
+                alert('Preencha pelo menos CNAE e Área de atuação');
+                return;
+            }
+        
+            const atv = { cnae, area, subarea };
+            atividades.push(atv);
+            renderAtividades();
+            limparCamposAtividade();
+            modalAtividadeBackdrop.style.display = 'none';
+        }
+        
+        addAtividadeBtn.addEventListener('click', addAtividade);
+        
+        // RENDERIZA A LISTA DE ATIVIDADES
+        function renderAtividades() {
+            const list = qs('#atividadesList');
+            list.innerHTML = '';
+        
+            atividades.forEach((a, i) => {
+                const c = document.createElement('div');
+                c.className = 'director-card'; // reaproveitando o estilo
+            
+                const info = document.createElement('div');
+                info.innerHTML = `
+                    <div style="font-weight:600">CNAE: ${escapeHtml(a.cnae)}</div>
+                    <div class="small">Área: ${escapeHtml(a.area)}</div>
+                    ${a.subarea ? `<div class="small">Subárea: ${escapeHtml(a.subarea)}</div>` : ''}
+                `;
+            
+                const remove = document.createElement('button');
+                remove.className = 'btn';
+                remove.textContent = '✕';
+                remove.style.padding = '6px 8px';
+                remove.style.marginLeft = '8px';
+                remove.addEventListener('click', () => {
+                    atividades.splice(i, 1);
+                    renderAtividades();
+                });
+            
+                c.appendChild(info);
+                c.appendChild(remove);
+                list.appendChild(c);
+            });
+        }
+
         function escapeHtml(str) {
             return (str || '').replace(/[&<>"]+/g, function(match) {
                 return {
@@ -725,7 +831,6 @@
             const formData = new FormData();
             formData.append("image", file);
 
-            // Luiz: Alterado o diretorio de upload | Jhonnie: corrigido com o formato do arquivo no servidor
             const response = await fetch("/upload.php", { 
                 method: "POST",
                 body: formData,
@@ -778,9 +883,7 @@
 
             data.nomeOsc = qs("#nomeOsc").value;
             data.historia = qs("#historia").value;
-            data.cnae = qs("#cnae").value;
-            data.area = qs("#area").value;
-            data.subarea = qs("#subarea").value;
+            data.atividades = atividades;
 
             data.razaoSocial = qs("#razaoSocial").value;
             data.nomeFantasia = qs("#nomeFantasia").value;
@@ -860,7 +963,9 @@
             if (confirm('Limpar todos os campos?')) {
                 document.getElementById('oscForm').reset();
                 directors.length = 0;
+                atividades.length = 0;
                 renderDirectors();
+                renderAtividades();
                 updatePreviews();
                 qs('#jsonOut').textContent = '{}';
                 qs('#downloadLink').style.display = 'none';
