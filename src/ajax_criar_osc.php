@@ -2,24 +2,30 @@
 include 'conexao.php';
 error_log("teste",0,"error.log");   
 
-/**
- * Cria a estrutura de diretórios de documentos da OSC:
- * /assets/documentos/osc-{id}/
- * /assets/documentos/osc-{id}/projetos
- */
+// Cria a estrutura de diretórios de documentos/imagens da OSC:
 function criarDiretoriosOsc(int $oscId): bool
 {
-    $baseDir = __DIR__ . '/assets/documentos';
+    // __DIR__ = .../OSCS/src
+    // baseDir = .../OSCS/src/assets/oscs
+    $baseDir = __DIR__ . '/assets/oscs';
 
-    if (!is_dir($baseDir) && !mkdir($baseDir, 0775, true)) {
+    if (!is_dir($baseDir) && !mkdir($baseDir, 0777, true)) {
         return false;
     }
 
-    $oscDir  = $baseDir . '/osc-' . $oscId;
-    $projDir = $oscDir . '/projetos';
+    // Raiz da OSC
+    $oscRoot = $baseDir . '/osc-' . $oscId;
 
-    foreach ([$oscDir, $projDir] as $dir) {
-        if (!is_dir($dir) && !mkdir($dir, 0775, true)) {
+    // Pastas que precisam existir para cada OSC
+    $dirs = [
+        $oscRoot,                
+        $oscRoot . '/documentos',        
+        $oscRoot . '/imagens',           
+        $oscRoot . '/projetos',          
+    ];
+
+    foreach ($dirs as $dir) {
+        if (!is_dir($dir) && !mkdir($dir, 0777, true)) {
             return false;
         }
     }
@@ -35,6 +41,7 @@ if (!$data) {
     echo json_encode(['success' => false, 'error' => 'JSON inválido']);
     exit;
 }
+
 // --- 1️⃣ Salva os dados principais na tabela OSC ---
 $nomeOsc           = mysqli_real_escape_string($conn, $data['nomeOsc']);
 $email             = mysqli_real_escape_string($conn, $data['email']);
