@@ -56,7 +56,7 @@ $oq_faz = "Não informado";
 // --------------------------
 // INFORMAÇÕES GERAIS
 // --------------------------
-$logo_nobg = "/assets/images/assocest-logo5-nobg.png";
+$logo_nobg = "/oscs/src/assets/images/assocest-logo5-nobg.png";
 $endereco =  "AVENIDA TEREZA ANSELMO MASSARI <br> PARQUE BRASIL, Jacareí - SP<br> <strong>CEP:</strong> 12328-430";
 $email = "contato@osc.org.br";
 $tel = "(12) 3948-5753";
@@ -77,6 +77,7 @@ include 'conexao.php';
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Comic+Relief:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
     /* ===========================================================
    1️⃣ RESET / GLOBAL
@@ -297,6 +298,30 @@ include 'conexao.php';
       font-weight: 600;
       margin-bottom: 5px;
     }
+
+
+    /* ===========================================================
+            VISUAL MODAL PARA VISUALIZAÇÃO DOS PDFS
+    =========================================================== */
+
+    .modal {
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      animation: fadeIn 0.3s;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: scale(0.95);}
+      to   {opacity: 1; transform: scale(1);}
+    }
   </style>
 
   <script>
@@ -492,9 +517,9 @@ include 'conexao.php';
     <section class="hero">
       <div class="carousel" id="carousel">
         <div class="carousel-inner">
-          <img src="/assets/images/banner-1.png" alt="Banner 1" class="img-hero active">
-          <img src="/assets/images/inst-5.webp" alt="Banner 2" class="img-hero">
-          <img src="/assets/images/inst-6.webp" alt="Banner 3" class="img-hero">
+          <img src="/oscs/src/assets/images/banner-1.png" alt="Banner 1" class="img-hero active">
+          <img src="/oscs/src/assets/images/inst-5.webp" alt="Banner 2" class="img-hero">
+          <img src="/oscs/src/assets/images/inst-6.webp" alt="Banner 3" class="img-hero">
         </div>
       </div>
       <div class="hero-overlay"></div>
@@ -514,7 +539,7 @@ include 'conexao.php';
                 <!-- Card 1 -->
                 <div class="col-md-6 card-news">
                   <div class="card border-0 shadow-sm h-100">
-                    <img src="/assets/images/inst-5.webp" class="card-img-top" alt="Evento 1">
+                    <img src="/oscs/src/assets/images/inst-5.webp" class="card-img-top" alt="Evento 1">
                     <div class="card-body">
                       <h6 class="card-title fw-semibold">Primeira Graduação de Karatê Promovida</h6>
                       <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 15/04/2025</p>
@@ -525,7 +550,7 @@ include 'conexao.php';
                 <!-- Card 2 -->
                 <div class="col-md-6 card-news">
                   <div class="card border-0 shadow-sm h-100">
-                    <img src="/assets/images/inst-6.webp" class="card-img-top" alt="Evento 2">
+                    <img src="/oscs/src/assets/images/inst-6.webp" class="card-img-top" alt="Evento 2">
                     <div class="card-body">
                       <h6 class="card-title fw-semibold">O Dentista chegou!</h6>
                       <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 20/02/2025</p>
@@ -536,7 +561,7 @@ include 'conexao.php';
                 <!-- Card 3 -->
                 <div class="col-md-6 card-news">
                   <div class="card border-0 shadow-sm h-100">
-                    <img src="/assets/images/inst-7.webp" class="card-img-top" alt="Evento 3">
+                    <img src="/oscs/src/assets/images/inst-7.webp" class="card-img-top" alt="Evento 3">
                     <div class="card-body">
                       <h6 class="card-title fw-semibold">Celebrando os 26 anos de Promovida</h6>
                       <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 20/08/2024</p>
@@ -547,7 +572,7 @@ include 'conexao.php';
                 <!-- Card 4 -->
                 <div class="col-md-6 card-news">
                   <div class="card border-0 shadow-sm h-100">
-                    <img src="/assets/images/inst-8.webp" class="card-img-top" alt="Evento 4">
+                    <img src="/oscs/src/assets/images/inst-8.webp" class="card-img-top" alt="Evento 4">
                     <div class="card-body">
                       <h6 class="card-title fw-semibold">Evento Solidário</h6>
                       <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 15/01/2024</p>
@@ -659,7 +684,7 @@ include 'conexao.php';
             <!-- Card 1 -->
             <div class="col-md-3 col-sm-6 mb-4">
               <div class="card border-0 shadow-sm text-center h-100">
-                <img src="/assets/images/usuario.jpg" class="card-img-top rounded-top" alt="Foto da pessoa">
+                <img src="/oscs/src/assets/images/usuario.jpg" class="card-img-top rounded-top" alt="Foto da pessoa">
                 <div class="card-body">
                   <h5 class="card-title mb-1">Ana Souza</h5>
                   <p class="card-text text-muted">Coordenadora de Projetos</p>
@@ -670,7 +695,7 @@ include 'conexao.php';
             <!-- Card 2 -->
             <div class="col-md-3 col-sm-6 mb-4">
               <div class="card border-0 shadow-sm text-center h-100">
-                <img src="/assets/images/usuario.jpg" class="card-img-top rounded-top" alt="Foto da pessoa">
+                <img src="/oscs/src/assets/images/usuario.jpg" class="card-img-top rounded-top" alt="Foto da pessoa">
                 <div class="card-body">
                   <h5 class="card-title mb-1">Bruno Lima</h5>
                   <p class="card-text text-muted">Analista Financeiro</p>
@@ -681,7 +706,7 @@ include 'conexao.php';
             <!-- Card 3 -->
             <div class="col-md-3 col-sm-6 mb-4">
               <div class="card border-0 shadow-sm text-center h-100">
-                <img src="/assets/images/usuario.jpg" class="card-img-top rounded-top" alt="Foto da pessoa">
+                <img src="/oscs/src/assets/images/usuario.jpg" class="card-img-top rounded-top" alt="Foto da pessoa">
                 <div class="card-body">
                   <h5 class="card-title mb-1">Carla Mendes</h5>
                   <p class="card-text text-muted">Comunicação e Marketing</p>
@@ -834,6 +859,142 @@ include 'conexao.php';
             <span><?php echo $oq_faz; ?></span>
           </div>
         </div>
+
+
+        <!-- Documentos -->
+
+        <!-- 1 div Docs Institucionais -->
+        <hr>
+        <h4><strong>Documentos Institucionais</strong></h4>
+
+        <div class="info-grid">
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> Estatuto:</strong>
+            <button class="btn btn-primary btn-sm" onclick="abrirPDF('estatuto')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+            
+          </div>
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> Ata:</strong>
+            <button class="btn btn-primary btn-sm" onclick="abrirPDF('ata')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+        </div>
+
+        <!-- 2 div Certidões -->
+        <hr>
+        <h4><strong>Certidões (CNDs)</strong></h4>
+
+        <div class="info-grid">
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> CND Federal:</strong>
+            <button class="btn btn-primary btn-sm" onclick="abrirPDF('cndFederal')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> CND Estadual:</strong>
+            <button class="btn btn-primary btn-sm" onclick="abrirPDF('cndEstadual')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> CND Municipal:</strong>
+            <button class="btn btn-primary btn-sm" onclick="abrirPDF('cndMunicipal')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> FGTS:</strong>
+            <button class="btn btn-primary btn-sm" onclick="abrirPDF('fgts')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> Trabalhista:</strong>
+            <button class="btn btn-primary btn-sm" onclick="abrirPDF('trabalhista')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+
+          </div>
+
+        <!-- 3 div Utilidade Pública -->
+        <hr>
+        <h4><strong>Utilidade Pública</strong></h4>
+
+        <div class="info-grid">
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> Lei de Utilidade Pública Federal:</strong>
+            <button
+              class="btn btn-primary btn-sm"
+              onclick="window.open('https://www2.camara.leg.br/legin/fed/lei/1930-1939/lei-91-28-agosto-1935-398006-normaatualizada-pl.html', '_blank')"
+              style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                Visualizar Documento
+            </button>
+          </div>
+
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> Lei de Utilidade Pública Estadual:</strong>
+            <button
+              class="btn btn-primary btn-sm"
+              onclick="window.open('https://www.almg.gov.br/atividade-parlamentar/leis/legislacao-mineira/lei/texto/print.html?tipo=LEI&num=12972&ano=1998&comp=&cons=', '_blank')"
+              style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                Visualizar Documento
+            </button>
+          </div>
+
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> Lei de Utilidade Pública Municipal:</strong>
+            <button
+              class="btn btn-primary btn-sm"
+              onclick="window.open('https://leismunicipais.com.br/a/mg/p/paracatu/lei-ordinaria/2025/403/4021/lei-ordinaria-n-4021-2025-autoriza-o-poder-executivo-a-majorar-a-destinacao-de-recursos-para-a-associacao-esther-siqueira-tillmann-e-da-outras-providencias?q=associa%E7%E3o', '_blank')"
+              style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                Visualizar Documento
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 div Utilidade Pública -->
+        <hr>
+        <h4><strong>Cadastro e Identificação</strong></h4>
+
+        <div class="info-grid">
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i>Cartão CNPJ</strong>
+            <button class="btn btn-primary btn-sm" onclick="abrirPDF('cartaoCNPJ')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 div Documentos Contábeis -->
+        <hr>
+        <h4><strong>Documentos Contábeis</strong></h4>
+
+        <div class="info-grid">
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i>Balanço Patrimonial</strong>
+            <button class="btn btn-primary btn-sm" onclick="abrirPDF('balanco')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i>DRE (Demonstração do Resultado do Exercício)</strong>
+            <button class="btn btn-primary btn-sm" onclick="abrirPDF('dre')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+        </div>
+
+
       </div>
     </div>
   </div>
@@ -850,7 +1011,7 @@ include 'conexao.php';
       <div class="row align-items-center mb-5">
         <div class="col-md-5 text-center">
           <div class="img-wrapper border-blue">
-            <img src="/assets/images/Borboleta.png" alt="Projeto 1">
+            <img src="/oscs/src/assets/images/Borboleta.png" alt="Projeto 1">
           </div>
         </div>
         <div class="col-md-7">
@@ -871,7 +1032,7 @@ include 'conexao.php';
       <div class="row align-items-center flex-md-row-reverse mt-5">
         <div class="col-md-5 text-center">
           <div class="img-wrapper border-yellow">
-            <img src="/assets/images/Casulo.jpg" alt="Projeto 2">
+            <img src="/oscs/src/assets/images/Casulo.jpg" alt="Projeto 2">
           </div>
         </div>
         <div class="col-md-7">
@@ -941,6 +1102,74 @@ include 'conexao.php';
       .bindPopup('OSC Assocest<br>Jacareí - SP')
       .openPopup();
   </script>
+
+  
+  <!-- Modal para renderização do PDF nas páginas de documentação -->
+  <div id="pdfModal" class="modal" style="display:none;">
+      <div class="modal-content" style="padding:20px; background:white; max-width:90%; margin:auto;">
+          <span class="close" onclick="fecharPDF()" style="float:right; cursor:pointer;">&times;</span>
+          <canvas id="pdfViewer" style="width:100%;"></canvas>
+
+          <!-- Botão de download -->
+          <a id="downloadLink" class="btn btn-success btn-sm" download>
+              Baixar PDF
+          </a>
+      </div>
+  </div>
+
+  <script>
+
+    // Configuração do PDF.js
+    function abrirPDF(tipo) {
+      const pdfs = {
+          ata: "assets/files/ata.pdf",
+          estatuto: "assets/files/estatuto.pdf",
+          balanco: "assets/files/balanco_patrimonial.pdf",
+          dre: "assets/files/dre.pdf",
+          cartaoCNPJ: "assets/files/cartao_cnpj.pdf",
+          cndFederal: "assets/files/cnd_federal.pdf",
+          cndEstadual: "assets/files/cnd_estadual.pdf",
+          cndMunicipal: "assets/files/cnd_municipal.pdf",
+          fgts: "assets/files/fgts.pdf",
+          trabalhista: "assets/files/trabalhista.pdf"
+      };
+
+      const pdfUrl = pdfs[tipo];
+
+      if (!pdfUrl) {
+              console.error("Tipo de PDF inválido:", tipo);
+          return;
+      }
+
+      // Abre o modal
+      document.getElementById("pdfModal").style.display = "flex";
+
+      // Link de download
+      document.getElementById('downloadLink').href = pdfUrl;
+
+      // Renderização do PDF
+      pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
+          pdf.getPage(1).then(page => {
+              const viewport = page.getViewport({ scale: 1.4 });
+              const canvas = document.getElementById("pdfViewer");
+              const context = canvas.getContext("2d");
+
+              canvas.width = viewport.width;
+              canvas.height = viewport.height;
+
+              page.render({
+                  canvasContext: context,
+                  viewport: viewport
+              });
+          });
+      });
+    } 
+
+    function fecharPDF() {
+        document.getElementById("pdfModal").style.display = "none";
+    }
+  </script>
+
 
 </body>
 
