@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Admin — Cadastro de OSC</title>
+    <title>Painel — Editar OSC</title>
     <style>
         :root {
             --bg: #f7f7f8;
@@ -219,16 +219,9 @@
             }
         }
 
-        /* small helpers */
         .muted {
             color: var(--muted);
             font-size: 13px
-        }
-
-        .label-inline {
-            display: flex;
-            align-items: center;
-            gap: 8px
         }
 
         pre.json-out {
@@ -243,55 +236,77 @@
 </head>
 
 <body>
-    <header>
-        <h1>Admin — Editar OSC</h1>
-    </header>
+<header>
+    <h1>Painel de Controle — Editar OSC</h1>
+    <div class="muted">Administração</div>
+</header>
 
-    <main>
-        <form id="oscForm" class="card" onsubmit="event.preventDefault();saveData()">
-            <input type="hidden" id="oscId" value="" />
+<main>
 
+    <!-- SEÇÃO PARA SELECIONAR OSC -->
+    <div class="card">
+        <h2>Selecionar OSC para edição:</h2>
+        <div class="grid cols-3">
+            <div>
+                <select id="oscSelector">
+                    <option value="">Selecione uma OSC...</option>
+                </select>
+            </div>
+            <div style="align-self:flex-end">
+                <button type="button" class="btn btn-ghost" id="reloadOscList">Atualizar</button>
+            </div>
+        </div>
+        <div class="small muted" style="margin-top:8px">
+            Após escolher uma OSC, os dados serão carregados nos campos abaixo.
+        </div>
+    </div>
+
+    <form id="oscForm" onsubmit="event.preventDefault();saveData()">
+        <input type="hidden" id="oscId" />
+
+        <!-- SEÇÃO 1 -->
+        <div style="margin-top:16px" class="card">
             <div class="grid cols-2">
+                <!-- LADO ESQUERDO -->
                 <div>
-                    <h2>Configurações Gerais</h2>
+                    <h2>Exibição do site</h2>
                     <div class="grid">
-                        <div>
-                            <label for="logoSimples">Logo simples (obrigatório)</label>
-                            <input id="logoSimples" type="file" accept="image/*" required />
-                        </div>
-                        <div>
-                            <label for="logoCompleta">Logo completa (obrigatório)</label>
-                            <input id="logoCompleta" type="file" accept="image/*" required />
-                        </div>
-                        <div>
-                            <label for="labelBanner">Label do banner</label>
-                            <input id="labelBanner" type="text" placeholder="Texto do banner" />
+                        <div class="row">
+                            <div style="flex:1">
+                                <label for="bgColor">Cor de fundo (*)</label>
+                                <input id="bgColor" type="color" value="#f7f7f8" required />
+                            </div>
+                            <div style="flex:1">
+                                <label for="secColor">Cor secundária (*)</label>
+                                <input id="secColor" type="color" value="#0a6" required />
+                            </div>
                         </div>
                         <div class="row">
                             <div style="flex:1">
-                                <label for="bgColor">Cor de fundo</label>
-                                <input id="bgColor" type="color" value="#f7f7f8" />
+                                <label for="terColor">Cor terciária (*)</label>
+                                <input id="terColor" type="color" value="#ff8a65" required />
                             </div>
                             <div style="flex:1">
-                                <label for="secColor">Cor secundária</label>
-                                <input id="secColor" type="color" value="#0a6" />
+                                <label for="quaColor">Cor quaternária (*)</label>
+                                <input id="quaColor" type="color" value="#6c5ce7" required />
                             </div>
                         </div>
-
-                        <div class="row">
-                            <div style="flex:1">
-                                <label for="terColor">Cor terciária</label>
-                                <input id="terColor" type="color" value="#ff8a65" />
-                            </div>
-                            <div style="flex:1">
-                                <label for="quaColor">Cor quaternária</label>
-                                <input id="quaColor" type="color" value="#6c5ce7" />
-                            </div>
+                        <div>
+                            <label for="logoCompleta">Logo completa</label>
+                            <!-- na edição, não é mais required -->
+                            <input id="logoCompleta" type="file" accept="image/*" />
                         </div>
-
+                        <div>
+                            <label for="logoSimples">Logo simples</label>
+                            <input id="logoSimples" type="file" accept="image/*" />
+                        </div>
                         <div>
                             <label for="banner1">Banner principal (imagem)</label>
                             <input id="banner1" type="file" accept="image/*" />
+                        </div>
+                        <div>
+                            <label for="labelBanner">Texto do banner</label>
+                            <input id="labelBanner" type="text" placeholder="Texto do banner" />
                         </div>
                         <div>
                             <label for="banner2">Banner 2 (imagem)</label>
@@ -301,25 +316,12 @@
                             <label for="banner3">Banner 3 (imagem)</label>
                             <input id="banner3" type="file" accept="image/*" />
                         </div>
-
-                        <div>
-                            <label for="missao">Missão da OSC</label>
-                            <textarea id="missao" placeholder="Missão"></textarea>
-                        </div>
-                        <div>
-                            <label for="visao">Visão da OSC</label>
-                            <textarea id="visao" placeholder="Visão"></textarea>
-                        </div>
-                        <div>
-                            <label for="valores">Valores da OSC</label>
-                            <textarea id="valores" placeholder="Valores"></textarea>
-                        </div>
-
                     </div>
                 </div>
 
+                <!-- LADO DIREITO -->
                 <div>
-                    <h2 class="section-title">Visualização / Previews</h2>
+                    <h2 class="section-title">Visualização</h2>
                     <div class="card">
                         <div class="small">Previews automáticos das imagens e cores selecionadas</div>
                         <div class="divider"></div>
@@ -334,12 +336,10 @@
                                     <div class="images-preview" id="previewLogoCompleta"></div>
                                 </div>
                             </div>
-
                             <div style="margin-top:12px">
                                 <div class="small">Banners</div>
                                 <div class="images-preview" id="previewBanners"></div>
                             </div>
-
                             <div style="margin-top:12px">
                                 <div class="small">Paleta</div>
                                 <div class="row" id="colorSwatches">
@@ -357,199 +357,280 @@
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
-
-                    <div style="margin-top:14px" class="card">
-                        <h2>Diretores adicionados</h2>
-                        <div class="small">Use o botão "Adicionar Diretor" para abrir o modal.</div>
-                        <div class="directors-list" id="directorsList"></div>
-                        <div style="margin-top:10px">
-                            <button type="button" class="btn btn-ghost" id="openDirectorModal">Adicionar Diretor</button>
-                        </div>
-                    </div>
-
                 </div>
-            </div>
-
-            <div class="card">
-                <h2>Sobre Nós</h2>
-                <div class="grid cols-2">
-                    <div>
-                        <label for="historia">História da OSC</label>
-                        <textarea id="historia"></textarea>
-                    </div>
-                    <div>
-                        <label for="cnae">Atividade econômica (CNAE)</label>
-                        <input id="cnae" type="text" />
-                        <label for="area">Área de atuação</label>
-                        <input id="area" type="text" />
-                        <label for="subarea">Subárea</label>
-                        <input id="subarea" type="text" />
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>Transparência</h2>
-                <div class="grid cols-3">
-                    <div>
-                        <label for="nomeOsc">Nome da OSC</label>
-                        <input id="nomeOsc" type="text" />
-                    </div>
-                    <div>
-                        <label for="nomeFantasia">Nome fantasia</label>
-                        <input id="nomeFantasia" type="text" />
-                    </div>
-                    <div>
-                        <label for="sigla">Sigla da OSC</label>
-                        <input id="sigla" type="text" />
-                    </div>
-                    <div>
-                        <label for="situacaoCadastral">Situação cadastral</label>
-                        <input id="situacaoCadastral" type="text" />
-                    </div>
-
-                    <div>
-                        <label for="endereco">Endereço</label>
-                        <input id="endereco" type="text" />
-                    </div>
-                    <div>
-                        <label for="situacaoImovel">Situação do imóvel</label>
-                        <input id="situacaoImovel" type="text" />
-                    </div>
-                    <div>
-                        <label for="anoCNPJ">Ano de cadastro do CNPJ</label>
-                        <input id="anoCNPJ" type="text" />
-                    </div>
-
-                    <div>
-                        <label for="anoFundacao">Ano de fundação</label>
-                        <input id="anoFundacao" type="text" />
-                    </div>
-                    <div>
-                        <label for="responsavelLegal">Responsável legal</label>
-                        <input id="responsavelLegal" type="text" />
-                    </div>
-                    <div>
-                        <label for="email">E-mail</label>
-                        <input id="email" type="text" />
-                    </div>
-
-                    <div>
-                        <label for="oQueFaz">O que a OSC faz</label>
-                        <input id="oQueFaz" type="text" />
-                    </div>
-                    <div>
-                        <label for="abreviacao">Abreviação do nome</label>
-                        <input id="abreviacao" type="text" />
-                    </div>
-
-
-
-                    <div>
-                        <label for="CNPJ">CNPJ</label>
-                        <input id="CNPJ" type="text" />
-                    </div>
-                    <div>
-                        <label for="telefone">Telefone</label>
-                        <input id="telefone" type="text" />
-                    </div>
-                    <div>
-                        <label for="instagram">Instagram</label>
-                        <input id="instagram" type="text" />
-                    </div>
-                    <div>
-                        <label for="status">Status</label>
-                        <input id="status" type="text" />
-                    </div>
-                </div>
-            </div>
-
-            <footer>
-                <div class="small muted">Os campos de logo simples e logo completa são obrigatórios.</div>
-                <div style="display:flex; gap:8px">
-                    <button type="button" class="btn" onclick="resetForm()">Limpar</button>
-                    <button type="submit" class="btn btn-primary" id="submitBtn">Salvar informações da OSC</button>
-                </div>
-            </footer>
-
-        </form>
-
-        <!-- output area -->
-        <div style="margin-top:16px" class="card">
-            <h2>JSON gerado</h2>
-            <div class="small">Ao salvar, os dados são agregados em um JSON. Você pode baixar ou copiar.</div>
-            <div class="divider"></div>
-            <pre id="jsonOut" class="json-out">{}</pre>
-            <div style="margin-top:8px; display:flex; gap:8px">
-                <a id="downloadLink" style="display:none" class="btn btn-ghost">Baixar JSON</a>
             </div>
         </div>
 
-    </main>
+        <!-- SEÇÃO 2 -->
+        <div style="margin-top:16px" class="card">
+            <div class="grid cols-2">
+                <!-- LADO ESQUERDO -->
+                <div>
+                    <h2>Informações da OSC</h2>
+                    <div class="grid">
+                        <div>
+                            <label for="nomeOsc">Nome (*)</label>
+                            <input id="nomeOsc" type="text" required />
+                        </div>
+                        <div>
+                            <label for="sigla">Sigla (*)</label>
+                            <input id="sigla" type="text" required />
+                        </div>
+                        <div>
+                            <label for="anoFundacao">Ano de fundação</label>
+                            <input id="anoFundacao" inputmode="numeric" type="text" />
+                        </div>
+                        <div>
+                            <label for="instagram">Instagram</label>
+                            <input id="instagram" type="text" />
+                        </div>
+                        <div>
+                            <label for="historia">História</label>
+                            <textarea id="historia" placeholder="Conte a história da OSC"></textarea>
+                        </div>
+                        <div>
+                            <label for="missao">Missão</label>
+                            <textarea id="missao" placeholder="Descreva a missão da OSC"></textarea>
+                        </div>
+                        <div>
+                            <label for="visao">Visão</label>
+                            <textarea id="visao" placeholder="Descreva a visão da OSC"></textarea>
+                        </div>
+                        <div>
+                            <label for="valores">Valores</label>
+                            <textarea id="valores" placeholder="Descreva os valores da OSC"></textarea>
+                        </div>
+                    </div>
+                </div>
 
-    <!-- modal director -->
-    <div id="modalBackdrop" class="modal-backdrop">
-        <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Diretor">
-            <h3>Adicionar Diretor</h3>
-            <div style="margin-top:8px" class="grid">
+                <!-- LADO DIREITO -->
                 <div>
-                    <label for="dirFoto">Foto do diretor</label>
-                    <input id="dirFoto" type="file" accept="image/*" />
-                </div>
-                <div>
-                    <label for="dirNome">Nome</label>
-                    <input id="dirNome" type="text" />
-                </div>
-                <div>
-                    <label for="dirFunc">Função</label>
-                    <input id="dirFunc" type="text" />
+                    <div style="margin-top:14px" class="card">
+                        <h2>Envolvidos</h2>
+                        <div class="small">Clique em "Adicionar" para incluir as pessoas envolvidas com a OSC.</div>
+                        <div class="directors-list" id="directorsList"></div>
+                        <div style="margin-top:10px">
+                            <button type="button" class="btn btn-ghost" id="openDirectorModal">Adicionar</button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
-                <button class="btn btn-ghost" id="closeDirectorModal">Cancelar</button>
-                <button class="btn btn-primary" id="addDirectorBtn">Adicionar</button>
+        </div>
+
+        <!-- SEÇÃO 3 -->
+        <div style="margin-top:16px" class="card">
+            <h2>Transparência</h2>
+            <div class="grid cols-3">
+                <div>
+                    <label for="CNPJ">CNPJ (*)</label>
+                    <input id="CNPJ" inputmode="numeric" type="text" required />
+                </div>
+                <div>
+                    <label for="razaoSocial">Razão Social</label>
+                    <input id="razaoSocial" type="text" />
+                </div>
+                <div>
+                    <label for="nomeFantasia">Nome fantasia</label>
+                    <input id="nomeFantasia" type="text" />
+                </div>
+                <div>
+                    <label for="anoCNPJ">Ano de cadastro do CNPJ</label>
+                    <input id="anoCNPJ" inputmode="numeric" type="text" />
+                </div>
+                <div>
+                    <label for="responsavelLegal">Responsável legal</label>
+                    <input id="responsavelLegal" type="text" />
+                </div>
+                <div>
+                    <label for="situacaoCadastral">Situação cadastral</label>
+                    <input id="situacaoCadastral" type="text" />
+                </div>
+                <div>
+                    <label for="telefone">Telefone</label>
+                    <input id="telefone" inputmode="numeric" type="text" />
+                </div>
+                <div>
+                    <label for="email">E-mail</label>
+                    <input id="email" type="text" />
+                </div>
+                <div>
+                    <label for="status">Status</label>
+                    <input id="status" type="text" />
+                </div>
             </div>
+            <div style="margin-top: 10px;">
+                <label for="oQueFaz">O que a OSC faz?</label>
+                <textarea id="oQueFaz" placeholder="Descreva a finalidade da OSC"></textarea>
+            </div>
+        </div>
+
+        <!-- SEÇÃO 4 -->
+        <div style="margin-top:16px" class="card">
+            <h2>Imóvel</h2>
+            <div class="grid cols-3">
+                <div>
+                    <label for="situacaoImovel">Situação do imóvel</label>
+                    <input id="situacaoImovel" type="text" />
+                </div>
+                <div>
+                    <label for="cep">CEP</label>
+                    <input id="cep" inputmode="numeric" type="text" />
+                </div>
+                <div>
+                    <label for="cidade">Cidade</label>
+                    <input id="cidade" type="text" />
+                </div>
+                <div>
+                    <label for="bairro">Bairro</label>
+                    <input id="bairro" type="text" />
+                </div>
+                <div>
+                    <label for="logradouro">Logradouro</label>
+                    <input id="logradouro" type="text" />
+                </div>
+                <div>
+                    <label for="numero">Numero</label>
+                    <input id="numero" inputmode="numeric" type="text" />
+                </div>
+            </div>
+        </div>
+
+        <!-- SEÇÃO 5 -->
+        <div style="margin-top:16px" class="card">
+            <h2>Área e Subárea de Atuação</h2>
+            <div class="small">
+                Clique em "Adicionar" para incluir as atividades econômicas, áreas e subáreas de atuação.
+            </div>
+            <!-- Lista de atividades -->
+            <div class="directors-list" id="atividadesList"></div>
+            <div style="margin-top:10px">
+                <button type="button" class="btn btn-ghost" id="openAtividadeModal">
+                    Adicionar
+                </button>
+            </div>
+        </div>
+
+        <!-- BOTÕES -->
+        <div style="margin-top:16px" class="card">
+            <footer>
+                <div class="small muted">Edite os campos desejados e clique em "Atualizar OSC".</div>
+                <div style="display:flex; gap:8px">
+                    <button type="submit" class="btn btn-primary">ALTERAR OSC</button>    
+                    <button type="button" class="btn" onclick="resetForm()">LIMPAR CAMPOS</button>
+                    <button type="button" class="btn btn-ghost" id="deleteBtn" disabled>DELETAR OSC</button>
+                </div>
+            </footer>
+        </div>
+    </form>
+
+    <!-- EXIBIÇÃO DO JSON PARA TESTE -->
+    <div style="margin-top:16px" class="card">
+        <h2>JSON DA EDIÇÃO</h2>
+        <div class="divider"></div>
+        <pre id="jsonOut" class="json-out">{}</pre>
+        <div style="margin-top:8px; display:flex; gap:8px">
+            <a id="downloadLink" style="display:none" class="btn btn-ghost">Baixar JSON</a>
         </div>
     </div>
 
-    <script>
-        // helpers
-        const qs = s => document.querySelector(s);
-        const qsa = s => document.querySelectorAll(s);
+</main>
 
-        // Detectar ID da OSC via URL (ex: ?id=123)
-        const urlParams = new URLSearchParams(window.location.search);
-        const oscId = urlParams.get('id');
-        
-        // Guardar ID no campo hidden
-        if (oscId) {
-            qs('#oscId').value = oscId;
-        }
+<!-- MODAL DOS ENVOLVIDOS -->
+<div id="modalBackdrop" class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Envolvido">
+        <h3>Adicionar Envolvido</h3>
+        <div style="margin-top:8px" class="grid">
+            <div>
+                <label for="dirFoto">Foto</label>
+                <input id="dirFoto" type="file" accept="image/*" />
+            </div>
+            <div>
+                <label for="dirNome">Nome (*)</label>
+                <input id="dirNome" type="text" required/>
+            </div>
+            <div>
+                <label for="dirTelefone">Telefone</label>
+                <input id="dirTelefone" inputmode="numeric" type="text" />
+            </div>
+            <div>
+                <label for="dirEmail">E-mail</label>
+                <input id="dirEmail" type="text" />
+            </div>
+            <div>
+                <label for="dirFunc">Função (*)</label>
+                <input id="dirFunc" type="text" required/>
+            </div>
+        </div>
+        <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+            <button class="btn btn-ghost" id="closeDirectorModal">Cancelar</button>
+            <button class="btn btn-primary" id="addDirectorBtn">Adicionar</button>
+        </div>
+    </div>
+</div>
 
-        const logoSimples = qs('#logoSimples');
-        const logoCompleta = qs('#logoCompleta');
-        const banner1 = qs('#banner1');
-        const banner2 = qs('#banner2');
-        const banner3 = qs('#banner3');
+<!-- MODAL DAS ATIVIDADES -->
+<div id="modalAtividadeBackdrop" class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Atividade">
+        <h3>Adicionar Atividade</h3>
+        <div style="margin-top:8px" class="grid">
+            <div>
+                <label for="atvCnae">Atividade econômica (CNAE)</label>
+                <input id="atvCnae" type="text" required />
+            </div>
+            <div>
+                <label for="atvArea">Área de atuação</label>
+                <input id="atvArea" type="text" required />
+            </div>
+            <div>
+                <label for="atvSubarea">Subárea</label>
+                <input id="atvSubarea" type="text" />
+            </div>
+        </div>
+        <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+            <button type="button" class="btn btn-ghost" id="closeAtividadeModal">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="addAtividadeBtn">Adicionar</button>
+        </div>
+    </div>
+</div>
 
-        const previewLogoSimples = qs('#previewLogoSimples');
-        const previewLogoCompleta = qs('#previewLogoCompleta');
-        const previewBanners = qs('#previewBanners');
+<script>
+    const qs = s => document.querySelector(s);
+    const qsa = s => document.querySelectorAll(s);
 
-        const bgColor = qs('#bgColor');
-        const secColor = qs('#secColor');
-        const terColor = qs('#terColor');
-        const quaColor = qs('#quaColor');
+    // ID da OSC (pode vir da URL ou do seletor)
+    let oscId = null;
 
-        const swBg = qs('#swBg');
-        const swSec = qs('#swSec');
-        const swTer = qs('#swTer');
-        const swQua = qs('#swQua');
+    const urlParams = new URLSearchParams(window.location.search);
+    const oscIdFromUrl = urlParams.get('id');
+    if (oscIdFromUrl) {
+        oscId = oscIdFromUrl;
+        const hiddenId = document.getElementById('oscId');
+        if (hiddenId) hiddenId.value = oscId;
+    }
 
-        const directors = [];
+    const logoSimples = qs('#logoSimples');
+    const logoCompleta = qs('#logoCompleta');
+    const banner1 = qs('#banner1');
+    const banner2 = qs('#banner2');
+    const banner3 = qs('#banner3');
+
+    const previewLogoSimples = qs('#previewLogoSimples');
+    const previewLogoCompleta = qs('#previewLogoCompleta');
+    const previewBanners = qs('#previewBanners');
+
+    const bgColor = qs('#bgColor');
+    const secColor = qs('#secColor');
+    const terColor = qs('#terColor');
+    const quaColor = qs('#quaColor');
+
+    const swBg = qs('#swBg');
+    const swSec = qs('#swSec');
+    const swTer = qs('#swTer');
+    const swQua = qs('#swQua');
+
+    const directors = [];
 
         async function uploadDocumentoOsc() {
             console.log("Form:", document.getElementById("formDoc"));
@@ -573,359 +654,672 @@
                 alert("Erro ao enviar documento: " + (result.mensagem || 'Erro desconhecido'));
             }
         }
+    const atividades = [];
 
-        // 🔄 Carregar dados da OSC do banco de dados
-        async function loadOscData() {
-            if (!oscId) return; // Se não houver ID, é criação de nova OSC
-            
-            try {
-                const response = await fetch(`ajax_obter_osc.php?id=${oscId}`);
-                const result = await response.json();
-                
-                if (result.success && result.data) {
-                    const osc = result.data;
-                    
-                    // Preencher campos de Configurações Gerais
-                    if (osc.labelBanner) qs('#labelBanner').value = osc.labelBanner;
-                    if (osc.cores) {
-                        if (osc.cores.bg) qs('#bgColor').value = osc.cores.bg;
-                        if (osc.cores.sec) qs('#secColor').value = osc.cores.sec;
-                        if (osc.cores.ter) qs('#terColor').value = osc.cores.ter;
-                        if (osc.cores.qua) qs('#quaColor').value = osc.cores.qua;
-                    }
-                    
-                    // Preencher campos de Sobre Nós
-                    if (osc.missao) qs('#missao').value = osc.missao;
-                    if (osc.visao) qs('#visao').value = osc.visao;
-                    if (osc.valores) qs('#valores').value = osc.valores;
-                    if (osc.historia) qs('#historia').value = osc.historia;
-                    if (osc.cnae) qs('#cnae').value = osc.cnae;
-                    if (osc.area) qs('#area').value = osc.area;
-                    if (osc.subarea) qs('#subarea').value = osc.subarea;
-                    
-                    // Preencher campos de Transparência
-                    console.log(osc.nomeOsc);
-                    if (osc.nomeOsc) qs('#nomeOsc').value = osc.nomeOsc;
-                    if (osc.nomeFantasia) qs('#nomeFantasia').value = osc.nomeFantasia;
-                    if (osc.sigla) qs('#sigla').value = osc.sigla;
-                    if (osc.situacaoCadastral) qs('#situacaoCadastral').value = osc.situacaoCadastral;
-                    console.log(osc.endereco);
-                    if (osc.endereco) qs('#endereco').value = osc.endereco;
-                    if (osc.situacaoImovel) qs('#situacaoImovel').value = osc.situacaoImovel;
-                    if (osc.anoCNPJ) qs('#anoCNPJ').value = osc.anoCNPJ;
-                    if (osc.anoFundacao) qs('#anoFundacao').value = osc.anoFundacao;
-                    if (osc.responsavelLegal) qs('#responsavelLegal').value = osc.responsavelLegal;
-                    if (osc.email) qs('#email').value = osc.email;
-                    if (osc.oQueFaz) qs('#oQueFaz').value = osc.oQueFaz;
-                    if (osc.abreviacao) qs('#abreviacao').value = osc.abreviacao;
-                    if (osc.cnpj) qs('#CNPJ').value = osc.cnpj;
-                    if (osc.telefone) qs('#telefone').value = osc.telefone;
-                    if (osc.instagram) qs('#instagram').value = osc.instagram;
-                    if (osc.status) qs('#status').value = osc.status;
-                    
-                    // Carregar diretores
-                    if (osc.diretores && Array.isArray(osc.diretores)) {
-                        osc.diretores.forEach(d => {
-                            directors.push({
-                                foto: d.foto || null,
-                                nome: d.nome || '',
-                                func: d.func || ''
-                            });
-                        });
-                    }
-                    
-                    // Mudar texto do botão para "Atualizar"
-                    qs('#submitBtn').textContent = 'Atualizar informações da OSC';
-                    
-                    // Atualizar previews
-                    await updatePreviews();
-                    renderDirectors();
-                    
-                } else {
-                    alert('Erro ao carregar dados da OSC: ' + (result.error || 'desconhecido'));
-                }
-            } catch (error) {
-                console.error('Erro ao buscar dados da OSC:', error);
-                alert('Erro ao carregar dados da OSC');
-            }
-        }
+    const deleteBtn   = qs('#deleteBtn');
+    const oscSelector = qs('#oscSelector');
+    const reloadOscListBtn = qs('#reloadOscList');
 
-        function readFileAsDataURL(file) {
-            return new Promise((res, rej) => {
-                if (!file) return res(null);
-                const fr = new FileReader();
-                fr.onload = () => res(fr.result);
-                fr.onerror = rej;
-                fr.readAsDataURL(file);
-            })
-        }
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', deleteOsc);
+    }
 
-        async function updatePreviews() {
-            previewLogoSimples.innerHTML = '';
-            previewLogoCompleta.innerHTML = '';
-            previewBanners.innerHTML = '';
+    // Carrega lista de OSCs para o <select>
+    async function loadOscList() {
+        try {
+            const resp = await fetch('ajax_listar_osc.php');
+            const result = await resp.json();
 
-            const l1 = logoSimples.files[0];
-            const l2 = logoCompleta.files[0];
-            const b1 = banner1.files[0];
-            const b2 = banner2.files[0];
-            const b3 = banner3.files[0];
+            oscSelector.innerHTML = '<option value="">Selecione uma OSC...</option>';
 
-            if (l1) {
-                const src = await readFileAsDataURL(l1);
-                const img = document.createElement('img');
-                img.src = src;
-                previewLogoSimples.appendChild(img)
-            }
-            if (l2) {
-                const src = await readFileAsDataURL(l2);
-                const img = document.createElement('img');
-                img.src = src;
-                previewLogoCompleta.appendChild(img)
-            }
-            [b1, b2, b3].forEach(async (b) => {
-                if (b) {
-                    const src = await readFileAsDataURL(b);
-                    const img = document.createElement('img');
-                    img.src = src;
-                    previewBanners.appendChild(img)
-                }
-            })
-
-            swBg.style.background = bgColor.value;
-            swSec.style.background = secColor.value;
-            swTer.style.background = terColor.value;
-            swQua.style.background = quaColor.value;
-
-            // apply page palette live
-            document.documentElement.style.setProperty('--bg', bgColor.value);
-            document.documentElement.style.setProperty('--sec', secColor.value);
-            document.documentElement.style.setProperty('--ter', terColor.value);
-            document.documentElement.style.setProperty('--qua', quaColor.value);
-        }
-
-        [logoSimples, logoCompleta, banner1, banner2, banner3].forEach(el => el.addEventListener('change', updatePreviews));
-        [bgColor, secColor, terColor, quaColor].forEach(el => el.addEventListener('input', updatePreviews));
-
-        // modal logic
-        const modalBackdrop = qs('#modalBackdrop');
-        const openDirectorModal = qs('#openDirectorModal');
-        const closeDirectorModal = qs('#closeDirectorModal');
-        const addDirectorBtn = qs('#addDirectorBtn');
-
-        openDirectorModal.addEventListener('click', () => {
-            modalBackdrop.style.display = 'flex'
-        });
-        closeDirectorModal.addEventListener('click', () => {
-            modalBackdrop.style.display = 'none'
-        });
-        modalBackdrop.addEventListener('click', (e) => {
-            if (e.target === modalBackdrop) modalBackdrop.style.display = 'none'
-        });
-
-        async function addDirector() {
-            const foto = qs('#dirFoto').files[0];
-            const nome = qs('#dirNome').value.trim();
-            const func = qs('#dirFunc').value.trim();
-            if (!nome || !func) {
-                alert('Preencha nome e função do diretor');
-                return
-            }
-            const fotoData = foto ? await readFileAsDataURL(foto) : null;
-            const dir = {
-                foto: fotoData,
-                nome,
-                func
-            };
-            directors.push(dir);
-            renderDirectors();
-            // reset modal fields
-            qs('#dirFoto').value = '';
-            qs('#dirNome').value = '';
-            qs('#dirFunc').value = '';
-            modalBackdrop.style.display = 'none';
-        }
-        addDirectorBtn.addEventListener('click', addDirector);
-
-        function renderDirectors() {
-            const list = qs('#directorsList');
-            list.innerHTML = '';
-            directors.forEach((d, i) => {
-                const c = document.createElement('div');
-                c.className = 'director-card';
-                const img = document.createElement('img');
-                img.src = d.foto || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
-                const info = document.createElement('div');
-                info.innerHTML = `<div style="font-weight:600">${escapeHtml(d.nome)}</div><div class="small">${escapeHtml(d.func)}</div>`;
-                const remove = document.createElement('button');
-                remove.className = 'btn';
-                remove.textContent = '✕';
-                remove.style.padding = '6px 8px';
-                remove.style.marginLeft = '8px';
-                remove.addEventListener('click', () => {
-                    directors.splice(i, 1);
-                    renderDirectors()
+            if (result.success && Array.isArray(result.data)) {
+                result.data.forEach(o => {
+                    const opt = document.createElement('option');
+                    opt.value = o.id;
+                    opt.textContent = `${o.id} - ${o.nome} (${o.cnpj})`;
+                    oscSelector.appendChild(opt);
                 });
-                c.appendChild(img);
-                c.appendChild(info);
-                c.appendChild(remove);
-                list.appendChild(c);
-            })
+
+                // Se veio id pela URL, já seleciona e carrega
+                if (oscId) {
+                    oscSelector.value = oscId;
+                    loadOscData(); // carrega os dados dessa OSC
+                }
+            } else {
+                console.error(result.error || 'Falha ao listar OSCs');
+            }
+        } catch (e) {
+            console.error('Erro ao carregar lista de OSCs:', e);
+            alert('Erro ao carregar lista de OSCs.');
+        }
+    }
+
+    // Quando mudar a seleção, atualiza oscId e carrega os dados
+    oscSelector.addEventListener('change', () => {
+        const selected = oscSelector.value;
+        oscId = selected || null;
+        qs('#oscId').value = oscId || '';
+
+        if (oscId) {
+            loadOscData();
+        } else {
+            // se limpar a seleção, você pode opcionalmente limpar o formulário
+            // resetForm();
+        }
+    });
+
+    reloadOscListBtn.addEventListener('click', loadOscList);
+
+    // paths já existentes (vindos do template_web)
+    let existingLogos = {
+        logoSimples: null,
+        logoCompleta: null
+    };
+    let existingBanners = {
+        banner1: null,
+        banner2: null,
+        banner3: null
+    };
+
+    function readFileAsDataURL(file) {
+        return new Promise((res, rej) => {
+            if (!file) return res(null);
+            const fr = new FileReader();
+            fr.onload = () => res(fr.result);
+            fr.onerror = rej;
+            fr.readAsDataURL(file);
+        })
+    }
+
+    async function updatePreviews() {
+        previewLogoSimples.innerHTML = '';
+        previewLogoCompleta.innerHTML = '';
+        previewBanners.innerHTML = '';
+
+        const l1 = logoSimples.files[0];
+        const l2 = logoCompleta.files[0];
+        const b1 = banner1.files[0];
+        const b2 = banner2.files[0];
+        const b3 = banner3.files[0];
+
+        // logo simples
+        if (l1) {
+            const src = await readFileAsDataURL(l1);
+            const img = document.createElement('img');
+            img.src = src;
+            previewLogoSimples.appendChild(img);
+        } else if (existingLogos.logoSimples) {
+            const img = document.createElement('img');
+            img.src = existingLogos.logoSimples;
+            previewLogoSimples.appendChild(img);
         }
 
-        function escapeHtml(str) {
-            return (str || '').replace(/[&<>"]+/g, function(match) {
-                return {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;'
-                } [match]
-            })
+        // logo completa
+        if (l2) {
+            const src = await readFileAsDataURL(l2);
+            const img = document.createElement('img');
+            img.src = src;
+            previewLogoCompleta.appendChild(img);
+        } else if (existingLogos.logoCompleta) {
+            const img = document.createElement('img');
+            img.src = existingLogos.logoCompleta;
+            previewLogoCompleta.appendChild(img);
         }
 
-        // gather data and generate JSON
-        async function uploadImage(file) {
-            if (!file) return null;
+        // banners
+        const bannersFiles = [b1, b2, b3];
+        const bannersExisting = [existingBanners.banner1, existingBanners.banner2, existingBanners.banner3];
 
-            const formData = new FormData();
-            formData.append("image", file);
+        for (let i = 0; i < 3; i++) {
+            if (bannersFiles[i]) {
+                const src = await readFileAsDataURL(bannersFiles[i]);
+                const img = document.createElement('img');
+                img.src = src;
+                previewBanners.appendChild(img);
+            } else if (bannersExisting[i]) {
+                const img = document.createElement('img');
+                img.src = bannersExisting[i];
+                previewBanners.appendChild(img);
+            }
+        }
 
-            const response = await fetch("/upload.php", {
-                method: "POST",
-                body: formData,
+        swBg.style.background = bgColor.value;
+        swSec.style.background = secColor.value;
+        swTer.style.background = terColor.value;
+        swQua.style.background = quaColor.value;
+
+        document.documentElement.style.setProperty('--bg', bgColor.value);
+        document.documentElement.style.setProperty('--sec', secColor.value);
+        document.documentElement.style.setProperty('--ter', terColor.value);
+        document.documentElement.style.setProperty('--qua', quaColor.value);
+    }
+
+    [logoSimples, logoCompleta, banner1, banner2, banner3].forEach(el => el.addEventListener('change', updatePreviews));
+    [bgColor, secColor, terColor, quaColor].forEach(el => el.addEventListener('input', updatePreviews));
+
+    // modal logic envolvidos
+    const modalBackdrop = qs('#modalBackdrop');
+    const openDirectorModal = qs('#openDirectorModal');
+    const closeDirectorModal = qs('#closeDirectorModal');
+    const addDirectorBtn = qs('#addDirectorBtn');
+
+    openDirectorModal.addEventListener('click', () => {
+        modalBackdrop.style.display = 'flex'
+    });
+    closeDirectorModal.addEventListener('click', () => {
+        modalBackdrop.style.display = 'none'
+    });
+    modalBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalBackdrop) modalBackdrop.style.display = 'none'
+    });
+
+    // ADICIONAR ENVOLVIDO
+    async function addDirector() {
+        const foto = qs('#dirFoto').files[0];
+        const nome = qs('#dirNome').value.trim();
+        const telefone = qs('#dirTelefone').value.trim();
+        const email = qs('#dirEmail').value.trim();
+        const func = qs('#dirFunc').value.trim();
+        if (!nome || !func) {
+            alert('Preencha nome e função do envolvido');
+            return;
+        }
+        const fotoData = foto ? await readFileAsDataURL(foto) : null;
+        const envolvido = {
+            foto: fotoData,
+            nome,
+            telefone,
+            email,
+            func
+        };
+        directors.push(envolvido);
+        renderDirectors();
+        qs('#dirFoto').value = '';
+        qs('#dirNome').value = '';
+        qs('#dirTelefone').value = '';
+        qs('#dirEmail').value = '';
+        qs('#dirFunc').value = '';
+        modalBackdrop.style.display = 'none';
+    }
+    addDirectorBtn.addEventListener('click', addDirector);
+
+    function renderDirectors() {
+        const list = qs('#directorsList');
+        list.innerHTML = '';
+        directors.forEach((d, i) => {
+            const c = document.createElement('div');
+            c.className = 'director-card';
+            const img = document.createElement('img');
+            img.src = d.foto || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
+            const info = document.createElement('div');
+            info.innerHTML = `
+                <div style="font-weight:600">${escapeHtml(d.nome)}</div>
+                <div class="small">${escapeHtml(d.func)}</div>
+            `;
+            const remove = document.createElement('button');
+            remove.className = 'btn';
+            remove.textContent = '✕';
+            remove.style.padding = '6px 8px';
+            remove.style.marginLeft = '8px';
+            remove.addEventListener('click', () => {
+                directors.splice(i, 1);
+                renderDirectors()
+            });
+            c.appendChild(img);
+            c.appendChild(info);
+            c.appendChild(remove);
+            list.appendChild(c);
+        })
+    }
+
+    // modal atividades
+    const modalAtividadeBackdrop = qs('#modalAtividadeBackdrop');
+    const openAtividadeModal = qs('#openAtividadeModal');
+    const closeAtividadeModal = qs('#closeAtividadeModal');
+    const addAtividadeBtn = qs('#addAtividadeBtn');
+
+    openAtividadeModal.addEventListener('click', () => {
+        modalAtividadeBackdrop.style.display = 'flex';
+    });
+
+    closeAtividadeModal.addEventListener('click', () => {
+        modalAtividadeBackdrop.style.display = 'none';
+    });
+
+    modalAtividadeBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalAtividadeBackdrop) modalAtividadeBackdrop.style.display = 'none';
+    });
+
+    function limparCamposAtividade() {
+        qs('#atvCnae').value = '';
+        qs('#atvArea').value = '';
+        qs('#atvSubarea').value = '';
+    }
+
+    function addAtividade() {
+        const cnae = qs('#atvCnae').value.trim();
+        const area = qs('#atvArea').value.trim();
+        const subarea = qs('#atvSubarea').value.trim();
+
+        if (!cnae || !area) {
+            alert('Preencha pelo menos CNAE e Área de atuação');
+            return;
+        }
+
+        const atv = { cnae, area, subarea };
+        atividades.push(atv);
+        renderAtividades();
+        limparCamposAtividade();
+        modalAtividadeBackdrop.style.display = 'none';
+    }
+
+    addAtividadeBtn.addEventListener('click', addAtividade);
+
+    function renderAtividades() {
+        const list = qs('#atividadesList');
+        list.innerHTML = '';
+
+        atividades.forEach((a, i) => {
+            const c = document.createElement('div');
+            c.className = 'director-card';
+
+            const info = document.createElement('div');
+            info.innerHTML = `
+                <div style="font-weight:600">CNAE: ${escapeHtml(a.cnae)}</div>
+                <div class="small">Área: ${escapeHtml(a.area)}</div>
+                ${a.subarea ? `<div class="small">Subárea: ${escapeHtml(a.subarea)}</div>` : ''}
+            `;
+
+            const remove = document.createElement('button');
+            remove.className = 'btn';
+            remove.textContent = '✕';
+            remove.style.padding = '6px 8px';
+            remove.style.marginLeft = '8px';
+            remove.addEventListener('click', () => {
+                atividades.splice(i, 1);
+                renderAtividades();
             });
 
-            if (!response.ok) {
-                throw new Error("Erro ao enviar imagem");
-            }
+            c.appendChild(info);
+            c.appendChild(remove);
+            list.appendChild(c);
+        });
+    }
 
-            const result = await response.json();
-            // o PHP deve retornar algo como: { "path": "/assets/images/oscs/nome_arquivo.jpg" }
-            return result.path;
+    function escapeHtml(str) {
+        return (str || '').replace(/[&<>"]+/g, function(match) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;'
+            }[match]
+        })
+    }
+
+    async function uploadImage(file) {
+        if (!file) return null;
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        const response = await fetch("/oscs/src/upload.php", {
+            method: "POST",
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error("Erro ao enviar imagem");
         }
 
-        async function saveData() {
-            if (!logoSimples.files[0] || !logoCompleta.files[0]) {
-                alert("Os logos simples e completa são obrigatórios.");
+        const result = await response.json();
+        return result.path;
+    }
+
+    // CARREGAR DADOS DA OSC PARA EDIÇÃO
+    async function loadOscData() {
+        if (!oscId) return;
+
+        try {
+            // limpa arrays e listas visuais antes de carregar a nova OSC
+            directors.length = 0;
+            atividades.length = 0;
+            renderDirectors();
+            renderAtividades();
+
+            // zera paths de imagens existentes
+            existingLogos = { logoSimples: null, logoCompleta: null };
+            existingBanners = { banner1: null, banner2: null, banner3: null };
+            const response = await fetch(`ajax_obter_osc.php?id=${oscId}`);
+            const result = await response.json();
+
+            if (!result.success || !result.data) {
+                alert('Erro ao carregar dados da OSC: ' + (result.error || 'desconhecido'));
                 return;
             }
 
-            const form = document.getElementById("oscForm");
-            const data = {};
-            data.missao = qs("#missao").value;
-            data.visao = qs("#visao").value;
-            data.valores = qs("#valores").value;
-            data.cores = {
-                bg: bgColor.value,
-                sec: secColor.value,
-                ter: terColor.value,
-                qua: quaColor.value,
-            };
+            const osc = result.data;
 
-            // --- 🔄 Envia imagens para o backend PHP ---
-            data.logos = {
-                logoSimples: logoSimples.files[0] ? await uploadImage(logoSimples.files[0]) : null,
-                logoCompleta: logoCompleta.files[0] ? await uploadImage(logoCompleta.files[0]) : null,
-            };
+            // cores
+            if (osc.cores) {
+                if (osc.cores.bg) bgColor.value = osc.cores.bg;
+                if (osc.cores.sec) secColor.value = osc.cores.sec;
+                if (osc.cores.ter) terColor.value = osc.cores.ter;
+                if (osc.cores.qua) quaColor.value = osc.cores.qua;
+            }
 
+            // textos principais
+            if (osc.nomeOsc) qs('#nomeOsc').value = osc.nomeOsc;
+            if (osc.sigla) qs('#sigla').value = osc.sigla;
+            if (osc.anoFundacao) qs('#anoFundacao').value = osc.anoFundacao;
+            if (osc.instagram) qs('#instagram').value = osc.instagram;
 
-            data.banners = {
-                labelBanner: qs("#labelBanner").value,
-                banner1: banner1.files[0] ? await uploadImage(banner1.files[0]) : null,
-                banner2: banner2.files[0] ? await uploadImage(banner2.files[0]) : null,
-                banner3: banner3.files[0] ? await uploadImage(banner3.files[0]) : null,
-            };
+            if (osc.historia) qs('#historia').value = osc.historia;
+            if (osc.missao) qs('#missao').value = osc.missao;
+            if (osc.visao) qs('#visao').value = osc.visao;
+            if (osc.valores) qs('#valores').value = osc.valores;
 
+            // transparência
+            if (osc.cnpj) qs('#CNPJ').value = osc.cnpj;
+            if (osc.razaoSocial) qs('#razaoSocial').value = osc.razaoSocial;
+            if (osc.nomeFantasia) qs('#nomeFantasia').value = osc.nomeFantasia;
+            if (osc.anoCNPJ) qs('#anoCNPJ').value = osc.anoCNPJ;
+            if (osc.responsavelLegal) qs('#responsavelLegal').value = osc.responsavelLegal;
+            if (osc.situacaoCadastral) qs('#situacaoCadastral').value = osc.situacaoCadastral;
+            if (osc.telefone) qs('#telefone').value = osc.telefone;
+            if (osc.email) qs('#email').value = osc.email;
+            if (osc.status) qs('#status').value = osc.status;
+            if (osc.oQueFaz) qs('#oQueFaz').value = osc.oQueFaz;
 
-            // ------------------------------------------
+            // imóvel
+            if (osc.situacaoImovel) qs('#situacaoImovel').value = osc.situacaoImovel;
+            if (osc.cep) qs('#cep').value = osc.cep;
+            if (osc.cidade) qs('#cidade').value = osc.cidade;
+            if (osc.bairro) qs('#bairro').value = osc.bairro;
+            if (osc.logradouro) qs('#logradouro').value = osc.logradouro;
+            if (osc.numero) qs('#numero').value = osc.numero;
 
-            data.historia = qs("#historia").value;
-            data.cnae = qs("#cnae").value;
-            data.area = qs("#area").value;
-            data.subarea = qs("#subarea").value;
-
-            data.nomeFantasia = qs("#nomeFantasia").value;
-            data.sigla = qs("#sigla").value;
-            data.situacaoCadastral = qs("#situacaoCadastral").value;
-            data.endereco = qs("#endereco").value;
-            data.situacaoImovel = qs("#situacaoImovel").value;
-            data.anoCNPJ = qs("#anoCNPJ").value;
-            data.anoFundacao = qs("#anoFundacao").value;
-            data.responsavelLegal = qs("#responsavelLegal").value;
-            data.email = qs("#email").value;
-            data.oQueFaz = qs("#oQueFaz").value;
-            data.nomeOsc = qs("#nomeOsc").value;
-            data.abreviacao = qs("#abreviacao").value;
-            data.cnpj = qs("#CNPJ").value;
-            data.nomeFantasia = qs("#nomeFantasia").value;
-            data.telefone = qs("#telefone").value;
-            data.instagram = qs("#instagram").value;
-            data.status = qs("#status").value;
-
-
-            data.diretores = directors;
-
-            const json = JSON.stringify(data, null, 2);
-            qs("#jsonOut").textContent = json;
-
-            const blob = new Blob([json], {
-                type: "application/json"
-            });
-            const url = URL.createObjectURL(blob);
-            const dl = qs("#downloadLink");
-            dl.style.display = "inline-block";
-            dl.href = url;
-            dl.download = (qs("#nomeOsc").value || "osc") + ".json";
-
-            alert("Dados preparados. As imagens foram salvas no servidor.");
-
-            // --- 🚀 Enviar JSON para o PHP ---
-            try {
-                const endpoint = oscId ? 'ajax_atualizar_osc.php' : 'ajax_criar_osc.php';
-                const payload = JSON.parse(JSON.stringify(data));
-                if (oscId) payload.id = oscId;
-                console.log(endpoint);
-                console.log(endpoint + "?id=" + oscId);
-                const response = await fetch(endpoint + "?id=" + oscId, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(payload)
+            // atividades
+            if (Array.isArray(osc.atividades)) {
+                osc.atividades.forEach(a => {
+                    atividades.push({
+                        cnae: a.cnae || '',
+                        area: a.area || '',
+                        subarea: a.subarea || ''
+                    });
                 });
-
-                const result = await response.json();
-                console.log("✅ Resposta do servidor:", result);
-
-                if (result.success) {
-                    const msg = oscId ? "OSC atualizada com sucesso!" : "OSC criada com sucesso!";
-                    alert(msg);
-                } else {
-                    alert("Erro ao salvar OSC: " + (result.error || "desconhecido"));
-                }
-
-            } catch (error) {
-                console.error("❌ Erro ao enviar dados:", error);
-                alert("Erro ao enviar dados ao servidor.");
+                renderAtividades();
             }
-        }
 
-        function resetForm() {
-            if (confirm('Limpar todos os campos?')) {
-                document.getElementById('oscForm').reset();
-                directors.length = 0;
+            // envolvidos
+            if (Array.isArray(osc.diretores)) {
+                osc.diretores.forEach(d => {
+                    directors.push({
+                        foto: null, // não vem do banco
+                        nome: d.nome || '',
+                        telefone: d.telefone || '',
+                        email: d.email || '',
+                        func: d.funcao || ''
+                    });
+                });
                 renderDirectors();
-                updatePreviews();
-                qs('#jsonOut').textContent = '{}';
-                qs('#downloadLink').style.display = 'none';
             }
+
+            // template / imagens
+            if (osc.template) {
+                if (osc.labelBanner) qs('#labelBanner').value = osc.labelBanner;
+                existingLogos.logoSimples = osc.template.logo_simples || null;
+                existingLogos.logoCompleta = osc.template.logo_completa || null;
+                existingBanners.banner1 = osc.template.banner1 || null;
+                existingBanners.banner2 = osc.template.banner2 || null;
+                existingBanners.banner3 = osc.template.banner3 || null;
+            } else {
+                if (osc.labelBanner) qs('#labelBanner').value = osc.labelBanner;
+            }
+
+            // botão
+            const submitBtn = qs('button[type="submit"]');
+            if (submitBtn) submitBtn.textContent = 'ATUALIZAR OSC';
+
+            await updatePreviews();
+
+        } catch (err) {
+            console.error('Erro ao buscar dados da OSC:', err);
+            alert('Erro ao carregar dados da OSC');
+        }
+    }
+
+    // SALVAR (ATUALIZAR) OSC
+    async function saveData() {
+        if (!oscId) {
+            alert('ID da OSC não informado na URL.');
+            return;
         }
 
-        // initialize
-        updatePreviews();
-        loadOscData();
-    </script>
-</body>
+        // validação mínima de logos: se não há arquivo novo, precisa ter pelo menos uma imagem existente
+        if (!logoSimples.files[0] && !existingLogos.logoSimples) {
+            alert("Informe a logo simples ou mantenha a já existente.");
+            return;
+        }
+        if (!logoCompleta.files[0] && !existingLogos.logoCompleta) {
+            alert("Informe a logo completa ou mantenha a já existente.");
+            return;
+        }
 
+        const data = {};
+        data.missao = qs("#missao").value;
+        data.visao = qs("#visao").value;
+        data.valores = qs("#valores").value;
+        data.cores = {
+            bg: bgColor.value,
+            sec: secColor.value,
+            ter: terColor.value,
+            qua: quaColor.value,
+        };
+
+        // imagens: se não houver arquivo novo, usa o path existente
+        data.logos = {
+            logoSimples: logoSimples.files[0] ? await uploadImage(logoSimples.files[0]) : existingLogos.logoSimples,
+            logoCompleta: logoCompleta.files[0] ? await uploadImage(logoCompleta.files[0]) : existingLogos.logoCompleta,
+        };
+
+        data.banners = {
+            labelBanner: qs("#labelBanner").value,
+            banner1: banner1.files[0] ? await uploadImage(banner1.files[0]) : existingBanners.banner1,
+            banner2: banner2.files[0] ? await uploadImage(banner2.files[0]) : existingBanners.banner2,
+            banner3: banner3.files[0] ? await uploadImage(banner3.files[0]) : existingBanners.banner3,
+        };
+
+        data.nomeOsc = qs("#nomeOsc").value;
+        data.historia = qs("#historia").value;
+        data.atividades = atividades;
+
+        data.razaoSocial = qs("#razaoSocial").value;
+        data.nomeFantasia = qs("#nomeFantasia").value;
+        data.sigla = qs("#sigla").value;
+        data.situacaoCadastral = qs("#situacaoCadastral").value;
+        data.anoCNPJ = qs("#anoCNPJ").value;
+        data.anoFundacao = qs("#anoFundacao").value;
+        data.responsavelLegal = qs("#responsavelLegal").value;
+        data.email = qs("#email").value;
+        data.oQueFaz = qs("#oQueFaz").value;
+        data.cnpj = qs("#CNPJ").value;
+        data.telefone = qs("#telefone").value;
+        data.instagram = qs("#instagram").value;
+        data.status = qs("#status").value;
+
+        data.situacaoImovel = qs("#situacaoImovel").value;
+        data.cep = qs("#cep").value;
+        data.cidade = qs("#cidade").value;
+        data.bairro = qs("#bairro").value;
+        data.logradouro = qs("#logradouro").value;
+        data.numero = qs("#numero").value;
+
+        data.diretores = directors;
+        data.id = oscId; // importante para o ajax_atualizar_osc.php
+
+        const json = JSON.stringify(data, null, 2);
+        qs("#jsonOut").textContent = json;
+
+        const blob = new Blob([json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const dl = qs("#downloadLink");
+        dl.style.display = "inline-block";
+        dl.href = url;
+        dl.download = (qs("#nomeOsc").value || "osc") + ".json";
+
+        try {
+            const response = await fetch("ajax_atualizar_osc.php?id=" + oscId, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+
+            const text = await response.text();
+            console.log("Resposta bruta do servidor:", text);
+
+            let result;
+            try {
+                result = JSON.parse(text);
+            } catch (e) {
+                console.error("Erro ao parsear JSON:", e);
+                alert("Resposta do servidor não é JSON válido. Veja o console.");
+                return;
+            }
+
+            console.log("✅ Resposta do servidor:", result);
+
+            if (result.success) {
+                alert("OSC atualizada com sucesso!");
+            } else {
+                alert("Erro ao atualizar OSC: " + (result.error || "desconhecido"));
+            }
+
+        } catch (error) {
+            console.error("❌ Erro ao enviar dados:", error);
+            alert("Erro ao enviar dados ao servidor.");
+        }
+    }
+
+    function limparFormularioSemConfirmar() {
+        const form = document.getElementById('oscForm');
+        if (form) form.reset();
+
+        if (Array.isArray(directors)) {
+            directors.length = 0;
+            renderDirectors();
+        }
+
+        if (typeof atividades !== 'undefined' && Array.isArray(atividades) && typeof renderAtividades === 'function') {
+            atividades.length = 0;
+            renderAtividades();
+        }
+
+        updatePreviews();
+        const jsonOut = qs('#jsonOut');
+        if (jsonOut) jsonOut.textContent = '{}';
+
+        const dl = qs('#downloadLink');
+        if (dl) dl.style.display = 'none';
+    }
+
+    function resetForm() {
+        if (confirm('Limpar todos os campos?')) {
+            limparFormularioSemConfirmar();
+        }
+    }
+
+    async function deleteOsc() {
+        const idHidden = qs('#oscId') ? qs('#oscId').value : '';
+        const idSelect = oscSelector ? oscSelector.value : '';
+        const id = idHidden || idSelect;
+
+        if (!id) {
+            alert('Selecione uma OSC para deletar.');
+            return;
+        }
+
+        if (!confirm('Tem certeza que deseja deletar esta OSC?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('ajax_deletar_osc.php?id=' + encodeURIComponent(id), {
+                method: 'GET'
+                // não precisa de headers nem body aqui
+            });
+
+            const text = await response.text();
+            console.log('Resposta bruta do servidor (delete):', text);
+
+            let result;
+            try {
+                result = JSON.parse(text);
+            } catch (e) {
+                console.error('Erro ao parsear JSON do delete:', e);
+                alert('Resposta do servidor ao deletar não é JSON válido. Veja o console.');
+                return;
+            }
+
+            if (result.success) {
+                alert('OSC deletada com sucesso!');
+            
+                // 🔴 ZERA o ID global e os campos
+                oscId = null;
+            
+                if (oscSelector) {
+                    oscSelector.value = '';
+                }
+                const oscIdHidden = qs('#oscId');
+                if (oscIdHidden) {
+                    oscIdHidden.value = '';
+                }
+            
+                if (deleteBtn) {
+                    deleteBtn.disabled = true;
+                }
+            
+                // limpa o formulário SEM perguntar
+                limparFormularioSemConfirmar();
+            
+                // recarrega a lista de OSCs no select
+                await loadOscList();
+            } else {
+                alert('Erro ao deletar OSC: ' + (result.error || 'desconhecido'));
+            }
+
+        } catch (error) {
+            console.error('Erro ao deletar OSC:', error);
+            alert('Erro ao comunicar com o servidor ao deletar.');
+        }
+    }
+
+    if (oscSelector) {
+        oscSelector.addEventListener('change', () => {
+            const selectedId = oscSelector.value;
+
+            // joga o ID selecionado no hidden
+            qs('#oscId').value = selectedId || '';
+
+            if (selectedId) {
+                if (deleteBtn) {
+                    deleteBtn.disabled = false;
+                }
+                loadOscData(selectedId);
+            } else {
+                if (deleteBtn) {
+                    deleteBtn.disabled = true;
+                }
+                limparFormularioSemConfirmar(); // aqui também é sem confirmação
+            }
+        });
+    }
+
+    // initialize
+    updatePreviews();
+    loadOscList();
+</script>
+</body>
 </html>
