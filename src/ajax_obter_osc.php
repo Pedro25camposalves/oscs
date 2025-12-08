@@ -67,7 +67,7 @@ try {
     // 5) DIRETORES (ator + ator_osc)
     // ============================================
     $stmt = $conn->prepare("
-        SELECT a.nome, a.telefone, ao.funcao
+        SELECT a.nome, a.telefone, a.email, ao.funcao
         FROM ator a
         INNER JOIN ator_osc ao ON ao.ator_id = a.id
         WHERE ao.osc_id = ?
@@ -78,9 +78,31 @@ try {
     $stmt->close();
 
     // ============================================
-    // 6) Montar resposta final
+    // 6) ATIVIDADES (osc_atividade)
     // ============================================
-    error_log($osc['endereco'],0,"error.log");
+    $stmt = $conn->prepare("
+        SELECT cnae, area_atuacao, subarea
+        FROM osc_atividade
+        WHERE osc_id = ?
+    ");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $atividadesBD = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    // transformar para o formato do front: { cnae, area, subarea }
+    $atividades = [];
+    foreach ($atividadesBD as $row) {
+        $atividades[] = [
+            'cnae'    => $row['cnae'],
+            'area'    => $row['area_atuacao'],
+            'subarea' => $row['subarea'],
+        ];
+    }
+
+    // ============================================
+    // 7) Montar resposta final
+    // ============================================
     $resultado = [
         'id' => $osc['id'],
         'labelBanner' => $template['label_banner'] ?? '',
@@ -92,41 +114,44 @@ try {
             'qua' => $cores['cor4'] ?? '#999999',
         ],
 
-        'missao' => $osc['missao'],
-        'visao' => $osc['visao'],
+        'missao'  => $osc['missao'],
+        'visao'   => $osc['visao'],
         'valores' => $osc['valores'],
-
-        // estes campos não existem no banco → definindo como null
-        'nomeOsc' => $osc['nome'],
         'historia' => $osc['historia'],
-        'area' => $osc['area_atuacao'],
-        'responsavelLegal' => null,
-        'oQueFaz' => $osc['oque_faz'],
-        'instagram' => $osc['instagram'],
-        'status' => $osc['status'],
 
-        'cnae' => $osc['cnae'],
-        'subarea' => $osc['subarea'],
-
-        'nomeFantasia' => $osc['nome_fantasia'],
+        'nomeOsc' => $osc['nome'],
+        'nomeFantasia' => $osc['nome_fantasia'] ?? null,
         'sigla' => $osc['sigla'],
         'situacaoCadastral' => $osc['situacao_cadastral'],
 
-        // 'endereco' => $imovel
-        //     ? "{$imovel['logradouro']}, {$imovel['numero']}, {$imovel['bairro']}"
-        //     : null,
-        'endereco' => $osc['endereco'],
+        'email' => $osc['email'],
+        'cnpj' => $osc['cnpj'],
+        'telefone' => $osc['telefone'],
+        'instagram' => $osc['instagram'],
+        'status' => $osc['status'],
+        'razaoSocial' => $osc['razao_social'],
 
         'anoCNPJ' => $osc['ano_cnpj'],
         'anoFundacao' => $osc['ano_fundacao'],
+        'responsavelLegal' => $osc['responsavel'],
 
-        'email' => $osc['email'],
-        'abreviacao' => $osc['sigla'],
-        'cnpj' => $osc['cnpj'],
-        'telefone' => $osc['telefone'],
+        'cep'   => $imovel['cep']      ?? null,
+        'cidade'=> $imovel['cidade']   ?? null,
+        'bairro'=> $imovel['bairro']   ?? null,
+        'logradouro' => $imovel['logradouro'] ?? null,
+        'numero' => $imovel['numero']  ?? null,
+        'situacaoImovel' => $imovel['situacao'] ?? null,
+        'endereco' => $imovel
+            ? trim(($imovel['logradouro'] ?? '') . ', ' . ($imovel['numero'] ?? '') . ', ' . ($imovel['bairro'] ?? ''))
+            : null,
+
+        'oQueFaz' => $osc['oque_faz'],
+
+        'atividades' => $atividades,
 
         'diretores' => $diretores,
-        'template' => $template
+
+        'template' => $template,
     ];
 
     echo json_encode(['success' => true, 'data' => $resultado]);
@@ -136,5 +161,4 @@ try {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
     exit;
-
 }
