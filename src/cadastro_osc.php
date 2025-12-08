@@ -726,7 +726,7 @@
             formData.append("image", file);
 
             // Luiz: Alterado o diretorio de upload | Jhonnie: corrigido com o formato do arquivo no servidor
-            const response = await fetch("/upload.php", { 
+            const response = await fetch("upload.php", { 
                 method: "POST",
                 body: formData,
             });

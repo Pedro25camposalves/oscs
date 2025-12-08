@@ -2,48 +2,69 @@
 
 require_once 'conexao.php';
 
-// verificar melhor como atribuir aqui
-const CAMINHO = 'assets/oscs/assocest/document/';  // puxar do jwt
-$id_osc = 4;  // puxar do jwt
+$id_osc = $_POST['id_osc'] ?? null;
+$id_projeto = $_POST['id_projeto'] ?? null;
+$tipo = $_POST['tipo'] ?? null;
 
-if (isset($_FILES['arquivo'])) {
-    $arquivo = $_FILES['arquivo'];
+if (!$id_osc) {
+    die("ID da OSC não informado.");
+}
 
-    if ($arquivo['error'] !== UPLOAD_ERR_OK) {
-        die("Erro no upload do arquivo.");
-    }
+if (!$tipo) {
+    die("Tipo do documento não informado.");
+}
 
-    if (mime_content_type($arquivo['tmp_name']) !== "application/pdf") {
+if (!isset($_FILES['arquivo']) || $_FILES['arquivo']['error'] !== UPLOAD_ERR_OK) {
+    die("Erro no upload do arquivo.");
+}
+
+$arquivo = $_FILES['arquivo'];
+
+if (mime_content_type($arquivo['tmp_name']) !== "application/pdf") {
         die("Por favor, envie um arquivo PDF.");
-    }
+}
 
-    $pastaDestino = CAMINHO;
+$caminhaBase = "assets/oscs/osc-$id_osc/";
 
-    if (!file_exists($pastaDestino)) {
-        mkdir($pastaDestino, 0777, true);
-    }
-
-    $nomeArquivo = uniqid() . "-" . basename($arquivo['name']);
-
-    $caminhoCompleto = $pastaDestino . $nomeArquivo;
-
-    if (move_uploaded_file($arquivo['tmp_name'], $caminhoCompleto)) {
-        $sql = "INSERT INTO documento (osc_id, documento) VALUES (?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("is", $id_osc, $caminhoCompleto);
-
-        if ($stmt->execute()) {
-            echo "Arquivo enviado com sucesso!<br>";
-            echo "Caminho salvo no banco: " . $caminhoCompleto;
-        } else {
-            echo "Erro ao salvar no banco.";
-        }
-
-    } else {
-        echo "Erro ao mover o arquivo.";
-    }
-
+if ($id_projeto) {
+    $pastaDestino = $caminhaBase . "projetos/projeto-$id_projeto/documentos/";
 } else {
-    echo "Nenhum arquivo ou nome enviado.";
+    $pastaDestino = $caminhaBase . "documentos/";
+}
+
+if (!is_dir($pastaDestino)) {
+    die("Diretório de destino não encontrado. Verifique o cadastro da OSC/projeto.");
+}
+
+$nomeArquivo = uniqid() . "-" . basename($arquivo['name']);
+
+$caminhoCompleto = $pastaDestino . $nomeArquivo;
+
+if (!move_uploaded_file($arquivo['tmp_name'], $caminhoCompleto)) {
+    die("Erro ao mover o arquivo.");
+}
+
+if ($id_projeto) {
+    $sql = "INSERT INTO documento (osc_id, projeto_id, tipo, documento) VALUES (?, ?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("iiss", $id_osc, $id_projeto, $tipo, $caminhoCompleto);
+} else {
+    $sql = "INSERT INTO documento (osc_id, tipo, documento) VALUES (?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("iss", $id_osc, $tipo, $caminhoCompleto);
+}
+
+if ($stmt->execute()) {
+    echo json_encode([
+        "status" => "ok",
+        "mensagem" => "Arquivo enviado com sucesso!",
+        "tipo" => $tipo,
+        "caminho" => $caminhoCompleto
+    ]);
+} else {
+    echo json_encode([
+        "status" => "erro",
+        "mensagem" => "Erro ao salvar no banco."
+    ]);
 }
 ?>
