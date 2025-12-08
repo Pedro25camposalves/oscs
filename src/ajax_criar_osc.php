@@ -51,6 +51,7 @@ $sigla             = mysqli_real_escape_string($conn, $data['sigla']);
 $situacaoCadastral = mysqli_real_escape_string($conn, $data['situacaoCadastral']);
 $anoCNPJ           = mysqli_real_escape_string($conn, $data['anoCNPJ']);
 $anoFundacao       = mysqli_real_escape_string($conn, $data['anoFundacao']);
+$responsavel       = mysqli_real_escape_string($conn, $data['responsavelLegal']);
 $missao            = mysqli_real_escape_string($conn, $data['missao']);
 $visao             = mysqli_real_escape_string($conn, $data['visao']);
 $valores           = mysqli_real_escape_string($conn, $data['valores']);
@@ -64,10 +65,10 @@ $status            = mysqli_real_escape_string($conn, $data['status']);
 $sql_osc = "
     INSERT INTO osc (
         nome, razao_social, cnpj, telefone, email, nome_fantasia, sigla, situacao_cadastral,
-        ano_cnpj, ano_fundacao, missao, visao, valores, instagram, status, historia, oque_faz
+        ano_cnpj, ano_fundacao, responsavel, missao, visao, valores, instagram, status, historia, oque_faz
     ) VALUES (
         '$nomeOsc', '$razaoSocial', '$cnpj', '$telefone', '$email', '$nomeFantasia', '$sigla', '$situacaoCadastral',
-        '$anoCNPJ', '$anoFundacao', '$missao', '$visao', '$valores', '$instagram', '$status', '$historia', '$oQueFaz'
+        '$anoCNPJ', '$anoFundacao', '$responsavel', '$missao', '$visao', '$valores', '$instagram', '$status', '$historia', '$oQueFaz'
     )";
 
 if (!mysqli_query($conn, $sql_osc)) {
