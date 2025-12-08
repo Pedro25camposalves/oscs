@@ -3,15 +3,15 @@ SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
 -- -----------------------------------------------------
--- Schema osc
+-- Schema osctech
 -- -----------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS `osc` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci ;
-USE `osc` ;
+CREATE SCHEMA IF NOT EXISTS `osctech` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci ;
+USE `osctech` ;
 
 -- -----------------------------------------------------
--- Table `osc`.`ator`
+-- Table `osctech`.`ator`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `osc`.`ator` (
+CREATE TABLE IF NOT EXISTS `osctech`.`ator` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `nome` VARCHAR(60) NULL DEFAULT NULL,
   `telefone` VARCHAR(11) NULL DEFAULT NULL,
@@ -23,9 +23,9 @@ COLLATE = utf8mb4_general_ci;
 
 
 -- -----------------------------------------------------
--- Table `osc`.`osc`
+-- Table `osctech`.`osc`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `osc`.`osc` (
+CREATE TABLE IF NOT EXISTS `osctech`.`osc` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `razao_social` VARCHAR(60) NULL DEFAULT NULL,
   `sigla` VARCHAR(10) NULL DEFAULT NULL,
@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS `osc`.`osc` (
   `nome_fantasia` VARCHAR(60) NULL DEFAULT NULL,
   `ano_fundacao` VARCHAR(45) NULL DEFAULT NULL,
   `ano_cnpj` VARCHAR(45) NULL DEFAULT NULL,
+  `responsavel` VARCHAR(100) NULL DEFAULT NULL,
   `situacao_cadastral` VARCHAR(30) NULL DEFAULT NULL,
   `missao` LONGTEXT NULL DEFAULT NULL,
   `visao` LONGTEXT NULL DEFAULT NULL,
@@ -53,9 +54,9 @@ COLLATE = utf8mb4_general_ci;
 
 
 -- -----------------------------------------------------
--- Table `osc`.`osc_atividade`
+-- Table `osctech`.`osc_atividade`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `osc`.`osc_atividade` (
+CREATE TABLE IF NOT EXISTS `osctech`.`osc_atividade` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `osc_id` INT NOT NULL,
   `cnae` VARCHAR(120) NULL DEFAULT NULL,
@@ -65,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `osc`.`osc_atividade` (
   INDEX `fk_osc_atividade_osc1_idx` (`osc_id` ASC),
   CONSTRAINT `fk_osc_atividade_osc1`
     FOREIGN KEY (`osc_id`)
-    REFERENCES `osc`.`osc` (`id`)
+    REFERENCES `osctech`.`osc` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE
 )
@@ -75,9 +76,9 @@ COLLATE = utf8mb4_general_ci;
 
 
 -- -----------------------------------------------------
--- Table `osc`.`ator_osc`
+-- Table `osctech`.`ator_osc`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `osc`.`ator_osc` (
+CREATE TABLE IF NOT EXISTS `osctech`.`ator_osc` (
   `ator_id` INT NOT NULL,
   `osc_id` INT NOT NULL,
   `funcao` VARCHAR(60) NULL DEFAULT NULL,
@@ -86,12 +87,12 @@ CREATE TABLE IF NOT EXISTS `osc`.`ator_osc` (
   INDEX `fk_ator_has_osc_ator_idx` (`ator_id` ASC) ,
   CONSTRAINT `fk_ator_has_osc_ator`
     FOREIGN KEY (`ator_id`)
-    REFERENCES `osc`.`ator` (`id`)
+    REFERENCES `osctech`.`ator` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_ator_has_osc_osc1`
     FOREIGN KEY (`osc_id`)
-    REFERENCES `osc`.`osc` (`id`)
+    REFERENCES `osctech`.`osc` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB
@@ -100,9 +101,9 @@ COLLATE = utf8mb4_general_ci;
 
 
 -- -----------------------------------------------------
--- Table `osc`.`projeto`
+-- Table `osctech`.`projeto`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `osc`.`projeto` (
+CREATE TABLE IF NOT EXISTS `osctech`.`projeto` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `osc_id` INT NOT NULL,
   `nome` VARCHAR(120) NULL DEFAULT NULL,
@@ -116,7 +117,7 @@ CREATE TABLE IF NOT EXISTS `osc`.`projeto` (
   INDEX `fk_projeto_osc1_idx` (`osc_id` ASC) ,
   CONSTRAINT `fk_projeto_osc1`
     FOREIGN KEY (`osc_id`)
-    REFERENCES `osc`.`osc` (`id`)
+    REFERENCES `osctech`.`osc` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB
@@ -125,9 +126,9 @@ COLLATE = utf8mb4_general_ci;
 
 
 -- -----------------------------------------------------
--- Table `osc`.`ator_projeto`
+-- Table `osctech`.`ator_projeto`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `osc`.`ator_projeto` (
+CREATE TABLE IF NOT EXISTS `osctech`.`ator_projeto` (
   `ator_id` INT NOT NULL,
   `projeto_id` INT NOT NULL,
   `osc_id` INT NOT NULL,
@@ -138,12 +139,12 @@ CREATE TABLE IF NOT EXISTS `osc`.`ator_projeto` (
   INDEX `ix_ap_projeto` (`projeto_id` ASC, `osc_id` ASC) ,
   CONSTRAINT `fk_ap_ator_osc`
     FOREIGN KEY (`ator_id` , `osc_id`)
-    REFERENCES `osc`.`ator_osc` (`ator_id` , `osc_id`)
+    REFERENCES `osctech`.`ator_osc` (`ator_id` , `osc_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_ap_projeto_osc`
     FOREIGN KEY (`projeto_id` , `osc_id`)
-    REFERENCES `osc`.`projeto` (`id` , `osc_id`)
+    REFERENCES `osctech`.`projeto` (`id` , `osc_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB
@@ -152,9 +153,9 @@ COLLATE = utf8mb4_general_ci;
 
 
 -- -----------------------------------------------------
--- Table `osc`.`evento_oficina`
+-- Table `osctech`.`evento_oficina`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `osc`.`evento_oficina` (
+CREATE TABLE IF NOT EXISTS `osctech`.`evento_oficina` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `projeto_id` INT NOT NULL,
   `pai_id` INT NULL DEFAULT NULL,
@@ -168,12 +169,12 @@ CREATE TABLE IF NOT EXISTS `osc`.`evento_oficina` (
   INDEX `fk_evento_oficina_projeto1_idx` (`projeto_id` ASC) ,
   CONSTRAINT `fk_evento_oficina_evento_oficina1`
     FOREIGN KEY (`pai_id`)
-    REFERENCES `osc`.`evento_oficina` (`id`)
+    REFERENCES `osctech`.`evento_oficina` (`id`)
     ON DELETE SET NULL
     ON UPDATE CASCADE,
   CONSTRAINT `fk_evento_oficina_projeto1`
     FOREIGN KEY (`projeto_id`)
-    REFERENCES `osc`.`projeto` (`id`)
+    REFERENCES `osctech`.`projeto` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB
@@ -182,9 +183,9 @@ COLLATE = utf8mb4_general_ci;
 
 
 -- -----------------------------------------------------
--- Table `osc`.`ator_evento_oficina`
+-- Table `osctech`.`ator_evento_oficina`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `osc`.`ator_evento_oficina` (
+CREATE TABLE IF NOT EXISTS `osctech`.`ator_evento_oficina` (
   `ator_id` INT NOT NULL,
   `evento_oficina_id` INT NOT NULL,
   `projeto_id` INT NOT NULL,
@@ -195,12 +196,12 @@ CREATE TABLE IF NOT EXISTS `osc`.`ator_evento_oficina` (
   INDEX `ix_aeo_evento` (`evento_oficina_id` ASC, `projeto_id` ASC) ,
   CONSTRAINT `fk_aeo_ator_projeto`
     FOREIGN KEY (`ator_id` , `projeto_id`)
-    REFERENCES `osc`.`ator_projeto` (`ator_id` , `projeto_id`)
+    REFERENCES `osctech`.`ator_projeto` (`ator_id` , `projeto_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_aeo_eo_proj`
     FOREIGN KEY (`evento_oficina_id` , `projeto_id`)
-    REFERENCES `osc`.`evento_oficina` (`id` , `projeto_id`)
+    REFERENCES `osctech`.`evento_oficina` (`id` , `projeto_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB
@@ -209,9 +210,9 @@ COLLATE = utf8mb4_general_ci;
 
 
 -- -----------------------------------------------------
--- Table `osc`.`cores`
+-- Table `osctech`.`cores`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `osc`.`cores` (
+CREATE TABLE IF NOT EXISTS `osctech`.`cores` (
   `id_cores` INT NOT NULL AUTO_INCREMENT,
   `osc_id` INT NOT NULL,
   `cor1` VARCHAR(10) NULL DEFAULT NULL,
@@ -222,7 +223,7 @@ CREATE TABLE IF NOT EXISTS `osc`.`cores` (
   INDEX `fk_cores_osc1_idx` (`osc_id` ASC),
   CONSTRAINT `fk_cores_osc1`
     FOREIGN KEY (`osc_id`)
-    REFERENCES `osc`.`osc` (`id`)
+    REFERENCES `osctech`.`osc` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE
 )
@@ -232,9 +233,9 @@ COLLATE = utf8mb4_general_ci;
 
 
 -- -----------------------------------------------------
--- Table `osc`.`documento`
+-- Table `osctech`.`documento`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `osc`.`documento` (
+CREATE TABLE IF NOT EXISTS `osctech`.`documento` (
   `id_documento` INT NOT NULL AUTO_INCREMENT,
   `osc_id` INT NOT NULL,
   `projeto_id` INT NULL DEFAULT NULL,
@@ -247,13 +248,13 @@ CREATE TABLE IF NOT EXISTS `osc`.`documento` (
 
   CONSTRAINT `fk_documento_osc`
     FOREIGN KEY (`osc_id`)
-    REFERENCES `osc`.`osc` (`id`)
+    REFERENCES `osctech`.`osc` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
 
   CONSTRAINT `fk_documento_projeto`
     FOREIGN KEY (`projeto_id`, `osc_id`)
-    REFERENCES `osc`.`projeto` (`id`, `osc_id`)
+    REFERENCES `osctech`.`projeto` (`id`, `osc_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE
 )
@@ -264,9 +265,9 @@ COLLATE = utf8mb4_general_ci;
 
 
 -- -----------------------------------------------------
--- Table `osc`.`edital`
+-- Table `osctech`.`edital`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `osc`.`edital` (
+CREATE TABLE IF NOT EXISTS `osctech`.`edital` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `osc_id` INT NOT NULL,
   `descricao` VARCHAR(45) NULL DEFAULT NULL,
@@ -275,7 +276,7 @@ CREATE TABLE IF NOT EXISTS `osc`.`edital` (
   INDEX `fk_edital_osc1_idx` (`osc_id` ASC) ,
   CONSTRAINT `fk_edital_osc1`
     FOREIGN KEY (`osc_id`)
-    REFERENCES `osc`.`osc` (`id`)
+    REFERENCES `osctech`.`osc` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB
@@ -284,9 +285,9 @@ COLLATE = utf8mb4_general_ci;
 
 
 -- -----------------------------------------------------
--- Table `osc`.`imovel`
+-- Table `osctech`.`imovel`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `osc`.`imovel` (
+CREATE TABLE IF NOT EXISTS `osctech`.`imovel` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `osc_id` INT NOT NULL,
   `cep` VARCHAR(8) NULL DEFAULT NULL,
@@ -299,7 +300,7 @@ CREATE TABLE IF NOT EXISTS `osc`.`imovel` (
   INDEX `fk_imovel_osc1_idx` (`osc_id` ASC) ,
   CONSTRAINT `fk_imovel_osc1`
     FOREIGN KEY (`osc_id`)
-    REFERENCES `osc`.`osc` (`id`)
+    REFERENCES `osctech`.`osc` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB
@@ -308,9 +309,9 @@ COLLATE = utf8mb4_general_ci;
 
 
 -- -----------------------------------------------------
--- Table `osc`.`template_web`
+-- Table `osctech`.`template_web`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `osc`.`template_web` (
+CREATE TABLE IF NOT EXISTS `osctech`.`template_web` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `osc_id` INT NOT NULL,
   `cores_id` INT NOT NULL,
@@ -326,12 +327,12 @@ CREATE TABLE IF NOT EXISTS `osc`.`template_web` (
   INDEX `fk_template_web_cores1_idx` (`cores_id` ASC),
   CONSTRAINT `fk_template_web_cores1`
     FOREIGN KEY (`cores_id`)
-    REFERENCES `osc`.`cores` (`id_cores`)
+    REFERENCES `osctech`.`cores` (`id_cores`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_template_web_osc1`
     FOREIGN KEY (`osc_id`)
-    REFERENCES `osc`.`osc` (`id`)
+    REFERENCES `osctech`.`osc` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE
 )

@@ -899,7 +899,6 @@
             data.telefone = qs("#telefone").value;
             data.instagram = qs("#instagram").value;
             data.status = qs("#status").value;
-
             data.situacaoImovel = qs("#situacaoImovel").value;
             data.cep = qs("#cep").value;
             data.cidade = qs("#cidade").value;
