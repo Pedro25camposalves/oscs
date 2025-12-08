@@ -42,7 +42,7 @@ if (!$data) {
     exit;
 }
 
-// --- 1️⃣ Salva os dados principais na tabela OSC ---
+// --- Salva os dados principais na tabela OSC ---
 $nomeOsc           = mysqli_real_escape_string($conn, $data['nomeOsc']);
 $email             = mysqli_real_escape_string($conn, $data['email']);
 $razaoSocial       = mysqli_real_escape_string($conn, $data['razaoSocial']);
@@ -51,9 +51,6 @@ $sigla             = mysqli_real_escape_string($conn, $data['sigla']);
 $situacaoCadastral = mysqli_real_escape_string($conn, $data['situacaoCadastral']);
 $anoCNPJ           = mysqli_real_escape_string($conn, $data['anoCNPJ']);
 $anoFundacao       = mysqli_real_escape_string($conn, $data['anoFundacao']);
-$cnae              = mysqli_real_escape_string($conn, $data['cnae']);
-$area              = mysqli_real_escape_string($conn, $data['area']);
-$subarea           = mysqli_real_escape_string($conn, $data['subarea']);
 $missao            = mysqli_real_escape_string($conn, $data['missao']);
 $visao             = mysqli_real_escape_string($conn, $data['visao']);
 $valores           = mysqli_real_escape_string($conn, $data['valores']);
@@ -67,10 +64,10 @@ $status            = mysqli_real_escape_string($conn, $data['status']);
 $sql_osc = "
     INSERT INTO osc (
         nome, razao_social, cnpj, telefone, email, nome_fantasia, sigla, situacao_cadastral,
-        ano_cnpj, ano_fundacao, cnae, area_atuacao, subarea, missao, visao, valores, instagram, status, historia, oque_faz
+        ano_cnpj, ano_fundacao, missao, visao, valores, instagram, status, historia, oque_faz
     ) VALUES (
         '$nomeOsc', '$razaoSocial', '$cnpj', '$telefone', '$email', '$nomeFantasia', '$sigla', '$situacaoCadastral',
-        '$anoCNPJ', '$anoFundacao', '$cnae', '$area', '$subarea', '$missao', '$visao', '$valores', '$instagram', '$status', '$historia', '$oQueFaz'
+        '$anoCNPJ', '$anoFundacao', '$missao', '$visao', '$valores', '$instagram', '$status', '$historia', '$oQueFaz'
     )";
 
 if (!mysqli_query($conn, $sql_osc)) {
@@ -79,6 +76,30 @@ if (!mysqli_query($conn, $sql_osc)) {
 }
 
 $osc_id = mysqli_insert_id($conn);
+
+// --- Salva as ATIVIDADES (CNAE / Área / Subárea) ---
+$atividades = $data['atividades'] ?? [];
+
+foreach ($atividades as $atv) {
+    $cnae    = mysqli_real_escape_string($conn, $atv['cnae']   ?? '');
+    $area    = mysqli_real_escape_string($conn, $atv['area']   ?? '');
+    $subarea = mysqli_real_escape_string($conn, $atv['subarea'] ?? '');
+
+    // Se não tiver nada relevante, pula
+    if ($cnae === '' && $area === '') {
+        continue;
+    }
+
+    $sql_atividade = "
+        INSERT INTO osc_atividade (osc_id, cnae, area_atuacao, subarea)
+        VALUES ('$osc_id', '$cnae', '$area', '$subarea')
+    ";
+
+    if (!mysqli_query($conn, $sql_atividade)) {
+        echo json_encode(['success' => false, 'error' => 'Erro ao salvar atividade: ' . mysqli_error($conn)]);
+        exit;
+    }
+}
 
 // Cria diretórios de documentos da OSC
 if (!criarDiretoriosOsc((int)$osc_id)) {
@@ -89,13 +110,14 @@ if (!criarDiretoriosOsc((int)$osc_id)) {
     exit;
 }
 
-// --- 2️⃣ Salva os dados do ator (Diretor da OSC) ---
+// --- Salva os dados do ator (Diretor da OSC) ---
 $diretores = $data['diretores'] ?? [];
 
-foreach ($diretores as $dir) {
-    $nome     = mysqli_real_escape_string($conn, $dir['nome']);
-    $telefone = mysqli_real_escape_string($conn, $dir['telefone']);
-    $func     = mysqli_real_escape_string($conn, $dir['func']);
+foreach ($diretores as $envolvido) {
+    $nome     = mysqli_real_escape_string($conn, $envolvido['nome']);
+    $telefone = mysqli_real_escape_string($conn, $envolvido['telefone'] ?? '');
+    $email = mysqli_real_escape_string($conn, $envolvido['email'] ?? '');
+    $func     = mysqli_real_escape_string($conn, $envolvido['func']);
 
     if ($nome === '' && $func === '') {
         continue;
@@ -103,8 +125,8 @@ foreach ($diretores as $dir) {
 
     // Insere o ator
     $sql_ator = "
-        INSERT INTO ator (nome, telefone)
-        VALUES ('$nome', '$telefone')
+        INSERT INTO ator (nome, telefone, email)
+        VALUES ('$nome', '$telefone', '$email')
         ";
 
     if (!mysqli_query($conn, $sql_ator)) {
@@ -128,7 +150,7 @@ foreach ($diretores as $dir) {
     $ator_osc_id = mysqli_insert_id($conn);
 }
 
-// --- 3️⃣ Salva os dados do imovel da OSC ---
+// --- Salva os dados do imovel da OSC ---
 $situacaoImovel = mysqli_real_escape_string($conn, $data['situacaoImovel']);
 $cep            = mysqli_real_escape_string($conn, $data['cep']);
 $cidade         = mysqli_real_escape_string($conn, $data['cidade']);
@@ -150,7 +172,7 @@ if (!mysqli_query($conn, $sql_imovel)) {
 
 $imovel_id = mysqli_insert_id($conn);
 
-// --- 4️⃣ Salva as cores na tabela `cores` ---
+// --- Salva as cores na tabela `cores` ---
 $cor1 = mysqli_real_escape_string($conn, $data['cores']['bg']);
 $cor2 = mysqli_real_escape_string($conn, $data['cores']['sec']);
 $cor3 = mysqli_real_escape_string($conn, $data['cores']['ter']);
@@ -168,7 +190,7 @@ if (!mysqli_query($conn, $sql_cores)) {
 
 $cores_id = mysqli_insert_id($conn);
 
-// --- 5️⃣ Salva o template visual (logos, banners) ---
+// --- Salva o template visual (logos, banners) ---
 $logoSimples  = mysqli_real_escape_string($conn, $data['logos']['logoSimples']);
 $logoCompleta = mysqli_real_escape_string($conn, $data['logos']['logoCompleta']);
 $banner1      = mysqli_real_escape_string($conn, $data['banners']['banner1']);
@@ -188,12 +210,12 @@ if (!mysqli_query($conn, $sql_template)) {
     exit;
 }
 
-// ✅ Tudo certo!
 echo json_encode([
     'success' => true,
     'template_id' => mysqli_insert_id($conn),
     'cores_id' => $cores_id,
     'osc_id' => $osc_id,
+    'atividade_osc_id'=> true,
     'ator_id' => $ator_id,
     'ator_osc_id' => true,
     'imovel_id' => $imovel_id

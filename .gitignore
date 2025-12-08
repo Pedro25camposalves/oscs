@@ -6,3 +6,4 @@ conexao.php
 docker-compose.yml
 error.log
 config.example.php
+src/conexao.php

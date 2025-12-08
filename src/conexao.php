@@ -1,9 +1,9 @@
 <?php
-
-if (file_exists(__DIR__ . '/config.php')) {
-    $config = require __DIR__ . '/config.php';
+$baseDir = __DIR__ . '/../';
+if (file_exists($baseDir . 'config.php')) {
+    $config = require $baseDir . 'config.php';
 } else {
-    $config = require __DIR__ . '/config.example.php';
+    $config = require $baseDir . 'config.example.php';
 }
 
 $host = $config['DB_HOST'];
@@ -12,7 +12,7 @@ $pass = $config['DB_PASS'];
 $name = $config['DB_NAME'];
 
 // Conecta ao MySQL com mysqli
-$conn = mysqli_connect($host, $user, $pass, $name);
+$conn = mysqli_connect($host, $user, $pass, $name, 3307);
 
 // Verifica a conexão
 if (!$conn) {

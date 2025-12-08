@@ -551,6 +551,29 @@
 
         const directors = [];
 
+        async function uploadDocumentoOsc() {
+            console.log("Form:", document.getElementById("formDoc"));
+            const form = document.getElementById('formDoc');
+            const formData = new FormData(form);
+
+            // pega ID da OSC já carregado no script
+            formData.append("id_osc", oscId);
+
+            const response = await fetch("upload_pdf.php", {
+                method: "POST",
+                body: formData
+            });
+
+            const result = await response.json();
+            console.log("Upload Documento:", result);
+
+            if (result.status === "ok") {
+                alert("Documento enviado com sucesso!");
+            } else {
+                alert("Erro ao enviar documento: " + (result.mensagem || 'Erro desconhecido'));
+            }
+        }
+
         // 🔄 Carregar dados da OSC do banco de dados
         async function loadOscData() {
             if (!oscId) return; // Se não houver ID, é criação de nova OSC
