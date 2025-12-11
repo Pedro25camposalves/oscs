@@ -32,12 +32,12 @@ $valores = "Ética, transparência, empatia, compromisso social e respeito às p
 // SOBRE
 // --------------------------
 $cnae = "Atividades de recreação e lazer não especificadas anteriormente";
-$historia =  "Nossa OSC atua desde 2010, buscando fortalecer comunidades por meio de projetos de capacitação, apoio social e desenvolvimento sustentável.
-      Nosso time é formado por profissionais e voluntários comprometidos com a transparência, ética e eficiência na gestão dos recursos.
-      🏛️ Como Surgiu a OSC
-        A Associação Esther Siqueira Tillmann (ASSOCEST) nasceu do sonho de um grupo de pessoas comprometidas com a valorização da cultura, da educação e do desenvolvimento social. Inspiradas pelo legado de Esther Siqueira Tillmann — uma mulher reconhecida por seu trabalho comunitário e dedicação à preservação das tradições locais —, essas pessoas decidiram transformar a admiração em ação.
-        O projeto começou de forma simples, com encontros em espaços comunitários e pequenas oficinas voltadas à transmissão de saberes artesanais e culturais. Com o tempo, o impacto positivo dessas iniciativas chamou a atenção de parceiros, voluntários e instituições públicas, permitindo que a associação se estruturasse oficialmente como uma Organização da Sociedade Civil (OSC).
-        Desde então, a ASSOCEST vem ampliando suas ações e consolidando-se como referência em projetos que unem patrimônio cultural, educação e transformação social. Hoje, a entidade atua em diversas frentes, fortalecendo vínculos comunitários, incentivando a economia criativa e promovendo o reconhecimento das práticas culturais como instrumentos de identidade e cidadania.";
+$historia =  "A <strong>Associação Esther Siqueira Tillmann (ASSOCEST)</strong> atua desde 2010 fortalecendo comunidades por meio de projetos de capacitação, apoio social e desenvolvimento sustentável. Nossa equipe reúne profissionais e voluntários comprometidos com transparência, ética e gestão responsável dos recursos.
+
+<br><br>A OSC surgiu do ideal de um grupo inspirado pelo trabalho comunitário de Esther Siqueira Tillmann, reconhecida por preservar tradições locais e promover ações sociais. As atividades começaram em encontros comunitários e oficinas voltadas aos saberes artesanais e culturais. O impacto dessas iniciativas atraiu parceiros e instituições públicas, permitindo a formalização da entidade e a expansão dos projetos.
+
+<br><br>Hoje, a ASSOCEST é referência em ações que integram patrimônio cultural, educação e transformação social, fortalecendo vínculos comunitários, incentivando a economia criativa e valorizando práticas culturais como instrumentos de identidade e cidadania.
+<br><br>";
 $area_atuacao1 = "Cultura e recreação";
 $subarea1 = "Não Informado";
 $area_atuacao2 = "Cultura e recreação";
@@ -56,7 +56,7 @@ $oq_faz = "Não informado";
 // --------------------------
 // INFORMAÇÕES GERAIS
 // --------------------------
-$logo_nobg = "/oscs/src/assets/images/assocest-logo5-nobg.png";
+$logo_nobg = "oscs/src/assets/images/assocest-logo5-nobg.png";
 $endereco =  "AVENIDA TEREZA ANSELMO MASSARI <br> PARQUE BRASIL, Jacareí - SP<br> <strong>CEP:</strong> 12328-430";
 $email = "contato@osc.org.br";
 $tel = "(12) 3948-5753";
@@ -112,7 +112,7 @@ include 'conexao.php';
 
     .nav-link {
       font-size: 1.2rem;
-      color: black;
+      color: <?php echo $cor_font; ?>;
     }
 
     /* ===========================================================
@@ -670,8 +670,8 @@ include 'conexao.php';
 
   <!-- Sobre -->
   <div id="sobre" class="section">
-    <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px; color:white; font-weight:400;">Sobre Nós</h1>
-    <div class="container my-5">
+    <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px; color:white; font-weight:400; text-align:center;">Sobre Nós</h1>
+    <div class="container my-5" style="text-align: justify;">
       <p> <?php echo $historia; ?> </p>
       <ul>
         <li><strong>Missão: </strong><?php echo $missao; ?></li>
@@ -770,7 +770,7 @@ include 'conexao.php';
 
   <!-- Transparência -->
   <div id="transparencia" class="section">
-    <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px; color:white; font-weight:400;">Transparência</h1>
+    <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px; color:white; font-weight:400; text-align:center;">Transparência</h1>
     <hr>
     <div class="container my-5">
       <div class="osc-detalhes">
@@ -850,6 +850,7 @@ include 'conexao.php';
               Visualizar Documento
             </button>
           </div>
+          
         </div>
 
         <!-- 2 div Certidões -->
