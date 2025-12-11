@@ -56,7 +56,7 @@ $oq_faz = "Não informado";
 // --------------------------
 // INFORMAÇÕES GERAIS
 // --------------------------
-$logo_nobg = "/oscs/src/assets/images/assocest-logo5-nobg.png";
+$logo_nobg = "../assets/images/oscs/691a9fb0e72df_assocest-logo5-nobg.png";
 $endereco =  "AVENIDA TEREZA ANSELMO MASSARI <br> PARQUE BRASIL, Jacareí - SP<br> <strong>CEP:</strong> 12328-430";
 $email = "contato@osc.org.br";
 $tel = "(12) 3948-5753";
@@ -552,7 +552,7 @@ include 'conexao.php';
                   <div class="card border-0 shadow-sm h-100">
                     <img src="/oscs/src/assets/images/inst-6.webp" class="card-img-top" alt="Evento 2">
                     <div class="card-body">
-                      <h6 class="card-title fw-semibold">O Dentista chegou!</h6>
+                      <h6 class="card-title fw-semibold" style="color:<?php echo $cor_font ?>;">O Dentista chegou!</h6>
                       <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 20/02/2025</p>
                     </div>
                   </div>
@@ -563,7 +563,7 @@ include 'conexao.php';
                   <div class="card border-0 shadow-sm h-100">
                     <img src="/oscs/src/assets/images/inst-7.webp" class="card-img-top" alt="Evento 3">
                     <div class="card-body">
-                      <h6 class="card-title fw-semibold">Celebrando os 26 anos de Promovida</h6>
+                      <h6 class="card-title fw-semibold" style="color:<?php echo $cor_font ?>;">Celebrando os 26 anos de Promovida</h6>
                       <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 20/08/2024</p>
                     </div>
                   </div>
@@ -574,7 +574,7 @@ include 'conexao.php';
                   <div class="card border-0 shadow-sm h-100">
                     <img src="/oscs/src/assets/images/inst-8.webp" class="card-img-top" alt="Evento 4">
                     <div class="card-body">
-                      <h6 class="card-title fw-semibold">Evento Solidário</h6>
+                      <h6 class="card-title fw-semibold" style="color:<?php echo $cor_font ?>;">Evento Solidário</h6>
                       <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 15/01/2024</p>
                     </div>
                   </div>
@@ -624,7 +624,7 @@ include 'conexao.php';
             <div class="card mb-3 shadow-sm card-mvv">
               <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
                 <i class="bi bi-bullseye text-warning fs-2 mb-2"></i>
-                <h5 class="fw-bold">Missão</h5>
+                <h5 class="fw-bold" style="color:<?php echo $cor_font ?>;">Missão</h5>
                 <p><?php echo $missao ?></p>
               </div>
             </div>
@@ -632,7 +632,7 @@ include 'conexao.php';
             <div class="card mb-3 shadow-sm card-mvv">
               <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
                 <i class="bi bi-eye text-success fs-2 mb-2"></i>
-                <h5 class="fw-bold">Visão</h5>
+                <h5 class="fw-bold" style="color:<?php echo $cor_font ?>;">Visão</h5>
                 <p><?php echo $visao ?></p>
               </div>
             </div>
@@ -640,7 +640,7 @@ include 'conexao.php';
             <div class="card mb-3 shadow-sm card-mvv">
               <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
                 <i class="bi bi-heart-fill text-danger fs-2 mb-2"></i>
-                <h5 class="fw-bold">Valores</h5>
+                <h5 class="fw-bold" style="color:<?php echo $cor_font ?>;">Valores</h5>
                 <p><?php echo $valores ?></p>
               </div>
             </div>
@@ -670,7 +670,7 @@ include 'conexao.php';
 
   <!-- Sobre -->
   <div id="sobre" class="section">
-    <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px;">Sobre Nós</h1>
+    <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px; color:white; font-weight:400;">Sobre Nós</h1>
     <div class="container my-5">
       <p> <?php echo $historia; ?> </p>
       <ul>
@@ -770,38 +770,7 @@ include 'conexao.php';
 
   <!-- Transparência -->
   <div id="transparencia" class="section">
-    <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px;">Transparência</h1>
-
-    <div class="row mt-4">
-      <div class="col-md-4">
-        <div class="card shadow-sm">
-          <div class="card-body text-center">
-            <h5 class="card-title">Recursos Recebidos</h5>  
-            <p class="display-6 text-success">R$ 250.000</p>
-            <p class="text-muted">em 2024</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card shadow-sm">
-          <div class="card-body text-center">
-            <h5 class="card-title">Projetos Ativos</h5>
-            <p class="display-6 text-primary">6</p>
-            <p class="text-muted">em andamento</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card shadow-sm">
-          <div class="card-body text-center">
-            <h5 class="card-title">Beneficiados</h5>
-            <p class="display-6 text-warning">+1.200</p>
-            <p class="text-muted">pessoas alcançadas</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
+    <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px; color:white; font-weight:400;">Transparência</h1>
     <hr>
     <div class="container my-5">
       <div class="osc-detalhes">
@@ -1050,8 +1019,8 @@ include 'conexao.php';
     </section>
   </div>
 
-  <footer style="background-color: <?php echo $cor3; ?>;">
-    <p>© 2025 OSC Exemplo - Todos os direitos reservados.</p>
+  <footer style="background-color: <?php echo $cor3; ?>; color:white;">
+    <p>© 2025 OSCTECH - Todos os direitos reservados.</p>
   </footer>
 
   <script>
