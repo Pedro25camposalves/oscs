@@ -56,7 +56,7 @@ $oq_faz = "Não informado";
 // --------------------------
 // INFORMAÇÕES GERAIS
 // --------------------------
-$logo_nobg = "../assets/images/oscs/691a9fb0e72df_assocest-logo5-nobg.png";
+$logo_nobg = "/oscs/src/assets/images/assocest-logo5-nobg.png";
 $endereco =  "AVENIDA TEREZA ANSELMO MASSARI <br> PARQUE BRASIL, Jacareí - SP<br> <strong>CEP:</strong> 12328-430";
 $email = "contato@osc.org.br";
 $tel = "(12) 3948-5753";
@@ -676,7 +676,7 @@ include 'conexao.php';
       <ul>
         <li><strong>Missão: </strong><?php echo $missao; ?></li>
       </ul>
-      <section id="equipe" class="my-5">
+      <section id="equipe" class="my-5" style="color:<?php echo $cor_font ?>;">
         <div class="container">
           <h2 class="text-center mb-4">Nossa Equipe</h2>
 
@@ -732,7 +732,7 @@ include 'conexao.php';
           </div>
         </section>
 
-        <div class="card shadow-sm border-0 my-3">
+        <div class="card shadow-sm border-0 my-3" style="color:<?php echo $cor_font ?>;">
           <div class="card-body bg-light">
             <div class="d-flex justify-content-between align-items-start">
               <h6 class="fw-bold mb-3">Atividade Econômica (CNAE):</h6>
