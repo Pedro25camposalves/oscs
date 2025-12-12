@@ -528,24 +528,24 @@
             <h3>Adicionar Envolvido</h3>
             <div style="margin-top:8px" class="grid">
                 <div>
-                    <label for="dirFoto">Foto</label>
-                    <input id="dirFoto" type="file" accept="image/*" />
+                    <label for="envFoto">Foto</label>
+                    <input id="envFoto" type="file" accept="image/*" />
                 </div>
                 <div>
-                    <label for="dirNome">Nome (*)</label>
-                    <input id="dirNome" type="text" required/>
+                    <label for="envNome">Nome (*)</label>
+                    <input id="envNome" type="text" required/>
                 </div>
                 <div>
-                    <label for="dirTelefone">Telefone</label>
-                    <input id="dirTelefone" inputmode="numeric" type="text" />
+                    <label for="envTelefone">Telefone</label>
+                    <input id="envTelefone" inputmode="numeric" type="text" />
                 </div>
                 <div>
-                    <label for="dirEmail">E-mail</label>
-                    <input id="dirEmail" type="text" />
+                    <label for="envEmail">E-mail</label>
+                    <input id="envEmail" type="text" />
                 </div>
                 <div>
-                    <label for="dirFunc">Função (*)</label>
-                    <input id="dirFunc" type="text" required/>
+                    <label for="envFuncao">Função (*)</label>
+                    <input id="envFuncao" type="text" required/>
                 </div>
             </div>
             <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
@@ -555,7 +555,7 @@
         </div>
     </div>
 
-        <!-- MODAL DAS ATIVIDADES -->
+    <!-- MODAL DAS ATIVIDADES -->
     <div id="modalAtividadeBackdrop" class="modal-backdrop">
         <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Atividade">
             <h3>Adicionar Atividade</h3>
@@ -682,35 +682,36 @@
 
         // ADICIONAR ENVOLVIDO
         async function addEnvolvido() {
-            const foto = qs('#dirFoto').files[0];
-            const nome = qs('#dirNome').value.trim();
-            const telefone = qs('#dirTelefone').value.trim();
-            const email = qs('#dirEmail').value.trim();
-            const func = qs('#dirFunc').value.trim();
-
-            if (!nome || !func) {
-                alert('Preencha nome e função do envolvido');
+            const fotoFile = qs('#envFoto').files[0] || null;
+            const nome     = qs('#envNome').value.trim();
+            const telefone = qs('#envTelefone').value.trim();
+            const email    = qs('#envEmail').value.trim();
+            const funcao   = qs('#envFuncao').value.trim();
+        
+            if (!nome || !funcao) {
+                alert('Preencha pelo menos o Nome e Função do envolvido!');
                 return;
             }
         
-            const fotoData = foto ? await readFileAsDataURL(foto) : null;
+            const fotoPreview = fotoFile ? await readFileAsDataURL(fotoFile) : null;
+        
             const envolvido = {
-                foto: fotoData,
+                fotoPreview,  // usado só no front
+                fotoFile,     // usado no FormData no saveData()
                 nome,
                 telefone,
                 email,
-                func
+                funcao
             };
         
             envolvidos.push(envolvido);
             renderEnvolvidos();
         
-            // reseta o modal
-            qs('#dirFoto').value = '';
-            qs('#dirNome').value = '';
-            qs('#dirTelefone').value = '';
-            qs('#dirEmail').value = '';
-            qs('#dirFunc').value = '';
+            qs('#envFoto').value = '';
+            qs('#envNome').value = '';
+            qs('#envTelefone').value = '';
+            qs('#envEmail').value = '';
+            qs('#envFuncao').value = '';
             modalBackdrop.style.display = 'none';
         }
         addEnvolvidoBtn.addEventListener('click', addEnvolvido);
@@ -718,17 +719,18 @@
         function renderEnvolvidos() {
             const list = qs('#listaEnvolvidos');
             list.innerHTML = '';
-                
+
             envolvidos.forEach((e, i) => {
                 const c = document.createElement('div');
                 c.className = 'envolvido-card';
+            
                 const img = document.createElement('img');
-                img.src = e.foto || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
-                
+                img.src = e.fotoPreview || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
+
                 const info = document.createElement('div');
                 info.innerHTML = `
                     <div style="font-weight:600">${escapeHtml(e.nome)}</div>
-                    <div class="small">${escapeHtml(e.func)}</div>
+                    <div class="small">${escapeHtml(e.funcao)}</div>
                 `;
             
                 const remove = document.createElement('button');
@@ -884,9 +886,23 @@
         // Texto do banner
         fd.append('labelBanner', qs("#labelBanner").value);
 
-        // Arrays (envolvidos + atividades) vão como JSON dentro de um campo de texto
-        fd.append('envolvidos',  JSON.stringify(envolvidos));
+        // Monta array de envolvidos SEM o File (apenas dados de texto)
+        const envolvidosParaEnvio = envolvidos.map(e => ({
+            nome: e.nome,
+            telefone: e.telefone,
+            email: e.email,
+            funcao: e.funcao
+        }));
+
+        fd.append('envolvidos', JSON.stringify(envolvidosParaEnvio));
         fd.append('atividades', JSON.stringify(atividades));
+
+        // Arquivos de foto de cada envolvido, em campos próprios
+        envolvidos.forEach((e, i) => {
+            if (e.fotoFile) {
+                fd.append(`fotoEnvolvido_${i}`, e.fotoFile);
+            }
+        });
 
         // Arquivos — aqui vai o binário mesmo
         if (logoSimples.files[0])  fd.append('logoSimples',  logoSimples.files[0]);
@@ -928,7 +944,7 @@
                 qua: quaColor.value,
             },
             labelBanner: qs("#labelBanner").value,
-            envolvidos,
+            envolvidos: envolvidosParaEnvio,
             atividades,
         };
 

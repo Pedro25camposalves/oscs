@@ -13,11 +13,13 @@ USE `osctech` ;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `osctech`.`ator` (
   `id` INT NOT NULL AUTO_INCREMENT,
+  `foto` VARCHAR(255) NULL DEFAULT NULL,
   `nome` VARCHAR(60) NULL DEFAULT NULL,
   `telefone` VARCHAR(11) NULL DEFAULT NULL,
   `email` VARCHAR(100) NULL DEFAULT NULL,
   PRIMARY KEY (`id`))
 ENGINE = InnoDB
+AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_general_ci;
 
@@ -45,6 +47,7 @@ CREATE TABLE IF NOT EXISTS `osctech`.`osc` (
   `status` VARCHAR(45) NULL DEFAULT NULL,
   `nome` VARCHAR(45) NULL DEFAULT NULL,
   `instagram` VARCHAR(45) NULL DEFAULT NULL,
+  `senha` VARCHAR(255) NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
 )
 ENGINE = InnoDB
@@ -71,6 +74,7 @@ CREATE TABLE IF NOT EXISTS `osctech`.`osc_atividade` (
     ON UPDATE CASCADE
 )
 ENGINE = InnoDB
+AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_general_ci;
 
@@ -121,6 +125,7 @@ CREATE TABLE IF NOT EXISTS `osctech`.`projeto` (
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB
+AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_general_ci;
 
@@ -178,6 +183,7 @@ CREATE TABLE IF NOT EXISTS `osctech`.`evento_oficina` (
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB
+AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_general_ci;
 
@@ -228,6 +234,7 @@ CREATE TABLE IF NOT EXISTS `osctech`.`cores` (
     ON UPDATE CASCADE
 )
 ENGINE = InnoDB
+AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_general_ci;
 
@@ -259,7 +266,7 @@ CREATE TABLE IF NOT EXISTS `osctech`.`documento` (
     ON UPDATE CASCADE
 )
 ENGINE = InnoDB
-AUTO_INCREMENT = 4
+AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_general_ci;
 
@@ -270,6 +277,7 @@ COLLATE = utf8mb4_general_ci;
 CREATE TABLE IF NOT EXISTS `osctech`.`edital` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `osc_id` INT NOT NULL,
+  `projeto_id` INT NOT NULL,
   `descricao` VARCHAR(45) NULL DEFAULT NULL,
   `caminho` VARCHAR(255) NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -280,6 +288,7 @@ CREATE TABLE IF NOT EXISTS `osctech`.`edital` (
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB
+AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_general_ci;
 
@@ -304,6 +313,7 @@ CREATE TABLE IF NOT EXISTS `osctech`.`imovel` (
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB
+AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_general_ci;
 
@@ -337,6 +347,7 @@ CREATE TABLE IF NOT EXISTS `osctech`.`template_web` (
     ON UPDATE CASCADE
 )
 ENGINE = InnoDB
+AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_general_ci;
 

@@ -146,16 +146,16 @@
     $atores_ids = [];
     $atores_osc_ids = [];
 
-    foreach ($envolvidos as $envolvido) {
-        $nome     = mysqli_real_escape_string($conn, $envolvido['nome'] ?? '');
+    foreach ($envolvidos as $idx => $envolvido) {
+        $nome     = mysqli_real_escape_string($conn, $envolvido['nome']     ?? '');
         $telefone = mysqli_real_escape_string($conn, $envolvido['telefone'] ?? '');
-        $email    = mysqli_real_escape_string($conn, $envolvido['email'] ?? '');
-        $func     = mysqli_real_escape_string($conn, $envolvido['func'] ?? '');
+        $email    = mysqli_real_escape_string($conn, $envolvido['email']    ?? '');
+        $funcao   = mysqli_real_escape_string($conn, $envolvido['funcao']   ?? '');
 
-        if ($nome === '' && $func === '') {
+        if ($nome === '' && $funcao === '') {
             continue;
         }
-
+    
         $sql_ator = "
             INSERT INTO ator (nome, telefone, email)
             VALUES ('$nome', '$telefone', '$email')
@@ -169,12 +169,29 @@
             exit;
         }
 
-        $ator_id = mysqli_insert_id($conn);
+        $ator_id = (int) mysqli_insert_id($conn);
         $atores_ids[] = $ator_id;
-    
+
+        // Cria o diretório próprio do ator no servidor
+        $atorDir     = __DIR__ . '/assets/atores/ator-' . $ator_id . '/';
+        $atorRelBase = '/assets/atores/ator-' . $ator_id . '/';
+
+        $fieldNameFoto = 'fotoEnvolvido_' . $idx;
+        $caminhoFotoRel = moverArquivo($fieldNameFoto, $atorDir, $atorRelBase);
+
+        if ($caminhoFotoRel !== null) {
+            $caminhoFotoRelSql = mysqli_real_escape_string($conn, $caminhoFotoRel);
+            $sql_update_foto = "
+                UPDATE ator
+                   SET foto = '$caminhoFotoRelSql'
+                 WHERE id = '$ator_id'
+            ";
+            mysqli_query($conn, $sql_update_foto);
+        }
+
         $sql_ator_osc = "
             INSERT INTO ator_osc (ator_id, osc_id, funcao)
-            VALUES ('$ator_id', '$osc_id', '$func')
+            VALUES ('$ator_id', '$osc_id', '$funcao')
         ";
 
         if (!mysqli_query($conn, $sql_ator_osc)) {
