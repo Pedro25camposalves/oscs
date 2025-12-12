@@ -106,7 +106,7 @@
 
     $baseOscDir   = __DIR__ . '/assets/oscs/osc-' . $osc_id;
     $imgDir       = $baseOscDir . '/imagens/';
-    $imgRelBase   = '/assets/oscs/osc-' . $osc_id . '/imagens/';
+    $imgRelBase   = 'assets/oscs/osc-' . $osc_id . '/imagens/';
 
     // --- Salva as ATIVIDADES da OSC (CNAE / Área / Subárea) ---
     $atividadesJson = $_POST['atividades'] ?? '[]';
@@ -147,48 +147,60 @@
     $atores_osc_ids = [];
 
     foreach ($envolvidos as $idx => $envolvido) {
+        $tipo            = $envolvido['tipo']    ?? 'novo';
+        $atorIdExistente = isset($envolvido['ator_id']) ? (int)$envolvido['ator_id'] : 0;
+
         $nome     = mysqli_real_escape_string($conn, $envolvido['nome']     ?? '');
         $telefone = mysqli_real_escape_string($conn, $envolvido['telefone'] ?? '');
         $email    = mysqli_real_escape_string($conn, $envolvido['email']    ?? '');
         $funcao   = mysqli_real_escape_string($conn, $envolvido['funcao']   ?? '');
 
-        if ($nome === '' && $funcao === '') {
-            continue;
-        }
-    
-        $sql_ator = "
-            INSERT INTO ator (nome, telefone, email)
-            VALUES ('$nome', '$telefone', '$email')
-        ";
+        // Decide se usamos ator existente ou criamos um novo
+        if ($atorIdExistente > 0 && $tipo === 'existente') {
+            // Somente vincula este ator à OSC
+            $ator_id = $atorIdExistente;
 
-        if (!mysqli_query($conn, $sql_ator)) {
-            echo json_encode([
-                'success' => false,
-                'error'   => 'Erro ao salvar o ator: ' . mysqli_error($conn)
-            ]);
-            exit;
-        }
+        } else {
+            // Cria um novo ator
+            if ($nome === '' && $funcao === '') {
+                continue;
+            }
 
-        $ator_id = (int) mysqli_insert_id($conn);
-        $atores_ids[] = $ator_id;
-
-        // Cria o diretório próprio do ator no servidor
-        $atorDir     = __DIR__ . '/assets/atores/ator-' . $ator_id . '/';
-        $atorRelBase = '/assets/atores/ator-' . $ator_id . '/';
-
-        $fieldNameFoto = 'fotoEnvolvido_' . $idx;
-        $caminhoFotoRel = moverArquivo($fieldNameFoto, $atorDir, $atorRelBase);
-
-        if ($caminhoFotoRel !== null) {
-            $caminhoFotoRelSql = mysqli_real_escape_string($conn, $caminhoFotoRel);
-            $sql_update_foto = "
-                UPDATE ator
-                   SET foto = '$caminhoFotoRelSql'
-                 WHERE id = '$ator_id'
+            $sql_ator = "
+                INSERT INTO ator (nome, telefone, email)
+                VALUES ('$nome', '$telefone', '$email')
             ";
-            mysqli_query($conn, $sql_update_foto);
+
+            if (!mysqli_query($conn, $sql_ator)) {
+                echo json_encode([
+                    'success' => false,
+                    'error'   => 'Erro ao salvar o ator: ' . mysqli_error($conn)
+                ]);
+                exit;
+            }
+
+            $ator_id = (int) mysqli_insert_id($conn);
+            $atores_ids[] = $ator_id;
+
+            // Cria o diretório próprio do ator no servidor
+            $atorDir     = __DIR__ . '/assets/atores/ator-' . $ator_id . '/';
+            $atorRelBase = 'assets/atores/ator-' . $ator_id . '/';
+
+            $fieldNameFoto = 'fotoEnvolvido_' . $idx;
+            $caminhoFotoRel = moverArquivo($fieldNameFoto, $atorDir, $atorRelBase);
+
+            if ($caminhoFotoRel !== null) {
+                $caminhoFotoRelSql = mysqli_real_escape_string($conn, $caminhoFotoRel);
+                $sql_update_foto = "
+                    UPDATE ator
+                       SET foto = '$caminhoFotoRelSql'
+                     WHERE id = '$ator_id'
+                ";
+                mysqli_query($conn, $sql_update_foto);
+            }
         }
 
+        // Em ambos os casos (novo ou existente), cria o vínculo com a OSC
         $sql_ator_osc = "
             INSERT INTO ator_osc (ator_id, osc_id, funcao)
             VALUES ('$ator_id', '$osc_id', '$funcao')

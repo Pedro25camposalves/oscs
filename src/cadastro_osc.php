@@ -526,28 +526,61 @@
     <div id="modalBackdrop" class="modal-backdrop">
         <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Envolvido">
             <h3>Adicionar Envolvido</h3>
-            <div style="margin-top:8px" class="grid">
-                <div>
-                    <label for="envFoto">Foto</label>
-                    <input id="envFoto" type="file" accept="image/*" />
-                </div>
-                <div>
-                    <label for="envNome">Nome (*)</label>
-                    <input id="envNome" type="text" required/>
-                </div>
-                <div>
-                    <label for="envTelefone">Telefone</label>
-                    <input id="envTelefone" inputmode="numeric" type="text" />
-                </div>
-                <div>
-                    <label for="envEmail">E-mail</label>
-                    <input id="envEmail" type="text" />
-                </div>
-                <div>
-                    <label for="envFuncao">Função (*)</label>
-                    <input id="envFuncao" type="text" required/>
+
+            <!-- Modo de seleção: novo ou existente -->
+            <div class="row" style="margin-top:8px; margin-bottom:8px">
+                <label class="label-inline">
+                    <input type="radio" name="envModo" value="novo" checked />
+                    Novo envolvido
+                </label>
+                <label class="label-inline">
+                    <input type="radio" name="envModo" value="existente" />
+                    Usar envolvido existente
+                </label>
+            </div>
+
+            <!-- Container: NOVO ENVOLVIDO -->
+            <div id="envNovoContainer">
+                <div class="grid">
+                    <div>
+                        <label for="envFoto">Foto</label>
+                        <input id="envFoto" type="file" accept="image/*" />
+                    </div>
+                    <div>
+                        <label for="envNome">Nome (*)</label>
+                        <input id="envNome" type="text" required/>
+                    </div>
+                    <div>
+                        <label for="envTelefone">Telefone</label>
+                        <input id="envTelefone" inputmode="numeric" type="text" />
+                    </div>
+                    <div>
+                        <label for="envEmail">E-mail</label>
+                        <input id="envEmail" type="text" />
+                    </div>
+                    <div>
+                        <label for="envFuncao">Função (*)</label>
+                        <input id="envFuncaoNovo" type="text" required/>
+                    </div>
                 </div>
             </div>
+
+            <!-- Container: ENVOLVIDO EXISTENTE -->
+            <div id="envExistenteContainer" style="display:none; margin-top:8px">
+                <div class="grid">
+                    <div>
+                        <label for="envAtorExistente">Envolvido já cadastrado</label>
+                        <select id="envAtorExistente">
+                            <option value="">Selecione um envolvido...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="envFuncao">Função nesta OSC (*)</label>
+                        <input id="envFuncaoExistente" type="text" required/>
+                    </div>
+                </div>
+            </div>
+
             <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
                 <button class="btn btn-ghost" id="closeEnvolvidoModal">Cancelar</button>
                 <button class="btn btn-primary" id="addEnvolvidoBtn">Adicionar</button>
@@ -605,6 +638,7 @@
         const swQua = qs('#swQua');
 
         const envolvidos = [];
+        let atoresCache = [];
         const atividades = [];
 
         function readFileAsDataURL(file) {
@@ -670,48 +704,156 @@
         const closeEnvolvidoModal = qs('#closeEnvolvidoModal');
         const addEnvolvidoBtn = qs('#addEnvolvidoBtn');
 
-        openEnvolvidoModal.addEventListener('click', () => {
-            modalBackdrop.style.display = 'flex'
-        });
-        closeEnvolvidoModal.addEventListener('click', () => {
-            modalBackdrop.style.display = 'none'
-        });
-        modalBackdrop.addEventListener('click', (e) => {
-            if (e.target === modalBackdrop) modalBackdrop.style.display = 'none'
-        });
+        // modo de seleção novo/existente
+        const envModoRadios         = qsa('input[name="envModo"]');
+        const envNovoContainer      = qs('#envNovoContainer');
+        const envExistenteContainer = qs('#envExistenteContainer');
+        const envAtorExistente      = qs('#envAtorExistente');
 
-        // ADICIONAR ENVOLVIDO
-        async function addEnvolvido() {
-            const fotoFile = qs('#envFoto').files[0] || null;
-            const nome     = qs('#envNome').value.trim();
-            const telefone = qs('#envTelefone').value.trim();
-            const email    = qs('#envEmail').value.trim();
-            const funcao   = qs('#envFuncao').value.trim();
+        openEnvolvidoModal.addEventListener('click', () => {
+            modalBackdrop.style.display = 'flex';
         
-            if (!nome || !funcao) {
-                alert('Preencha pelo menos o Nome e Função do envolvido!');
-                return;
-            }
-        
-            const fotoPreview = fotoFile ? await readFileAsDataURL(fotoFile) : null;
-        
-            const envolvido = {
-                fotoPreview,  // usado só no front
-                fotoFile,     // usado no FormData no saveData()
-                nome,
-                telefone,
-                email,
-                funcao
-            };
-        
-            envolvidos.push(envolvido);
-            renderEnvolvidos();
+            envModoRadios.forEach(r => r.checked = (r.value === 'novo'));
+            envNovoContainer.style.display = 'block';
+            envExistenteContainer.style.display = 'none';
         
             qs('#envFoto').value = '';
             qs('#envNome').value = '';
             qs('#envTelefone').value = '';
             qs('#envEmail').value = '';
-            qs('#envFuncao').value = '';
+            const funcaoNovoInput = qs('#envFuncaoNovo');
+            const funcaoExistenteInput = qs('#envFuncaoExistente');
+            if (funcaoNovoInput) funcaoNovoInput.value = '';
+            if (funcaoExistenteInput) funcaoExistenteInput.value = '';
+            envAtorExistente.value = '';
+        
+            loadAtoresList();
+        });
+
+        envModoRadios.forEach(r => {
+            r.addEventListener('change', () => {
+                const modoSelecionado = [...envModoRadios].find(x => x.checked)?.value || 'novo';
+            
+                if (modoSelecionado === 'existente') {
+                    envNovoContainer.style.display = 'none';
+                    envExistenteContainer.style.display = 'block';
+                    loadAtoresList(); // garante lista atualizada
+                } else {
+                    envNovoContainer.style.display = 'block';
+                    envExistenteContainer.style.display = 'none';
+                }
+            });
+        });
+
+        closeEnvolvidoModal.addEventListener('click', () => {
+            modalBackdrop.style.display = 'none'
+        });
+
+        modalBackdrop.addEventListener('click', (e) => {
+            if (e.target === modalBackdrop) modalBackdrop.style.display = 'none'
+        });
+
+        // Carrega lista de atores existentes para o <select> do modal
+        async function loadAtoresList() {
+            try {
+                const resp = await fetch('ajax_listar_atores.php');
+                const result = await resp.json();
+            
+                envAtorExistente.innerHTML = '<option value="">Selecione um envolvido...</option>';
+                atoresCache = [];
+            
+                if (result.success && Array.isArray(result.data)) {
+                    atoresCache = result.data;
+                    result.data.forEach(a => {
+                        const opt = document.createElement('option');
+                        opt.value = a.id;
+                        const labelEmail = a.email ? ` - ${a.email}` : '';
+                        opt.textContent = `${a.nome}${labelEmail}`;
+                        envAtorExistente.appendChild(opt);
+                    });
+                } else {
+                    console.error(result.error || 'Falha ao listar atores');
+                }
+            } catch (e) {
+                console.error('Erro ao carregar lista de atores:', e);
+                alert('Erro ao carregar lista de envolvidos existentes.');
+            }
+        }
+
+        // ADICIONAR ENVOLVIDO
+        async function addEnvolvido() {
+            const modo = [...envModoRadios].find(r => r.checked)?.value || 'novo';
+        
+            if (modo === 'existente') {
+                const atorId = parseInt(envAtorExistente.value, 10);
+                const funcao = qs('#envFuncaoExistente').value.trim();
+            
+                if (!atorId || !funcao) {
+                    alert('Selecione um envolvido existente e informe a função.');
+                    return;
+                }
+            
+                const ator = atoresCache.find(a => a.id === atorId);
+                if (!ator) {
+                    alert('Envolvido não encontrado na lista.');
+                    return;
+                }
+            
+                const envolvido = {
+                    tipo: 'existente',
+                    atorId,
+                    nome: ator.nome || '',
+                    telefone: ator.telefone || '',
+                    email: ator.email || '',
+                    funcao,
+                    fotoPreview: ator.foto || null,  // se tiver caminho da foto
+                    fotoFile: null                   // sem upload novo
+                };
+            
+                envolvidos.push(envolvido);
+            
+            } else {
+                // modo: novo
+                const fotoFile = qs('#envFoto').files[0] || null;
+                const nome     = qs('#envNome').value.trim();
+                const telefone = qs('#envTelefone').value.trim();
+                const email    = qs('#envEmail').value.trim();
+                const funcao   = qs('#envFuncaoNovo').value.trim();
+            
+                if (!nome || !funcao) {
+                    alert('Preencha pelo menos o Nome e a Função do envolvido!');
+                    return;
+                }
+            
+                const fotoPreview = fotoFile ? await readFileAsDataURL(fotoFile) : null;
+            
+                const envolvido = {
+                    tipo: 'novo',
+                    atorId: null,
+                    fotoPreview,
+                    fotoFile,
+                    nome,
+                    telefone,
+                    email,
+                    funcao
+                };
+            
+                envolvidos.push(envolvido);
+            }
+        
+            renderEnvolvidos();
+        
+            // Reseta campos do modal
+            qs('#envFoto').value = '';
+            qs('#envNome').value = '';
+            qs('#envTelefone').value = '';
+            qs('#envEmail').value = '';
+            const funcaoNovoInput = qs('#envFuncaoNovo');
+            const funcaoExistenteInput = qs('#envFuncaoExistente');
+            if (funcaoNovoInput) funcaoNovoInput.value = '';
+            if (funcaoExistenteInput) funcaoExistenteInput.value = '';
+            envAtorExistente.value = '';
+        
             modalBackdrop.style.display = 'none';
         }
         addEnvolvidoBtn.addEventListener('click', addEnvolvido);
@@ -886,8 +1028,10 @@
         // Texto do banner
         fd.append('labelBanner', qs("#labelBanner").value);
 
-        // Monta array de envolvidos SEM o File (apenas dados de texto)
+        // Monta array de envolvidos para envio
         const envolvidosParaEnvio = envolvidos.map(e => ({
+            tipo: e.tipo || 'novo',       // 'novo' ou 'existente'
+            ator_id: e.atorId || null,   // id do ator se já existir
             nome: e.nome,
             telefone: e.telefone,
             email: e.email,
