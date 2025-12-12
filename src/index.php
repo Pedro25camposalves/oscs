@@ -32,12 +32,12 @@ $valores = "Ética, transparência, empatia, compromisso social e respeito às p
 // SOBRE
 // --------------------------
 $cnae = "Atividades de recreação e lazer não especificadas anteriormente";
-$historia =  "Nossa OSC atua desde 2010, buscando fortalecer comunidades por meio de projetos de capacitação, apoio social e desenvolvimento sustentável.
-      Nosso time é formado por profissionais e voluntários comprometidos com a transparência, ética e eficiência na gestão dos recursos.
-      🏛️ Como Surgiu a OSC
-        A Associação Esther Siqueira Tillmann (ASSOCEST) nasceu do sonho de um grupo de pessoas comprometidas com a valorização da cultura, da educação e do desenvolvimento social. Inspiradas pelo legado de Esther Siqueira Tillmann — uma mulher reconhecida por seu trabalho comunitário e dedicação à preservação das tradições locais —, essas pessoas decidiram transformar a admiração em ação.
-        O projeto começou de forma simples, com encontros em espaços comunitários e pequenas oficinas voltadas à transmissão de saberes artesanais e culturais. Com o tempo, o impacto positivo dessas iniciativas chamou a atenção de parceiros, voluntários e instituições públicas, permitindo que a associação se estruturasse oficialmente como uma Organização da Sociedade Civil (OSC).
-        Desde então, a ASSOCEST vem ampliando suas ações e consolidando-se como referência em projetos que unem patrimônio cultural, educação e transformação social. Hoje, a entidade atua em diversas frentes, fortalecendo vínculos comunitários, incentivando a economia criativa e promovendo o reconhecimento das práticas culturais como instrumentos de identidade e cidadania.";
+$historia =  "A <strong>Associação Esther Siqueira Tillmann (ASSOCEST)</strong> atua desde 2010 fortalecendo comunidades por meio de projetos de capacitação, apoio social e desenvolvimento sustentável. Nossa equipe reúne profissionais e voluntários comprometidos com transparência, ética e gestão responsável dos recursos.
+
+<br><br>A OSC surgiu do ideal de um grupo inspirado pelo trabalho comunitário de Esther Siqueira Tillmann, reconhecida por preservar tradições locais e promover ações sociais. As atividades começaram em encontros comunitários e oficinas voltadas aos saberes artesanais e culturais. O impacto dessas iniciativas atraiu parceiros e instituições públicas, permitindo a formalização da entidade e a expansão dos projetos.
+
+<br><br>Hoje, a ASSOCEST é referência em ações que integram patrimônio cultural, educação e transformação social, fortalecendo vínculos comunitários, incentivando a economia criativa e valorizando práticas culturais como instrumentos de identidade e cidadania.
+<br><br>";
 $area_atuacao1 = "Cultura e recreação";
 $subarea1 = "Não Informado";
 $area_atuacao2 = "Cultura e recreação";
@@ -56,7 +56,7 @@ $oq_faz = "Não informado";
 // --------------------------
 // INFORMAÇÕES GERAIS
 // --------------------------
-$logo_nobg = "/oscs/src/assets/images/assocest-logo5-nobg.png";
+$logo_nobg = "oscs/src/assets/images/assocest-logo5-nobg.png";
 $endereco =  "AVENIDA TEREZA ANSELMO MASSARI <br> PARQUE BRASIL, Jacareí - SP<br> <strong>CEP:</strong> 12328-430";
 $email = "contato@osc.org.br";
 $tel = "(12) 3948-5753";
@@ -112,7 +112,7 @@ include 'conexao.php';
 
     .nav-link {
       font-size: 1.2rem;
-      color: black;
+      color: <?php echo $cor_font; ?>;
     }
 
     /* ===========================================================
@@ -552,7 +552,7 @@ include 'conexao.php';
                   <div class="card border-0 shadow-sm h-100">
                     <img src="/oscs/src/assets/images/inst-6.webp" class="card-img-top" alt="Evento 2">
                     <div class="card-body">
-                      <h6 class="card-title fw-semibold">O Dentista chegou!</h6>
+                      <h6 class="card-title fw-semibold" style="color:<?php echo $cor_font ?>;">O Dentista chegou!</h6>
                       <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 20/02/2025</p>
                     </div>
                   </div>
@@ -563,7 +563,7 @@ include 'conexao.php';
                   <div class="card border-0 shadow-sm h-100">
                     <img src="/oscs/src/assets/images/inst-7.webp" class="card-img-top" alt="Evento 3">
                     <div class="card-body">
-                      <h6 class="card-title fw-semibold">Celebrando os 26 anos de Promovida</h6>
+                      <h6 class="card-title fw-semibold" style="color:<?php echo $cor_font ?>;">Celebrando os 26 anos de Promovida</h6>
                       <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 20/08/2024</p>
                     </div>
                   </div>
@@ -574,7 +574,7 @@ include 'conexao.php';
                   <div class="card border-0 shadow-sm h-100">
                     <img src="/oscs/src/assets/images/inst-8.webp" class="card-img-top" alt="Evento 4">
                     <div class="card-body">
-                      <h6 class="card-title fw-semibold">Evento Solidário</h6>
+                      <h6 class="card-title fw-semibold" style="color:<?php echo $cor_font ?>;">Evento Solidário</h6>
                       <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 15/01/2024</p>
                     </div>
                   </div>
@@ -624,7 +624,7 @@ include 'conexao.php';
             <div class="card mb-3 shadow-sm card-mvv">
               <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
                 <i class="bi bi-bullseye text-warning fs-2 mb-2"></i>
-                <h5 class="fw-bold">Missão</h5>
+                <h5 class="fw-bold" style="color:<?php echo $cor_font ?>;">Missão</h5>
                 <p><?php echo $missao ?></p>
               </div>
             </div>
@@ -632,7 +632,7 @@ include 'conexao.php';
             <div class="card mb-3 shadow-sm card-mvv">
               <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
                 <i class="bi bi-eye text-success fs-2 mb-2"></i>
-                <h5 class="fw-bold">Visão</h5>
+                <h5 class="fw-bold" style="color:<?php echo $cor_font ?>;">Visão</h5>
                 <p><?php echo $visao ?></p>
               </div>
             </div>
@@ -640,7 +640,7 @@ include 'conexao.php';
             <div class="card mb-3 shadow-sm card-mvv">
               <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
                 <i class="bi bi-heart-fill text-danger fs-2 mb-2"></i>
-                <h5 class="fw-bold">Valores</h5>
+                <h5 class="fw-bold" style="color:<?php echo $cor_font ?>;">Valores</h5>
                 <p><?php echo $valores ?></p>
               </div>
             </div>
@@ -670,13 +670,13 @@ include 'conexao.php';
 
   <!-- Sobre -->
   <div id="sobre" class="section">
-    <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px;">Sobre Nós</h1>
-    <div class="container my-5">
+    <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px; color:white; font-weight:400; text-align:center;">Sobre Nós</h1>
+    <div class="container my-5" style="text-align: justify;">
       <p> <?php echo $historia; ?> </p>
       <ul>
         <li><strong>Missão: </strong><?php echo $missao; ?></li>
       </ul>
-      <section id="equipe" class="my-5">
+      <section id="equipe" class="my-5" style="color:<?php echo $cor_font ?>;">
         <div class="container">
           <h2 class="text-center mb-4">Nossa Equipe</h2>
 
@@ -732,7 +732,7 @@ include 'conexao.php';
           </div>
         </section>
 
-        <div class="card shadow-sm border-0 my-3">
+        <div class="card shadow-sm border-0 my-3" style="color:<?php echo $cor_font ?>;">
           <div class="card-body bg-light">
             <div class="d-flex justify-content-between align-items-start">
               <h6 class="fw-bold mb-3">Atividade Econômica (CNAE):</h6>
@@ -770,38 +770,7 @@ include 'conexao.php';
 
   <!-- Transparência -->
   <div id="transparencia" class="section">
-    <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px;">Transparência</h1>
-
-    <div class="row mt-4">
-      <div class="col-md-4">
-        <div class="card shadow-sm">
-          <div class="card-body text-center">
-            <h5 class="card-title">Recursos Recebidos</h5>  
-            <p class="display-6 text-success">R$ 250.000</p>
-            <p class="text-muted">em 2024</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card shadow-sm">
-          <div class="card-body text-center">
-            <h5 class="card-title">Projetos Ativos</h5>
-            <p class="display-6 text-primary">6</p>
-            <p class="text-muted">em andamento</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card shadow-sm">
-          <div class="card-body text-center">
-            <h5 class="card-title">Beneficiados</h5>
-            <p class="display-6 text-warning">+1.200</p>
-            <p class="text-muted">pessoas alcançadas</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
+    <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px; color:white; font-weight:400; text-align:center;">Transparência</h1>
     <hr>
     <div class="container my-5">
       <div class="osc-detalhes">
@@ -881,6 +850,7 @@ include 'conexao.php';
               Visualizar Documento
             </button>
           </div>
+          
         </div>
 
         <!-- 2 div Certidões -->
@@ -1050,8 +1020,8 @@ include 'conexao.php';
     </section>
   </div>
 
-  <footer style="background-color: <?php echo $cor3; ?>;">
-    <p>© 2025 OSC Exemplo - Todos os direitos reservados.</p>
+  <footer style="background-color: <?php echo $cor3; ?>; color:white;">
+    <p>© 2025 OSCTECH - Todos os direitos reservados.</p>
   </footer>
 
   <script>
