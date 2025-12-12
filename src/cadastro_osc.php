@@ -1,3 +1,7 @@
+<?php
+require 'autenticacao.php';
+?>
+
 <!doctype html>
 <html lang="pt-BR">
 
