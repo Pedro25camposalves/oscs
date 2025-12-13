@@ -3,6 +3,8 @@ conexao.php
 .gitignore
 .env
 ./src/config.php
+/src/assets/atores/
+/src/assets/oscs/
 docker-compose.yml
 error.log
 config.example.php
