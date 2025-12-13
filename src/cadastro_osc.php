@@ -1,6 +1,8 @@
 <?php
-require 'autenticacao.php';
-?>
+    $TIPOS_PERMITIDOS = ['OSC_TECH_ADMIN']; // só usuário OscTech admin
+    $RESPOSTA_JSON    = false;              // resposta é página HTML
+    require 'autenticacao.php';
+    ?>
 
 <!doctype html>
 <html lang="pt-BR">
@@ -243,13 +245,46 @@ require 'autenticacao.php';
             border-radius: 8px;
             font-size: 12px
         }
+
+        .header-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logout-link {
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid #ddd;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            background: #fff;
+            color: #444;
+            cursor: pointer;
+        }
+
+        .logout-link:hover {
+            background: #f0f0f0;
+        }
     </style>
 </head>
 
 <body>
     <header>
         <h1>Painel de Controle — Cadastro de OSC</h1>
-        <div class="muted">Administração</div>
+        <div class="header-right">
+            <div class="muted">
+                <?php if (!empty($_SESSION['nome'])): ?>
+                    Olá, <?= htmlspecialchars($_SESSION['nome']) ?>
+                <?php else: ?>
+                    Administração
+                <?php endif; ?>
+            </div>
+
+            <a href="logout.php" class="logout-link">Sair</a>
+        </div>
     </header>
 
     <main>

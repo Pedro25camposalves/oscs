@@ -1,4 +1,8 @@
 <?php
+    $TIPOS_PERMITIDOS = ['OSC_TECH_ADMIN']; // só OscTech admin pode criar OSC
+    $RESPOSTA_JSON    = true;               // endpoint retorna JSON
+    require 'autenticacao.php';
+
     include 'conexao.php';
 
     // Cria a estrutura de diretórios da OSC:
