@@ -121,6 +121,7 @@ include 'conexao.php';
     .card-body {
       background: <?php echo $background ?>;
       border-radius: 6px;
+      color: <?php echo $cor_font; ?>;
     }
 
     #acontecimentos .card img {
