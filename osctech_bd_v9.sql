@@ -244,21 +244,23 @@ COLLATE = utf8mb4_general_ci;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `osctech`.`documento` (
   `id_documento` INT NOT NULL AUTO_INCREMENT,
-  `osc_id` INT NOT NULL,
-  `projeto_id` INT NULL DEFAULT NULL,
-  `tipo` VARCHAR(45) NOT NULL,
-  `documento` TINYTEXT NOT NULL,
+  `osc_id`       INT NOT NULL,
+  `projeto_id`   INT NULL DEFAULT NULL,
+  `categoria` ENUM('INSTITUCIONAL','CERTIDAO','CONTABIL') NOT NULL,
+  `subtipo`   VARCHAR(45) NOT NULL,          -- ESTATUTO, ATA, CND_FEDERAL, CND_ESTADUAL, CND_MUNICIPAL, FGTS, TRABALHISTA, BALANCO_PATRIMONIAL, DRE
+  `ano_referencia` YEAR NULL,                -- usado pra BALANCO_PATRIMONIAL e DRE
+  `documento`   TINYTEXT NOT NULL,           
+  `data_upload` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_documento`),
-
   INDEX `fk_documento_osc_idx` (`osc_id` ASC),
   INDEX `fk_documento_projeto_idx` (`projeto_id` ASC, `osc_id` ASC),
-
+  INDEX `idx_categoria_subtipo` (`categoria` ASC, `subtipo` ASC),
+  INDEX `idx_ano_referencia` (`ano_referencia` ASC),
   CONSTRAINT `fk_documento_osc`
     FOREIGN KEY (`osc_id`)
     REFERENCES `osctech`.`osc` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-
   CONSTRAINT `fk_documento_projeto`
     FOREIGN KEY (`projeto_id`, `osc_id`)
     REFERENCES `osctech`.`projeto` (`id`, `osc_id`)

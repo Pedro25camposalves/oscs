@@ -596,6 +596,77 @@
                 </div>
             </div>
 
+            <!-- SEÇÃO X: DOCUMENTOS DA OSC -->
+            <div style="margin-top:16px" class="card">
+                <h2>Documentos da OSC</h2>
+                <div class="small">
+                    Envie os documentos institucionais, certidões e demonstrações contábeis mais recentes da OSC.
+                </div>
+                <div class="divider"></div>
+
+                <!-- 1. INSTITUCIONAIS -->
+                <h3 class="section-title">1. Institucionais</h3>
+                <div class="grid cols-2">
+                    <div>
+                        <label for="docEstatuto">Estatuto</label>
+                        <input id="docEstatuto" type="file" accept=".pdf,image/*" />
+                    </div>
+                    <div>
+                        <label for="docAta">Ata</label>
+                        <input id="docAta" type="file" accept=".pdf,image/*" />
+                    </div>
+                </div>
+
+                <!-- 2. CERTIDÕES -->
+                <h3 class="section-title" style="margin-top:16px">2. Certidões</h3>
+                <div class="grid cols-3">
+                    <div>
+                        <label for="docCndFederal">CND Federal</label>
+                        <input id="docCndFederal" type="file" accept=".pdf,image/*" />
+                    </div>
+                    <div>
+                        <label for="docCndEstadual">CND Estadual</label>
+                        <input id="docCndEstadual" type="file" accept=".pdf,image/*" />
+                    </div>
+                    <div>
+                        <label for="docCndMunicipal">CND Municipal</label>
+                        <input id="docCndMunicipal" type="file" accept=".pdf,image/*" />
+                    </div>
+                    <div>
+                        <label for="docFgts">FGTS</label>
+                        <input id="docFgts" type="file" accept=".pdf,image/*" />
+                    </div>
+                    <div>
+                        <label for="docTrabalhista">Trabalhista</label>
+                        <input id="docTrabalhista" type="file" accept=".pdf,image/*" />
+                    </div>
+                </div>
+
+                <!-- 3. Contábeis -->
+                <h3 class="section-title" style="margin-top:16px">3. Contábeis</h3>
+                <!-- Balanços Patrimoniais -->
+                <div class="small">
+                    Adicione um ou mais Balanços Patrimoniais, informando o ano de referência.
+                </div>
+                <div class="envolvidos-list" id="balancosList"></div>
+                <div style="margin-top:10px; margin-bottom:16px;">
+                    <button type="button" class="btn btn-ghost" id="openBalancoModal">
+                        Adicionar Balanço Patrimonial
+                    </button>
+                </div>
+
+                <!-- DRE -->
+                <div class="small">
+                    Adicione uma DRE para cada ano de referência.
+                </div>
+                <div class="envolvidos-list" id="dresList"></div>
+                <div style="margin-top:10px;">
+                    <button type="button" class="btn btn-ghost" id="openDreModal">
+                        Adicionar DRE
+                    </button>
+                </div>
+            </div>
+
             <!-- BOTÕES -->
             <div style="margin-top:16px" class="card">
                 <footer>
@@ -711,6 +782,53 @@
         </div>
     </div>
 
+    <!-- MODAL DOS BALANÇOS PATRIMONIAIS -->
+    <div id="modalBalancoBackdrop" class="modal-backdrop">
+        <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Balanço Patrimonial">
+            <h3>Adicionar Balanço Patrimonial</h3>
+
+            <div style="margin-top:8px" class="grid">
+                <div>
+                    <label for="balancoAno">Ano de referência (*)</label>
+                    <input id="balancoAno" type="text" inputmode="numeric" placeholder="Ex: 2024" required />
+                </div>
+                <div>
+                    <label for="balancoArquivo">Arquivo (PDF ou imagem) (*)</label>
+                    <input id="balancoArquivo" type="file" accept=".pdf,image/*" required />
+                </div>
+            </div>
+
+            <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+                <button type="button" class="btn btn-ghost" id="closeBalancoModal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="addBalancoBtn">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DAS DREs -->
+    <div id="modalDreBackdrop" class="modal-backdrop">
+        <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar DRE">
+            <h3>Adicionar DRE</h3>
+
+            <div style="margin-top:8px" class="grid">
+                <div>
+                    <label for="dreAno">Ano de referência (*)</label>
+                    <input id="dreAno" type="text" inputmode="numeric" placeholder="Ex: 2024" required />
+                </div>
+                <div>
+                    <label for="dreArquivo">Arquivo (PDF ou imagem) (*)</label>
+                    <input id="dreArquivo" type="file" accept=".pdf,image/*" required />
+                </div>
+            </div>
+
+            <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+                <button type="button" class="btn btn-ghost" id="closeDreModal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="addDreBtn">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         const qs = s => document.querySelector(s);
         const qsa = s => document.querySelectorAll(s);
@@ -758,6 +876,185 @@
         const envolvidos = [];
         let atoresCache = [];
         const atividades = [];
+        const balancos   = []; // { ano, file }
+        const dres       = []; // { ano, file }
+
+        // modal balanços patrimoniais
+        const modalBalancoBackdrop = qs('#modalBalancoBackdrop');
+        const openBalancoModal     = qs('#openBalancoModal');
+        const closeBalancoModal    = qs('#closeBalancoModal');
+        const addBalancoBtn        = qs('#addBalancoBtn');
+
+        if (openBalancoModal) {
+            openBalancoModal.addEventListener('click', () => {
+                modalBalancoBackdrop.style.display = 'flex';
+            });
+        }
+
+        if (closeBalancoModal) {
+            closeBalancoModal.addEventListener('click', () => {
+                modalBalancoBackdrop.style.display = 'none';
+            });
+        }
+
+        if (modalBalancoBackdrop) {
+            modalBalancoBackdrop.addEventListener('click', (e) => {
+                if (e.target === modalBalancoBackdrop) {
+                    modalBalancoBackdrop.style.display = 'none';
+                }
+            });
+        }
+
+        function limparCamposBalanco() {
+            const anoInput = qs('#balancoAno');
+            const arqInput = qs('#balancoArquivo');
+            if (anoInput) anoInput.value = '';
+            if (arqInput) arqInput.value = '';
+        }
+
+        function renderBalancos() {
+            const list = qs('#balancosList');
+            if (!list) return;
+        
+            list.innerHTML = '';
+        
+            balancos.forEach((b, i) => {
+                const c = document.createElement('div');
+                c.className = 'envolvido-card';
+            
+                const info = document.createElement('div');
+                info.innerHTML = `
+                    <div style="font-weight:600">Ano: ${escapeHtml(b.ano)}</div>
+                    <div class="small">Arquivo: ${escapeHtml(b.file?.name || '')}</div>
+                `;
+            
+                const remove = document.createElement('button');
+                remove.className = 'btn';
+                remove.textContent = '✕';
+                remove.style.padding = '6px 8px';
+                remove.style.marginLeft = '8px';
+                remove.addEventListener('click', () => {
+                    balancos.splice(i, 1);
+                    renderBalancos();
+                });
+            
+                c.appendChild(info);
+                c.appendChild(remove);
+                list.appendChild(c);
+            });
+        }
+
+        function addBalanco() {
+            const anoInput = qs('#balancoAno');
+            const arqInput = qs('#balancoArquivo');
+        
+            const ano = anoInput ? anoInput.value.trim() : '';
+            const file = arqInput && arqInput.files ? arqInput.files[0] : null;
+        
+            if (!ano || !file) {
+                alert('Informe o ano e selecione o arquivo do Balanço Patrimonial.');
+                return;
+            }
+        
+            balancos.push({ ano, file });
+        
+            renderBalancos();
+            limparCamposBalanco();
+            modalBalancoBackdrop.style.display = 'none';
+        }
+
+        if (addBalancoBtn) {
+            addBalancoBtn.addEventListener('click', addBalanco);
+        }
+
+        // ===== MODAL DRE =====
+        const modalDreBackdrop = qs('#modalDreBackdrop');
+        const openDreModal     = qs('#openDreModal');
+        const closeDreModal    = qs('#closeDreModal');
+        const addDreBtn        = qs('#addDreBtn');
+
+        if (openDreModal) {
+            openDreModal.addEventListener('click', () => {
+                modalDreBackdrop.style.display = 'flex';
+            });
+        }
+
+        if (closeDreModal) {
+            closeDreModal.addEventListener('click', () => {
+                modalDreBackdrop.style.display = 'none';
+            });
+        }
+
+        if (modalDreBackdrop) {
+            modalDreBackdrop.addEventListener('click', (e) => {
+                if (e.target === modalDreBackdrop) {
+                    modalDreBackdrop.style.display = 'none';
+                }
+            });
+        }
+
+        function limparCamposDre() {
+            const anoInput = qs('#dreAno');
+            const arqInput = qs('#dreArquivo');
+            if (anoInput) anoInput.value = '';
+            if (arqInput) arqInput.value = '';
+        }
+
+        function renderDres() {
+            const list = qs('#dresList');
+            if (!list) return;
+        
+            list.innerHTML = '';
+        
+            dres.forEach((d, i) => {
+                const c = document.createElement('div');
+                c.className = 'envolvido-card';
+            
+                const info = document.createElement('div');
+                info.innerHTML = `
+                    <div style="font-weight:600">Ano: ${escapeHtml(d.ano)}</div>
+                    <div class="small">Arquivo: ${escapeHtml(d.file?.name || '')}</div>
+                `;
+            
+                const remove = document.createElement('button');
+                remove.className = 'btn';
+                remove.textContent = '✕';
+                remove.style.padding = '6px 8px';
+                remove.style.marginLeft = '8px';
+                remove.addEventListener('click', () => {
+                    dres.splice(i, 1);
+                    renderDres();
+                });
+            
+                c.appendChild(info);
+                c.appendChild(remove);
+                list.appendChild(c);
+            });
+        }
+
+        function addDre() {
+            const anoInput = qs('#dreAno');
+            const arqInput = qs('#dreArquivo');
+        
+            const ano  = anoInput ? anoInput.value.trim() : '';
+            const file = arqInput && arqInput.files ? arqInput.files[0] : null;
+        
+            if (!ano || !file) {
+                alert('Informe o ano e selecione o arquivo da DRE.');
+                return;
+            }
+        
+            dres.push({ ano, file });
+        
+            renderDres();
+            limparCamposDre();
+            modalDreBackdrop.style.display = 'none';
+        }
+
+        if (addDreBtn) {
+            addDreBtn.addEventListener('click', addDre);
+        }
+
 
         function validarSenhaLive() {
             const s1 = usuarioSenha.value;
@@ -1329,6 +1626,8 @@
             labelBanner: qs("#labelBanner").value,
             envolvidos: envolvidosParaEnvio,
             atividades,
+            balancos: balancos.map(b => ({ ano: b.ano, fileName: b.file?.name || '' })),
+            dres: dres.map(d => ({ ano: d.ano, fileName: d.file?.name || '' })),
         };
 
         const jsonPreview = JSON.stringify(previewData, null, 2);
@@ -1382,8 +1681,14 @@
 
         envolvidos.length = 0;
         atividades.length = 0;
+        balancos.length   = 0;
+        dres.length       = 0;
+
         renderEnvolvidos();
         renderAtividades();
+        renderBalancos(); 
+        renderDres();         
+
         updatePreviews();
         qs('#jsonOut').textContent = '{}';
         qs('#downloadLink').style.display = 'none';
