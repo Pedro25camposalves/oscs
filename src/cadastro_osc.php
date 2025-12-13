@@ -596,12 +596,10 @@
                 </div>
             </div>
 
-            <!-- SEÇÃO X: DOCUMENTOS DA OSC -->
+            <!-- SEÇÃO 7: DOCUMENTOS DA OSC -->
             <div style="margin-top:16px" class="card">
                 <h2>Documentos da OSC</h2>
-                <div class="small">
-                    Envie os documentos institucionais, certidões e demonstrações contábeis mais recentes da OSC.
-                </div>
+                <div class="small">Formatos permitidos: .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf</div>
                 <div class="divider"></div>
 
                 <!-- 1. INSTITUCIONAIS -->
@@ -609,11 +607,11 @@
                 <div class="grid cols-2">
                     <div>
                         <label for="docEstatuto">Estatuto</label>
-                        <input id="docEstatuto" type="file" accept=".pdf,image/*" />
+                        <input id="docEstatuto" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
                     </div>
                     <div>
                         <label for="docAta">Ata</label>
-                        <input id="docAta" type="file" accept=".pdf,image/*" />
+                        <input id="docAta" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
                     </div>
                 </div>
 
@@ -622,23 +620,23 @@
                 <div class="grid cols-3">
                     <div>
                         <label for="docCndFederal">CND Federal</label>
-                        <input id="docCndFederal" type="file" accept=".pdf,image/*" />
+                        <input id="docCndFederal" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
                     </div>
                     <div>
                         <label for="docCndEstadual">CND Estadual</label>
-                        <input id="docCndEstadual" type="file" accept=".pdf,image/*" />
+                        <input id="docCndEstadual" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
                     </div>
                     <div>
                         <label for="docCndMunicipal">CND Municipal</label>
-                        <input id="docCndMunicipal" type="file" accept=".pdf,image/*" />
+                        <input id="docCndMunicipal" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
                     </div>
                     <div>
                         <label for="docFgts">FGTS</label>
-                        <input id="docFgts" type="file" accept=".pdf,image/*" />
+                        <input id="docFgts" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
                     </div>
                     <div>
                         <label for="docTrabalhista">Trabalhista</label>
-                        <input id="docTrabalhista" type="file" accept=".pdf,image/*" />
+                        <input id="docTrabalhista" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
                     </div>
                 </div>
 
@@ -793,8 +791,8 @@
                     <input id="balancoAno" type="text" inputmode="numeric" placeholder="Ex: 2024" required />
                 </div>
                 <div>
-                    <label for="balancoArquivo">Arquivo (PDF ou imagem) (*)</label>
-                    <input id="balancoArquivo" type="file" accept=".pdf,image/*" required />
+                    <label for="balancoArquivo">Arquivo (*)</label>
+                    <input id="balancoArquivo" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" required />
                 </div>
             </div>
 
@@ -816,8 +814,8 @@
                     <input id="dreAno" type="text" inputmode="numeric" placeholder="Ex: 2024" required />
                 </div>
                 <div>
-                    <label for="dreArquivo">Arquivo (PDF ou imagem) (*)</label>
-                    <input id="dreArquivo" type="file" accept=".pdf,image/*" required />
+                    <label for="dreArquivo">Arquivo (*)</label>
+                    <input id="dreArquivo" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" required />
                 </div>
             </div>
 
@@ -873,11 +871,20 @@
             });
         }
 
+        // Inputs de documentos "fixos"
+        const docEstatuto     = qs('#docEstatuto');
+        const docAta          = qs('#docAta');
+        const docCndFederal   = qs('#docCndFederal');
+        const docCndEstadual  = qs('#docCndEstadual');
+        const docCndMunicipal = qs('#docCndMunicipal');
+        const docFgts         = qs('#docFgts');
+        const docTrabalhista  = qs('#docTrabalhista');
+        const balancos   = []; // { ano, file }
+        const dres       = []; // { ano, file }
+
         const envolvidos = [];
         let atoresCache = [];
         const atividades = [];
-        const balancos   = []; // { ano, file }
-        const dres       = []; // { ano, file }
 
         // modal balanços patrimoniais
         const modalBalancoBackdrop = qs('#modalBalancoBackdrop');
@@ -1468,6 +1475,156 @@
             })
         }
 
+        // ====== UPLOAD DE DOCUMENTOS (após criar a OSC) ======
+
+        async function enviarDocumentoSimples(oscId, fileInput, categoria, subtipo) {
+            // se não tem arquivo, não é erro, só ignora
+            if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+                return null;
+            }
+        
+            const fdDoc = new FormData();
+            fdDoc.append('id_osc', oscId);
+            fdDoc.append('categoria', categoria);   // INSTITUCIONAL / CERTIDAO
+            fdDoc.append('subtipo', subtipo);       // ESTATUTO, ATA, etc.
+            // ano_referencia não se aplica aqui
+            fdDoc.append('arquivo', fileInput.files[0]);
+        
+            try {
+                const resp = await fetch('ajax_upload_documento.php', {
+                    method: 'POST',
+                    body: fdDoc
+                });
+            
+                const text = await resp.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    console.error('Erro ao parsear JSON no upload de documento:', subtipo, text);
+                    return `(${categoria}/${subtipo}) resposta inválida do servidor.`;
+                }
+            
+                if (data.status !== 'ok') {
+                    return `(${categoria}/${subtipo}) ${data.mensagem || 'erro ao enviar documento.'}`;
+                }
+            
+                return null; // sem erro
+            
+            } catch (e) {
+                console.error('Erro na requisição de upload de documento:', subtipo, e);
+                return `(${categoria}/${subtipo}) erro de comunicação com o servidor.`;
+            }
+        }
+
+        // Envia TODOS os documentos simples (estatuto, ata, certidões, se existirem)
+        async function enviarDocumentosFixos(oscId) {
+            const erros = [];
+        
+            const docs = [
+                { el: docEstatuto,     cat: 'INSTITUCIONAL', subtipo: 'ESTATUTO' },
+                { el: docAta,          cat: 'INSTITUCIONAL', subtipo: 'ATA' },
+                { el: docCndFederal,   cat: 'CERTIDAO',      subtipo: 'CND_FEDERAL' },
+                { el: docCndEstadual,  cat: 'CERTIDAO',      subtipo: 'CND_ESTADUAL' },
+                { el: docCndMunicipal, cat: 'CERTIDAO',      subtipo: 'CND_MUNICIPAL' },
+                { el: docFgts,         cat: 'CERTIDAO',      subtipo: 'FGTS' },
+                { el: docTrabalhista,  cat: 'CERTIDAO',      subtipo: 'TRABALHISTA' },
+            ];
+        
+            for (const cfg of docs) {
+                const erro = await enviarDocumentoSimples(oscId, cfg.el, cfg.cat, cfg.subtipo);
+                if (erro) erros.push(erro);
+            }
+        
+            return erros;
+        }
+
+        // Envia todos os Balanços Patrimoniais da lista "balancos"
+        async function enviarBalancos(oscId) {
+            const erros = [];
+        
+            for (const b of balancos) {
+                if (!b.file) continue;
+            
+                const fdDoc = new FormData();
+                fdDoc.append('id_osc', oscId);
+                fdDoc.append('categoria', 'CONTABIL');
+                fdDoc.append('subtipo', 'BALANCO_PATRIMONIAL');
+                fdDoc.append('ano_referencia', b.ano);
+                fdDoc.append('arquivo', b.file);
+            
+                try {
+                    const resp = await fetch('ajax_upload_documento.php', {
+                        method: 'POST',
+                        body: fdDoc
+                    });
+                
+                    const text = await resp.text();
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                    } catch (e) {
+                        console.error('Erro ao parsear JSON no upload Balanço:', text);
+                        erros.push(`(Balanço ${b.ano}) resposta inválida do servidor.`);
+                        continue;
+                    }
+                
+                    if (data.status !== 'ok') {
+                        erros.push(`(Balanço ${b.ano}) ${data.mensagem || 'erro ao enviar documento.'}`);
+                    }
+                
+                } catch (e) {
+                    console.error('Erro de requisição no upload Balanço:', e);
+                    erros.push(`(Balanço ${b.ano}) erro de comunicação com o servidor.`);
+                }
+            }
+        
+            return erros;
+        }
+
+        // Envia todas as DREs da lista "dres"
+        async function enviarDres(oscId) {
+            const erros = [];
+        
+            for (const d of dres) {
+                if (!d.file) continue;
+            
+                const fdDoc = new FormData();
+                fdDoc.append('id_osc', oscId);
+                fdDoc.append('categoria', 'CONTABIL');
+                fdDoc.append('subtipo', 'DRE');
+                fdDoc.append('ano_referencia', d.ano);
+                fdDoc.append('arquivo', d.file);
+            
+                try {
+                    const resp = await fetch('ajax_upload_documento.php', {
+                        method: 'POST',
+                        body: fdDoc
+                    });
+                
+                    const text = await resp.text();
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                    } catch (e) {
+                        console.error('Erro ao parsear JSON no upload DRE:', text);
+                        erros.push(`(DRE ${d.ano}) resposta inválida do servidor.`);
+                        continue;
+                    }
+                
+                    if (data.status !== 'ok') {
+                        erros.push(`(DRE ${d.ano}) ${data.mensagem || 'erro ao enviar documento.'}`);
+                    }
+                
+                } catch (e) {
+                    console.error('Erro de requisição no upload DRE:', e);
+                    erros.push(`(DRE ${d.ano}) erro de comunicação com o servidor.`);
+                }
+            }
+        
+            return erros;
+        }
+
     // REALIZA O CADASTRO (ao clicar no botão 'CADASTRAR OSC')
     async function saveData() {
         // validações mínimas
@@ -1547,6 +1704,14 @@
         fd.append('usuario_email', usuarioEmail.value);
         fd.append('usuario_senha', usuarioSenha.value);
 
+        const docEstatutoInput    = qs('#docEstatuto');
+        const docAtaInput         = qs('#docAta');
+        const docCndFederalInput  = qs('#docCndFederal');
+        const docCndEstadualInput = qs('#docCndEstadual');
+        const docCndMunicipalInput= qs('#docCndMunicipal');
+        const docFgtsInput        = qs('#docFgts');
+        const docTrabalhistaInput = qs('#docTrabalhista');
+        const getFileName = (input) => (input && input.files && input.files[0]) ? input.files[0].name : null;
 
         // Imóvel
         fd.append('situacaoImovel',   qs("#situacaoImovel").value);
@@ -1588,6 +1753,14 @@
 
         // Opcional: montar um JSON só pra exibir no <pre> (sem os arquivos)
         const previewData = {
+            labelBanner: qs("#labelBanner").value,
+            cores: {
+                bg:  bgColor.value,
+                sec: secColor.value,
+                ter: terColor.value,
+                qua: quaColor.value,
+                fon: fonColor.value,
+            },
             nomeOsc: qs("#nomeOsc").value,
             historia: qs("#historia").value,
             missao: qs("#missao").value,
@@ -1616,18 +1789,31 @@
                 nome:  usuarioNome.value,
                 email: usuarioEmail.value
             },
-            cores: {
-                bg: bgColor.value,
-                sec: secColor.value,
-                ter: terColor.value,
-                qua: quaColor.value,
-                fon: fonColor.value,
-            },
-            labelBanner: qs("#labelBanner").value,
             envolvidos: envolvidosParaEnvio,
             atividades,
-            balancos: balancos.map(b => ({ ano: b.ano, fileName: b.file?.name || '' })),
-            dres: dres.map(d => ({ ano: d.ano, fileName: d.file?.name || '' })),
+            documentos: {
+                institucionais: {
+                    estatuto:    getFileName(docEstatutoInput),
+                    ata:         getFileName(docAtaInput),
+                },
+                certidoes: {
+                    cnd_federal:   getFileName(docCndFederalInput),
+                    cnd_estadual:  getFileName(docCndEstadualInput),
+                    cnd_municipal: getFileName(docCndMunicipalInput),
+                    fgts:          getFileName(docFgtsInput),
+                    trabalhista:   getFileName(docTrabalhistaInput),
+                },
+                contabeis: {
+                    balancos: balancos.map(b => ({
+                        ano: b.ano,
+                        fileName: b.file?.name || ''
+                    })),
+                    dres: dres.map(d => ({
+                        ano: d.ano,
+                        fileName: d.file?.name || ''
+                    })),
+                }
+            }
         };
 
         const jsonPreview = JSON.stringify(previewData, null, 2);
@@ -1659,8 +1845,37 @@
             }
 
             if (result.success) {
-                alert("OSC criada com sucesso! ID: " + result.osc_id);
-                resetForm(); // limpa o formulário após finalizar o cadastro
+                const oscId = result.osc_id;
+                        
+                // Após criar a OSC, envia os documentos (se existirem)
+                let errosDocs = [];
+                        
+                try {
+                    const errosFixos    = await enviarDocumentosFixos(oscId);
+                    const errosBalancos = await enviarBalancos(oscId);
+                    const errosDres     = await enviarDres(oscId);
+                
+                    errosDocs = [
+                        ...errosFixos,
+                        ...errosBalancos,
+                        ...errosDres
+                    ];
+                } catch (e) {
+                    console.error('Falha geral ao enviar documentos da OSC:', e);
+                    errosDocs.push('Falha inesperada ao enviar alguns documentos.');
+                }
+            
+                if (errosDocs.length === 0) {
+                    alert("OSC criada com sucesso! Todos os documentos foram enviados.");
+                } else {
+                    alert(
+                        "OSC criada com sucesso, mas alguns documentos não foram enviados:\n\n" +
+                        errosDocs.map(e => "- " + e).join("\n")
+                    );
+                }
+            
+                resetForm();
+            
             } else {
                 alert("Erro ao criar OSC: " + (result.error || "desconhecido"));
             }
