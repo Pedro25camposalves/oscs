@@ -224,6 +224,7 @@ CREATE TABLE IF NOT EXISTS `osctech`.`cores` (
   `cor2` VARCHAR(10) NULL DEFAULT NULL,
   `cor3` VARCHAR(10) NULL DEFAULT NULL,
   `cor4` VARCHAR(10) NULL DEFAULT NULL,
+  `cor5` VARCHAR(10) NULL DEFAULT NULL,
   PRIMARY KEY (`id_cores`),
   INDEX `fk_cores_osc1_idx` (`osc_id` ASC),
   CONSTRAINT `fk_cores_osc1`

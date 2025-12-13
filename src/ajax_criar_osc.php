@@ -250,10 +250,11 @@
     $cor2  = mysqli_real_escape_string($conn, $cores['sec'] ?? '');
     $cor3  = mysqli_real_escape_string($conn, $cores['ter'] ?? '');
     $cor4  = mysqli_real_escape_string($conn, $cores['qua'] ?? '');
+    $cor5  = mysqli_real_escape_string($conn, $cores['fon'] ?? '');
 
     $sql_cores = "
-        INSERT INTO cores (osc_id, cor1, cor2, cor3, cor4)
-        VALUES ('$osc_id', '$cor1', '$cor2', '$cor3', '$cor4')
+        INSERT INTO cores (osc_id, cor1, cor2, cor3, cor4, cor5)
+        VALUES ('$osc_id', '$cor1', '$cor2', '$cor3', '$cor4', '$cor5')
     ";
 
     if (!mysqli_query($conn, $sql_cores)) {

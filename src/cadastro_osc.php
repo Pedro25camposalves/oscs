@@ -302,19 +302,25 @@
                                     <label for="bgColor">Cor de fundo (*)</label>
                                    <input id="bgColor" type="color" value="#f7f7f8" required />
                                 </div>
+                            </div>
+                            <div class="row">
                                 <div style="flex:1">
                                     <label for="secColor">Cor secundária (*)</label>
                                     <input id="secColor" type="color" value="#0a6" required />
                                 </div>
-                            </div>
-                            <div class="row">
                                 <div style="flex:1">
                                     <label for="terColor">Cor terciária (*)</label>
                                     <input id="terColor" type="color" value="#ff8a65" required />
                                 </div>
+                            </div>
+                            <div class="row">
                                 <div style="flex:1">
                                     <label for="quaColor">Cor quaternária (*)</label>
                                     <input id="quaColor" type="color" value="#6c5ce7" required />
+                                </div>
+                                <div style="flex:1">
+                                    <label for="fonColor">Cor da fonte (*)</label>
+                                    <input id="fonColor" type="color" value="#000000ff" required />
                                 </div>
                             </div>
                             <div>
@@ -379,6 +385,9 @@
                                         </div>
                                         <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Qua<br>
                                             <div id="swQua">&nbsp;</div>
+                                        </div>
+                                        <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Fonte<br>
+                                            <div id="swFon">&nbsp;</div>
                                         </div>
                                     </div>
                                 </div>
@@ -670,11 +679,13 @@
         const secColor = qs('#secColor');
         const terColor = qs('#terColor');
         const quaColor = qs('#quaColor');
+        const fonColor = qs('#fonColor');
 
         const swBg = qs('#swBg');
         const swSec = qs('#swSec');
         const swTer = qs('#swTer');
         const swQua = qs('#swQua');
+        const swFon = qs('#swFon');
 
         const envolvidos = [];
         let atoresCache = [];
@@ -726,16 +737,18 @@
             swSec.style.background = secColor.value;
             swTer.style.background = terColor.value;
             swQua.style.background = quaColor.value;
+            swFon.style.background = fonColor.value;
 
             // apply page palette live
             document.documentElement.style.setProperty('--bg', bgColor.value);
             document.documentElement.style.setProperty('--sec', secColor.value);
             document.documentElement.style.setProperty('--ter', terColor.value);
             document.documentElement.style.setProperty('--qua', quaColor.value);
+            document.documentElement.style.setProperty('--fon', fonColor.value);
         }
 
         [logoSimples, logoCompleta, banner1, banner2, banner3].forEach(el => el.addEventListener('change', updatePreviews));
-        [bgColor, secColor, terColor, quaColor].forEach(el => el.addEventListener('input', updatePreviews));
+        [bgColor, secColor, terColor, quaColor, fonColor].forEach(el => el.addEventListener('input', updatePreviews));
 
         // modal logic
         const modalBackdrop = qs('#modalBackdrop');
@@ -1034,6 +1047,7 @@
         fd.append('cores[sec]', secColor.value);
         fd.append('cores[ter]', terColor.value);
         fd.append('cores[qua]', quaColor.value);
+        fd.append('cores[fon]', fonColor.value);
 
         // Dados "simples" da OSC
         fd.append('nomeOsc',          qs("#nomeOsc").value);
@@ -1125,6 +1139,7 @@
                 sec: secColor.value,
                 ter: terColor.value,
                 qua: quaColor.value,
+                fon: fonColor.value,
             },
             labelBanner: qs("#labelBanner").value,
             envolvidos: envolvidosParaEnvio,
