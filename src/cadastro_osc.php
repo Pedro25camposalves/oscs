@@ -1,3 +1,7 @@
+<?php
+require 'autenticacao.php';
+?>
+
 <!doctype html>
 <html lang="pt-BR">
 
@@ -139,14 +143,14 @@
             margin: 6px 0
         }
 
-        .directors-list {
+        .envolvidos-list {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
             margin-top: 12px
         }
 
-        .director-card {
+        .envolvido-card {
             background: #fafafa;
             padding: 8px;
             border-radius: 8px;
@@ -156,7 +160,7 @@
             border: 1px solid #f0f0f0
         }
 
-        .director-card img {
+        .envolvido-card img {
             width: 48px;
             height: 48px;
             border-radius: 6px;
@@ -396,9 +400,9 @@
                         <div style="margin-top:14px" class="card">
                             <h2>Envolvidos (*)</h2>
                             <div class="small">Clique em "Adicionar" para incluir as pessoas envolvidas com a OSC.</div>
-                            <div class="directors-list" id="directorsList"></div>
+                            <div class="envolvidos-list" id="listaEnvolvidos"></div>
                             <div style="margin-top:10px">
-                                <button type="button" class="btn btn-ghost" id="openDirectorModal">Adicionar</button>
+                                <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">Adicionar</button>
                             </div>
                         </div>                
                     </div>
@@ -490,7 +494,7 @@
                     Clique em "Adicionar" para incluir as atividades econômicas, áreas e subáreas de atuação.
                 </div>
                 <!-- Lista de atividades -->
-                <div class="directors-list" id="atividadesList"></div>
+                <div class="envolvidos-list" id="atividadesList"></div>
                 <div style="margin-top:10px">
                     <button type="button" class="btn btn-ghost" id="openAtividadeModal">
                         Adicionar
@@ -526,36 +530,69 @@
     <div id="modalBackdrop" class="modal-backdrop">
         <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Envolvido">
             <h3>Adicionar Envolvido</h3>
-            <div style="margin-top:8px" class="grid">
-                <div>
-                    <label for="dirFoto">Foto</label>
-                    <input id="dirFoto" type="file" accept="image/*" />
-                </div>
-                <div>
-                    <label for="dirNome">Nome (*)</label>
-                    <input id="dirNome" type="text" required/>
-                </div>
-                <div>
-                    <label for="dirTelefone">Telefone</label>
-                    <input id="dirTelefone" inputmode="numeric" type="text" />
-                </div>
-                <div>
-                    <label for="dirEmail">E-mail</label>
-                    <input id="dirEmail" type="text" />
-                </div>
-                <div>
-                    <label for="dirFunc">Função (*)</label>
-                    <input id="dirFunc" type="text" required/>
+
+            <!-- Modo de seleção: novo ou existente -->
+            <div class="row" style="margin-top:8px; margin-bottom:8px">
+                <label class="label-inline">
+                    <input type="radio" name="envModo" value="novo" checked />
+                    Novo envolvido
+                </label>
+                <label class="label-inline">
+                    <input type="radio" name="envModo" value="existente" />
+                    Usar envolvido existente
+                </label>
+            </div>
+
+            <!-- Container: NOVO ENVOLVIDO -->
+            <div id="envNovoContainer">
+                <div class="grid">
+                    <div>
+                        <label for="envFoto">Foto</label>
+                        <input id="envFoto" type="file" accept="image/*" />
+                    </div>
+                    <div>
+                        <label for="envNome">Nome (*)</label>
+                        <input id="envNome" type="text" required/>
+                    </div>
+                    <div>
+                        <label for="envTelefone">Telefone</label>
+                        <input id="envTelefone" inputmode="numeric" type="text" />
+                    </div>
+                    <div>
+                        <label for="envEmail">E-mail</label>
+                        <input id="envEmail" type="text" />
+                    </div>
+                    <div>
+                        <label for="envFuncao">Função (*)</label>
+                        <input id="envFuncaoNovo" type="text" required/>
+                    </div>
                 </div>
             </div>
+
+            <!-- Container: ENVOLVIDO EXISTENTE -->
+            <div id="envExistenteContainer" style="display:none; margin-top:8px">
+                <div class="grid">
+                    <div>
+                        <label for="envAtorExistente">Envolvido já cadastrado</label>
+                        <select id="envAtorExistente">
+                            <option value="">Selecione um envolvido...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="envFuncao">Função nesta OSC (*)</label>
+                        <input id="envFuncaoExistente" type="text" required/>
+                    </div>
+                </div>
+            </div>
+
             <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
-                <button class="btn btn-ghost" id="closeDirectorModal">Cancelar</button>
-                <button class="btn btn-primary" id="addDirectorBtn">Adicionar</button>
+                <button class="btn btn-ghost" id="closeEnvolvidoModal">Cancelar</button>
+                <button class="btn btn-primary" id="addEnvolvidoBtn">Adicionar</button>
             </div>
         </div>
     </div>
 
-        <!-- MODAL DAS ATIVIDADES -->
+    <!-- MODAL DAS ATIVIDADES -->
     <div id="modalAtividadeBackdrop" class="modal-backdrop">
         <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Atividade">
             <h3>Adicionar Atividade</h3>
@@ -604,7 +641,8 @@
         const swTer = qs('#swTer');
         const swQua = qs('#swQua');
 
-        const directors = [];
+        const envolvidos = [];
+        let atoresCache = [];
         const atividades = [];
 
         function readFileAsDataURL(file) {
@@ -666,75 +704,196 @@
 
         // modal logic
         const modalBackdrop = qs('#modalBackdrop');
-        const openDirectorModal = qs('#openDirectorModal');
-        const closeDirectorModal = qs('#closeDirectorModal');
-        const addDirectorBtn = qs('#addDirectorBtn');
+        const openEnvolvidoModal = qs('#openEnvolvidoModal');
+        const closeEnvolvidoModal = qs('#closeEnvolvidoModal');
+        const addEnvolvidoBtn = qs('#addEnvolvidoBtn');
 
-        openDirectorModal.addEventListener('click', () => {
-            modalBackdrop.style.display = 'flex'
+        // modo de seleção novo/existente
+        const envModoRadios         = qsa('input[name="envModo"]');
+        const envNovoContainer      = qs('#envNovoContainer');
+        const envExistenteContainer = qs('#envExistenteContainer');
+        const envAtorExistente      = qs('#envAtorExistente');
+
+        openEnvolvidoModal.addEventListener('click', () => {
+            modalBackdrop.style.display = 'flex';
+        
+            envModoRadios.forEach(r => r.checked = (r.value === 'novo'));
+            envNovoContainer.style.display = 'block';
+            envExistenteContainer.style.display = 'none';
+        
+            qs('#envFoto').value = '';
+            qs('#envNome').value = '';
+            qs('#envTelefone').value = '';
+            qs('#envEmail').value = '';
+            const funcaoNovoInput = qs('#envFuncaoNovo');
+            const funcaoExistenteInput = qs('#envFuncaoExistente');
+            if (funcaoNovoInput) funcaoNovoInput.value = '';
+            if (funcaoExistenteInput) funcaoExistenteInput.value = '';
+            envAtorExistente.value = '';
+        
+            loadAtoresList();
         });
-        closeDirectorModal.addEventListener('click', () => {
+
+        envModoRadios.forEach(r => {
+            r.addEventListener('change', () => {
+                const modoSelecionado = [...envModoRadios].find(x => x.checked)?.value || 'novo';
+            
+                if (modoSelecionado === 'existente') {
+                    envNovoContainer.style.display = 'none';
+                    envExistenteContainer.style.display = 'block';
+                    loadAtoresList(); // garante lista atualizada
+                } else {
+                    envNovoContainer.style.display = 'block';
+                    envExistenteContainer.style.display = 'none';
+                }
+            });
+        });
+
+        closeEnvolvidoModal.addEventListener('click', () => {
             modalBackdrop.style.display = 'none'
         });
+
         modalBackdrop.addEventListener('click', (e) => {
             if (e.target === modalBackdrop) modalBackdrop.style.display = 'none'
         });
 
-        // ADICIONAR ENVOLVIDO
-        async function addDirector() {
-            const foto = qs('#dirFoto').files[0];
-            const nome = qs('#dirNome').value.trim();
-            const telefone = qs('#dirTelefone').value.trim();
-            const email = qs('#dirEmail').value.trim();
-            const func = qs('#dirFunc').value.trim();
-            if (!nome || !func) {
-                alert('Preencha nome e função do envolvido');
-                return
+        // Carrega lista de atores existentes para o <select> do modal
+        async function loadAtoresList() {
+            try {
+                const resp = await fetch('ajax_listar_atores.php');
+                const result = await resp.json();
+            
+                envAtorExistente.innerHTML = '<option value="">Selecione um envolvido...</option>';
+                atoresCache = [];
+            
+                if (result.success && Array.isArray(result.data)) {
+                    atoresCache = result.data;
+                    result.data.forEach(a => {
+                        const opt = document.createElement('option');
+                        opt.value = a.id;
+                        const labelEmail = a.email ? ` - ${a.email}` : '';
+                        opt.textContent = `${a.nome}${labelEmail}`;
+                        envAtorExistente.appendChild(opt);
+                    });
+                } else {
+                    console.error(result.error || 'Falha ao listar atores');
+                }
+            } catch (e) {
+                console.error('Erro ao carregar lista de atores:', e);
+                alert('Erro ao carregar lista de envolvidos existentes.');
             }
-            const fotoData = foto ? await readFileAsDataURL(foto) : null;
-            const envolvido = {
-                foto: fotoData,
-                nome,
-                telefone,
-                email,
-                func
-            };
-            directors.push(envolvido);
-            renderDirectors();
-            // reset modal fields
-            qs('#dirFoto').value = '';
-            qs('#dirNome').value = '';
-            qs('#dirTelefone').value = '';
-            qs('#dirEmail').value = '';
-            qs('#dirFunc').value = '';
+        }
+
+        // ADICIONAR ENVOLVIDO
+        async function addEnvolvido() {
+            const modo = [...envModoRadios].find(r => r.checked)?.value || 'novo';
+        
+            if (modo === 'existente') {
+                const atorId = parseInt(envAtorExistente.value, 10);
+                const funcao = qs('#envFuncaoExistente').value.trim();
+            
+                if (!atorId || !funcao) {
+                    alert('Selecione um envolvido existente e informe a função.');
+                    return;
+                }
+            
+                const ator = atoresCache.find(a => a.id === atorId);
+                if (!ator) {
+                    alert('Envolvido não encontrado na lista.');
+                    return;
+                }
+            
+                const envolvido = {
+                    tipo: 'existente',
+                    atorId,
+                    nome: ator.nome || '',
+                    telefone: ator.telefone || '',
+                    email: ator.email || '',
+                    funcao,
+                    fotoPreview: ator.foto || null,  // se tiver caminho da foto
+                    fotoFile: null                   // sem upload novo
+                };
+            
+                envolvidos.push(envolvido);
+            
+            } else {
+                // modo: novo
+                const fotoFile = qs('#envFoto').files[0] || null;
+                const nome     = qs('#envNome').value.trim();
+                const telefone = qs('#envTelefone').value.trim();
+                const email    = qs('#envEmail').value.trim();
+                const funcao   = qs('#envFuncaoNovo').value.trim();
+            
+                if (!nome || !funcao) {
+                    alert('Preencha pelo menos o Nome e a Função do envolvido!');
+                    return;
+                }
+            
+                const fotoPreview = fotoFile ? await readFileAsDataURL(fotoFile) : null;
+            
+                const envolvido = {
+                    tipo: 'novo',
+                    atorId: null,
+                    fotoPreview,
+                    fotoFile,
+                    nome,
+                    telefone,
+                    email,
+                    funcao
+                };
+            
+                envolvidos.push(envolvido);
+            }
+        
+            renderEnvolvidos();
+        
+            // Reseta campos do modal
+            qs('#envFoto').value = '';
+            qs('#envNome').value = '';
+            qs('#envTelefone').value = '';
+            qs('#envEmail').value = '';
+            const funcaoNovoInput = qs('#envFuncaoNovo');
+            const funcaoExistenteInput = qs('#envFuncaoExistente');
+            if (funcaoNovoInput) funcaoNovoInput.value = '';
+            if (funcaoExistenteInput) funcaoExistenteInput.value = '';
+            envAtorExistente.value = '';
+        
             modalBackdrop.style.display = 'none';
         }
-        addDirectorBtn.addEventListener('click', addDirector);
+        addEnvolvidoBtn.addEventListener('click', addEnvolvido);
 
-        function renderDirectors() {
-            const list = qs('#directorsList');
+        function renderEnvolvidos() {
+            const list = qs('#listaEnvolvidos');
             list.innerHTML = '';
-            directors.forEach((d, i) => {
+
+            envolvidos.forEach((e, i) => {
                 const c = document.createElement('div');
-                c.className = 'director-card';
+                c.className = 'envolvido-card';
+            
                 const img = document.createElement('img');
-                img.src = d.foto || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
+                img.src = e.fotoPreview || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
+
                 const info = document.createElement('div');
-                info.innerHTML = `<div style="font-weight:600">${escapeHtml(d.nome)}</div><div class="small">${escapeHtml(d.func)}</div>`;
+                info.innerHTML = `
+                    <div style="font-weight:600">${escapeHtml(e.nome)}</div>
+                    <div class="small">${escapeHtml(e.funcao)}</div>
+                `;
+            
                 const remove = document.createElement('button');
                 remove.className = 'btn';
                 remove.textContent = '✕';
                 remove.style.padding = '6px 8px';
                 remove.style.marginLeft = '8px';
                 remove.addEventListener('click', () => {
-                    directors.splice(i, 1);
-                    renderDirectors()
+                    envolvidos.splice(i, 1);
+                    renderEnvolvidos();
                 });
+            
                 c.appendChild(img);
                 c.appendChild(info);
                 c.appendChild(remove);
                 list.appendChild(c);
-            })
+            });
         }
 
         // modal atividades
@@ -788,7 +947,7 @@
         
             atividades.forEach((a, i) => {
                 const c = document.createElement('div');
-                c.className = 'director-card'; // reaproveitando o estilo
+                c.className = 'envolvido-card'; // reaproveitando o estilo
             
                 const info = document.createElement('div');
                 info.innerHTML = `
@@ -824,147 +983,166 @@
             })
         }
 
-        // gather data and generate JSON
-        async function uploadImage(file) {
-            if (!file) return null;
-
-            const formData = new FormData();
-            formData.append("image", file);
-
-            // Luiz: Alterado o diretorio de upload | Jhonnie: corrigido com o formato do arquivo no servidor
-            const response = await fetch("upload.php", { 
-                method: "POST",
-                body: formData,
-            });
-
-            if (!response.ok) {
-                throw new Error("Erro ao enviar imagem");
-            }
-
-            const result = await response.json();
-            // o PHP deve retornar algo como: { "path": "/assets/images/oscs/nome_arquivo.jpg" }
-            return result.path;
+    // REALIZA O CADASTRO (ao clicar no botão 'CADASTRAR OSC')
+    async function saveData() {
+        // validações mínimas
+        if (!logoSimples.files[0] || !logoCompleta.files[0] || !banner1.files[0]) {
+            alert("Logo simples, logo completa e banner principal são obrigatórios.");
+            return;
         }
 
-        // REALIZA O CADASTRO (ao clicar no botão 'Salvar informações da OSC')
-        async function saveData() {
-            if (!logoSimples.files[0] || !logoCompleta.files[0]) {
-                alert("Os logos simples e completa são obrigatórios.");
-                return;
-            }
+        // Monta um FormData em vez de JSON
+        const fd = new FormData();
 
-            const form = document.getElementById("oscForm");
-            const data = {};
-            data.missao = qs("#missao").value;
-            data.visao = qs("#visao").value;
-            data.valores = qs("#valores").value;
-            data.cores = {
+        // Cores (usando sintaxe cores[bg] pra virar $_POST['cores']['bg'] no PHP)
+        fd.append('cores[bg]',  bgColor.value);
+        fd.append('cores[sec]', secColor.value);
+        fd.append('cores[ter]', terColor.value);
+        fd.append('cores[qua]', quaColor.value);
+
+        // Dados "simples" da OSC
+        fd.append('nomeOsc',          qs("#nomeOsc").value);
+        fd.append('historia',         qs("#historia").value);
+        fd.append('missao',           qs("#missao").value);
+        fd.append('visao',            qs("#visao").value);
+        fd.append('valores',          qs("#valores").value);
+
+        fd.append('razaoSocial',      qs("#razaoSocial").value);
+        fd.append('nomeFantasia',     qs("#nomeFantasia").value);
+        fd.append('sigla',            qs("#sigla").value);
+        fd.append('situacaoCadastral',qs("#situacaoCadastral").value);
+        fd.append('anoCNPJ',          qs("#anoCNPJ").value);
+        fd.append('anoFundacao',      qs("#anoFundacao").value);
+        fd.append('responsavelLegal', qs("#responsavelLegal").value);
+        fd.append('email',            qs("#email").value);
+        fd.append('oQueFaz',          qs("#oQueFaz").value);
+        fd.append('cnpj',             qs("#CNPJ").value);
+        fd.append('telefone',         qs("#telefone").value);
+        fd.append('instagram',        qs("#instagram").value);
+        fd.append('status',           qs("#status").value);
+
+        // Imóvel
+        fd.append('situacaoImovel',   qs("#situacaoImovel").value);
+        fd.append('cep',              qs("#cep").value);
+        fd.append('cidade',           qs("#cidade").value);
+        fd.append('bairro',           qs("#bairro").value);
+        fd.append('logradouro',       qs("#logradouro").value);
+        fd.append('numero',           qs("#numero").value);
+
+        // Texto do banner
+        fd.append('labelBanner', qs("#labelBanner").value);
+
+        // Monta array de envolvidos para envio
+        const envolvidosParaEnvio = envolvidos.map(e => ({
+            tipo: e.tipo || 'novo',       // 'novo' ou 'existente'
+            ator_id: e.atorId || null,   // id do ator se já existir
+            nome: e.nome,
+            telefone: e.telefone,
+            email: e.email,
+            funcao: e.funcao
+        }));
+
+        fd.append('envolvidos', JSON.stringify(envolvidosParaEnvio));
+        fd.append('atividades', JSON.stringify(atividades));
+
+        // Arquivos de foto de cada envolvido, em campos próprios
+        envolvidos.forEach((e, i) => {
+            if (e.fotoFile) {
+                fd.append(`fotoEnvolvido_${i}`, e.fotoFile);
+            }
+        });
+
+        // Arquivos — aqui vai o binário mesmo
+        if (logoSimples.files[0])  fd.append('logoSimples',  logoSimples.files[0]);
+        if (logoCompleta.files[0]) fd.append('logoCompleta', logoCompleta.files[0]);
+        if (banner1.files[0])      fd.append('banner1',      banner1.files[0]);
+        if (banner2.files[0])      fd.append('banner2',      banner2.files[0]);
+        if (banner3.files[0])      fd.append('banner3',      banner3.files[0]);
+
+        // Opcional: montar um JSON só pra exibir no <pre> (sem os arquivos)
+        const previewData = {
+            nomeOsc: qs("#nomeOsc").value,
+            historia: qs("#historia").value,
+            missao: qs("#missao").value,
+            visao: qs("#visao").value,
+            valores: qs("#valores").value,
+            razaoSocial: qs("#razaoSocial").value,
+            nomeFantasia: qs("#nomeFantasia").value,
+            sigla: qs("#sigla").value,
+            situacaoCadastral: qs("#situacaoCadastral").value,
+            anoCNPJ: qs("#anoCNPJ").value,
+            anoFundacao: qs("#anoFundacao").value,
+            responsavelLegal: qs("#responsavelLegal").value,
+            email: qs("#email").value,
+            oQueFaz: qs("#oQueFaz").value,
+            cnpj: qs("#CNPJ").value,
+            telefone: qs("#telefone").value,
+            instagram: qs("#instagram").value,
+            status: qs("#status").value,
+            situacaoImovel: qs("#situacaoImovel").value,
+            cep: qs("#cep").value,
+            cidade: qs("#cidade").value,
+            bairro: qs("#bairro").value,
+            logradouro: qs("#logradouro").value,
+            numero: qs("#numero").value,
+            cores: {
                 bg: bgColor.value,
                 sec: secColor.value,
                 ter: terColor.value,
                 qua: quaColor.value,
-            };
+            },
+            labelBanner: qs("#labelBanner").value,
+            envolvidos: envolvidosParaEnvio,
+            atividades,
+        };
 
-            // --- 🔄 Envia imagens para o backend PHP ---
-            data.logos = {
-                logoSimples: logoSimples.files[0] ? await uploadImage(logoSimples.files[0]) : null,
-                logoCompleta: logoCompleta.files[0] ? await uploadImage(logoCompleta.files[0]) : null,
-            };
+        const jsonPreview = JSON.stringify(previewData, null, 2);
+        qs("#jsonOut").textContent = jsonPreview;
 
+        const blob = new Blob([jsonPreview], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const dl = qs("#downloadLink");
+        dl.style.display = "inline-block";
+        dl.href = url;
+        dl.download = (qs("#nomeOsc").value || "osc") + ".json";
 
-            data.banners = {
-                labelBanner: qs("#labelBanner").value,
-                banner1: banner1.files[0] ? await uploadImage(banner1.files[0]) : null,
-                banner2: banner2.files[0] ? await uploadImage(banner2.files[0]) : null,
-                banner3: banner3.files[0] ? await uploadImage(banner3.files[0]) : null,
-            };
-
-
-            // ------------------------------------------
-
-            data.nomeOsc = qs("#nomeOsc").value;
-            data.historia = qs("#historia").value;
-            data.atividades = atividades;
-
-            data.razaoSocial = qs("#razaoSocial").value;
-            data.nomeFantasia = qs("#nomeFantasia").value;
-            data.sigla = qs("#sigla").value;
-            data.situacaoCadastral = qs("#situacaoCadastral").value;
-            data.anoCNPJ = qs("#anoCNPJ").value;
-            data.anoFundacao = qs("#anoFundacao").value;
-            data.responsavelLegal = qs("#responsavelLegal").value;
-            data.email = qs("#email").value;
-            data.oQueFaz = qs("#oQueFaz").value;
-            data.cnpj = qs("#CNPJ").value;
-            data.telefone = qs("#telefone").value;
-            data.instagram = qs("#instagram").value;
-            data.status = qs("#status").value;
-            data.situacaoImovel = qs("#situacaoImovel").value;
-            data.cep = qs("#cep").value;
-            data.cidade = qs("#cidade").value;
-            data.bairro = qs("#bairro").value;
-            data.logradouro = qs("#logradouro").value;
-            data.numero = qs("#numero").value;
-
-            data.diretores = directors;
-
-            const json = JSON.stringify(data, null, 2);
-            qs("#jsonOut").textContent = json;
-
-            const blob = new Blob([json], {
-                type: "application/json"
+        try {
+            const response = await fetch("ajax_criar_osc.php", {
+                method: "POST",
+                body: fd,
             });
-            const url = URL.createObjectURL(blob);
-            const dl = qs("#downloadLink");
-            dl.style.display = "inline-block";
-            dl.href = url;
-            dl.download = (qs("#nomeOsc").value || "osc") + ".json";
 
-            alert("Dados preparados. As imagens foram salvas no servidor.");
+            const text = await response.text();
+            console.log("Resposta bruta do servidor:", text);
 
-            // --- 🚀 Enviar JSON para o PHP ---
+            let result;
             try {
-
-                const response = await fetch("ajax_criar_osc.php", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                const text = await response.text();
-                console.log("Resposta bruta do servidor:", text);
-
-                let result;
-                try {
-                    result = JSON.parse(text);
-                } catch (e) {
-                    console.error("Erro ao parsear JSON:", e);
-                    alert("Resposta do servidor não é JSON válido. Veja o console.");
-                    return;
-                }
-
-                console.log("✅ Resposta do servidor:", result);
-
-                if (result.success) {
-                    alert("OSC criada com sucesso!");
-                } else {
-                    alert("Erro ao criar OSC: " + (result.error || "desconhecido"));
-                }
-
-            } catch (error) {
-                console.error("❌ Erro ao enviar dados:", error);
-                alert("Erro ao enviar dados ao servidor.");
+                result = JSON.parse(text);
+            } catch (e) {
+                console.error("Erro ao parsear JSON:", e);
+                alert("Resposta do servidor não é JSON válido. Veja o console.");
+                return;
             }
+
+            if (result.success) {
+                alert("OSC criada com sucesso! ID: " + result.osc_id);
+                resetForm(); // limpa o formulário após finalizar o cadastro
+            } else {
+                alert("Erro ao criar OSC: " + (result.error || "desconhecido"));
+            }
+
+        } catch (error) {
+            console.error("❌ Erro ao enviar dados:", error);
+            alert("Erro ao enviar dados ao servidor.");
         }
+    }
 
         function resetForm() {
             if (confirm('Limpar todos os campos?')) {
                 document.getElementById('oscForm').reset();
-                directors.length = 0;
+                envolvidos.length = 0;
                 atividades.length = 0;
-                renderDirectors();
+                renderEnvolvidos();
                 renderAtividades();
                 updatePreviews();
                 qs('#jsonOut').textContent = '{}';
@@ -972,7 +1150,6 @@
             }
         }
 
-        // initialize
         updatePreviews();
     </script>
 </body>
