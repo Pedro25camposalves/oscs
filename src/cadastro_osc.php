@@ -91,6 +91,8 @@
         }
 
         input[type="text"],
+        input[type="email"],
+        input[type="password"],
         input[type="color"],
         input[type="file"],
         textarea,
@@ -99,7 +101,7 @@
             padding: 8px 10px;
             border-radius: 8px;
             border: 1px solid #e6e6e9;
-            font-size: 14px
+            font-size: 14px;
         }
 
         textarea {
@@ -268,6 +270,17 @@
         .logout-link:hover {
             background: #f0f0f0;
         }
+
+        .senha-ok {
+            color: #0a6;        
+            font-weight: 600;
+        }
+
+        .senha-erro {
+            color: #c00;        
+            font-weight: 600;
+        }
+
     </style>
 </head>
 
@@ -290,7 +303,7 @@
     <main>
         
         <form id="oscForm" onsubmit="event.preventDefault();saveData()">
-            <!-- SEÇÃO 1 -->
+            <!-- SEÇÃO 1: TEMPLATE DA OSC -->
             <div style="margin-top:16px" class="card">  
                 <div class="grid cols-2">
                     <!-- LADO ESQUERDO -->
@@ -397,7 +410,7 @@
                 </div>
             </div>
             
-            <!-- SEÇÃO 2 -->
+            <!-- SEÇÃO 2: INFORMAÕES BASICAS DA OSC -->
             <div style="margin-top:16px" class="card">
                 <div class="grid cols-2">
                     <!-- LADO ESQUERDO -->
@@ -453,7 +466,7 @@
                 </div>
             </div>
 
-            <!-- SEÇÃO 3 -->
+            <!-- SEÇÃO 3: INFORMAÇÕES JURIDICAS DA OSC -->
             <div style="margin-top:16px" class="card">
                 <h2>Transparência</h2>
                 <div class="grid cols-3">
@@ -500,7 +513,7 @@
                 </div>
             </div>
 
-            <!-- SEÇÃO 4 -->
+            <!-- SEÇÃO 4: INFORMAÕES DO IMOVEL (ENDEREÇO DA OSC) -->
             <div style="margin-top:16px" class="card">
                 <h2>Imóvel</h2>
                 <div class="grid cols-3">
@@ -531,7 +544,7 @@
                 </div>
             </div>
             
-            <!-- SEÇÃO 5 -->
+            <!-- SEÇÃO 5: AREAS DE ATUAÇÃO DA OSC -->
             <div style="margin-top:16px" class="card">
                 <h2>Área e Subárea de Atuação</h2>
                 <div class="small">
@@ -543,6 +556,43 @@
                     <button type="button" class="btn btn-ghost" id="openAtividadeModal">
                         Adicionar
                     </button>
+                </div>
+            </div>
+
+            <!-- SEÇÃO 6: USUÁRIO RESPONSÁVEL PELA OSC -->
+            <div style="margin-top:16px" class="card">
+                <h2>Usuário responsável pela OSC</h2>
+                <div>
+                    <div>
+                        <label for="usuarioNome">Nome (*)</label>
+                        <input id="usuarioNome" type="text" required />
+                    </div>
+                    <div style="margin-top: 5px">
+                        <label for="usuarioEmail">E-mail de acesso (*)</label>
+                        <input id="usuarioEmail" type="email" required />
+                    </div>
+                </div>
+                <div id="emailMsg" class="small"></div>
+                <div class="row" style="margin-top:10px">
+                    <div style="flex:1">
+                        <label for="usuarioSenha">Senha do usuário (*)</label>
+                        <input id="usuarioSenha" type="password" required />
+                    </div>
+                    <div style="flex:1">
+                        <label for="usuarioSenhaConf">Confirmar senha (*)</label>
+                        <input id="usuarioSenhaConf" type="password" required />
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top:8px; text-align:center">
+                    <label class="label-inline">
+                        <input type="checkbox" id="toggleSenha" />
+                        <span class="small">Exibir senha</span>
+                    </label>
+                    <div id="senhaMsg" class="small"></div>
+                </div>
+                <div class="small muted" style="margin-top:6px">
+                    Este usuário será criado como Administrador, com permissão para gerenciar apenas esta OSC.
                 </div>
             </div>
 
@@ -687,9 +737,99 @@
         const swQua = qs('#swQua');
         const swFon = qs('#swFon');
 
+        // Campos do usuário responsável
+        const usuarioNome       = qs('#usuarioNome');
+        const usuarioEmail      = qs('#usuarioEmail');
+        const usuarioSenha      = qs('#usuarioSenha');
+        const usuarioSenhaConf  = qs('#usuarioSenhaConf');
+        const toggleSenha       = qs('#toggleSenha');
+        const senhaMsg          = qs('#senhaMsg');
+        const emailMsg          = qs('#emailMsg');
+
+        // Toggle de exibição das senhas
+        if (toggleSenha) {
+            toggleSenha.addEventListener('change', () => {
+                const tipo = toggleSenha.checked ? 'text' : 'password';
+                if (usuarioSenha)     usuarioSenha.type = tipo;
+                if (usuarioSenhaConf) usuarioSenhaConf.type = tipo;
+            });
+        }
+
         const envolvidos = [];
         let atoresCache = [];
         const atividades = [];
+
+        function validarSenhaLive() {
+            const s1 = usuarioSenha.value;
+            const s2 = usuarioSenhaConf.value;
+                
+            senhaMsg.textContent = '';
+            senhaMsg.classList.remove('senha-ok', 'senha-erro');
+                
+            // se ainda não tem nada digitado na confirmação, não fala nada
+            if (!s2) return;
+                
+            if (s1 === s2) {
+                senhaMsg.textContent = '✔ As senhas coincidem.';
+                senhaMsg.classList.add('senha-ok');
+            } else {
+                senhaMsg.textContent = '✖ As senhas não coincidem.';
+                senhaMsg.classList.add('senha-erro');
+            }
+        }
+
+        async function verificarEmailAdmin() {
+            const email = usuarioEmail ? usuarioEmail.value.trim() : '';
+            if (emailMsg) {
+                emailMsg.textContent = '';
+            }
+        
+            if (!email) {
+                if (emailMsg) emailMsg.textContent = 'Preencha o e-mail do administrador.';
+                return { ok: false, motivo: 'Preencha o e-mail do administrador.' };
+            }
+        
+            // Validação básica de formato
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                if (emailMsg) emailMsg.textContent = 'E-mail inválido.';
+                return { ok: false, motivo: 'E-mail inválido.' };
+            }
+        
+            try {
+                const resp = await fetch('ajax_verificar_email_usuario.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({ email })
+                });
+            
+                const result = await resp.json();
+            
+                if (!result.success) {
+                    console.error('Erro na verificação de e-mail:', result.error);
+                    if (emailMsg) emailMsg.textContent = 'Erro ao verificar e-mail. Tente novamente.';
+                    return { ok: false, motivo: 'Erro na verificação.' };
+                }
+            
+                if (result.exists) {
+                    if (emailMsg) emailMsg.textContent = 'Este e-mail já está cadastrado para outro usuário.';
+                    return { ok: false, motivo: 'E-mail já cadastrado.' };
+                }
+            
+                if (emailMsg) emailMsg.textContent = 'E-mail disponível.';
+                return { ok: true };
+            
+            } catch (e) {
+                console.error('Falha na requisição de verificação de e-mail:', e);
+                if (emailMsg) emailMsg.textContent = 'Erro ao verificar e-mail.';
+                return { ok: false, motivo: 'Erro na verificação.' };
+            }
+        }
+
+        usuarioSenha.addEventListener('input', validarSenhaLive);
+        usuarioSenhaConf.addEventListener('input', validarSenhaLive);
 
         function readFileAsDataURL(file) {
             return new Promise((res, rej) => {
@@ -1039,6 +1179,41 @@
             return;
         }
 
+        // 1) valida a senha do admin da OSC
+        const s1 = usuarioSenha.value.trim();
+        const s2 = usuarioSenhaConf.value.trim();
+        
+        if (!s1 || !s2) {
+            alert('Preencha a senha e a confirmação de senha do administrador da OSC.');
+            usuarioSenha.focus();
+            return;
+        }
+    
+        if (s1 !== s2) {
+            alert('As senhas não coincidem. Corrija antes de continuar.');
+            usuarioSenhaConf.focus();
+            return;
+        }
+
+        // 2) valida nome e e-mail do admin
+        const nomeAdmin  = usuarioNome.value.trim();
+        const emailAdmin = usuarioEmail.value.trim();
+        
+        if (!nomeAdmin || !emailAdmin) {
+            alert('Preencha nome e e-mail do administrador da OSC.');
+            usuarioNome.focus();
+            return;
+        }
+    
+        // 3) verifica no servidor se o e-mail já existe
+        const resultadoEmail = await verificarEmailAdmin();
+            
+        if (!resultadoEmail.ok) {
+            // sempre dá um feedback visível
+            alert(resultadoEmail.motivo || 'Erro ao verificar e-mail do administrador.');
+            return;
+        }
+
         // Monta um FormData em vez de JSON
         const fd = new FormData();
 
@@ -1069,6 +1244,12 @@
         fd.append('telefone',         qs("#telefone").value);
         fd.append('instagram',        qs("#instagram").value);
         fd.append('status',           qs("#status").value);
+
+        // Usuário responsável pela OSC (OSC_MASTER)
+        fd.append('usuario_nome',  usuarioNome.value);
+        fd.append('usuario_email', usuarioEmail.value);
+        fd.append('usuario_senha', usuarioSenha.value);
+
 
         // Imóvel
         fd.append('situacaoImovel',   qs("#situacaoImovel").value);
@@ -1134,6 +1315,10 @@
             bairro: qs("#bairro").value,
             logradouro: qs("#logradouro").value,
             numero: qs("#numero").value,
+            usuario: {
+                nome:  usuarioNome.value,
+                email: usuarioEmail.value
+            },
             cores: {
                 bg: bgColor.value,
                 sec: secColor.value,
@@ -1187,20 +1372,43 @@
         }
     }
 
-        function resetForm() {
-            if (confirm('Limpar todos os campos?')) {
-                document.getElementById('oscForm').reset();
-                envolvidos.length = 0;
-                atividades.length = 0;
-                renderEnvolvidos();
-                renderAtividades();
-                updatePreviews();
-                qs('#jsonOut').textContent = '{}';
-                qs('#downloadLink').style.display = 'none';
-            }
+    function resetForm() {
+        if (!confirm('Limpar todos os campos?')) {
+            return;
         }
 
+        const form = document.getElementById('oscForm');
+        form.reset();
+
+        envolvidos.length = 0;
+        atividades.length = 0;
+        renderEnvolvidos();
+        renderAtividades();
         updatePreviews();
+        qs('#jsonOut').textContent = '{}';
+        qs('#downloadLink').style.display = 'none';
+
+        const usuarioSenha     = qs('#usuarioSenha');
+        const usuarioSenhaConf = qs('#usuarioSenhaConf');
+        const toggleSenha      = qs('#toggleSenha');
+
+        // Primeiro: desmarca o "Exibir senha"
+        if (toggleSenha) {
+            toggleSenha.checked = false;
+        }
+
+        // Depois de um tick, força o tipo (driblando tretas de autocomplete/estilo do browser)
+        setTimeout(() => {
+            if (usuarioSenha) {
+                usuarioSenha.type = 'password';
+            }
+            if (usuarioSenhaConf) {
+                usuarioSenhaConf.type = 'password';
+            }
+        }, 0);
+    }
+
+    updatePreviews();
     </script>
 </body>
 
