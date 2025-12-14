@@ -62,13 +62,13 @@ CREATE TABLE IF NOT EXISTS `osc_atividade` (
 -- Tabela ENVOLVIDO_OSC
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `envolvido_osc` (
-  `id`       INT          NOT NULL AUTO_INCREMENT,
-  `osc_id`   INT          NOT NULL,
-  `foto`     VARCHAR(255) NULL     DEFAULT NULL,
-  `nome`     VARCHAR(60)  NULL     DEFAULT NULL,
-  `telefone` VARCHAR(11)  NULL     DEFAULT NULL,
-  `email`    VARCHAR(100) NULL     DEFAULT NULL,
-  `funcao`   VARCHAR(60)  NULL     DEFAULT NULL,
+  `id`       INT           NOT NULL AUTO_INCREMENT,
+  `osc_id`   INT           NOT NULL,
+  `foto`     VARCHAR(255)  NULL     DEFAULT NULL,
+  `nome`     VARCHAR(100)  NOT NULL DEFAULT NULL,
+  `telefone` VARCHAR(11)   NULL     DEFAULT NULL,
+  `email`    VARCHAR(100)  NULL     DEFAULT NULL,
+  `funcao`   ENUM('DIRETOR','COORDENADOR','FINANCEIRO','MARKETING','RH') NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `fk_envolvido_osc_osc1_idx` (`osc_id` ASC),
   CONSTRAINT `fk_envolvido_osc_osc1`

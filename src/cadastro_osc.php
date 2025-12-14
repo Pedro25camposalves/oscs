@@ -715,7 +715,14 @@
                     </div>
                     <div>
                         <label for="envFuncaoNovo">Função (*)</label>
-                        <input id="envFuncaoNovo" type="text" required/>
+                        <select id="envFuncaoNovo" required>
+                            <option value="">Selecione...</option>
+                            <option value="DIRETOR">Diretor(a)</option>
+                            <option value="COORDENADOR">Coordenador(a)</option>
+                            <option value="FINANCEIRO">Financeiro</option>
+                            <option value="MARKETING">Marketing</option>
+                            <option value="RH">Recursos Humanos (RH)</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -1228,21 +1235,31 @@
 
         addEnvolvidoBtn.addEventListener('click', addEnvolvido);
 
+        const FUNCAO_LABELS = {
+            DIRETOR: 'Diretor(a)',
+            COORDENADOR: 'Coordenador(a)',
+            FINANCEIRO: 'Financeiro',
+            MARKETING: 'Marketing',
+            RH: 'Recursos Humanos (RH)'
+        };
+
         function renderEnvolvidos() {
             const list = qs('#listaEnvolvidos');
             list.innerHTML = '';
-
+                
             envolvidos.forEach((e, i) => {
                 const c = document.createElement('div');
                 c.className = 'envolvido-card';
             
                 const img = document.createElement('img');
                 img.src = e.fotoPreview || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
-
+            
+                const funcaoLabel = FUNCAO_LABELS[e.funcao] || e.funcao;
+            
                 const info = document.createElement('div');
                 info.innerHTML = `
                     <div style="font-weight:600">${escapeHtml(e.nome)}</div>
-                    <div class="small">${escapeHtml(e.funcao)}</div>
+                    <div class="small">${escapeHtml(funcaoLabel)}</div>
                 `;
             
                 const remove = document.createElement('button');

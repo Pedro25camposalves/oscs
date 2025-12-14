@@ -196,16 +196,29 @@ $envolvidos_ids = [];
 $envolvidosRootDir     = $baseOscDir . '/envolvidos/';
 $envolvidosRootRelBase = 'assets/oscs/osc-' . $osc_id . '/envolvidos/';
 
+$funcoesValidas = ['DIRETOR','COORDENADOR','FINANCEIRO','MARKETING','RH'];
+
 // --- Salva os dados de cada envolvido ---
 foreach ($envolvidos as $idx => $envolvido) {
-    $nome     = mysqli_real_escape_string($conn, $envolvido['nome']     ?? '');
-    $telefone = mysqli_real_escape_string($conn, $envolvido['telefone'] ?? '');
-    $emailEnv = mysqli_real_escape_string($conn, $envolvido['email']    ?? '');
-    $funcao   = mysqli_real_escape_string($conn, $envolvido['funcao']   ?? '');
+    $nome      = mysqli_real_escape_string($conn, $envolvido['nome']      ?? '');
+    $telefone  = mysqli_real_escape_string($conn, $envolvido['telefone']  ?? '');
+    $emailEnv  = mysqli_real_escape_string($conn, $envolvido['email']     ?? '');
 
-    if ($nome === '' && $funcao === '') {
+    $funcaoRaw = strtoupper(trim($envolvido['funcao'] ?? ''));
+
+    if ($nome === '' && $funcaoRaw === '') {
         continue;
     }
+
+    if (!in_array($funcaoRaw, $funcoesValidas, true)) {
+        echo json_encode([
+            'success' => false,
+            'error'   => 'Função de envolvido inválida.'
+        ]);
+        exit;
+    }
+
+    $funcao = mysqli_real_escape_string($conn, $funcaoRaw);
 
     $sql_envolvido = "
         INSERT INTO envolvido_osc (osc_id, foto, nome, telefone, email, funcao)
