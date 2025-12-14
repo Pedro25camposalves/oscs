@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS `envolvido_osc` (
   `id`       INT           NOT NULL AUTO_INCREMENT,
   `osc_id`   INT           NOT NULL,
   `foto`     VARCHAR(255)  NULL     DEFAULT NULL,
-  `nome`     VARCHAR(100)  NOT NULL DEFAULT NULL,
+  `nome`     VARCHAR(100)  NOT NULL,
   `telefone` VARCHAR(11)   NULL     DEFAULT NULL,
   `email`    VARCHAR(100)  NULL     DEFAULT NULL,
   `funcao`   ENUM('DIRETOR','COORDENADOR','FINANCEIRO','MARKETING','RH') NOT NULL,
