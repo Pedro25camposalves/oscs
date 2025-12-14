@@ -2056,7 +2056,7 @@ if (!$oscIdVinculada) {
             const camposPendentes = Object.entries(templateRemover)
               .filter(([, v]) => v)
               .map(([k]) => k);
-                    
+
             // Se tiver arquivo novo no mesmo campo, não deleta (substituição já resolve)
             const temNovo = {
               logo_simples: !!logoSimples.files[0],
@@ -2065,9 +2065,9 @@ if (!$oscIdVinculada) {
               banner2: !!banner2.files[0],
               banner3: !!banner3.files[0],
             };
-            
+
             const deletarAgora = camposPendentes.filter(campo => !temNovo[campo]);
-            
+
             for (const campo of deletarAgora) {
               try {
                 await excluirImagemTemplateServidor(oscId, campo);
@@ -2076,14 +2076,12 @@ if (!$oscIdVinculada) {
                 errosDocs.push(`(Imagem ${campo}) ${e.message || 'falha ao excluir no servidor.'}`);
               }
             }
-            
+
             // limpa pendências
             Object.keys(templateRemover).forEach(k => templateRemover[k] = false);
             Object.keys(templateBackupUrl).forEach(k => templateBackupUrl[k] = null);
 
-            // recarrega para refletir imagens existentes/caminhos
-            await loadOscData();
-
+            window.location.reload();
         } catch (error) {
             console.error("Erro ao enviar dados:", error);
             alert("Erro ao enviar dados ao servidor.");
