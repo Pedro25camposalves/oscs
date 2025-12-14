@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS `envolvido_osc` (
   `nome`     VARCHAR(100)  NOT NULL,
   `telefone` VARCHAR(11)   NULL     DEFAULT NULL,
   `email`    VARCHAR(100)  NULL     DEFAULT NULL,
-  `funcao`   ENUM('DIRETOR','COORDENADOR','FINANCEIRO','MARKETING','RH') NOT NULL,
+  `funcao`   ENUM('DIRETOR','COORDENADOR','FINANCEIRO','MARKETING','RH', 'PARTICIPANTE') NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `fk_envolvido_osc_osc1_idx` (`osc_id` ASC),
   CONSTRAINT `fk_envolvido_osc_osc1`

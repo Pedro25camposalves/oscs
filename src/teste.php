@@ -8,14 +8,66 @@ if (!$osc || !is_numeric($osc)) {
     exit;
 }
 
-$stmt = $conn->prepare("SELECT osc.*, template_web.*, cores.* FROM osc
-LEFT JOIN template_web ON template_web.osc_id = osc.id LEFT JOIN cores ON cores.id_cores = osc.id WHERE osc.id = ?;");
-$stmt->bind_param("i", $osc); 
+$stmtDocs = $conn->prepare("SELECT subtipo, documento, ano_referencia FROM documento WHERE osc_id = ?");
+$stmtDocs->bind_param("i", $osc);
+$stmtDocs->execute();
+$result = $stmtDocs->get_result();
+$documentos = [];
+while ($rowDoc = $result->fetch_assoc()) {
+    $documentos[] = $rowDoc;
+}
+
+$docsPorSubtipo = [];
+foreach ($documentos as $doc) {
+    $subtipo = strtolower($doc['subtipo']);
+
+    $docsPorSubtipo[$subtipo][] = [
+        'caminho' => '/oscs/src/' . ltrim($doc['documento'], '/'),
+        'nome'    => basename($doc['documento']),
+        'ano'     => $doc['ano_referencia']
+    ];
+}
+
+$pdfs = [];
+foreach ($docsPorSubtipo as $subtipo => $lista) {
+    if (count($lista) === 1) {
+        $pdfs[$subtipo] = $lista[0]['caminho'];
+    }
+}
+
+$stmtEnvolvidos = $conn->prepare("
+    SELECT nome, funcao, foto
+    FROM envolvido_osc
+    WHERE osc_id = ?
+      AND funcao <> 'PARTICIPANTE'
+");
+$stmtEnvolvidos->bind_param("i", $osc);
+$stmtEnvolvidos->execute();
+
+$resultEnvolvidos = $stmtEnvolvidos->get_result();
+
+$envolvidos = [];
+while ($row = $resultEnvolvidos->fetch_assoc()) {
+    $envolvidos[] = $row;
+}
+
+$funcoesLabel = [
+    'DIRETOR'     => 'Diretor(a)',
+    'COORDENADOR' => 'Coordenador(a)',
+    'FINANCEIRO'  => 'Financeiro',
+    'MARKETING'   => 'Comunicação e Marketing',
+    'RH'          => 'Recursos Humanos'
+];
+
+$stmt = $conn->prepare("SELECT osc.*, template_web.*, cores.*, imovel.*, osc_atividade.* FROM osc
+LEFT JOIN template_web ON template_web.osc_id = osc.id LEFT JOIN cores ON cores.id_cores = osc.id LEFT JOIN osc_atividade ON osc_atividade.osc_id = osc.id 
+LEFT JOIN imovel ON imovel.osc_id = osc.id WHERE osc.id = ?;");
+$stmt->bind_param("i", $osc);
 $stmt->execute();
 $result = $stmt->get_result();
 
 if ($row = $result->fetch_assoc()) {
-    echo $row["id"] . " - " . $row["nome"] . " - " . $row["cnpj"] . "<br>";
+    //echo $row["id"] . " - " . $row["nome"] . " - " . $row["cnpj"] . "<br>";
 } else {
     echo "Nenhum registro encontrado";
 }
@@ -26,8 +78,7 @@ $cor1 = $row["cor1"];
 $cor2 = $row["cor2"];
 $cor3 = $row["cor3"];
 $cor4 = $row["cor4"];
-$cor_font = '#4B2E23';
-$background = '#f6dfcbff';
+$cor_font = $row["cor4"];
 // --------------------------
 // INICIO
 // --------------------------
@@ -42,27 +93,42 @@ $cnae = $row["cnae"];
 $historia = $row["historia"];
 $area_atuacao1 = $row["area_atuacao"];
 $subarea1 = $row["subarea"];
-$area_atuacao2 = "Cultura e recreação";
-$subarea2 = "Não Informado";
 // --------------------------
 // TRANSPARENCIA
 // --------------------------
 $nome_fantasia = $row["nome_fantasia"];
-$sigla = "ASSOCEST";
+$sigla = $row["sigla"];
 $situacao_cad = $row["situacao_cadastral"];
-$situacao_imo = "Não informado";
+$situacao_imo = $row["situacao"];
 $ano_cadastro = $row["ano_cnpj"];
 $ano_fundacao = $row["ano_fundacao"];
-$responsavel = "Não informado";
+$responsavel = $row["responsavel"];
 $oq_faz = $row["oque_faz"];
 // --------------------------
 // INFORMAÇÕES GERAIS
 // --------------------------
 $logo_nobg = $row["logo_simples"];
-$endereco =  "AVENIDA TEREZA ANSELMO MASSARI <br> PARQUE BRASIL, Jacareí - SP<br> <strong>CEP:</strong> 12328-430";
+$banner1 = $row["banner1"];
+$banner2 = $row["banner2"];
+$banner3 = $row["banner3"];
+$logradouro = $row['logradouro'];
+$numero = $row['numero'];
+$cidade = $row['cidade'];
+$cep = $row['cep'];
+$endereco =  "$logradouro - $numero<br>{$row['bairro']}, $cidade<br><strong>CEP: </strong>$cep";
 $email = $row["email"];
 $tel = $row["telefone"];
 
+//varíavel para localização no mapa
+$buscaEndereco = "$logradouro, $numero, $cidade, $cep";
+$buscaEndereco = trim(
+    implode(', ', array_filter([
+        $logradouro ?? null,
+        $numero ?? null,
+        $cidade ?? null,
+        $cep ?? null
+    ]))
+);
 ?>
 
 <!DOCTYPE html>
@@ -298,6 +364,69 @@ $tel = $row["telefone"];
       font-weight: 600;
       margin-bottom: 5px;
     }
+
+    /* ===== LISTA DE DOCUMENTOS NO MODAL ===== */
+    #listaDocumentos {
+      margin-top: 20px;
+    }
+
+    .doc-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .doc-item:hover {
+      background-color: #eef2f5;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    .doc-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .doc-info i {
+      font-size: 20px;
+      color: #0d6efd; /* azul bootstrap */
+    }
+
+    .doc-nome {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      cursor: pointer;
+    }
+
+    .doc-nome:hover {
+      text-decoration: underline;
+    }
+
+    .doc-actions a {
+      color: #198754; /* verde bootstrap */
+      font-size: 18px;
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .doc-actions a:hover {
+      color: #146c43;
+      transform: scale(1.15);
+    }
+
+    .doc-ano {
+      margin-left: 6px;
+      font-size: 13px;
+      color: #6c757d;
+      font-weight: 400;
+    }
+
   </style>
 
   <script>
@@ -467,7 +596,7 @@ $tel = $row["telefone"];
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-light shadow-sm sticky-top" style="background-color: <?php echo $cor1; ?>;">
     <div class="container">
-      <img src="<?php echo $logo_nobg; ?>" class="img-fluid" style="max-width: 80px;" alt="Logo ASSOCEST">
+      <img src="<?php echo $logo_nobg; ?>" class="img-fluid" style="max-width: 80px;" alt="Logo <?php echo $sigla?>">
       <!-- <div style="margin-left: 8px;">
         <h7><strong>ASSOCEST</strong></h7>
       </div> -->
@@ -493,9 +622,9 @@ $tel = $row["telefone"];
     <section class="hero">
       <div class="carousel" id="carousel">
         <div class="carousel-inner">
-          <img src="/assets/images/banner-1.png" alt="Banner 1" class="img-hero active">
-          <img src="/assets/images/inst-5.webp" alt="Banner 2" class="img-hero">
-          <img src="/assets/images/inst-6.webp" alt="Banner 3" class="img-hero">
+          <img src="<?php echo $banner1; ?>" alt="Banner 1" class="img-hero active">
+          <img src="<?php echo $banner2; ?>" alt="Banner 2" class="img-hero">
+          <img src="<?php echo $banner3; ?>" alt="Banner 3" class="img-hero">
         </div>
       </div>
       <div class="hero-overlay"></div>
@@ -636,7 +765,6 @@ $tel = $row["telefone"];
           <p>✉️ <?php echo $email ?></p>
         </div>
         <div class="map">
-          <!-- Coloca aqui o iframe ou div do Leaflet -->
           <div id="map"></div>
         </div>
       </div>
@@ -649,46 +777,35 @@ $tel = $row["telefone"];
     <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px;">Sobre Nós</h1>
     <div class="container my-5">
       <p> <?php echo $historia; ?> </p>
-      <ul>
-        <li><strong>Missão: </strong><?php echo $missao; ?></li>
-      </ul>
       <section id="equipe" class="my-5">
         <div class="container">
           <h2 class="text-center mb-4">Nossa Equipe</h2>
 
           <div class="row justify-content-center">
-            <!-- Card 1 -->
-            <div class="col-md-3 col-sm-6 mb-4">
-              <div class="card border-0 shadow-sm text-center h-100">
-                <img src="/assets/images/usuario.jpg" class="card-img-top rounded-top" alt="Foto da pessoa">
-                <div class="card-body">
-                  <h5 class="card-title mb-1">Ana Souza</h5>
-                  <p class="card-text text-muted">Coordenadora de Projetos</p>
-                </div>
-              </div>
-            </div>
+            
+            <?php if (empty($envolvidos)): ?>
+              <p class="text-muted text-center">Nenhum envolvido cadastrado.</p>
+            <?php endif; ?>
+            <?php foreach ($envolvidos as $env): ?>
+              <div class="col-md-3 col-sm-6 mb-4">
+                <div class="card border-0 shadow-sm text-center h-100">
+                  <img 
+                    src="<?= !empty($env['foto']) ? '/oscs/src/' . ltrim($env['foto'], '/') : '/oscs/src/assets/imagens/usuario_default.png' ?>" 
+                    class="card-img-top rounded-top"
+                    alt="Foto de <?= htmlspecialchars($env['nome']) ?>"
+                  >
+                  <div class="card-body">
+                    <h5 class="card-title mb-1">
+                      <?= htmlspecialchars($env['nome']) ?>
+                    </h5>
 
-            <!-- Card 2 -->
-            <div class="col-md-3 col-sm-6 mb-4">
-              <div class="card border-0 shadow-sm text-center h-100">
-                <img src="/assets/images/usuario.jpg" class="card-img-top rounded-top" alt="Foto da pessoa">
-                <div class="card-body">
-                  <h5 class="card-title mb-1">Bruno Lima</h5>
-                  <p class="card-text text-muted">Analista Financeiro</p>
+                    <p class="card-text text-muted">
+                      <?= $funcoesLabel[$env['funcao']] ?? $env['funcao'] ?>
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <!-- Card 3 -->
-            <div class="col-md-3 col-sm-6 mb-4">
-              <div class="card border-0 shadow-sm text-center h-100">
-                <img src="/assets/images/usuario.jpg" class="card-img-top rounded-top" alt="Foto da pessoa">
-                <div class="card-body">
-                  <h5 class="card-title mb-1">Carla Mendes</h5>
-                  <p class="card-text text-muted">Comunicação e Marketing</p>
-                </div>
-              </div>
-            </div>
+            <?php endforeach; ?>
           </div>
         </div>
 
@@ -725,17 +842,6 @@ $tel = $row["telefone"];
               <div class="col-md-6">
                 <p class="fw-semibold mb-1">Subárea:</p>
                 <p class="text-muted"><?php echo $subarea1; ?></p>
-              </div>
-            </div>
-            <hr>
-            <div class="row">
-              <div class="col-md-6">
-                <p class="fw-semibold mb-1">Área de Atuação:</p>
-                <p class="text-muted"><?php echo $area_atuacao2; ?></p>
-              </div>
-              <div class="col-md-6">
-                <p class="fw-semibold mb-1">Subárea:</p>
-                <p class="text-muted"><?php echo $subarea2; ?></p>
               </div>
             </div>
           </div>
@@ -795,20 +901,6 @@ $tel = $row["telefone"];
 
         <hr>
 
-        <div class="map-card">
-          <div class="endereco">
-            <strong>Endereço:</strong>
-            <p><?php echo $endereco ?></p>
-            <p><i class="bi bi-telephone"></i><?php echo $tel ?></p>
-            <p><i class="bi bi-envelope"></i><?php echo $email ?></p>
-          </div>
-
-          <iframe
-            src="https://www.openstreetmap.org/export/embed.html?bbox=-35.386%2C-8.583%2C-35.381%2C-8.578&layer=mapnik&marker=-8.581%2C-35.384"
-            title="Mapa Gameleira">
-          </iframe>
-        </div>
-
         <div class="info-grid">
           <div class="info-block">
             <strong><i class="bi bi-house"></i> Situação do imóvel:</strong>
@@ -833,6 +925,136 @@ $tel = $row["telefone"];
           <div class="info-block" style="grid-column: 1 / -1;">
             <strong><i class="bi bi-info-circle"></i> O que a OSC faz:</strong>
             <span><?php echo $oq_faz; ?></span>
+          </div>
+        </div>
+        <hr>
+        <h4><strong>Documentos Institucionais</strong></h4>
+
+        <div class="info-grid">
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> Estatuto:</strong>
+            <button class="btn btn-primary btn-sm" onclick="visualizar('estatuto')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+            
+          </div>
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> Ata:</strong>
+            <button class="btn btn-primary btn-sm" onclick="visualizar('ata')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+          
+        </div>
+
+        <!-- 2 div Certidões -->
+        <hr>
+        <h4><strong>Certidões (CNDs)</strong></h4>
+
+        <div class="info-grid">
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> CND Federal:</strong>
+            <button class="btn btn-primary btn-sm" onclick="visualizar('cnd_federal')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> CND Estadual:</strong>
+            <button class="btn btn-primary btn-sm" onclick="visualizar('cnd_estadual')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> CND Municipal:</strong>
+            <button class="btn btn-primary btn-sm" onclick="visualizar('cnd_municipal')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> FGTS:</strong>
+            <button class="btn btn-primary btn-sm" onclick="visualizar('fgts')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> Trabalhista:</strong>
+            <button class="btn btn-primary btn-sm" onclick="visualizar('trabalhista')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+
+          </div>
+
+        <!-- 3 div Utilidade Pública -->
+        <hr>
+        <h4><strong>Utilidade Pública</strong></h4>
+
+        <div class="info-grid">
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> Lei de Utilidade Pública Federal:</strong>
+            <button
+              class="btn btn-primary btn-sm"
+              onclick="window.open('https://www2.camara.leg.br/legin/fed/lei/1930-1939/lei-91-28-agosto-1935-398006-normaatualizada-pl.html', '_blank')"
+              style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                Visualizar Documento
+            </button>
+          </div>
+
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> Lei de Utilidade Pública Estadual:</strong>
+            <button
+              class="btn btn-primary btn-sm"
+              onclick="window.open('https://www.almg.gov.br/atividade-parlamentar/leis/legislacao-mineira/lei/texto/print.html?tipo=LEI&num=12972&ano=1998&comp=&cons=', '_blank')"
+              style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                Visualizar Documento
+            </button>
+          </div>
+
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i> Lei de Utilidade Pública Municipal:</strong>
+            <button
+              class="btn btn-primary btn-sm"
+              onclick="window.open('https://leismunicipais.com.br/a/mg/p/paracatu/lei-ordinaria/2025/403/4021/lei-ordinaria-n-4021-2025-autoriza-o-poder-executivo-a-majorar-a-destinacao-de-recursos-para-a-associacao-esther-siqueira-tillmann-e-da-outras-providencias?q=associa%E7%E3o', '_blank')"
+              style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                Visualizar Documento
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 div Utilidade Pública -->
+        <hr>
+        <h4><strong>Cadastro e Identificação</strong></h4>
+
+        <div class="info-grid">
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i>Cartão CNPJ</strong>
+            <button class="btn btn-primary btn-sm" onclick="visualizar('cartaoCNPJ')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 div Documentos Contábeis -->
+        <hr>
+        <h4><strong>Documentos Contábeis</strong></h4>
+
+        <div class="info-grid">
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i>Balanço Patrimonial</strong>
+            <button class="btn btn-primary btn-sm" onclick="visualizar('balanco_patrimonial')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
+          </div>
+
+          <div class="info-block">
+            <strong><i class="bi bi-file-text"></i>DRE (Demonstração do Resultado do Exercício)</strong>
+            <button class="btn btn-primary btn-sm" onclick="visualizar('dre')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+              Visualizar Documento
+            </button>
           </div>
         </div>
       </div>
@@ -927,21 +1149,169 @@ $tel = $row["telefone"];
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 
   <script>
+    const buscaEndereco = <?= json_encode($buscaEndereco) ?>;
     // Inicializa o mapa
-    var map = L.map('map').setView([-23.305, -45.965], 13); // Coordenadas de Jacareí-SP
+    var map = L.map('map').setView([-17.2219, -46.8754], 13);
 
     // Adiciona o tile layer (mapa base)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Adiciona marcador
-    L.marker([-23.305, -45.965]).addTo(map)
-      .bindPopup('OSC Assocest<br>Jacareí - SP')
-      .openPopup();
+    fetch(`geocode.php?q=${encodeURIComponent(buscaEndereco)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.length > 0) {
+                const lat = parseFloat(data[0].lat);
+                const lon = parseFloat(data[0].lon);
+
+                map.setView([lat, lon], 16);
+
+                L.marker([lat, lon]).addTo(map)
+                    .bindPopup(buscaEndereco)
+                    .openPopup();
+            } else {
+                console.warn('Endereço não encontrado no mapa');
+            }
+        })
+        .catch(err => console.error('Erro ao buscar localização:', err));
   </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    const pdfs = <?= json_encode($pdfs, JSON_UNESCAPED_SLASHES) ?>;
+    const documentos = <?= json_encode($docsPorSubtipo, JSON_UNESCAPED_SLASHES) ?>;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    function visualizar(subtipo) {
+
+      if (documentos[subtipo] && documentos[subtipo].length > 1) {
+        abrirLista(subtipo);
+      } else if (pdfs[subtipo]) {
+        abrirPDF(subtipo);
+      } else {
+        alert("Documento não disponível.");
+      }
+    }
+    // Configuração do PDF.js
+    function abrirPDF(tipo) {
+      document.getElementById('listaDocumentos').style.display = 'none';
+      document.getElementById('pdfViewer').style.display = 'block';
+      document.getElementById('downloadLink').style.display = 'inline-block';
+      const pdfUrl = pdfs[tipo];  
+      
+      if (!pdfUrl) {
+          console.error("Tipo de PDF inválido:", tipo);
+          alert("Documento não disponível.");
+          return;
+      }
+
+      // Abre o modal
+      document.getElementById("pdfModal").style.display = "flex";
+
+      // Link de download
+      document.getElementById('downloadLink').href = pdfUrl;
+
+      // Renderização do PDF
+      pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
+          pdf.getPage(1).then(page => {
+              const viewport = page.getViewport({ scale: 1.4 });
+              const canvas = document.getElementById("pdfViewer");
+              const context = canvas.getContext("2d");
+
+              canvas.width = viewport.width;
+              canvas.height = viewport.height;
+
+              page.render({
+                  canvasContext: context,
+                  viewport: viewport
+              });
+          });
+      });
+    } 
+
+    function abrirLista(tipo) {
+      const lista = documentos[tipo];
+
+      if (!lista || lista.length === 0) {
+        alert("Nenhum documento disponível.");
+        return;
+      }
+
+      const container = document.getElementById('listaDocumentos');
+      container.innerHTML = '';
+      container.style.display = 'block';
+
+      document.getElementById('pdfViewer').style.display = 'none';
+      document.getElementById('downloadLink').style.display = 'none';
+      
+      lista.forEach(doc => {
+        const item = document.createElement('div');
+        item.className = 'doc-item';
+
+        item.innerHTML = `
+          <div class="doc-info">
+            <i class="bi bi-file-earmark-pdf-fill"></i>
+            <span class="doc-nome" onclick="abrirPDFPorCaminho('${doc.caminho}')">
+              ${doc.nome}
+              <small class="doc-ano">(${doc.ano})</small>
+            </span>
+          </div>
+          <div class="doc-actions">
+            <a href="${doc.caminho}" download title="Baixar documento">
+              <i class="bi bi-download"></i>
+            </a>
+          </div>
+        `;
+
+        container.appendChild(item);
+      });
+      document.getElementById("pdfModal").style.display = "flex";
+    }
+
+    function abrirPDFPorCaminho(caminho) {
+      document.getElementById('listaDocumentos').style.display = 'none';
+      document.getElementById('pdfViewer').style.display = 'block';
+      document.getElementById('downloadLink').style.display = 'inline-block';
+
+      document.getElementById('downloadLink').href = caminho;
+      document.getElementById("pdfModal").style.display = "flex";
+
+      const canvas = document.getElementById("pdfViewer");
+      const context = canvas.getContext("2d");
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      pdfjsLib.getDocument(caminho).promise
+        .then(pdf => pdf.getPage(1))
+        .then(page => {
+          const viewport = page.getViewport({ scale: 1.4 });
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+
+          page.render({ canvasContext: context, viewport });
+        });
+    }
+
+    function fecharPDF() {
+        document.getElementById("pdfModal").style.display = "none";
+    }
+  </script>
+
+  <div id="pdfModal" class="modal" style="display:none;">
+      <div class="modal-content" style="padding:20px; background:white; max-width:90%; margin:auto;">
+          <span class="close" onclick="fecharPDF()" style="float:right; cursor:pointer;">&times;</span>
+          <div id="listaDocumentos" style="display:none;"></div>
+          <canvas id="pdfViewer" style="width:100%;"></canvas>
+
+          <!-- Botão de download -->
+          <a id="downloadLink" class="btn btn-success btn-sm" download>
+              Baixar PDF
+          </a>
+      </div>
+  </div>
 
 </body>
 
