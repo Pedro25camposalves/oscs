@@ -4,8 +4,7 @@ include 'conexao.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-function normalizarLista($valor): array
-{
+function normalizarLista($valor): array {
     if (!isset($valor)) return [];
 
     if (is_string($valor)) {
@@ -40,17 +39,53 @@ function pick($data, array $paths, $default = null) {
     return $default;
 }
 
-$json = file_get_contents("php://input");
-$data = json_decode($json, true);
+function salvarImagemSeEnviada(string $campo, string $destDirAbs, string $prefixo, string $atual): string{
+    if (!isset($_FILES[$campo]) || $_FILES[$campo]['error'] !== UPLOAD_ERR_OK) return $atual;
 
-if (!$data) {
-    echo json_encode(['success' => false, 'error' => 'JSON inválido']);
+    $tmp  = $_FILES[$campo]['tmp_name'];
+    $name = $_FILES[$campo]['name'] ?? 'img';
+    $ext  = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+
+    // básico: evita extensões estranhas
+    $permitidas = ['jpg','jpeg','png','webp','gif'];
+    if (!in_array($ext, $permitidas, true)) {
+        throw new Exception("Arquivo inválido em {$campo} (extensão não permitida)");
+    }
+
+    if (!is_dir($destDirAbs) && !mkdir($destDirAbs, 0777, true)) {
+        throw new Exception("Não foi possível criar diretório de imagens");
+    }
+
+    $novoNome = $prefixo . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(4)) . '.' . $ext;
+    $destAbs  = rtrim($destDirAbs, '/\\') . DIRECTORY_SEPARATOR . $novoNome;
+
+    if (!move_uploaded_file($tmp, $destAbs)) {
+        throw new Exception("Falha ao salvar {$campo}");
+    }
+
+    // caminho relativo para salvar no BD (ajuste conforme seu projeto)
+    $rel = 'assets/oscs/osc-' . (int)($_POST['osc_id'] ?? 0) . '/imagens/' . $novoNome;
+    return $rel;
+}
+
+$data = $_POST;
+
+if (empty($data)) {
+    $json = file_get_contents("php://input");
+    $tmp  = json_decode($json, true);
+    if (json_last_error() === JSON_ERROR_NONE && is_array($tmp)) {
+        $data = $tmp;
+    }
+}
+
+if (empty($data)) {
+    echo json_encode(['success' => false, 'error' => 'Nenhum dado recebido (nem POST nem JSON)']);
     exit;
 }
 
-$osc_id = (int)($_GET['id'] ?? 0);
+$osc_id = (int)($data['osc_id'] ?? ($_GET['id'] ?? 0));
 if (!$osc_id) {
-    echo json_encode(['success' => false, 'error' => 'ID da OSC não enviado']);
+    echo json_encode(['success' => false, 'error' => 'ID da OSC não enviado (osc_id)']);
     exit;
 }
 
@@ -63,10 +98,27 @@ try {
     $template_id = null;
     $cores_id = null;
 
-    $stmt = $conn->prepare("SELECT id, cores_id FROM template_web WHERE osc_id = ? LIMIT 1");
+    $stmt = $conn->prepare("
+        SELECT id, cores_id, logo_simples, logo_completa, banner1, banner2, banner3, label_banner
+        FROM template_web
+        WHERE osc_id = ? LIMIT 1
+    ");
     $stmt->bind_param("i", $osc_id);
     $stmt->execute();
     $tplRow = $stmt->get_result()->fetch_assoc();
+    $logoSimplesAtual  = $tplRow['logo_simples']  ?? '';
+    $logoCompletaAtual = $tplRow['logo_completa'] ?? '';
+    $banner1Atual      = $tplRow['banner1']       ?? '';
+    $banner2Atual      = $tplRow['banner2']       ?? '';
+    $banner3Atual      = $tplRow['banner3']       ?? '';
+    $labelAtual        = $tplRow['label_banner']  ?? '';
+
+    $logoSimples  = (string)pick($data, ['template.logo_simples'], $logoSimplesAtual);
+    $logoCompleta = (string)pick($data, ['template.logo_completa'], $logoCompletaAtual);
+    $banner1      = (string)pick($data, ['template.banner1'], $banner1Atual);
+    $banner2      = (string)pick($data, ['template.banner2'], $banner2Atual);
+    $banner3      = (string)pick($data, ['template.banner3'], $banner3Atual);
+    $labelBanner  = (string)pick($data, ['labelBanner','template.label_banner'], $labelAtual);
     $stmt->close();
 
     if ($tplRow) {
@@ -281,15 +333,27 @@ try {
     // ============================================
     // 6) TEMPLATE (logos + banners + label)
     // ============================================
-    $logoSimples  = (string)pick($data, ['logos.logoSimples', 'template.logo_simples'], '');
-    $logoCompleta = (string)pick($data, ['logos.logoCompleta', 'template.logo_completa'], '');
-
-    $banner1 = (string)pick($data, ['banners.banner1', 'template.banner1'], '');
-    $banner2 = (string)pick($data, ['banners.banner2', 'template.banner2'], '');
-    $banner3 = (string)pick($data, ['banners.banner3', 'template.banner3'], '');
-
-    $labelBanner = (string)pick($data, ['banners.labelBanner', 'labelBanner', 'template.label_banner'], '');
-
+    
+    // 6.1) Começa do que já existe no BD
+    $logoSimples  = $logoSimplesAtual;
+    $logoCompleta = $logoCompletaAtual;
+    $banner1      = $banner1Atual;
+    $banner2      = $banner2Atual;
+    $banner3      = $banner3Atual;
+    
+    // 6.2) Label pode vir do form (texto), então pega com fallback correto
+    $labelBanner = (string)pick($data, ['labelBanner','template.label_banner'], $labelAtual);
+    
+    // 6.3) Se enviou arquivos, substitui e salva no disco
+    $destDirAbs = __DIR__ . '/assets/oscs/osc-' . $osc_id . '/imagens';
+    
+    $logoSimples  = salvarImagemSeEnviada('logoSimples',  $destDirAbs, 'logo-simples',  $logoSimples);
+    $logoCompleta = salvarImagemSeEnviada('logoCompleta', $destDirAbs, 'logo-completa', $logoCompleta);
+    $banner1      = salvarImagemSeEnviada('banner1',      $destDirAbs, 'banner1',       $banner1);
+    $banner2      = salvarImagemSeEnviada('banner2',      $destDirAbs, 'banner2',       $banner2);
+    $banner3      = salvarImagemSeEnviada('banner3',      $destDirAbs, 'banner3',       $banner3);
+    
+    // 6.4) Atualiza BD
     $stmt = $conn->prepare("
         UPDATE template_web SET
             logo_simples=?,

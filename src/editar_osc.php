@@ -1688,12 +1688,13 @@ if (!$oscIdVinculada) {
 
         // envolvidos/atividades
         const envolvidosParaEnvio = envolvidos.map((e, i) => ({
-            tipo: e.tipo || 'existente',
-            envolvido_id: e.envolvidoId || null,
-            nome: e.nome,
-            telefone: e.telefone,
-            email: e.email,
-            funcao: e.funcao
+          tipo: e.tipo || 'existente',
+          envolvido_id: e.envolvidoId || null,
+          nome: e.nome,
+          telefone: e.telefone,
+          email: e.email,
+          funcao: e.funcao,
+          foto: e.fotoUrl || ''   // <-- preserve!
         }));
 
         fd.append('envolvidos', JSON.stringify(envolvidosParaEnvio));
