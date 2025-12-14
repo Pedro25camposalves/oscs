@@ -1089,7 +1089,6 @@ include 'conexao.php';
   </div>
 
   <script>
-
     // Configuração do PDF.js
     function abrirPDF(tipo) {
       const pdfs = {

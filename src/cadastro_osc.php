@@ -722,6 +722,7 @@
                             <option value="FINANCEIRO">Financeiro</option>
                             <option value="MARKETING">Marketing</option>
                             <option value="RH">Recursos Humanos (RH)</option>
+                            <option value="PARTICIPANTE">Participante</option>
                         </select>
                     </div>
                 </div>
@@ -1240,7 +1241,8 @@
             COORDENADOR: 'Coordenador(a)',
             FINANCEIRO: 'Financeiro',
             MARKETING: 'Marketing',
-            RH: 'Recursos Humanos (RH)'
+            RH: 'Recursos Humanos (RH)',
+            PARTICIPANTE: 'Participante'
         };
 
         function renderEnvolvidos() {
