@@ -68,6 +68,33 @@ function salvarImagemSeEnviada(string $campo, string $destDirAbs, string $prefix
     return $rel;
 }
 
+function salvarFotoEnvolvidoSeEnviada(string $campo, string $destDirAbs, string $prefixo, string $atual, int $osc_id): string {
+    if (!isset($_FILES[$campo]) || $_FILES[$campo]['error'] !== UPLOAD_ERR_OK) return $atual;
+
+    $tmp  = $_FILES[$campo]['tmp_name'];
+    $name = $_FILES[$campo]['name'] ?? 'img';
+    $ext  = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+
+    $permitidas = ['jpg','jpeg','png','webp','gif'];
+    if (!in_array($ext, $permitidas, true)) {
+        throw new Exception("Arquivo inválido em {$campo} (extensão não permitida)");
+    }
+
+    if (!is_dir($destDirAbs) && !mkdir($destDirAbs, 0777, true)) {
+        throw new Exception("Não foi possível criar diretório de fotos dos envolvidos");
+    }
+
+    $novoNome = $prefixo . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(4)) . '.' . $ext;
+    $destAbs  = rtrim($destDirAbs, '/\\') . DIRECTORY_SEPARATOR . $novoNome;
+
+    if (!move_uploaded_file($tmp, $destAbs)) {
+        throw new Exception("Falha ao salvar {$campo}");
+    }
+
+    // caminho relativo salvo no BD
+    return 'assets/oscs/osc-' . $osc_id . '/envolvidos/' . $novoNome;
+}
+
 $data = $_POST;
 
 if (empty($data)) {
@@ -283,31 +310,40 @@ try {
     // ============================================
     if (isset($data['envolvidos'])) {
         $envolvidos = normalizarLista($data['envolvidos']);
-
+    
         $stmt = $conn->prepare("DELETE FROM envolvido_osc WHERE osc_id = ?");
         $stmt->bind_param("i", $osc_id);
         if (!$stmt->execute()) throw new Exception("Erro ao apagar envolvidos: " . $stmt->error);
         $stmt->close();
-
+    
         $stmt = $conn->prepare("
             INSERT INTO envolvido_osc (osc_id, nome, telefone, email, funcao, foto)
             VALUES (?, ?, ?, ?, ?, ?)
         ");
-
-        foreach ($envolvidos as $env) {
+    
+        $destDirAbs = __DIR__ . '/assets/oscs/osc-' . $osc_id . '/envolvidos';
+    
+        foreach ($envolvidos as $i => $env) {
             if (!is_array($env)) continue;
-
+        
             $nome     = (string)($env['nome'] ?? '');
             $telefone = (string)($env['telefone'] ?? '');
             $emailEnv = (string)($env['email'] ?? '');
             $funcao   = (string)($env['funcao'] ?? '');
-            $foto     = (string)($env['foto'] ?? '');
-
+        
+            // Foto atual (vem do JSON quando é existente)
+            $fotoAtual = (string)($env['foto'] ?? '');
+        
+            // Se veio arquivo novo "fotoEnvolvido_{$i}", salva e substitui
+            $campoFile = 'fotoEnvolvido_' . $i;
+            $foto = salvarFotoEnvolvidoSeEnviada($campoFile, $destDirAbs, 'envolvido', $fotoAtual, $osc_id);
+        
             if ($nome === '' && $funcao === '') continue;
-
+        
             $stmt->bind_param("isssss", $osc_id, $nome, $telefone, $emailEnv, $funcao, $foto);
             if (!$stmt->execute()) throw new Exception("Erro ao inserir envolvido: " . $stmt->error);
         }
+    
         $stmt->close();
     }
 
@@ -333,26 +369,26 @@ try {
     // ============================================
     // 6) TEMPLATE (logos + banners + label)
     // ============================================
-    
+
     // 6.1) Começa do que já existe no BD
     $logoSimples  = $logoSimplesAtual;
     $logoCompleta = $logoCompletaAtual;
     $banner1      = $banner1Atual;
     $banner2      = $banner2Atual;
     $banner3      = $banner3Atual;
-    
+
     // 6.2) Label pode vir do form (texto), então pega com fallback correto
     $labelBanner = (string)pick($data, ['labelBanner','template.label_banner'], $labelAtual);
-    
+
     // 6.3) Se enviou arquivos, substitui e salva no disco
     $destDirAbs = __DIR__ . '/assets/oscs/osc-' . $osc_id . '/imagens';
-    
+
     $logoSimples  = salvarImagemSeEnviada('logoSimples',  $destDirAbs, 'logo-simples',  $logoSimples);
     $logoCompleta = salvarImagemSeEnviada('logoCompleta', $destDirAbs, 'logo-completa', $logoCompleta);
     $banner1      = salvarImagemSeEnviada('banner1',      $destDirAbs, 'banner1',       $banner1);
     $banner2      = salvarImagemSeEnviada('banner2',      $destDirAbs, 'banner2',       $banner2);
     $banner3      = salvarImagemSeEnviada('banner3',      $destDirAbs, 'banner3',       $banner3);
-    
+
     // 6.4) Atualiza BD
     $stmt = $conn->prepare("
         UPDATE template_web SET
