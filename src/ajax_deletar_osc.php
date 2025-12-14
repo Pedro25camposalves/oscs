@@ -2,10 +2,9 @@
     $TIPOS_PERMITIDOS = ['OSC_TECH_ADMIN'];
     $RESPOSTA_JSON    = true;
     require 'autenticacao.php';
+    require_once 'conexao.php';
     
     header('Content-Type: application/json; charset=utf-8');
-    
-    require_once 'conexao.php';
     
     if (!isset($_GET['id'])) {
         http_response_code(400);

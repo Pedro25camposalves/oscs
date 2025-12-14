@@ -2,7 +2,7 @@
     $TIPOS_PERMITIDOS = ['OSC_TECH_ADMIN']; // só usuário OscTech admin
     $RESPOSTA_JSON    = false;              // resposta é página HTML
     require 'autenticacao.php';
-    ?>
+?>
 
 <!doctype html>
 <html lang="pt-BR">
@@ -410,7 +410,7 @@
                 </div>
             </div>
             
-            <!-- SEÇÃO 2: INFORMAÕES BASICAS DA OSC -->
+            <!-- SEÇÃO 2: INFORMAÇÕES BASICAS DA OSC -->
             <div style="margin-top:16px" class="card">
                 <div class="grid cols-2">
                     <!-- LADO ESQUERDO -->
@@ -466,7 +466,7 @@
                 </div>
             </div>
 
-            <!-- SEÇÃO 3: INFORMAÇÕES JURIDICAS DA OSC -->
+            <!-- SEÇÃO 3: INFORMAÇÕES JURÍDICAS DA OSC -->
             <div style="margin-top:16px" class="card">
                 <h2>Transparência</h2>
                 <div class="grid cols-3">
@@ -513,7 +513,7 @@
                 </div>
             </div>
 
-            <!-- SEÇÃO 4: INFORMAÕES DO IMOVEL (ENDEREÇO DA OSC) -->
+            <!-- SEÇÃO 4: INFORMAÇÕES DO IMÓVEL (ENDEREÇO DA OSC) -->
             <div style="margin-top:16px" class="card">
                 <h2>Imóvel</h2>
                 <div class="grid cols-3">
@@ -538,13 +538,13 @@
                         <input id="logradouro" type="text" />
                     </div>
                     <div>
-                        <label for="numero">Numero</label>
+                        <label for="numero">Número</label>
                         <input id="numero" inputmode="numeric" type="text" />
                     </div>
                 </div>
             </div>
             
-            <!-- SEÇÃO 5: AREAS DE ATUAÇÃO DA OSC -->
+            <!-- SEÇÃO 5: ÁREAS DE ATUAÇÃO DA OSC -->
             <div style="margin-top:16px" class="card">
                 <h2>Área e Subárea de Atuação</h2>
                 <div class="small">
@@ -689,25 +689,13 @@
 
     </main>
 
-    <!-- MODAL DOS ENVOLVIDOS -->
+    <!-- MODAL DOS ENVOLVIDOS (apenas "novo envolvido") -->
     <div id="modalBackdrop" class="modal-backdrop">
         <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Envolvido">
             <h3>Adicionar Envolvido</h3>
 
-            <!-- Modo de seleção: novo ou existente -->
-            <div class="row" style="margin-top:8px; margin-bottom:8px">
-                <label class="label-inline">
-                    <input type="radio" name="envModo" value="novo" checked />
-                    Novo envolvido
-                </label>
-                <label class="label-inline">
-                    <input type="radio" name="envModo" value="existente" />
-                    Usar envolvido existente
-                </label>
-            </div>
-
-            <!-- Container: NOVO ENVOLVIDO -->
-            <div id="envNovoContainer">
+            <!-- Novo Envolvido (sempre) -->
+            <div id="envNovoContainer" style="margin-top:8px">
                 <div class="grid">
                     <div>
                         <label for="envFoto">Foto</label>
@@ -726,31 +714,15 @@
                         <input id="envEmail" type="text" />
                     </div>
                     <div>
-                        <label for="envFuncao">Função (*)</label>
+                        <label for="envFuncaoNovo">Função (*)</label>
                         <input id="envFuncaoNovo" type="text" required/>
                     </div>
                 </div>
             </div>
 
-            <!-- Container: ENVOLVIDO EXISTENTE -->
-            <div id="envExistenteContainer" style="display:none; margin-top:8px">
-                <div class="grid">
-                    <div>
-                        <label for="envAtorExistente">Envolvido já cadastrado</label>
-                        <select id="envAtorExistente">
-                            <option value="">Selecione um envolvido...</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="envFuncao">Função nesta OSC (*)</label>
-                        <input id="envFuncaoExistente" type="text" required/>
-                    </div>
-                </div>
-            </div>
-
             <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
-                <button class="btn btn-ghost" id="closeEnvolvidoModal">Cancelar</button>
-                <button class="btn btn-primary" id="addEnvolvidoBtn">Adicionar</button>
+                <button class="btn btn-ghost" id="closeEnvolvidoModal" type="button">Cancelar</button>
+                <button class="btn btn-primary" id="addEnvolvidoBtn" type="button">Adicionar</button>
             </div>
         </div>
     </div>
@@ -883,7 +855,6 @@
         const dres       = []; // { ano, file }
 
         const envolvidos = [];
-        let atoresCache = [];
         const atividades = [];
 
         // modal balanços patrimoniais
@@ -1070,7 +1041,6 @@
             senhaMsg.textContent = '';
             senhaMsg.classList.remove('senha-ok', 'senha-erro');
                 
-            // se ainda não tem nada digitado na confirmação, não fala nada
             if (!s2) return;
                 
             if (s1 === s2) {
@@ -1093,7 +1063,6 @@
                 return { ok: false, motivo: 'Preencha o e-mail do administrador.' };
             }
         
-            // Validação básica de formato
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 if (emailMsg) emailMsg.textContent = 'E-mail inválido.';
@@ -1168,7 +1137,7 @@
                 img.src = src;
                 previewLogoCompleta.appendChild(img)
             }
-            [b1, b2, b3].forEach(async (b) => {
+            ;[b1, b2, b3].forEach(async (b) => {
                 if (b) {
                     const src = await readFileAsDataURL(b);
                     const img = document.createElement('img');
@@ -1183,7 +1152,6 @@
             swQua.style.background = quaColor.value;
             swFon.style.background = fonColor.value;
 
-            // apply page palette live
             document.documentElement.style.setProperty('--bg', bgColor.value);
             document.documentElement.style.setProperty('--sec', secColor.value);
             document.documentElement.style.setProperty('--ter', terColor.value);
@@ -1194,164 +1162,71 @@
         [logoSimples, logoCompleta, banner1, banner2, banner3].forEach(el => el.addEventListener('change', updatePreviews));
         [bgColor, secColor, terColor, quaColor, fonColor].forEach(el => el.addEventListener('input', updatePreviews));
 
-        // modal logic
-        const modalBackdrop = qs('#modalBackdrop');
-        const openEnvolvidoModal = qs('#openEnvolvidoModal');
+        // ===== MODAL ENVOLVIDOS (apenas novo) =====
+        const modalBackdrop       = qs('#modalBackdrop');
+        const openEnvolvidoModal  = qs('#openEnvolvidoModal');
         const closeEnvolvidoModal = qs('#closeEnvolvidoModal');
-        const addEnvolvidoBtn = qs('#addEnvolvidoBtn');
-
-        // modo de seleção novo/existente
-        const envModoRadios         = qsa('input[name="envModo"]');
-        const envNovoContainer      = qs('#envNovoContainer');
-        const envExistenteContainer = qs('#envExistenteContainer');
-        const envAtorExistente      = qs('#envAtorExistente');
+        const addEnvolvidoBtn     = qs('#addEnvolvidoBtn');
 
         openEnvolvidoModal.addEventListener('click', () => {
             modalBackdrop.style.display = 'flex';
-        
-            envModoRadios.forEach(r => r.checked = (r.value === 'novo'));
-            envNovoContainer.style.display = 'block';
-            envExistenteContainer.style.display = 'none';
-        
+
             qs('#envFoto').value = '';
             qs('#envNome').value = '';
             qs('#envTelefone').value = '';
             qs('#envEmail').value = '';
             const funcaoNovoInput = qs('#envFuncaoNovo');
-            const funcaoExistenteInput = qs('#envFuncaoExistente');
             if (funcaoNovoInput) funcaoNovoInput.value = '';
-            if (funcaoExistenteInput) funcaoExistenteInput.value = '';
-            envAtorExistente.value = '';
-        
-            loadAtoresList();
-        });
-
-        envModoRadios.forEach(r => {
-            r.addEventListener('change', () => {
-                const modoSelecionado = [...envModoRadios].find(x => x.checked)?.value || 'novo';
-            
-                if (modoSelecionado === 'existente') {
-                    envNovoContainer.style.display = 'none';
-                    envExistenteContainer.style.display = 'block';
-                    loadAtoresList(); // garante lista atualizada
-                } else {
-                    envNovoContainer.style.display = 'block';
-                    envExistenteContainer.style.display = 'none';
-                }
-            });
         });
 
         closeEnvolvidoModal.addEventListener('click', () => {
-            modalBackdrop.style.display = 'none'
+            modalBackdrop.style.display = 'none';
         });
 
         modalBackdrop.addEventListener('click', (e) => {
-            if (e.target === modalBackdrop) modalBackdrop.style.display = 'none'
+            if (e.target === modalBackdrop) modalBackdrop.style.display = 'none';
         });
 
-        // Carrega lista de atores existentes para o <select> do modal
-        async function loadAtoresList() {
-            try {
-                const resp = await fetch('ajax_listar_atores.php');
-                const result = await resp.json();
-            
-                envAtorExistente.innerHTML = '<option value="">Selecione um envolvido...</option>';
-                atoresCache = [];
-            
-                if (result.success && Array.isArray(result.data)) {
-                    atoresCache = result.data;
-                    result.data.forEach(a => {
-                        const opt = document.createElement('option');
-                        opt.value = a.id;
-                        const labelEmail = a.email ? ` - ${a.email}` : '';
-                        opt.textContent = `${a.nome}${labelEmail}`;
-                        envAtorExistente.appendChild(opt);
-                    });
-                } else {
-                    console.error(result.error || 'Falha ao listar atores');
-                }
-            } catch (e) {
-                console.error('Erro ao carregar lista de atores:', e);
-                alert('Erro ao carregar lista de envolvidos existentes.');
-            }
-        }
-
-        // ADICIONAR ENVOLVIDO
+        // ADICIONAR ENVOLVIDO (sempre novo, vinculado apenas a esta OSC)
         async function addEnvolvido() {
-            const modo = [...envModoRadios].find(r => r.checked)?.value || 'novo';
-        
-            if (modo === 'existente') {
-                const atorId = parseInt(envAtorExistente.value, 10);
-                const funcao = qs('#envFuncaoExistente').value.trim();
-            
-                if (!atorId || !funcao) {
-                    alert('Selecione um envolvido existente e informe a função.');
-                    return;
-                }
-            
-                const ator = atoresCache.find(a => a.id === atorId);
-                if (!ator) {
-                    alert('Envolvido não encontrado na lista.');
-                    return;
-                }
-            
-                const envolvido = {
-                    tipo: 'existente',
-                    atorId,
-                    nome: ator.nome || '',
-                    telefone: ator.telefone || '',
-                    email: ator.email || '',
-                    funcao,
-                    fotoPreview: ator.foto || null,  // se tiver caminho da foto
-                    fotoFile: null                   // sem upload novo
-                };
-            
-                envolvidos.push(envolvido);
-            
-            } else {
-                // modo: novo
-                const fotoFile = qs('#envFoto').files[0] || null;
-                const nome     = qs('#envNome').value.trim();
-                const telefone = qs('#envTelefone').value.trim();
-                const email    = qs('#envEmail').value.trim();
-                const funcao   = qs('#envFuncaoNovo').value.trim();
-            
-                if (!nome || !funcao) {
-                    alert('Preencha pelo menos o Nome e a Função do envolvido!');
-                    return;
-                }
-            
-                const fotoPreview = fotoFile ? await readFileAsDataURL(fotoFile) : null;
-            
-                const envolvido = {
-                    tipo: 'novo',
-                    atorId: null,
-                    fotoPreview,
-                    fotoFile,
-                    nome,
-                    telefone,
-                    email,
-                    funcao
-                };
-            
-                envolvidos.push(envolvido);
+            const fotoFile = qs('#envFoto').files[0] || null;
+            const nome     = qs('#envNome').value.trim();
+            const telefone = qs('#envTelefone').value.trim();
+            const email    = qs('#envEmail').value.trim();
+            const funcao   = qs('#envFuncaoNovo').value.trim();
+
+            if (!nome || !funcao) {
+                alert('Preencha pelo menos o Nome e a Função do envolvido!');
+                return;
             }
-        
+
+            const fotoPreview = fotoFile ? await readFileAsDataURL(fotoFile) : null;
+
+            const envolvido = {
+                tipo: 'novo',
+                atorId: null,
+                fotoPreview,
+                fotoFile,
+                nome,
+                telefone,
+                email,
+                funcao
+            };
+
+            envolvidos.push(envolvido);
             renderEnvolvidos();
-        
+
             // Reseta campos do modal
             qs('#envFoto').value = '';
             qs('#envNome').value = '';
             qs('#envTelefone').value = '';
             qs('#envEmail').value = '';
             const funcaoNovoInput = qs('#envFuncaoNovo');
-            const funcaoExistenteInput = qs('#envFuncaoExistente');
             if (funcaoNovoInput) funcaoNovoInput.value = '';
-            if (funcaoExistenteInput) funcaoExistenteInput.value = '';
-            envAtorExistente.value = '';
-        
+
             modalBackdrop.style.display = 'none';
         }
+
         addEnvolvidoBtn.addEventListener('click', addEnvolvido);
 
         function renderEnvolvidos() {
@@ -1439,7 +1314,7 @@
         
             atividades.forEach((a, i) => {
                 const c = document.createElement('div');
-                c.className = 'envolvido-card'; // reaproveitando o estilo
+                c.className = 'envolvido-card';
             
                 const info = document.createElement('div');
                 info.innerHTML = `
@@ -1471,23 +1346,21 @@
                     '<': '&lt;',
                     '>': '&gt;',
                     '"': '&quot;'
-                } [match]
+                }[match]
             })
         }
 
         // ====== UPLOAD DE DOCUMENTOS (após criar a OSC) ======
 
         async function enviarDocumentoSimples(oscId, fileInput, categoria, subtipo) {
-            // se não tem arquivo, não é erro, só ignora
             if (!fileInput || !fileInput.files || !fileInput.files[0]) {
                 return null;
             }
         
             const fdDoc = new FormData();
             fdDoc.append('id_osc', oscId);
-            fdDoc.append('categoria', categoria);   // INSTITUCIONAL / CERTIDAO
-            fdDoc.append('subtipo', subtipo);       // ESTATUTO, ATA, etc.
-            // ano_referencia não se aplica aqui
+            fdDoc.append('categoria', categoria);
+            fdDoc.append('subtipo', subtipo);
             fdDoc.append('arquivo', fileInput.files[0]);
         
             try {
@@ -1509,7 +1382,7 @@
                     return `(${categoria}/${subtipo}) ${data.mensagem || 'erro ao enviar documento.'}`;
                 }
             
-                return null; // sem erro
+                return null;
             
             } catch (e) {
                 console.error('Erro na requisição de upload de documento:', subtipo, e);
@@ -1517,7 +1390,6 @@
             }
         }
 
-        // Envia TODOS os documentos simples (estatuto, ata, certidões, se existirem)
         async function enviarDocumentosFixos(oscId) {
             const erros = [];
         
@@ -1539,7 +1411,6 @@
             return erros;
         }
 
-        // Envia todos os Balanços Patrimoniais da lista "balancos"
         async function enviarBalancos(oscId) {
             const erros = [];
         
@@ -1582,7 +1453,6 @@
             return erros;
         }
 
-        // Envia todas as DREs da lista "dres"
         async function enviarDres(oscId) {
             const erros = [];
         
@@ -1625,310 +1495,292 @@
             return erros;
         }
 
-    // REALIZA O CADASTRO (ao clicar no botão 'CADASTRAR OSC')
-    async function saveData() {
-        // validações mínimas
-        if (!logoSimples.files[0] || !logoCompleta.files[0] || !banner1.files[0]) {
-            alert("Logo simples, logo completa e banner principal são obrigatórios.");
-            return;
-        }
-
-        // 1) valida a senha do admin da OSC
-        const s1 = usuarioSenha.value.trim();
-        const s2 = usuarioSenhaConf.value.trim();
-        
-        if (!s1 || !s2) {
-            alert('Preencha a senha e a confirmação de senha do administrador da OSC.');
-            usuarioSenha.focus();
-            return;
-        }
-    
-        if (s1 !== s2) {
-            alert('As senhas não coincidem. Corrija antes de continuar.');
-            usuarioSenhaConf.focus();
-            return;
-        }
-
-        // 2) valida nome e e-mail do admin
-        const nomeAdmin  = usuarioNome.value.trim();
-        const emailAdmin = usuarioEmail.value.trim();
-        
-        if (!nomeAdmin || !emailAdmin) {
-            alert('Preencha nome e e-mail do administrador da OSC.');
-            usuarioNome.focus();
-            return;
-        }
-    
-        // 3) verifica no servidor se o e-mail já existe
-        const resultadoEmail = await verificarEmailAdmin();
-            
-        if (!resultadoEmail.ok) {
-            // sempre dá um feedback visível
-            alert(resultadoEmail.motivo || 'Erro ao verificar e-mail do administrador.');
-            return;
-        }
-
-        // Monta um FormData em vez de JSON
-        const fd = new FormData();
-
-        // Cores (usando sintaxe cores[bg] pra virar $_POST['cores']['bg'] no PHP)
-        fd.append('cores[bg]',  bgColor.value);
-        fd.append('cores[sec]', secColor.value);
-        fd.append('cores[ter]', terColor.value);
-        fd.append('cores[qua]', quaColor.value);
-        fd.append('cores[fon]', fonColor.value);
-
-        // Dados "simples" da OSC
-        fd.append('nomeOsc',          qs("#nomeOsc").value);
-        fd.append('historia',         qs("#historia").value);
-        fd.append('missao',           qs("#missao").value);
-        fd.append('visao',            qs("#visao").value);
-        fd.append('valores',          qs("#valores").value);
-
-        fd.append('razaoSocial',      qs("#razaoSocial").value);
-        fd.append('nomeFantasia',     qs("#nomeFantasia").value);
-        fd.append('sigla',            qs("#sigla").value);
-        fd.append('situacaoCadastral',qs("#situacaoCadastral").value);
-        fd.append('anoCNPJ',          qs("#anoCNPJ").value);
-        fd.append('anoFundacao',      qs("#anoFundacao").value);
-        fd.append('responsavelLegal', qs("#responsavelLegal").value);
-        fd.append('email',            qs("#email").value);
-        fd.append('oQueFaz',          qs("#oQueFaz").value);
-        fd.append('cnpj',             qs("#CNPJ").value);
-        fd.append('telefone',         qs("#telefone").value);
-        fd.append('instagram',        qs("#instagram").value);
-        fd.append('status',           qs("#status").value);
-
-        // Usuário responsável pela OSC (OSC_MASTER)
-        fd.append('usuario_nome',  usuarioNome.value);
-        fd.append('usuario_email', usuarioEmail.value);
-        fd.append('usuario_senha', usuarioSenha.value);
-
-        const docEstatutoInput    = qs('#docEstatuto');
-        const docAtaInput         = qs('#docAta');
-        const docCndFederalInput  = qs('#docCndFederal');
-        const docCndEstadualInput = qs('#docCndEstadual');
-        const docCndMunicipalInput= qs('#docCndMunicipal');
-        const docFgtsInput        = qs('#docFgts');
-        const docTrabalhistaInput = qs('#docTrabalhista');
-        const getFileName = (input) => (input && input.files && input.files[0]) ? input.files[0].name : null;
-
-        // Imóvel
-        fd.append('situacaoImovel',   qs("#situacaoImovel").value);
-        fd.append('cep',              qs("#cep").value);
-        fd.append('cidade',           qs("#cidade").value);
-        fd.append('bairro',           qs("#bairro").value);
-        fd.append('logradouro',       qs("#logradouro").value);
-        fd.append('numero',           qs("#numero").value);
-
-        // Texto do banner
-        fd.append('labelBanner', qs("#labelBanner").value);
-
-        // Monta array de envolvidos para envio
-        const envolvidosParaEnvio = envolvidos.map(e => ({
-            tipo: e.tipo || 'novo',       // 'novo' ou 'existente'
-            ator_id: e.atorId || null,   // id do ator se já existir
-            nome: e.nome,
-            telefone: e.telefone,
-            email: e.email,
-            funcao: e.funcao
-        }));
-
-        fd.append('envolvidos', JSON.stringify(envolvidosParaEnvio));
-        fd.append('atividades', JSON.stringify(atividades));
-
-        // Arquivos de foto de cada envolvido, em campos próprios
-        envolvidos.forEach((e, i) => {
-            if (e.fotoFile) {
-                fd.append(`fotoEnvolvido_${i}`, e.fotoFile);
-            }
-        });
-
-        // Arquivos — aqui vai o binário mesmo
-        if (logoSimples.files[0])  fd.append('logoSimples',  logoSimples.files[0]);
-        if (logoCompleta.files[0]) fd.append('logoCompleta', logoCompleta.files[0]);
-        if (banner1.files[0])      fd.append('banner1',      banner1.files[0]);
-        if (banner2.files[0])      fd.append('banner2',      banner2.files[0]);
-        if (banner3.files[0])      fd.append('banner3',      banner3.files[0]);
-
-        // Opcional: montar um JSON só pra exibir no <pre> (sem os arquivos)
-        const previewData = {
-            labelBanner: qs("#labelBanner").value,
-            cores: {
-                bg:  bgColor.value,
-                sec: secColor.value,
-                ter: terColor.value,
-                qua: quaColor.value,
-                fon: fonColor.value,
-            },
-            nomeOsc: qs("#nomeOsc").value,
-            historia: qs("#historia").value,
-            missao: qs("#missao").value,
-            visao: qs("#visao").value,
-            valores: qs("#valores").value,
-            razaoSocial: qs("#razaoSocial").value,
-            nomeFantasia: qs("#nomeFantasia").value,
-            sigla: qs("#sigla").value,
-            situacaoCadastral: qs("#situacaoCadastral").value,
-            anoCNPJ: qs("#anoCNPJ").value,
-            anoFundacao: qs("#anoFundacao").value,
-            responsavelLegal: qs("#responsavelLegal").value,
-            email: qs("#email").value,
-            oQueFaz: qs("#oQueFaz").value,
-            cnpj: qs("#CNPJ").value,
-            telefone: qs("#telefone").value,
-            instagram: qs("#instagram").value,
-            status: qs("#status").value,
-            situacaoImovel: qs("#situacaoImovel").value,
-            cep: qs("#cep").value,
-            cidade: qs("#cidade").value,
-            bairro: qs("#bairro").value,
-            logradouro: qs("#logradouro").value,
-            numero: qs("#numero").value,
-            usuario: {
-                nome:  usuarioNome.value,
-                email: usuarioEmail.value
-            },
-            envolvidos: envolvidosParaEnvio,
-            atividades,
-            documentos: {
-                institucionais: {
-                    estatuto:    getFileName(docEstatutoInput),
-                    ata:         getFileName(docAtaInput),
-                },
-                certidoes: {
-                    cnd_federal:   getFileName(docCndFederalInput),
-                    cnd_estadual:  getFileName(docCndEstadualInput),
-                    cnd_municipal: getFileName(docCndMunicipalInput),
-                    fgts:          getFileName(docFgtsInput),
-                    trabalhista:   getFileName(docTrabalhistaInput),
-                },
-                contabeis: {
-                    balancos: balancos.map(b => ({
-                        ano: b.ano,
-                        fileName: b.file?.name || ''
-                    })),
-                    dres: dres.map(d => ({
-                        ano: d.ano,
-                        fileName: d.file?.name || ''
-                    })),
-                }
-            }
-        };
-
-        const jsonPreview = JSON.stringify(previewData, null, 2);
-        qs("#jsonOut").textContent = jsonPreview;
-
-        const blob = new Blob([jsonPreview], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const dl = qs("#downloadLink");
-        dl.style.display = "inline-block";
-        dl.href = url;
-        dl.download = (qs("#nomeOsc").value || "osc") + ".json";
-
-        try {
-            const response = await fetch("ajax_criar_osc.php", {
-                method: "POST",
-                body: fd,
-            });
-
-            const text = await response.text();
-            console.log("Resposta bruta do servidor:", text);
-
-            let result;
-            try {
-                result = JSON.parse(text);
-            } catch (e) {
-                console.error("Erro ao parsear JSON:", e);
-                alert("Resposta do servidor não é JSON válido. Veja o console.");
+        // REALIZA O CADASTRO
+        async function saveData() {
+            if (!logoSimples.files[0] || !logoCompleta.files[0] || !banner1.files[0]) {
+                alert("Logo simples, logo completa e banner principal são obrigatórios.");
                 return;
             }
 
-            if (result.success) {
-                const oscId = result.osc_id;
-                        
-                // Após criar a OSC, envia os documentos (se existirem)
-                let errosDocs = [];
-                        
-                try {
-                    const errosFixos    = await enviarDocumentosFixos(oscId);
-                    const errosBalancos = await enviarBalancos(oscId);
-                    const errosDres     = await enviarDres(oscId);
-                
-                    errosDocs = [
-                        ...errosFixos,
-                        ...errosBalancos,
-                        ...errosDres
-                    ];
-                } catch (e) {
-                    console.error('Falha geral ao enviar documentos da OSC:', e);
-                    errosDocs.push('Falha inesperada ao enviar alguns documentos.');
-                }
+            const s1 = usuarioSenha.value.trim();
+            const s2 = usuarioSenhaConf.value.trim();
             
-                if (errosDocs.length === 0) {
-                    alert("OSC criada com sucesso! Todos os documentos foram enviados.");
-                } else {
-                    alert(
-                        "OSC criada com sucesso, mas alguns documentos não foram enviados:\n\n" +
-                        errosDocs.map(e => "- " + e).join("\n")
-                    );
-                }
-            
-                resetForm();
-            
-            } else {
-                alert("Erro ao criar OSC: " + (result.error || "desconhecido"));
+            if (!s1 || !s2) {
+                alert('Preencha a senha e a confirmação de senha do administrador da OSC.');
+                usuarioSenha.focus();
+                return;
+            }
+        
+            if (s1 !== s2) {
+                alert('As senhas não coincidem. Corrija antes de continuar.');
+                usuarioSenhaConf.focus();
+                return;
             }
 
-        } catch (error) {
-            console.error("❌ Erro ao enviar dados:", error);
-            alert("Erro ao enviar dados ao servidor.");
+            const nomeAdmin  = usuarioNome.value.trim();
+            const emailAdmin = usuarioEmail.value.trim();
+            
+            if (!nomeAdmin || !emailAdmin) {
+                alert('Preencha nome e e-mail do administrador da OSC.');
+                usuarioNome.focus();
+                return;
+            }
+        
+            const resultadoEmail = await verificarEmailAdmin();
+                
+            if (!resultadoEmail.ok) {
+                alert(resultadoEmail.motivo || 'Erro ao verificar e-mail do administrador.');
+                return;
+            }
+
+            const fd = new FormData();
+
+            fd.append('cores[bg]',  bgColor.value);
+            fd.append('cores[sec]', secColor.value);
+            fd.append('cores[ter]', terColor.value);
+            fd.append('cores[qua]', quaColor.value);
+            fd.append('cores[fon]', fonColor.value);
+
+            fd.append('nomeOsc',          qs("#nomeOsc").value);
+            fd.append('historia',         qs("#historia").value);
+            fd.append('missao',           qs("#missao").value);
+            fd.append('visao',            qs("#visao").value);
+            fd.append('valores',          qs("#valores").value);
+
+            fd.append('razaoSocial',      qs("#razaoSocial").value);
+            fd.append('nomeFantasia',     qs("#nomeFantasia").value);
+            fd.append('sigla',            qs("#sigla").value);
+            fd.append('situacaoCadastral',qs("#situacaoCadastral").value);
+            fd.append('anoCNPJ',          qs("#anoCNPJ").value);
+            fd.append('anoFundacao',      qs("#anoFundacao").value);
+            fd.append('responsavelLegal', qs("#responsavelLegal").value);
+            fd.append('email',            qs("#email").value);
+            fd.append('oQueFaz',          qs("#oQueFaz").value);
+            fd.append('cnpj',             qs("#CNPJ").value);
+            fd.append('telefone',         qs("#telefone").value);
+            fd.append('instagram',        qs("#instagram").value);
+            fd.append('status',           qs("#status").value);
+
+            fd.append('usuario_nome',  usuarioNome.value);
+            fd.append('usuario_email', usuarioEmail.value);
+            fd.append('usuario_senha', usuarioSenha.value);
+
+            const docEstatutoInput    = qs('#docEstatuto');
+            const docAtaInput         = qs('#docAta');
+            const docCndFederalInput  = qs('#docCndFederal');
+            const docCndEstadualInput = qs('#docCndEstadual');
+            const docCndMunicipalInput= qs('#docCndMunicipal');
+            const docFgtsInput        = qs('#docFgts');
+            const docTrabalhistaInput = qs('#docTrabalhista');
+            const getFileName = (input) => (input && input.files && input.files[0]) ? input.files[0].name : null;
+
+            fd.append('situacaoImovel',   qs("#situacaoImovel").value);
+            fd.append('cep',              qs("#cep").value);
+            fd.append('cidade',           qs("#cidade").value);
+            fd.append('bairro',           qs("#bairro").value);
+            fd.append('logradouro',       qs("#logradouro").value);
+            fd.append('numero',           qs("#numero").value);
+
+            fd.append('labelBanner', qs("#labelBanner").value);
+
+            const envolvidosParaEnvio = envolvidos.map(e => ({
+                tipo: e.tipo || 'novo',
+                ator_id: e.atorId || null,
+                nome: e.nome,
+                telefone: e.telefone,
+                email: e.email,
+                funcao: e.funcao
+            }));
+
+            fd.append('envolvidos', JSON.stringify(envolvidosParaEnvio));
+            fd.append('atividades', JSON.stringify(atividades));
+
+            envolvidos.forEach((e, i) => {
+                if (e.fotoFile) {
+                    fd.append(`fotoEnvolvido_${i}`, e.fotoFile);
+                }
+            });
+
+            if (logoSimples.files[0])  fd.append('logoSimples',  logoSimples.files[0]);
+            if (logoCompleta.files[0]) fd.append('logoCompleta', logoCompleta.files[0]);
+            if (banner1.files[0])      fd.append('banner1',      banner1.files[0]);
+            if (banner2.files[0])      fd.append('banner2',      banner2.files[0]);
+            if (banner3.files[0])      fd.append('banner3',      banner3.files[0]);
+
+            const previewData = {
+                labelBanner: qs("#labelBanner").value,
+                cores: {
+                    bg:  bgColor.value,
+                    sec: secColor.value,
+                    ter: terColor.value,
+                    qua: quaColor.value,
+                    fon: fonColor.value,
+                },
+                nomeOsc: qs("#nomeOsc").value,
+                historia: qs("#historia").value,
+                missao: qs("#missao").value,
+                visao: qs("#visao").value,
+                valores: qs("#valores").value,
+                razaoSocial: qs("#razaoSocial").value,
+                nomeFantasia: qs("#nomeFantasia").value,
+                sigla: qs("#sigla").value,
+                situacaoCadastral: qs("#situacaoCadastral").value,
+                anoCNPJ: qs("#anoCNPJ").value,
+                anoFundacao: qs("#anoFundacao").value,
+                responsavelLegal: qs("#responsavelLegal").value,
+                email: qs("#email").value,
+                oQueFaz: qs("#oQueFaz").value,
+                cnpj: qs("#CNPJ").value,
+                telefone: qs("#telefone").value,
+                instagram: qs("#instagram").value,
+                status: qs("#status").value,
+                situacaoImovel: qs("#situacaoImovel").value,
+                cep: qs("#cep").value,
+                cidade: qs("#cidade").value,
+                bairro: qs("#bairro").value,
+                logradouro: qs("#logradouro").value,
+                numero: qs("#numero").value,
+                usuario: {
+                    nome:  usuarioNome.value,
+                    email: usuarioEmail.value
+                },
+                envolvidos: envolvidosParaEnvio,
+                atividades,
+                documentos: {
+                    institucionais: {
+                        estatuto:    getFileName(docEstatutoInput),
+                        ata:         getFileName(docAtaInput),
+                    },
+                    certidoes: {
+                        cnd_federal:   getFileName(docCndFederalInput),
+                        cnd_estadual:  getFileName(docCndEstadualInput),
+                        cnd_municipal: getFileName(docCndMunicipalInput),
+                        fgts:          getFileName(docFgtsInput),
+                        trabalhista:   getFileName(docTrabalhistaInput),
+                    },
+                    contabeis: {
+                        balancos: balancos.map(b => ({
+                            ano: b.ano,
+                            fileName: b.file?.name || ''
+                        })),
+                        dres: dres.map(d => ({
+                            ano: d.ano,
+                            fileName: d.file?.name || ''
+                        })),
+                    }
+                }
+            };
+
+            const jsonPreview = JSON.stringify(previewData, null, 2);
+            qs("#jsonOut").textContent = jsonPreview;
+
+            const blob = new Blob([jsonPreview], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const dl = qs("#downloadLink");
+            dl.style.display = "inline-block";
+            dl.href = url;
+            dl.download = (qs("#nomeOsc").value || "osc") + ".json";
+
+            try {
+                const response = await fetch("ajax_criar_osc.php", {
+                    method: "POST",
+                    body: fd,
+                });
+
+                const text = await response.text();
+                console.log("Resposta bruta do servidor:", text);
+
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (e) {
+                    console.error("Erro ao parsear JSON:", e);
+                    alert("Resposta do servidor não é JSON válido. Veja o console.");
+                    return;
+                }
+
+                if (result.success) {
+                    const oscId = result.osc_id;
+                            
+                    let errosDocs = [];
+                            
+                    try {
+                        const errosFixos    = await enviarDocumentosFixos(oscId);
+                        const errosBalancos = await enviarBalancos(oscId);
+                        const errosDres     = await enviarDres(oscId);
+                    
+                        errosDocs = [
+                            ...errosFixos,
+                            ...errosBalancos,
+                            ...errosDres
+                        ];
+                    } catch (e) {
+                        console.error('Falha geral ao enviar documentos da OSC:', e);
+                        errosDocs.push('Falha inesperada ao enviar alguns documentos.');
+                    }
+                
+                    if (errosDocs.length === 0) {
+                        alert("OSC criada com sucesso! Todos os documentos foram enviados.");
+                    } else {
+                        alert(
+                            "OSC criada com sucesso, mas alguns documentos não foram enviados:\n\n" +
+                            errosDocs.map(e => "- " + e).join("\n")
+                        );
+                    }
+                
+                    resetForm();
+                
+                } else {
+                    alert("Erro ao criar OSC: " + (result.error || "desconhecido"));
+                }
+
+            } catch (error) {
+                console.error("❌ Erro ao enviar dados:", error);
+                alert("Erro ao enviar dados ao servidor.");
+            }
         }
-    }
 
-    function resetForm() {
-        if (!confirm('Limpar todos os campos?')) {
-            return;
+        function resetForm() {
+            if (!confirm('Limpar todos os campos?')) {
+                return;
+            }
+
+            const form = document.getElementById('oscForm');
+            form.reset();
+
+            envolvidos.length = 0;
+            atividades.length = 0;
+            balancos.length   = 0;
+            dres.length       = 0;
+
+            renderEnvolvidos();
+            renderAtividades();
+            renderBalancos(); 
+            renderDres();         
+
+            updatePreviews();
+            qs('#jsonOut').textContent = '{}';
+            qs('#downloadLink').style.display = 'none';
+
+            const usuarioSenha     = qs('#usuarioSenha');
+            const usuarioSenhaConf = qs('#usuarioSenhaConf');
+            const toggleSenha      = qs('#toggleSenha');
+
+            if (toggleSenha) {
+                toggleSenha.checked = false;
+            }
+
+            setTimeout(() => {
+                if (usuarioSenha) {
+                    usuarioSenha.type = 'password';
+                }
+                if (usuarioSenhaConf) {
+                    usuarioSenhaConf.type = 'password';
+                }
+            }, 0);
         }
-
-        const form = document.getElementById('oscForm');
-        form.reset();
-
-        envolvidos.length = 0;
-        atividades.length = 0;
-        balancos.length   = 0;
-        dres.length       = 0;
-
-        renderEnvolvidos();
-        renderAtividades();
-        renderBalancos(); 
-        renderDres();         
 
         updatePreviews();
-        qs('#jsonOut').textContent = '{}';
-        qs('#downloadLink').style.display = 'none';
-
-        const usuarioSenha     = qs('#usuarioSenha');
-        const usuarioSenhaConf = qs('#usuarioSenhaConf');
-        const toggleSenha      = qs('#toggleSenha');
-
-        // Primeiro: desmarca o "Exibir senha"
-        if (toggleSenha) {
-            toggleSenha.checked = false;
-        }
-
-        // Depois de um tick, força o tipo (driblando tretas de autocomplete/estilo do browser)
-        setTimeout(() => {
-            if (usuarioSenha) {
-                usuarioSenha.type = 'password';
-            }
-            if (usuarioSenhaConf) {
-                usuarioSenhaConf.type = 'password';
-            }
-        }, 0);
-    }
-
-    updatePreviews();
     </script>
 </body>
 

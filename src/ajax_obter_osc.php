@@ -1,8 +1,6 @@
 <?php
-/**
- * ajax_obter_osc.php
- * Endpoint para obter dados reais da OSC do banco MySQL usando mysqli
- */
+require 'autenticacao.php';
+require_once 'conexao.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -13,8 +11,6 @@ if (!isset($_GET['id'])) {
 }
 
 $id = (int) $_GET['id'];
-
-require_once 'conexao.php'; // este arquivo deve criar $conn (mysqli)
 
 try {
 
@@ -64,17 +60,23 @@ try {
     $stmt->close();
 
     // ============================================
-    // 5) DIRETORES (ator + ator_osc)
+    // 5) ENVOLVIDOS (ator_osc)
     // ============================================
     $stmt = $conn->prepare("
-        SELECT a.nome, a.telefone, a.email, ao.funcao
-        FROM ator a
-        INNER JOIN ator_osc ao ON ao.ator_id = a.id
-        WHERE ao.osc_id = ?
+        SELECT
+            id,
+            nome,
+            telefone,
+            email,
+            funcao,
+            foto
+        FROM ator_osc
+        WHERE osc_id = ?
+        ORDER BY nome
     ");
     $stmt->bind_param("i", $id);
     $stmt->execute();
-    $diretores = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $envolvidos = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
     // ============================================
@@ -114,42 +116,47 @@ try {
             'qua' => $cores['cor4'] ?? '#999999',
         ],
 
-        'missao'  => $osc['missao'],
-        'visao'   => $osc['visao'],
-        'valores' => $osc['valores'],
+        'missao'   => $osc['missao'],
+        'visao'    => $osc['visao'],
+        'valores'  => $osc['valores'],
         'historia' => $osc['historia'],
 
-        'nomeOsc' => $osc['nome'],
-        'nomeFantasia' => $osc['nome_fantasia'] ?? null,
-        'sigla' => $osc['sigla'],
-        'situacaoCadastral' => $osc['situacao_cadastral'],
+        'nomeOsc'          => $osc['nome'],
+        'nomeFantasia'     => $osc['nome_fantasia'] ?? null,
+        'sigla'            => $osc['sigla'],
+        'situacaoCadastral'=> $osc['situacao_cadastral'],
 
-        'email' => $osc['email'],
-        'cnpj' => $osc['cnpj'],
-        'telefone' => $osc['telefone'],
+        'email'     => $osc['email'],
+        'cnpj'      => $osc['cnpj'],
+        'telefone'  => $osc['telefone'],
         'instagram' => $osc['instagram'],
-        'status' => $osc['status'],
+        'status'    => $osc['status'],
         'razaoSocial' => $osc['razao_social'],
 
-        'anoCNPJ' => $osc['ano_cnpj'],
+        'anoCNPJ'     => $osc['ano_cnpj'],
         'anoFundacao' => $osc['ano_fundacao'],
         'responsavelLegal' => $osc['responsavel'],
 
-        'cep'   => $imovel['cep']      ?? null,
-        'cidade'=> $imovel['cidade']   ?? null,
-        'bairro'=> $imovel['bairro']   ?? null,
+        'cep'   => $imovel['cep']        ?? null,
+        'cidade'=> $imovel['cidade']     ?? null,
+        'bairro'=> $imovel['bairro']     ?? null,
         'logradouro' => $imovel['logradouro'] ?? null,
-        'numero' => $imovel['numero']  ?? null,
+        'numero'     => $imovel['numero']     ?? null,
         'situacaoImovel' => $imovel['situacao'] ?? null,
         'endereco' => $imovel
-            ? trim(($imovel['logradouro'] ?? '') . ', ' . ($imovel['numero'] ?? '') . ', ' . ($imovel['bairro'] ?? ''))
+            ? trim(
+                ($imovel['logradouro'] ?? '') . ', ' .
+                ($imovel['numero'] ?? '') . ', ' .
+                ($imovel['bairro'] ?? '')
+              )
             : null,
 
         'oQueFaz' => $osc['oque_faz'],
 
         'atividades' => $atividades,
 
-        'diretores' => $diretores,
+        // aqui troca de fato a nomenclatura
+        'envolvidos' => $envolvidos,
 
         'template' => $template,
     ];

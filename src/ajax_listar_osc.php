@@ -1,7 +1,9 @@
 <?php
+require 'autenticacao.php';
+require_once 'conexao.php';
+
 header('Content-Type: application/json; charset=utf-8');
 
-require_once 'conexao.php';
 
 try {
     $sql = "SELECT id, nome, cnpj FROM osc ORDER BY nome";
