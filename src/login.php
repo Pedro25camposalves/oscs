@@ -2,6 +2,9 @@
 session_start();
 $erro = $_SESSION['erro'] ?? null;
 unset($_SESSION['erro']);
+
+// Se veio algo pela sessão (setado pelo autenticacao.php), reaproveita
+$redirectTo = $_SESSION['redirect_to'] ?? './cadastro_osc.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -81,17 +84,23 @@ unset($_SESSION['erro']);
 <body>
     <main>
         <form action="logar.php" method="post" enctype="multipart/form-data">
+            <!-- mantém a URL de retorno escondida -->
+            <input type="hidden" name="redirect_to" 
+                   value="<?= htmlspecialchars($redirectTo, ENT_QUOTES, 'UTF-8') ?>">
+
             <label for="email">Login:</label>
             <input type="email" id="email" name="email" required>
             <br>
             <label for="password">Senha:</label>
             <input type="password" id="password" name="password" required>
             <br>
+
             <?php if ($erro): ?>
                 <div class="erro">
                     <?= htmlspecialchars($erro) ?>
                 </div>
             <?php endif; ?>
+
             <button type="submit">Entrar</button>
         </form>
     </main>

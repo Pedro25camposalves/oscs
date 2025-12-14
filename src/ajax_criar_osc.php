@@ -1,4 +1,8 @@
 <?php
+    $TIPOS_PERMITIDOS = ['OSC_TECH_ADMIN']; // só OscTech admin pode criar OSC
+    $RESPOSTA_JSON    = true;               // endpoint retorna JSON
+    require 'autenticacao.php';
+
     include 'conexao.php';
 
     // Cria a estrutura de diretórios da OSC:
@@ -135,6 +139,46 @@
         }
     }
 
+    // --- Usuário responsável pela OSC (OSC_MASTER) ---
+    $usuarioNome        = mysqli_real_escape_string($conn, $_POST['usuario_nome']  ?? '');
+    $usuarioEmail       = mysqli_real_escape_string($conn, $_POST['usuario_email'] ?? '');
+    $usuarioSenha       = $_POST['usuario_senha']        ?? '';
+
+    if ($usuarioNome !== '' && $usuarioEmail !== '' && $usuarioSenha !== '') {
+        // hash seguro da senha
+        $senhaHash = password_hash($usuarioSenha, PASSWORD_DEFAULT);
+
+        // cria usuário como OSC_MASTER
+        $sqlUsuario = "
+            INSERT INTO usuario (nome, email, senha, tipo, ativo)
+            VALUES ('$usuarioNome', '$usuarioEmail', '$senhaHash', 'OSC_MASTER', 1)
+        ";
+
+        if (!mysqli_query($conn, $sqlUsuario)) {
+            echo json_encode([
+                'success' => false,
+                'error'   => 'Erro ao criar usuário da OSC: ' . mysqli_error($conn)
+            ]);
+            exit;
+        }
+
+        $usuarioId = (int) mysqli_insert_id($conn);
+
+        // vincula usuário à OSC recém-criada
+        $sqlUsuarioOsc = "
+            INSERT INTO usuario_osc (usuario_id, osc_id)
+            VALUES ('$usuarioId', '$osc_id')
+        ";
+
+        if (!mysqli_query($conn, $sqlUsuarioOsc)) {
+            echo json_encode([
+                'success' => false,
+                'error'   => 'Usuário criado, mas erro ao vincular à OSC: ' . mysqli_error($conn)
+            ]);
+            exit;
+        }
+    }
+
     // --- Salva os dados dos envolvidos (atores da OSC) ---
     $envolvidosJson = $_POST['envolvidos'] ?? '[]';
     $envolvidos = json_decode($envolvidosJson, true);
@@ -246,10 +290,11 @@
     $cor2  = mysqli_real_escape_string($conn, $cores['sec'] ?? '');
     $cor3  = mysqli_real_escape_string($conn, $cores['ter'] ?? '');
     $cor4  = mysqli_real_escape_string($conn, $cores['qua'] ?? '');
+    $cor5  = mysqli_real_escape_string($conn, $cores['fon'] ?? '');
 
     $sql_cores = "
-        INSERT INTO cores (osc_id, cor1, cor2, cor3, cor4)
-        VALUES ('$osc_id', '$cor1', '$cor2', '$cor3', '$cor4')
+        INSERT INTO cores (osc_id, cor1, cor2, cor3, cor4, cor5)
+        VALUES ('$osc_id', '$cor1', '$cor2', '$cor3', '$cor4', '$cor5')
     ";
 
     if (!mysqli_query($conn, $sql_cores)) {

@@ -10,7 +10,7 @@ if (!$osc || !is_numeric($osc)) {
 }
 
 $stmt = $conn->prepare("SELECT osc.*, template_web.*, cores.* FROM osc
-LEFT JOIN template_web ON template_web.osc_id = osc.id LEFT JOIN cores ON cores.id_cores = osc.id WHERE osc.id = ?;");
+LEFT JOIN template_web ON template_web.osc_id = osc.id LEFT JOIN cores ON cores.osc_id = osc.id WHERE osc.id = ?;");
 $stmt->bind_param("i", $osc); 
 $stmt->execute();
 $result = $stmt->get_result();
@@ -26,8 +26,8 @@ $cor1 = $row["cor1"];
 $cor2 = $row["cor2"];
 $cor3 = $row["cor3"];
 $cor4 = $row["cor4"];
-$cor_font = '#4B2E23';
-$background = '#f6dfcbff';
+$cor_font = $row["cor1"];
+$background = '#ffffff';
 // --------------------------
 // INICIO
 // --------------------------
@@ -38,10 +38,10 @@ $valores = $row["valores"];
 // --------------------------
 // SOBRE
 // --------------------------
-$cnae = $row["cnae"];
+//$cnae = $row["cnae"];
 $historia = $row["historia"];
-$area_atuacao1 = $row["area_atuacao"];
-$subarea1 = $row["subarea"];
+//$area_atuacao1 = $row["area_atuacao"];
+//$subarea1 = $row["subarea"];
 $area_atuacao2 = "Cultura e recreação";
 $subarea2 = "Não Informado";
 // --------------------------
@@ -91,6 +91,28 @@ $tel = $row["telefone"];
             background-color: <?php echo $cor1 ?>;
         }
         
+        .btn {
+            color: #ffffff !important;
+            background-color: <?php echo $cor2; ?> !important;
+            border: none !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: filter 0.3s ease !important;
+        }
+
+        .btn:hover,
+        .btn:focus,
+        .btn:active {
+            filter: brightness(0.6) !important;
+            background-color: <?php echo $cor2; ?> !important;
+            color: #ffffff !important;
+        }
+
+        
+
+        
+
         /* Navbar de abas */
         .nav-tabs-custom {
             background-color: white;
@@ -196,12 +218,7 @@ $tel = $row["telefone"];
             margin-bottom: 1.5rem;
         }
         
-        /* Botões de download */
-        .btn-download {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+        
         
         /* Status badges */
         .status-approved {
@@ -743,8 +760,7 @@ $tel = $row["telefone"];
     <!-- Footer -->
     <footer class="bg-dark text-white py-4 mt-5">
         <div class="container text-center">
-            <p class="mb-0">&copy; 2024 Sistema de Gestão de Projetos. Todos os direitos reservados.</p>
-            <p class="mb-0 mt-2 small">Desenvolvido para transparência e controle social</p>
+            <p class="mb-0">&copy; 2025 OSCTECH - Todos os direitos reservados.</p>
         </div>
     </footer>
     

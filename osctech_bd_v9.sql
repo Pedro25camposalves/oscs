@@ -47,7 +47,6 @@ CREATE TABLE IF NOT EXISTS `osctech`.`osc` (
   `status` VARCHAR(45) NULL DEFAULT NULL,
   `nome` VARCHAR(45) NULL DEFAULT NULL,
   `instagram` VARCHAR(45) NULL DEFAULT NULL,
-  `senha` VARCHAR(255) NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
 )
 ENGINE = InnoDB
@@ -225,6 +224,7 @@ CREATE TABLE IF NOT EXISTS `osctech`.`cores` (
   `cor2` VARCHAR(10) NULL DEFAULT NULL,
   `cor3` VARCHAR(10) NULL DEFAULT NULL,
   `cor4` VARCHAR(10) NULL DEFAULT NULL,
+  `cor5` VARCHAR(10) NULL DEFAULT NULL,
   PRIMARY KEY (`id_cores`),
   INDEX `fk_cores_osc1_idx` (`osc_id` ASC),
   CONSTRAINT `fk_cores_osc1`
@@ -244,21 +244,23 @@ COLLATE = utf8mb4_general_ci;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `osctech`.`documento` (
   `id_documento` INT NOT NULL AUTO_INCREMENT,
-  `osc_id` INT NOT NULL,
-  `projeto_id` INT NULL DEFAULT NULL,
-  `tipo` VARCHAR(45) NOT NULL,
-  `documento` TINYTEXT NOT NULL,
+  `osc_id`       INT NOT NULL,
+  `projeto_id`   INT NULL DEFAULT NULL,
+  `categoria` ENUM('INSTITUCIONAL','CERTIDAO','CONTABIL') NOT NULL,
+  `subtipo`   VARCHAR(45) NOT NULL,          -- ESTATUTO, ATA, CND_FEDERAL, CND_ESTADUAL, CND_MUNICIPAL, FGTS, TRABALHISTA, BALANCO_PATRIMONIAL, DRE
+  `ano_referencia` YEAR NULL,                -- usado pra BALANCO_PATRIMONIAL e DRE
+  `documento`   TINYTEXT NOT NULL,           
+  `data_upload` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_documento`),
-
   INDEX `fk_documento_osc_idx` (`osc_id` ASC),
   INDEX `fk_documento_projeto_idx` (`projeto_id` ASC, `osc_id` ASC),
-
+  INDEX `idx_categoria_subtipo` (`categoria` ASC, `subtipo` ASC),
+  INDEX `idx_ano_referencia` (`ano_referencia` ASC),
   CONSTRAINT `fk_documento_osc`
     FOREIGN KEY (`osc_id`)
     REFERENCES `osctech`.`osc` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-
   CONSTRAINT `fk_documento_projeto`
     FOREIGN KEY (`projeto_id`, `osc_id`)
     REFERENCES `osctech`.`projeto` (`id`, `osc_id`)
@@ -341,6 +343,69 @@ CREATE TABLE IF NOT EXISTS `osctech`.`template_web` (
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_template_web_osc1`
+    FOREIGN KEY (`osc_id`)
+    REFERENCES `osctech`.`osc` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+)
+ENGINE = InnoDB
+AUTO_INCREMENT = 1
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_general_ci;
+
+
+-- -----------------------------------------------------
+-- Table `osctech`.`usuario`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `osctech`.`usuario` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nome` VARCHAR(100) NOT NULL,
+  `email` VARCHAR(150) NOT NULL,
+  `senha` VARCHAR(255) NOT NULL,
+  `tipo` ENUM('OSC_TECH_ADMIN', 'OSC_MASTER') NOT NULL,
+  `ativo` TINYINT(1) NOT NULL DEFAULT 1,
+  `data_criacao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `data_atualizacao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                   ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uk_usuario_email` (`email` ASC)
+)
+ENGINE = InnoDB
+AUTO_INCREMENT = 1
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_general_ci;
+
+-- -----------------------------------------------------
+-- Usuario padrão da OscTech
+-- -----------------------------------------------------
+INSERT INTO usuario (nome, email, senha, tipo, ativo)
+VALUES (
+  'Administrador OscTech',
+  'admin@osctech.com',
+  '$2y$10$gYD5.Gy0vPRH6tEC3odP.Ok.JSpE.qMi4hjDp6VX6KwejHTXDK.cO',
+  'OSC_TECH_ADMIN',
+  1
+);
+
+
+-- -----------------------------------------------------
+-- Table `osctech`.`usuario_osc`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `osctech`.`usuario_osc` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `usuario_id` INT NOT NULL,
+  `osc_id` INT NOT NULL,
+  `data_criacao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uk_usuario_osc` (`usuario_id` ASC, `osc_id` ASC),
+  INDEX `fk_usuario_osc_usuario_idx` (`usuario_id` ASC),
+  INDEX `fk_usuario_osc_osc_idx` (`osc_id` ASC),
+  CONSTRAINT `fk_usuario_osc_usuario`
+    FOREIGN KEY (`usuario_id`)
+    REFERENCES `osctech`.`usuario` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_usuario_osc_osc`
     FOREIGN KEY (`osc_id`)
     REFERENCES `osctech`.`osc` (`id`)
     ON DELETE CASCADE
