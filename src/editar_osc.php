@@ -760,6 +760,22 @@ if (!$oscIdVinculada) {
             DRE: []
         }
     };
+
+    const templateRemover = {
+        logo_simples: false,
+        logo_completa: false,
+        banner1: false,
+        banner2: false,
+        banner3: false
+    };
+
+    const templateBackupUrl = {
+        logo_simples: null,
+        logo_completa: null,
+        banner1: null,
+        banner2: null,
+        banner3: null
+    };
     
     function normalizarUrlDoc(url) {
         if (!url) return '';
@@ -767,31 +783,36 @@ if (!$oscIdVinculada) {
     }
     
     function criarCardDocumento(doc, onRemove) {
-        const c = document.createElement('div');
-        c.className = 'envolvido-card';
-    
-        const info = document.createElement('div');
-        info.style.minWidth = '220px';
-    
-        const nome = doc.nome || (doc.url ? doc.url.split('/').pop() : 'arquivo');
-        const anoTxt = doc.ano_referencia ? ` • ${doc.ano_referencia}` : '';
-        const url = normalizarUrlDoc(doc.url);
-    
-        info.innerHTML = `
-            <div style="font-weight:600">📄 ${escapeHtml(nome)}${anoTxt}</div>
-            ${url ? `<div class="small"><a href="${escapeHtml(url)}" target="_blank" rel="noopener">Abrir</a></div>` : `<div class="small">Sem URL</div>`}
-        `;
-    
-        const remove = document.createElement('button');
-        remove.className = 'btn';
-        remove.textContent = '✕';
-        remove.style.padding = '6px 8px';
-        remove.style.marginLeft = '8px';
-        remove.addEventListener('click', onRemove);
-    
-        c.appendChild(info);
-        c.appendChild(remove);
-        return c;
+      const c = document.createElement('div');
+      c.className = 'envolvido-card';
+
+      const info = document.createElement('div');
+      info.style.minWidth = '220px';
+
+      const nome = doc.nome || (doc.url ? doc.url.split('/').pop() : 'arquivo');
+      const anoTxt = doc.ano_referencia ? ` • ${doc.ano_referencia}` : '';
+      const url = normalizarUrlDoc(doc.url);
+
+      info.innerHTML = `
+        <div style="font-weight:600">📄 ${escapeHtml(nome)}${anoTxt}</div>
+        ${url ? `<div class="small"><a href="${escapeHtml(url)}" target="_blank" rel="noopener">Abrir</a></div>` : `<div class="small">Sem URL</div>`}
+      `;
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'btn';
+      remove.textContent = '✕';
+      remove.style.padding = '6px 8px';
+      remove.style.marginLeft = '8px';
+      remove.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        onRemove?.(ev);
+      });
+
+      c.appendChild(info);
+      c.appendChild(remove);
+      return c;
     }
     
     async function excluirDocumentoServidor(idDocumento) {
@@ -979,11 +1000,16 @@ if (!$oscIdVinculada) {
       `;
 
       const remove = document.createElement('button');
+      remove.type = 'button';
       remove.className = 'btn';
       remove.textContent = '✕';
       remove.style.padding = '6px 8px';
       remove.style.marginLeft = '8px';
-      remove.addEventListener('click', onRemove);
+      remove.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        onRemove?.(ev);
+      });
 
       c.appendChild(img);
       c.appendChild(info);
@@ -1028,41 +1054,66 @@ if (!$oscIdVinculada) {
         // 1) Se o usuário já selecionou um arquivo novo, mostre card “🆕” e o X só limpa o input
         const file = it.input?.files?.[0] || null;
         if (file) {
-          const cardNovo = criarCardImagem({
-            titulo: '🆕 ' + it.titulo,
-            file,
-            onRemove: () => {
-                it.input.value = '';
-                renderTemplateImageCards();
-                updatePreviews();
-            },
-            thumbWide: it.wide
-          });
+            templateRemover[it.campo] = false;
+            templateBackupUrl[it.campo] = null;
+            const cardNovo = criarCardImagem({
+                titulo: '🆕 ' + it.titulo,
+                file,
+                onRemove: () => {
+                    it.input.value = '';
+                    renderTemplateImageCards();
+                    updatePreviews();
+                },
+                thumbWide: it.wide
+            });
           slot.appendChild(cardNovo);
           return;
         }
 
-        // 2) Senão, se tem URL existente no servidor, mostre card do servidor e o X deleta de verdade
+        // 2) Se tem URL existente no servidor, mostre card do servidor e o X só marca remoção
         const url = it.getUrl();
         if (url) {
           const cardExistente = criarCardImagem({
             titulo: it.titulo,
             url,
-            onRemove: async () => {
-              if (!confirm(`Excluir "${it.titulo}" do servidor?`)) return;
-
-              try {
-                await excluirImagemTemplateServidor(oscId, it.campo);
-                it.setUrl(null);
-                renderTemplateImageCards();
-                updatePreviews();
-              } catch (e) {
-                alert(e.message || 'Falha ao excluir imagem.');
-              }
+            onRemove: () => {
+              // Nada de deletar agora. Só “some” e marca pendente.
+              templateRemover[it.campo] = true;
+              templateBackupUrl[it.campo] = url;
+              it.setUrl(null);
+            
+              // se tiver arquivo selecionado por acidente, limpa
+              it.input.value = '';
+            
+              renderTemplateImageCards();
+              updatePreviews();
             },
             thumbWide: it.wide
           });
           slot.appendChild(cardExistente);
+          return;
+        }
+
+        // 3) Se foi removida (pendente), mostre um card com “desfazer”
+        if (!url && templateRemover[it.campo] && templateBackupUrl[it.campo]) {
+          const cardPendente = criarCardImagem({
+            titulo: '🗑️ Remoção pendente — ' + it.titulo,
+            url: templateBackupUrl[it.campo],
+            onRemove: () => {
+              // “desfaz”: volta a URL e desmarca
+              templateRemover[it.campo] = false;
+              it.setUrl(templateBackupUrl[it.campo]);
+              templateBackupUrl[it.campo] = null;
+            
+              renderTemplateImageCards();
+              updatePreviews();
+            },
+            thumbWide: it.wide
+          });
+      
+          // aqui o botão aparece como ✕, mas ele funciona como “desfazer”.
+          // se quiser, eu te passo uma versão com ícone ↩ e cor diferente.
+          slot.appendChild(cardPendente);
         }
       });
     }
@@ -1693,6 +1744,9 @@ if (!$oscIdVinculada) {
     
         existingLogos = { logoSimples: null, logoCompleta: null };
         existingBanners = { banner1: null, banner2: null, banner3: null };
+
+        Object.keys(templateRemover).forEach(k => templateRemover[k] = false);
+        Object.keys(templateBackupUrl).forEach(k => templateBackupUrl[k] = null);
     
         const response = await fetch(`ajax_obter_osc.php?id=${oscId}`);
         const result = await response.json();
@@ -1771,53 +1825,53 @@ if (!$oscIdVinculada) {
           renderEnvolvidos();
         }
 
-    // ===== TEXTO DO BANNER =====
-    const label =
-      (osc.labelBanner ?? null) ||
-      (osc.banners?.labelBanner ?? null) ||
-      (osc.template?.label_banner ?? null) ||
-      '';
+        // ===== TEXTO DO BANNER =====
+        const label =
+          (osc.labelBanner ?? null) ||
+          (osc.banners?.labelBanner ?? null) ||
+          (osc.template?.label_banner ?? null) ||
+          '';
 
-    setVal('#labelBanner', label);
+        setVal('#labelBanner', label);
 
-    // ===== IMÓVEL (usa osc.imovel como fallback) =====
-    const imv = osc.imovel || {};
+        // ===== IMÓVEL (usa osc.imovel como fallback) =====
+        const imv = osc.imovel || {};
 
-    setVal('#situacaoImovel', (osc.situacaoImovel ?? imv.situacao ?? ''));
-    setVal('#cep',            (osc.cep ?? imv.cep ?? ''));
-    setVal('#cidade',         (osc.cidade ?? imv.cidade ?? ''));
-    setVal('#bairro',         (osc.bairro ?? imv.bairro ?? ''));
-    setVal('#logradouro',     (osc.logradouro ?? imv.logradouro ?? ''));
-    setVal('#numero',         (osc.numero ?? imv.numero ?? ''));
+        setVal('#situacaoImovel', (osc.situacaoImovel ?? imv.situacao ?? ''));
+        setVal('#cep',            (osc.cep ?? imv.cep ?? ''));
+        setVal('#cidade',         (osc.cidade ?? imv.cidade ?? ''));
+        setVal('#bairro',         (osc.bairro ?? imv.bairro ?? ''));
+        setVal('#logradouro',     (osc.logradouro ?? imv.logradouro ?? ''));
+        setVal('#numero',         (osc.numero ?? imv.numero ?? ''));
 
-    // ===== template/imagens =====
-    if (osc.template) {
-      existingLogos.logoSimples  = osc.template.logo_simples  || null;
-      existingLogos.logoCompleta = osc.template.logo_completa || null;
-      existingBanners.banner1    = osc.template.banner1 || null;
-      existingBanners.banner2    = osc.template.banner2 || null;
-      existingBanners.banner3    = osc.template.banner3 || null;
+        // ===== template/imagens =====
+        if (osc.template) {
+          existingLogos.logoSimples  = osc.template.logo_simples  || null;
+          existingLogos.logoCompleta = osc.template.logo_completa || null;
+          existingBanners.banner1    = osc.template.banner1 || null;
+          existingBanners.banner2    = osc.template.banner2 || null;
+          existingBanners.banner3    = osc.template.banner3 || null;
+        }
+        renderTemplateImageCards();
+
+        // ===== documentos existentes =====
+        documentosExistentes = osc.documentos || {
+          INSTITUCIONAL: {},
+          CERTIDAO: {},
+          CONTABIL: { BALANCO_PATRIMONIAL: [], DRE: [] }
+        };
+
+        renderDocumentosFixos();
+        renderBalancos();
+        renderDres();
+
+        await updatePreviews();
+
+      } catch (err) {
+        console.error('Erro ao buscar dados da OSC:', err);
+        alert('Erro ao carregar dados da OSC');
+      }
     }
-    renderTemplateImageCards();
-
-    // ===== documentos existentes =====
-    documentosExistentes = osc.documentos || {
-      INSTITUCIONAL: {},
-      CERTIDAO: {},
-      CONTABIL: { BALANCO_PATRIMONIAL: [], DRE: [] }
-    };
-
-    renderDocumentosFixos();
-    renderBalancos();
-    renderDres();
-
-    await updatePreviews();
-
-  } catch (err) {
-    console.error('Erro ao buscar dados da OSC:', err);
-    alert('Erro ao carregar dados da OSC');
-  }
-}
 
     // ===== SAVE (FormData compatível) =====
     async function saveData() {
@@ -1997,6 +2051,35 @@ if (!$oscIdVinculada) {
                     errosDocs.map(e => "- " + e).join("\n")
                 );
             }
+
+            // ===== APLICA REMOÇÕES PENDENTES DE IMAGENS DO TEMPLATE =====
+            const camposPendentes = Object.entries(templateRemover)
+              .filter(([, v]) => v)
+              .map(([k]) => k);
+                    
+            // Se tiver arquivo novo no mesmo campo, não deleta (substituição já resolve)
+            const temNovo = {
+              logo_simples: !!logoSimples.files[0],
+              logo_completa: !!logoCompleta.files[0],
+              banner1: !!banner1.files[0],
+              banner2: !!banner2.files[0],
+              banner3: !!banner3.files[0],
+            };
+            
+            const deletarAgora = camposPendentes.filter(campo => !temNovo[campo]);
+            
+            for (const campo of deletarAgora) {
+              try {
+                await excluirImagemTemplateServidor(oscId, campo);
+              } catch (e) {
+                console.error('Falha ao deletar imagem pendente:', campo, e);
+                errosDocs.push(`(Imagem ${campo}) ${e.message || 'falha ao excluir no servidor.'}`);
+              }
+            }
+            
+            // limpa pendências
+            Object.keys(templateRemover).forEach(k => templateRemover[k] = false);
+            Object.keys(templateBackupUrl).forEach(k => templateBackupUrl[k] = null);
 
             // recarrega para refletir imagens existentes/caminhos
             await loadOscData();
