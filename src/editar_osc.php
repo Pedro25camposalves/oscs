@@ -253,38 +253,37 @@ if (!$oscIdVinculada) {
                         </div>
                     </div>
 
-                    <!-- Na edição, arquivos NÃO são obrigatórios -->
                     <div>
-                      <label for="logoCompleta">Logo completa</label>
-                      <input id="logoCompleta" type="file" accept="image/*" />
-                      <div class="envolvidos-list" id="imgCard_logoCompleta"></div>
+                        <label for="logoCompleta">Logo completa</label>
+                        <div class="envolvidos-list" id="imgCard_logoCompleta"></div>
+                        <input id="logoCompleta" type="file" accept="image/*" />
                     </div>
 
                     <div>
-                      <label for="logoSimples">Logo simples</label>
-                      <input id="logoSimples" type="file" accept="image/*" />
-                      <div class="envolvidos-list" id="imgCard_logoSimples"></div>
+                        <label for="logoSimples">Logo simples</label>
+                        <div class="envolvidos-list" id="imgCard_logoSimples"></div>
+                        <input id="logoSimples" type="file" accept="image/*" />
                     </div>
 
                     <div>
-                      <label for="banner1">Banner principal </label>
-                      <input id="banner1" type="file" accept="image/*" />
-                      <div class="envolvidos-list" id="imgCard_banner1"></div>
+                        <label for="banner1">Banner principal </label>
+                        <div class="envolvidos-list" id="imgCard_banner1"></div>
+                        <input id="banner1" type="file" accept="image/*" />
                     </div>
                     <div>
-                      <label for="labelBanner">Texto do banner</label>
-                      <input id="labelBanner" type="text" placeholder="Texto do banner" />
+                        <label for="labelBanner">Texto do banner</label>
+                        <input id="labelBanner" type="text" placeholder="Texto do banner" />
                     </div>
                     <div>
-                      <label for="banner2">Banner 2 </label>
-                      <input id="banner2" type="file" accept="image/*" />
-                      <div class="envolvidos-list" id="imgCard_banner2"></div>
+                        <label for="banner2">Banner 2 </label>
+                        <div class="envolvidos-list" id="imgCard_banner2"></div>
+                        <input id="banner2" type="file" accept="image/*" />
                     </div>
 
                     <div>
-                      <label for="banner3">Banner 3 </label>
-                      <input id="banner3" type="file" accept="image/*" />
-                      <div class="envolvidos-list" id="imgCard_banner3"></div>
+                        <label for="banner3">Banner 3 </label>
+                        <div class="envolvidos-list" id="imgCard_banner3"></div>
+                        <input id="banner3" type="file" accept="image/*" />
                     </div>
                 </div>
             </div>
@@ -583,6 +582,7 @@ if (!$oscIdVinculada) {
             <div class="grid">
                 <div>
                     <label for="envFoto">Foto</label>
+                    <div class="envolvidos-list" id="imgCard_envFoto"></div>
                     <input id="envFoto" type="file" accept="image/*" />
                 </div>
                 <div>
@@ -740,13 +740,16 @@ if (!$oscIdVinculada) {
     // listas
     const envolvidos = []; // { tipo, envolvidoId, fotoPreview|fotoUrl, fotoFile, nome, telefone, email, funcao }
     let editEnvIndex = null; // null : novo, !=null : editando
-    const atividades = []; // { id?, cnae, area, subarea }
+    const atividades = []; // { atividadeId|null, cnae, area, subarea }
+    let editAtvIndex = null; // null = criando / !=null = editando
     const balancos   = []; // { ano, file }
-    const dres       = []; // { ano, file }
+    const dres       = []; // { ano, file }    
 
     // imagens já existentes vindas do servidor
     let existingLogos = { logoSimples: null, logoCompleta: null };
     let existingBanners = { banner1: null, banner2: null, banner3: null };
+    let envFotoExistingUrl = null; // quando editar: foto do BD
+    let envFotoRemover = false; // <-- ADD: pediu pra remover a foto atual?
 
     // ===== DOCUMENTOS EXISTENTES (vindos do servidor) =====
     let documentosExistentes = {
@@ -1029,9 +1032,9 @@ if (!$oscIdVinculada) {
             titulo: '🆕 ' + it.titulo,
             file,
             onRemove: () => {
-              it.input.value = '';
-              renderTemplateImageCards();
-              updatePreviews();
+                it.input.value = '';
+                renderTemplateImageCards();
+                updatePreviews();
             },
             thumbWide: it.wide
           });
@@ -1064,11 +1067,59 @@ if (!$oscIdVinculada) {
       });
     }
 
+    function renderEnvFotoCard() {
+        const slot = qs('#imgCard_envFoto');
+        const input = qs('#envFoto');
+        if (!slot || !input) return;
+        
+        slot.innerHTML = '';
+        
+        const file = input.files?.[0] || null;
+        
+        // 1) se escolheu arquivo novo no modal
+        if (file) {
+            const cardNovo = criarCardImagem({
+              titulo: 'NOVA FOTO',
+              file,
+            onRemove: () => {
+                  // pediu remoção: some do modal e vira regra no salvar
+                  envFotoExistingUrl = null;
+                  envFotoRemover = true;
+            
+                  // garante que não tem arquivo novo selecionado
+                  input.value = '';
+            
+                  renderEnvFotoCard();
+                },
+              thumbWide: false
+            });
+            slot.appendChild(cardNovo);
+            return;
+        }
+
+        // 2) se está editando e tem foto existente no servidor
+        if (envFotoExistingUrl) {
+            const cardExistente = criarCardImagem({
+                titulo: 'FOTO ATUAL',
+                url: envFotoExistingUrl,
+                onRemove: () => {
+                  envFotoExistingUrl = null;
+                  envFotoRemover = true;   // <-- AQUI
+                  renderEnvFotoCard();
+                },
+                thumbWide: false
+            });
+            slot.appendChild(cardExistente);
+        }
+    }
+
     // ===== MODAL ENVOLVIDOS =====
     const modalBackdrop       = qs('#modalBackdrop');
     const openEnvolvidoModal  = qs('#openEnvolvidoModal');
     const closeEnvolvidoModal = qs('#closeEnvolvidoModal');
     const addEnvolvidoBtn     = qs('#addEnvolvidoBtn');
+    const envFoto = qs('#envFoto');
+    envFoto.addEventListener('change', renderEnvFotoCard);
 
     openEnvolvidoModal.addEventListener('click', () => {
         editEnvIndex = null;
@@ -1081,6 +1132,10 @@ if (!$oscIdVinculada) {
         qs('#envTelefone').value = '';
         qs('#envEmail').value = '';
         qs('#envFuncaoNovo').value = '';
+        
+        envFotoExistingUrl = null;
+        envFotoRemover = false;
+        renderEnvFotoCard();
     });
 
     closeEnvolvidoModal.addEventListener('click', () => {
@@ -1092,77 +1147,82 @@ if (!$oscIdVinculada) {
     });
 
     function abrirEdicaoEnvolvido(i) {
-      const e = envolvidos[i];
-      if (!e) return;
+        const e = envolvidos[i];
+        if (!e) return;   
+        editEnvIndex = i; 
 
-      editEnvIndex = i;
+        qs('.modal h3').textContent = 'Editar Envolvido';
+        addEnvolvidoBtn.textContent = 'Salvar';   
+        modalBackdrop.style.display = 'flex'; 
 
-      qs('.modal h3').textContent = 'Editar Envolvido';
-      addEnvolvidoBtn.textContent = 'Salvar';
-
-      modalBackdrop.style.display = 'flex';
-
-      qs('#envFoto').value = ''; // não dá pra setar arquivo via JS
-      qs('#envNome').value = e.nome || '';
-      qs('#envTelefone').value = e.telefone || '';
-      qs('#envEmail').value = e.email || '';
-      qs('#envFuncaoNovo').value = e.funcao || '';
+        qs('#envFoto').value = ''; // não dá pra setar arquivo via JS
+        qs('#envNome').value = e.nome || '';
+        qs('#envTelefone').value = e.telefone || '';
+        qs('#envEmail').value = e.email || '';
+        qs('#envFuncaoNovo').value = e.funcao || '';
+        
+        envFotoExistingUrl = e.fotoUrl || null;
+        envFotoRemover = false;
+        renderEnvFotoCard();
     }
 
     async function salvarEnvolvido() {
-      const fotoFile = qs('#envFoto').files[0] || null;
-      const nome     = qs('#envNome').value.trim();
-      const telefone = qs('#envTelefone').value.trim();
-      const email    = qs('#envEmail').value.trim();
-      const funcao   = qs('#envFuncaoNovo').value.trim();
-
-      if (!nome || !funcao) {
-        alert('Preencha pelo menos o Nome e a Função do envolvido!');
-        return;
-      }
-
-      const fotoPreview = fotoFile ? await readFileAsDataURL(fotoFile) : null;
-
-      // EDITANDO UM EXISTENTE (ou um novo já adicionado)
-      if (editEnvIndex !== null) {
-        const alvo = envolvidos[editEnvIndex];
-        if (!alvo) return;
-
-        alvo.nome = nome;
-        alvo.telefone = telefone;
-        alvo.email = email;
-        alvo.funcao = funcao;
-
-        // se escolheu foto nova, troca; senão mantém fotoUrl/fotoPreview atuais
-        if (fotoFile) {
-          alvo.fotoFile = fotoFile;
-          alvo.fotoPreview = fotoPreview;
-        }
-
-        editEnvIndex = null;
-        addEnvolvidoBtn.textContent = 'Adicionar';
-        qs('.modal h3').textContent = 'Adicionar Envolvido';
-
+        const fotoFile = qs('#envFoto').files[0] || null;
+        const nome     = qs('#envNome').value.trim();
+        const telefone = qs('#envTelefone').value.trim();
+        const email    = qs('#envEmail').value.trim();
+        const funcao   = qs('#envFuncaoNovo').value.trim(); 
+        
+        if (!nome || !funcao) {
+            alert('Preencha pelo menos o Nome e a Função do envolvido!');
+            return;
+        }   
+        
+        const fotoPreview = fotoFile ? await readFileAsDataURL(fotoFile) : null;    
+        
+        // EDITANDO UM EXISTENTE (ou um novo já adicionado)
+        if (editEnvIndex !== null) {
+            const alvo = envolvidos[editEnvIndex];
+            if (!alvo) return;    
+            alvo.nome = nome;
+            alvo.telefone = telefone;
+            alvo.email = email;
+            alvo.funcao = funcao; 
+            // se escolheu foto nova, troca; senão mantém fotoUrl/fotoPreview atuais
+            if (fotoFile) {
+              alvo.fotoFile = fotoFile;
+              alvo.fotoPreview = fotoPreview;
+              alvo.removerFoto = false;
+            } else if (envFotoRemover) {
+              // usuário clicou no X da foto atual
+              alvo.fotoUrl = '';        // <-- zera foto existente
+              alvo.fotoPreview = null;
+              alvo.fotoFile = null;
+              alvo.removerFoto = true;  // <-- marca pra enviar pro PHP
+            }
+            editEnvIndex = null;
+            addEnvolvidoBtn.textContent = 'Adicionar';
+            qs('.modal h3').textContent = 'Adicionar Envolvido';  
+            renderEnvolvidos();
+            modalBackdrop.style.display = 'none';
+            envFotoRemover = false;
+            return;
+        }   
+        
+        // CRIANDO NOVO
+        envolvidos.push({
+            tipo: 'novo',
+            envolvidoId: null,
+            fotoUrl: null,
+            fotoPreview,
+            fotoFile,
+            nome,
+            telefone,
+            email,
+            funcao
+        }); 
         renderEnvolvidos();
         modalBackdrop.style.display = 'none';
-        return;
-      }
-
-      // CRIANDO NOVO
-      envolvidos.push({
-        tipo: 'novo',
-        envolvidoId: null,
-        fotoUrl: null,
-        fotoPreview,
-        fotoFile,
-        nome,
-        telefone,
-        email,
-        funcao
-      });
-
-      renderEnvolvidos();
-      modalBackdrop.style.display = 'none';
     }
     addEnvolvidoBtn.addEventListener('click', salvarEnvolvido);
 
@@ -1224,58 +1284,117 @@ if (!$oscIdVinculada) {
     const closeAtividadeModal    = qs('#closeAtividadeModal');
     const addAtividadeBtn        = qs('#addAtividadeBtn');
 
-    openAtividadeModal.addEventListener('click', () => modalAtividadeBackdrop.style.display = 'flex');
+    openAtividadeModal.addEventListener('click', () => {
+      editAtvIndex = null;
+      qs('#atvCnae').value = '';
+      qs('#atvArea').value = '';
+      qs('#atvSubarea').value = '';
+      addAtividadeBtn.textContent = 'Adicionar';
+      qs('#modalAtividadeBackdrop .modal h3').textContent = 'Adicionar Atividade';
+      modalAtividadeBackdrop.style.display = 'flex';
+    });
     closeAtividadeModal.addEventListener('click', () => modalAtividadeBackdrop.style.display = 'none');
     modalAtividadeBackdrop.addEventListener('click', (e) => {
         if (e.target === modalAtividadeBackdrop) modalAtividadeBackdrop.style.display = 'none';
     });
 
     function addAtividade() {
-        const cnae = qs('#atvCnae').value.trim();
-        const area = qs('#atvArea').value.trim();
-        const subarea = qs('#atvSubarea').value.trim();
-
-        if (!cnae || !area) {
-            alert('Preencha pelo menos CNAE e Área de atuação');
-            return;
-        }
-
-        atividades.push({ id: null, cnae, area, subarea });
+      const cnae = qs('#atvCnae').value.trim();
+      const area = qs('#atvArea').value.trim();
+      const subarea = qs('#atvSubarea').value.trim();
+    
+      if (!cnae || !area) {
+        alert('Preencha pelo menos CNAE e Área de atuação');
+        return;
+      }
+  
+      // EDITANDO
+      if (editAtvIndex !== null) {
+        const alvo = atividades[editAtvIndex];
+        if (!alvo) return;
+    
+        alvo.cnae = cnae;
+        alvo.area = area;
+        alvo.subarea = subarea;
+    
+        editAtvIndex = null;
+        addAtividadeBtn.textContent = 'Adicionar';
+        qs('#modalAtividadeBackdrop .modal h3').textContent = 'Adicionar Atividade';
+    
         renderAtividades();
         modalAtividadeBackdrop.style.display = 'none';
+        return;
+      }
+  
+      // NOVA
+      atividades.push({ atividadeId: null, cnae, area, subarea });
+      renderAtividades();
+      modalAtividadeBackdrop.style.display = 'none';
     }
-
     addAtividadeBtn.addEventListener('click', addAtividade);
 
+    function abrirEdicaoAtividade(i) {
+      const a = atividades[i];
+      if (!a) return;
+
+      editAtvIndex = i;
+
+      qs('#atvCnae').value = a.cnae || '';
+      qs('#atvArea').value = a.area || '';
+      qs('#atvSubarea').value = a.subarea || '';
+
+      addAtividadeBtn.textContent = 'Salvar';
+      qs('#modalAtividadeBackdrop .modal h3').textContent = 'Editar Atividade';
+      modalAtividadeBackdrop.style.display = 'flex';
+    }
+
     function renderAtividades() {
-        const list = qs('#atividadesList');
-        list.innerHTML = '';
+      const list = qs('#atividadesList');
+      list.innerHTML = '';
 
-        atividades.forEach((a, i) => {
-            const c = document.createElement('div');
-            c.className = 'envolvido-card';
+      atividades.forEach((a, i) => {
+        const c = document.createElement('div');
+        c.className = 'envolvido-card';
 
-            const info = document.createElement('div');
-            info.innerHTML = `
-                <div style="font-weight:600">CNAE: ${escapeHtml(a.cnae)}</div>
-                <div class="small">Área: ${escapeHtml(a.area)}</div>
-                ${a.subarea ? `<div class="small">Subárea: ${escapeHtml(a.subarea)}</div>` : ''}
-            `;
+        const info = document.createElement('div');
+        
+        info.innerHTML = `
+            ${a.atividadeId ? `` : `<div class="small muted">NOVO</div>`}
+            <div style="font-weight:600">CNAE: ${escapeHtml(a.cnae)}</div>
+            <div class="small">Área: ${escapeHtml(a.area)}</div>
+            ${a.subarea ? `<div class="small">Subárea: ${escapeHtml(a.subarea)}</div>` : ''}
+        `;
 
-            const remove = document.createElement('button');
-            remove.className = 'btn';
-            remove.textContent = '✕';
-            remove.style.padding = '6px 8px';
-            remove.style.marginLeft = '8px';
-            remove.addEventListener('click', () => {
-                atividades.splice(i, 1);
-                renderAtividades();
-            });
-
-            c.appendChild(info);
-            c.appendChild(remove);
-            list.appendChild(c);
+        const edit = document.createElement('button');
+        edit.type = 'button';
+        edit.className = 'btn';
+        edit.textContent = '✎';
+        edit.style.padding = '6px 8px';
+        edit.style.marginLeft = '8px';
+        edit.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          abrirEdicaoAtividade(i);
         });
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'btn';
+        remove.textContent = '✕';
+        remove.style.padding = '6px 8px';
+        remove.style.marginLeft = '8px';
+        remove.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          atividades.splice(i, 1);
+          renderAtividades();
+        });
+
+        c.appendChild(info);
+        c.appendChild(edit);
+        c.appendChild(remove);
+        list.appendChild(c);
+      });
     }
 
     // ===== BALANÇOS =====
@@ -1621,7 +1740,7 @@ if (!$oscIdVinculada) {
         if (Array.isArray(osc.atividades)) {
           osc.atividades.forEach(a => {
             atividades.push({
-              id: a.id ?? null,
+              atividadeId: a.id ?? a.atividade_id ?? null,
               cnae: a.cnae || '',
               area: a.area || '',
               subarea: a.subarea || ''
@@ -1636,15 +1755,16 @@ if (!$oscIdVinculada) {
             const funcao = String(d.funcao ?? d.funcao_ator ?? d.funcao_envolvido ?? '').trim();
         
             envolvidos.push({
-              tipo: 'existente',
-              envolvidoId: d.id ?? d.envolvido_id ?? null,
-              fotoUrl: d.foto || null,
-              fotoPreview: null,
-              fotoFile: null,
-              nome: d.nome || '',
-              telefone: d.telefone || '',
-              email: d.email || '',
-              funcao
+                tipo: 'existente',
+                envolvidoId: d.id ?? d.envolvido_id ?? null,
+                fotoUrl: d.foto || null,
+                fotoPreview: null,
+                fotoFile: null,
+                removerFoto: false, // <-- ADD
+                nome: d.nome || '',
+                telefone: d.telefone || '',
+                email: d.email || '',
+                funcao
             });
           });
       
@@ -1758,11 +1878,18 @@ if (!$oscIdVinculada) {
           telefone: e.telefone,
           email: e.email,
           funcao: e.funcao,
-          foto: e.fotoUrl || ''   // <-- preserve!
+          foto: e.fotoUrl || '',
+          remover_foto: !!e.removerFoto
         }));
 
         fd.append('envolvidos', JSON.stringify(envolvidosParaEnvio));
-        fd.append('atividades', JSON.stringify(atividades));
+        const atividadesParaEnvio = atividades.map(a => ({
+          atividade_id: a.atividadeId || 0,
+          cnae: a.cnae,
+          area: a.area,
+          subarea: a.subarea
+        }));
+        fd.append('atividades', JSON.stringify(atividadesParaEnvio));
 
         // fotos envolvidos (se houver)
         envolvidos.forEach((e, i) => {

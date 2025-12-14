@@ -349,36 +349,85 @@ try {
         $stmt->close();
     }
 
-    // ============================================
-    // 3) ATIVIDADES (zera e recria)
-    // ============================================
-    if (isset($data['atividades'])) {
-        $atividades = normalizarLista($data['atividades']);
+// ============================================
+// 3) ATIVIDADES (sync: update/insert/delete)
+// ============================================
+if (isset($data['atividades'])) {
+    $atividades = normalizarLista($data['atividades']);
 
-        $stmt = $conn->prepare("DELETE FROM osc_atividade WHERE osc_id = ?");
-        $stmt->bind_param("i", $osc_id);
-        if (!$stmt->execute()) throw new Exception("Erro ao apagar atividades: " . $stmt->error);
-        $stmt->close();
+    // 3.1) Carrega existentes do BD
+    $stmt = $conn->prepare("SELECT id FROM osc_atividade WHERE osc_id = ?");
+    $stmt->bind_param("i", $osc_id);
+    $stmt->execute();
+    $rs = $stmt->get_result();
 
-        $stmt = $conn->prepare("
-            INSERT INTO osc_atividade (osc_id, cnae, area_atuacao, subarea)
-            VALUES (?, ?, ?, ?)
-        ");
-
-        foreach ($atividades as $atv) {
-            if (!is_array($atv)) continue;
-
-            $cnae    = (string)($atv['cnae'] ?? '');
-            $area    = (string)($atv['area'] ?? '');
-            $subarea = (string)($atv['subarea'] ?? '');
-
-            if ($cnae === '' && $area === '') continue;
-
-            $stmt->bind_param("isss", $osc_id, $cnae, $area, $subarea);
-            if (!$stmt->execute()) throw new Exception("Erro ao inserir atividade: " . $stmt->error);
-        }
-        $stmt->close();
+    $existentes = []; // [id => true]
+    while ($row = $rs->fetch_assoc()) {
+        $existentes[(int)$row['id']] = true;
     }
+    $stmt->close();
+
+    // 3.2) IDs recebidos do front
+    $idsRecebidos = [];
+    foreach ($atividades as $a) {
+        if (!is_array($a)) continue;
+        $id = (int)($a['atividade_id'] ?? 0);
+        if ($id > 0) $idsRecebidos[$id] = true;
+    }
+
+    // 3.3) Deleta do BD o que existia e não veio mais
+    foreach ($existentes as $id => $_) {
+        if (!isset($idsRecebidos[$id])) {
+            $del = $conn->prepare("DELETE FROM osc_atividade WHERE id = ? AND osc_id = ?");
+            $del->bind_param("ii", $id, $osc_id);
+            if (!$del->execute()) throw new Exception("Erro ao deletar atividade {$id}: " . $del->error);
+            $del->close();
+        }
+    }
+
+    // 3.4) Prepara UPDATE e INSERT
+    $upd = $conn->prepare("
+        UPDATE osc_atividade
+           SET cnae = ?, area_atuacao = ?, subarea = ?
+         WHERE id = ? AND osc_id = ?
+    ");
+
+    $ins = $conn->prepare("
+        INSERT INTO osc_atividade (osc_id, cnae, area_atuacao, subarea)
+        VALUES (?, ?, ?, ?)
+    ");
+
+    // Para o front atualizar os IDs das novas
+    $novosIdsPorIndice = []; // [i => novoId]
+
+    foreach ($atividades as $i => $atv) {
+        if (!is_array($atv)) continue;
+
+        $id      = (int)($atv['atividade_id'] ?? 0);
+        $cnae    = (string)($atv['cnae'] ?? '');
+        $area    = (string)($atv['area'] ?? '');
+        $subarea = (string)($atv['subarea'] ?? '');
+
+        // pula linha vazia
+        if ($cnae === '' && $area === '' && $subarea === '') continue;
+
+        if ($id > 0 && isset($existentes[$id])) {
+            $upd->bind_param("sssii", $cnae, $area, $subarea, $id, $osc_id);
+            if (!$upd->execute()) throw new Exception("Erro ao atualizar atividade {$id}: " . $upd->error);
+        } else {
+            $ins->bind_param("isss", $osc_id, $cnae, $area, $subarea);
+            if (!$ins->execute()) throw new Exception("Erro ao inserir atividade: " . $ins->error);
+            $novosIdsPorIndice[(string)$i] = (int)$conn->insert_id;
+        }
+    }
+
+    $upd->close();
+    $ins->close();
+
+    // Se quiser devolver pro front atualizar o array local:
+    // guarde isso pra usar no echo json final:
+    $atividades_novos_ids = $novosIdsPorIndice;
+}
 
     // ============================================
     // 4) ENVOLVIDOS (sync: update/insert/delete)
@@ -471,6 +520,8 @@ try {
             $campoArquivo = "fotoEnvolvido_{$i}";
             $fotoNova = $fotoAtual;
 
+            $removerFoto = !empty($env['remover_foto']);
+
             if ($id > 0 && isset($_FILES[$campoArquivo]) && $_FILES[$campoArquivo]['error'] === UPLOAD_ERR_OK) {
                 $fotoAntigaBD = isset($existentes[$id]) ? $existentes[$id]['foto'] : '';
 
@@ -485,10 +536,18 @@ try {
                     $osc_id,
                     $id
                 );
-            
                 $apagarArquivoSeSeguro($fotoAntigaBD);
+            
+            // Se NÃO veio arquivo novo:
             } else {
-                if ($id > 0 && isset($existentes[$id]) && $fotoNova === '') {
+                // 1) Se pediu remoção, zera no BD e apaga o arquivo antigo
+                if ($id > 0 && $removerFoto) {
+                    $fotoAntigaBD = isset($existentes[$id]) ? $existentes[$id]['foto'] : '';
+                    $apagarArquivoSeSeguro($fotoAntigaBD);
+                    $fotoNova = ''; // <-- remove no BD
+                
+                // 2) Senão, se o front mandou vazio, preserva o que já tinha
+                } else if ($id > 0 && isset($existentes[$id]) && $fotoNova === '') {
                     $fotoNova = (string)$existentes[$id]['foto'];
                 }
             }
@@ -604,10 +663,11 @@ try {
     }
 
     echo json_encode([
-        'success' => true,
-        'osc_id' => $osc_id,
-        'cores_id' => $cores_id,
-        'template_id' => $template_id
+      'success' => true,
+      'osc_id' => $osc_id,
+      'cores_id' => $cores_id,
+      'template_id' => $template_id,
+      'atividades_novos_ids' => $atividades_novos_ids ?? new stdClass()
     ]);
 
 } catch (Exception $e) {

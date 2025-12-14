@@ -77,10 +77,10 @@ try {
     // 6) ATIVIDADES
     // ============================================
     $stmt = $conn->prepare("
-        SELECT cnae, area_atuacao, subarea
+        SELECT id, cnae, area_atuacao, subarea
         FROM osc_atividade
         WHERE osc_id = ?
-        ORDER BY area_atuacao, subarea
+        ORDER BY id
     ");
     $stmt->bind_param("i", $id);
     $stmt->execute();
@@ -90,9 +90,10 @@ try {
     $atividades = [];
     foreach ($atividadesBD as $row) {
         $atividades[] = [
-            'cnae'    => $row['cnae'],
-            'area'    => $row['area_atuacao'],
-            'subarea' => $row['subarea'],
+            'id'      => (int)($row['id'] ?? 0),
+            'cnae'    => $row['cnae'] ?? '',
+            'area'    => $row['area_atuacao'] ?? '',
+            'subarea' => $row['subarea'] ?? '',
         ];
     }
 
