@@ -196,7 +196,7 @@ $envolvidos_ids = [];
 $envolvidosRootDir     = $baseOscDir . '/envolvidos/';
 $envolvidosRootRelBase = 'assets/oscs/osc-' . $osc_id . '/envolvidos/';
 
-$funcoesValidas = ['DIRETOR','COORDENADOR','FINANCEIRO','MARKETING','RH'];
+$funcoesValidas = ['DIRETOR','COORDENADOR','FINANCEIRO','MARKETING','RH', 'PARTICIPANTE'];
 
 // --- Salva os dados de cada envolvido ---
 foreach ($envolvidos as $idx => $envolvido) {
