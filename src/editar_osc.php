@@ -739,6 +739,7 @@ if (!$oscIdVinculada) {
 
     // listas
     const envolvidos = []; // { tipo, envolvidoId, fotoPreview|fotoUrl, fotoFile, nome, telefone, email, funcao }
+    let editEnvIndex = null; // null : novo, !=null : editando
     const atividades = []; // { id?, cnae, area, subarea }
     const balancos   = []; // { ano, file }
     const dres       = []; // { ano, file }
@@ -1070,6 +1071,10 @@ if (!$oscIdVinculada) {
     const addEnvolvidoBtn     = qs('#addEnvolvidoBtn');
 
     openEnvolvidoModal.addEventListener('click', () => {
+        editEnvIndex = null;
+        addEnvolvidoBtn.textContent = 'Adicionar';
+        qs('.modal h3').textContent = 'Adicionar Envolvido';
+
         modalBackdrop.style.display = 'flex';
         qs('#envFoto').value = '';
         qs('#envNome').value = '';
@@ -1086,37 +1091,80 @@ if (!$oscIdVinculada) {
         if (e.target === modalBackdrop) modalBackdrop.style.display = 'none';
     });
 
-    async function addEnvolvido() {
-        const fotoFile = qs('#envFoto').files[0] || null;
-        const nome     = qs('#envNome').value.trim();
-        const telefone = qs('#envTelefone').value.trim();
-        const email    = qs('#envEmail').value.trim();
-        const funcao   = qs('#envFuncaoNovo').value.trim();
+    function abrirEdicaoEnvolvido(i) {
+      const e = envolvidos[i];
+      if (!e) return;
 
-        if (!nome || !funcao) {
-            alert('Preencha pelo menos o Nome e a Função do envolvido!');
-            return;
+      editEnvIndex = i;
+
+      qs('.modal h3').textContent = 'Editar Envolvido';
+      addEnvolvidoBtn.textContent = 'Salvar';
+
+      modalBackdrop.style.display = 'flex';
+
+      qs('#envFoto').value = ''; // não dá pra setar arquivo via JS
+      qs('#envNome').value = e.nome || '';
+      qs('#envTelefone').value = e.telefone || '';
+      qs('#envEmail').value = e.email || '';
+      qs('#envFuncaoNovo').value = e.funcao || '';
+    }
+
+    async function salvarEnvolvido() {
+      const fotoFile = qs('#envFoto').files[0] || null;
+      const nome     = qs('#envNome').value.trim();
+      const telefone = qs('#envTelefone').value.trim();
+      const email    = qs('#envEmail').value.trim();
+      const funcao   = qs('#envFuncaoNovo').value.trim();
+
+      if (!nome || !funcao) {
+        alert('Preencha pelo menos o Nome e a Função do envolvido!');
+        return;
+      }
+
+      const fotoPreview = fotoFile ? await readFileAsDataURL(fotoFile) : null;
+
+      // EDITANDO UM EXISTENTE (ou um novo já adicionado)
+      if (editEnvIndex !== null) {
+        const alvo = envolvidos[editEnvIndex];
+        if (!alvo) return;
+
+        alvo.nome = nome;
+        alvo.telefone = telefone;
+        alvo.email = email;
+        alvo.funcao = funcao;
+
+        // se escolheu foto nova, troca; senão mantém fotoUrl/fotoPreview atuais
+        if (fotoFile) {
+          alvo.fotoFile = fotoFile;
+          alvo.fotoPreview = fotoPreview;
         }
 
-        const fotoPreview = fotoFile ? await readFileAsDataURL(fotoFile) : null;
-
-        envolvidos.push({
-            tipo: 'novo',
-            envolvidoId: null,
-            fotoUrl: null,
-            fotoPreview,
-            fotoFile,
-            nome,
-            telefone,
-            email,
-            funcao
-        });
+        editEnvIndex = null;
+        addEnvolvidoBtn.textContent = 'Adicionar';
+        qs('.modal h3').textContent = 'Adicionar Envolvido';
 
         renderEnvolvidos();
         modalBackdrop.style.display = 'none';
-    }
+        return;
+      }
 
-    addEnvolvidoBtn.addEventListener('click', addEnvolvido);
+      // CRIANDO NOVO
+      envolvidos.push({
+        tipo: 'novo',
+        envolvidoId: null,
+        fotoUrl: null,
+        fotoPreview,
+        fotoFile,
+        nome,
+        telefone,
+        email,
+        funcao
+      });
+
+      renderEnvolvidos();
+      modalBackdrop.style.display = 'none';
+    }
+    addEnvolvidoBtn.addEventListener('click', salvarEnvolvido);
 
     function renderEnvolvidos() {
         const list = qs('#listaEnvolvidos');
@@ -1137,18 +1185,34 @@ if (!$oscIdVinculada) {
                 <div class="small">${escapeHtml(funcaoLabel)}</div>
             `;
 
+            const edit = document.createElement('button');
+            edit.type = 'button';
+            edit.className = 'btn';
+            edit.textContent = '✎';
+            edit.style.padding = '6px 8px';
+            edit.style.marginLeft = '8px';
+            edit.addEventListener('click', (ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+              abrirEdicaoEnvolvido(i);
+            });
+
             const remove = document.createElement('button');
+            remove.type = 'button';
             remove.className = 'btn';
             remove.textContent = '✕';
             remove.style.padding = '6px 8px';
             remove.style.marginLeft = '8px';
-            remove.addEventListener('click', () => {
-                envolvidos.splice(i, 1);
-                renderEnvolvidos();
+            remove.addEventListener('click', (ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+              envolvidos.splice(i, 1);
+              renderEnvolvidos();
             });
 
             c.appendChild(img);
             c.appendChild(info);
+            c.appendChild(edit);
             c.appendChild(remove);
             list.appendChild(c);
         });

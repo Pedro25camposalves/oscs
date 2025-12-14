@@ -91,7 +91,14 @@ function salvarImagemSeEnviada(
     return 'assets/oscs/osc-' . $osc_id . '/imagens/' . $novoNome;
 }
 
-function salvarFotoEnvolvidoSeEnviada(string $campo, string $destDirAbs, string $prefixo, string $atual, int $osc_id): string {
+function salvarFotoEnvolvidoSeEnviada(
+    string $campo,
+    string $destDirAbs,
+    string $prefixo,
+    string $atual,
+    int $osc_id,
+    int $envolvidoId
+    ): string {
     if (!isset($_FILES[$campo]) || $_FILES[$campo]['error'] !== UPLOAD_ERR_OK) return $atual;
 
     $tmp  = $_FILES[$campo]['tmp_name'];
@@ -104,7 +111,7 @@ function salvarFotoEnvolvidoSeEnviada(string $campo, string $destDirAbs, string 
     }
 
     if (!is_dir($destDirAbs) && !mkdir($destDirAbs, 0777, true)) {
-        throw new Exception("Não foi possível criar diretório de fotos dos envolvidos");
+        throw new Exception("Não foi possível criar diretório de fotos do envolvido");
     }
 
     $novoNome = $prefixo . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(4)) . '.' . $ext;
@@ -114,8 +121,53 @@ function salvarFotoEnvolvidoSeEnviada(string $campo, string $destDirAbs, string 
         throw new Exception("Falha ao salvar {$campo}");
     }
 
-    // caminho relativo salvo no BD
-    return 'assets/oscs/osc-' . $osc_id . '/envolvidos/' . $novoNome;
+    return "assets/oscs/osc-{$osc_id}/envolvidos/envolvido-{$envolvidoId}/imagens/{$novoNome}";
+}
+
+function garantirDiretoriosEnvolvido(int $osc_id, int $envolvidoId): array
+{
+    $baseAbs = __DIR__ . "/assets/oscs/osc-{$osc_id}/envolvidos/envolvido-{$envolvidoId}";
+    $docsAbs = $baseAbs . "/documentos";
+    $imgAbs  = $baseAbs . "/imagens";
+
+    foreach ([$baseAbs, $docsAbs, $imgAbs] as $dir) {
+        if (!is_dir($dir) && !mkdir($dir, 0777, true)) {
+            throw new Exception("Erro ao criar diretórios do envolvido {$envolvidoId}");
+        }
+    }
+
+    return [
+        'imgAbs' => $imgAbs,
+        'imgRelBase' => "assets/oscs/osc-{$osc_id}/envolvidos/envolvido-{$envolvidoId}/imagens"
+    ];
+}
+
+function excluirDiretorioRecursivoSeguro(string $dirAbs, string $baseAbs): void {
+    if ($dirAbs === '' || $baseAbs === '') return;
+
+    $baseReal = realpath($baseAbs);
+    if ($baseReal === false) return;
+
+    // se não existir, nada a fazer
+    if (!is_dir($dirAbs)) return;
+
+    // trava: só apaga se estiver dentro do base
+    $dirReal = realpath($dirAbs);
+    if ($dirReal === false) return;
+
+    $baseReal = rtrim($baseReal, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+    $dirReal  = rtrim($dirReal,  DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+
+    if (strpos($dirReal, $baseReal) !== 0) return; // fora do base? nem encosta.
+
+    $it = new RecursiveDirectoryIterator($dirReal, FilesystemIterator::SKIP_DOTS);
+    $ri = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
+
+    foreach ($ri as $f) {
+        if ($f->isDir()) @rmdir($f->getPathname());
+        else            @unlink($f->getPathname());
+    }
+    @rmdir($dirReal);
 }
 
 $data = $_POST;
@@ -329,45 +381,156 @@ try {
     }
 
     // ============================================
-    // 4) ENVOLVIDOS (zera e recria)
+    // 4) ENVOLVIDOS (sync: update/insert/delete)
     // ============================================
     if (isset($data['envolvidos'])) {
         $envolvidos = normalizarLista($data['envolvidos']);
 
-        $stmt = $conn->prepare("DELETE FROM envolvido_osc WHERE osc_id = ?");
+        // 4.1) Carrega existentes do BD
+        $stmt = $conn->prepare("SELECT id, foto FROM envolvido_osc WHERE osc_id = ?");
         $stmt->bind_param("i", $osc_id);
-        if (!$stmt->execute()) throw new Exception("Erro ao apagar envolvidos: " . $stmt->error);
+        $stmt->execute();
+        $rs = $stmt->get_result();
+
+        $existentes = []; // [id => ['foto' => '...']]
+        while ($row = $rs->fetch_assoc()) {
+            $existentes[(int)$row['id']] = ['foto' => (string)($row['foto'] ?? '')];
+        }
         $stmt->close();
 
-        $stmt = $conn->prepare("
+        // 4.2) IDs que chegaram do front (os que devem continuar existindo)
+        $idsRecebidos = [];
+        foreach ($envolvidos as $e) {
+            if (!is_array($e)) continue;
+            $id = (int)($e['envolvido_id'] ?? 0);
+            if ($id > 0) $idsRecebidos[$id] = true;
+        }
+
+        // helper: apaga arquivo antigo (somente dentro da pasta da OSC)
+        $apagarArquivoSeSeguro = function(string $url) use ($osc_id) {
+            $url = trim($url);
+            if ($url === '') return;
+
+            // normaliza /assets... ou assets...
+            $rel = ltrim($url, '/');
+
+            // Só apaga se for da OSC (evita deletar qualquer coisa fora)
+            $prefix = "assets/oscs/osc-{$osc_id}/";
+            if (strpos($rel, $prefix) !== 0) return;
+
+            $abs = __DIR__ . '/' . $rel;
+            if (is_file($abs)) @unlink($abs);
+        };
+
+        // 4.3) Deleta do BD o que existia e não veio mais
+        $baseEnvolvidosAbs = __DIR__ . "/assets/oscs/osc-{$osc_id}/envolvidos";
+
+        foreach ($existentes as $id => $info) {
+            if (!isset($idsRecebidos[$id])) {
+            
+                // 1) apaga o diretório inteiro do envolvido (envolvido-{id}/...)
+                $dirEnvolvidoAbs = $baseEnvolvidosAbs . "/envolvido-{$id}";
+                excluirDiretorioRecursivoSeguro($dirEnvolvidoAbs, $baseEnvolvidosAbs);
+            
+                // 2) apaga do BD
+                $del = $conn->prepare("DELETE FROM envolvido_osc WHERE id = ? AND osc_id = ?");
+                $del->bind_param("ii", $id, $osc_id);
+                if (!$del->execute()) throw new Exception("Erro ao deletar envolvido {$id}: " . $del->error);
+                $del->close();
+            }
+        }
+
+        // 4.4) Prepara statements de update/insert
+        $upd = $conn->prepare("
+            UPDATE envolvido_osc
+               SET nome=?, telefone=?, email=?, funcao=?, foto=?
+             WHERE id=? AND osc_id=?
+        ");
+
+        $ins = $conn->prepare("
             INSERT INTO envolvido_osc (osc_id, nome, telefone, email, funcao, foto)
             VALUES (?, ?, ?, ?, ?, ?)
         ");
 
-        $destDirAbs = __DIR__ . '/assets/oscs/osc-' . $osc_id . '/envolvidos';
+        // 4.5) Atualiza/insere, preservando foto se não trocar
+        $destDirAbsEnv = __DIR__ . "/assets/oscs/osc-{$osc_id}/envolvidos";
 
         foreach ($envolvidos as $i => $env) {
             if (!is_array($env)) continue;
 
+            $id       = (int)($env['envolvido_id'] ?? 0);
             $nome     = (string)($env['nome'] ?? '');
             $telefone = (string)($env['telefone'] ?? '');
             $emailEnv = (string)($env['email'] ?? '');
             $funcao   = (string)($env['funcao'] ?? '');
 
-            // Foto atual (vem do JSON quando é existente)
+            // foto atual que veio do front (pode ser '')
             $fotoAtual = (string)($env['foto'] ?? '');
 
-            // Se veio arquivo novo "fotoEnvolvido_{$i}", salva e substitui
-            $campoFile = 'fotoEnvolvido_' . $i;
-            $foto = salvarFotoEnvolvidoSeEnviada($campoFile, $destDirAbs, 'envolvido', $fotoAtual, $osc_id);
+            // Se o front mandou um novo arquivo, salva e substitui
+            $campoArquivo = "fotoEnvolvido_{$i}";
+            $fotoNova = $fotoAtual;
 
-            if ($nome === '' && $funcao === '') continue;
+            if ($id > 0 && isset($_FILES[$campoArquivo]) && $_FILES[$campoArquivo]['error'] === UPLOAD_ERR_OK) {
+                $fotoAntigaBD = isset($existentes[$id]) ? $existentes[$id]['foto'] : '';
 
-            $stmt->bind_param("isssss", $osc_id, $nome, $telefone, $emailEnv, $funcao, $foto);
-            if (!$stmt->execute()) throw new Exception("Erro ao inserir envolvido: " . $stmt->error);
+                $dirs = garantirDiretoriosEnvolvido($osc_id, $id);
+                $destDirAbsEnvImg = $dirs['imgAbs'];
+
+                $fotoNova = salvarFotoEnvolvidoSeEnviada(
+                    $campoArquivo,
+                    $destDirAbsEnvImg,
+                    "envolvido-{$id}",
+                    $fotoAtual,
+                    $osc_id,
+                    $id
+                );
+            
+                $apagarArquivoSeSeguro($fotoAntigaBD);
+            } else {
+                if ($id > 0 && isset($existentes[$id]) && $fotoNova === '') {
+                    $fotoNova = (string)$existentes[$id]['foto'];
+                }
+            }
+
+            // decide UPDATE x INSERT
+            if ($id > 0 && isset($existentes[$id])) {
+                $upd->bind_param("sssssii", $nome, $telefone, $emailEnv, $funcao, $fotoNova, $id, $osc_id);
+                if (!$upd->execute()) throw new Exception("Erro ao atualizar envolvido {$id}: " . $upd->error);
+            } else {
+                // 1) primeiro insere (sem depender de pasta do envolvido)
+                $fotoTemp = ''; // novo ainda não tem diretório, então começa vazio
+                $ins->bind_param("isssss", $osc_id, $nome, $telefone, $emailEnv, $funcao, $fotoTemp);
+                if (!$ins->execute()) throw new Exception("Erro ao inserir envolvido: " . $ins->error);
+
+                $novoId = (int)$conn->insert_id;
+
+                // 2) cria as pastas: envolvido-{novoId}/imagens
+                $dirs = garantirDiretoriosEnvolvido($osc_id, $novoId);
+                $destDirAbsEnvImg = $dirs['imgAbs'];
+
+                // 3) se veio foto, salva no lugar certo e atualiza o BD
+                if (isset($_FILES[$campoArquivo]) && $_FILES[$campoArquivo]['error'] === UPLOAD_ERR_OK) {
+                
+                    $fotoNova = salvarFotoEnvolvidoSeEnviada(
+                        $campoArquivo,
+                        $destDirAbsEnvImg,
+                        "envolvido-{$novoId}",
+                        '',
+                        $osc_id,
+                        $novoId
+                    );
+                
+                    $upFoto = $conn->prepare("UPDATE envolvido_osc SET foto=? WHERE id=? AND osc_id=?");
+                    $upFoto->bind_param("sii", $fotoNova, $novoId, $osc_id);
+                    if (!$upFoto->execute()) throw new Exception("Erro ao atualizar foto do envolvido {$novoId}: " . $upFoto->error);
+                    $upFoto->close();
+                }
+            }
         }
 
-        $stmt->close();
+        $upd->close();
+        $ins->close();
     }
 
     // ============================================
