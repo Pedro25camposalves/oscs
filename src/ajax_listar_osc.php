@@ -1,5 +1,5 @@
 <?php
-require 'autenticacao.php';
+session_start();
 require_once 'conexao.php';
 
 header('Content-Type: application/json; charset=utf-8');

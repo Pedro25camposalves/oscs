@@ -1,5 +1,5 @@
 <?php
-require 'autenticacao.php';
+session_start();
 require_once 'conexao.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -60,7 +60,7 @@ try {
     $stmt->close();
 
     // ============================================
-    // 5) ENVOLVIDOS (ator_osc)
+    // 5) ENVOLVIDOS
     // ============================================
     $stmt = $conn->prepare("
         SELECT
@@ -70,7 +70,7 @@ try {
             email,
             funcao,
             foto
-        FROM ator_osc
+        FROM envolvido_osc
         WHERE osc_id = ?
         ORDER BY nome
     ");
@@ -80,7 +80,7 @@ try {
     $stmt->close();
 
     // ============================================
-    // 6) ATIVIDADES (osc_atividade)
+    // 6) ATIVIDADES
     // ============================================
     $stmt = $conn->prepare("
         SELECT cnae, area_atuacao, subarea
@@ -92,7 +92,6 @@ try {
     $atividadesBD = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
-    // transformar para o formato do front: { cnae, area, subarea }
     $atividades = [];
     foreach ($atividadesBD as $row) {
         $atividades[] = [
@@ -154,10 +153,7 @@ try {
         'oQueFaz' => $osc['oque_faz'],
 
         'atividades' => $atividades,
-
-        // aqui troca de fato a nomenclatura
         'envolvidos' => $envolvidos,
-
         'template' => $template,
     ];
 

@@ -319,7 +319,7 @@
                             <div class="row">
                                 <div style="flex:1">
                                     <label for="secColor">Cor secundária (*)</label>
-                                    <input id="secColor" type="color" value="#0a6" required />
+                                    <input id="secColor" type="color" value="#00aa66" required />
                                 </div>
                                 <div style="flex:1">
                                     <label for="terColor">Cor terciária (*)</label>
@@ -333,7 +333,7 @@
                                 </div>
                                 <div style="flex:1">
                                     <label for="fonColor">Cor da fonte (*)</label>
-                                    <input id="fonColor" type="color" value="#000000ff" required />
+                                    <input id="fonColor" type="color" value="#000000" required />
                                 </div>
                             </div>
                             <div>
@@ -1162,7 +1162,7 @@
         [logoSimples, logoCompleta, banner1, banner2, banner3].forEach(el => el.addEventListener('change', updatePreviews));
         [bgColor, secColor, terColor, quaColor, fonColor].forEach(el => el.addEventListener('input', updatePreviews));
 
-        // ===== MODAL ENVOLVIDOS (apenas novo) =====
+        // MODAL ENVOLVIDOS 
         const modalBackdrop       = qs('#modalBackdrop');
         const openEnvolvidoModal  = qs('#openEnvolvidoModal');
         const closeEnvolvidoModal = qs('#closeEnvolvidoModal');
@@ -1187,7 +1187,7 @@
             if (e.target === modalBackdrop) modalBackdrop.style.display = 'none';
         });
 
-        // ADICIONAR ENVOLVIDO (sempre novo, vinculado apenas a esta OSC)
+        // ADICIONAR ENVOLVIDO 
         async function addEnvolvido() {
             const fotoFile = qs('#envFoto').files[0] || null;
             const nome     = qs('#envNome').value.trim();
@@ -1216,7 +1216,6 @@
             envolvidos.push(envolvido);
             renderEnvolvidos();
 
-            // Reseta campos do modal
             qs('#envFoto').value = '';
             qs('#envNome').value = '';
             qs('#envTelefone').value = '';
@@ -1585,7 +1584,7 @@
 
             const envolvidosParaEnvio = envolvidos.map(e => ({
                 tipo: e.tipo || 'novo',
-                ator_id: e.atorId || null,
+                envolvido_id: e.envolvidoId || null,
                 nome: e.nome,
                 telefone: e.telefone,
                 email: e.email,
@@ -1744,32 +1743,44 @@
             if (!confirm('Limpar todos os campos?')) {
                 return;
             }
-
+        
             const form = document.getElementById('oscForm');
             form.reset();
-
+        
             envolvidos.length = 0;
             atividades.length = 0;
             balancos.length   = 0;
             dres.length       = 0;
-
+        
             renderEnvolvidos();
             renderAtividades();
             renderBalancos(); 
             renderDres();         
-
+        
             updatePreviews();
             qs('#jsonOut').textContent = '{}';
             qs('#downloadLink').style.display = 'none';
-
+        
             const usuarioSenha     = qs('#usuarioSenha');
             const usuarioSenhaConf = qs('#usuarioSenhaConf');
             const toggleSenha      = qs('#toggleSenha');
-
+        
+            const senhaMsgEl = document.getElementById('senhaMsg');
+            if (senhaMsgEl) {
+                senhaMsgEl.textContent = '';
+                senhaMsgEl.className = 'small';
+            }
+        
+            const emailMsgEl = document.getElementById('emailMsg');
+            if (emailMsgEl) {
+                emailMsgEl.textContent = '';
+                emailMsgEl.className = 'small';
+            }
+        
             if (toggleSenha) {
                 toggleSenha.checked = false;
             }
-
+        
             setTimeout(() => {
                 if (usuarioSenha) {
                     usuarioSenha.type = 'password';

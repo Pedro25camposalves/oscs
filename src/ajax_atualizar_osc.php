@@ -1,8 +1,7 @@
 <?php
-require 'autenticacao.php';
+session_start();
 include 'conexao.php';
 
-// Lê o JSON
 $json = file_get_contents("php://input");
 $data = json_decode($json, true);
 
@@ -12,8 +11,8 @@ if (!$data) {
 }
 
 $osc_id = intval($_GET['id'] ?? 0);
-$cores_id    = $osc_id;   // mantendo sua lógica atual
-$template_id = $osc_id;   // idem
+$cores_id    = $osc_id;
+$template_id = $osc_id;
 
 if (!$osc_id || !$cores_id || !$template_id) {
     echo json_encode(['success' => false, 'error' => 'IDs não enviados']);

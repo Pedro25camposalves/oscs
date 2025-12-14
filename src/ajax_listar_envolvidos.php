@@ -1,11 +1,10 @@
 <?php
-require 'autenticacao.php';
+session_start();
 require_once 'conexao.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    // osc_id pode vir por GET ou POST
     $oscId = 0;
     if (isset($_GET['osc_id'])) {
         $oscId = (int) $_GET['osc_id'];
@@ -13,13 +12,11 @@ try {
         $oscId = (int) $_POST['osc_id'];
     }
 
-    // Se não tiver osc_id válido, não listamos ninguém
     if ($oscId <= 0) {
         echo json_encode(['success' => true, 'data' => []]);
         exit;
     }
 
-    // Usando prepared statement pra evitar injeção
     $sql = "
         SELECT
             id,

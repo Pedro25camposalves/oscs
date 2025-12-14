@@ -5,14 +5,6 @@ require 'autenticacao.php';
 
 include 'conexao.php';
 
-/**
- * Cria a estrutura de diretórios da OSC:
- *  /assets/oscs/osc-{id}
- *      /documentos
- *      /imagens
- *      /projetos
- *      /envolvidos
- */
 function criarDiretoriosOsc(int $oscId): bool
 {
     $baseDir = __DIR__ . '/assets/oscs';
@@ -21,10 +13,8 @@ function criarDiretoriosOsc(int $oscId): bool
         return false;
     }
 
-    // Raiz da OSC
     $oscRoot = $baseDir . '/osc-' . $oscId;
 
-    // Pastas que precisam existir para cada OSC
     $dirs = [
         $oscRoot,
         $oscRoot . '/documentos',
@@ -42,11 +32,6 @@ function criarDiretoriosOsc(int $oscId): bool
     return true;
 }
 
-/**
- * Move um arquivo de $_FILES para uma pasta específica.
- * $imgDir      = caminho absoluto da pasta (no servidor)
- * $imgRelBase  = caminho base relativo que será gravado no banco
- */
 function moverArquivo(string $fieldName, string $imgDir, string $imgRelBase): ?string
 {
     if (
@@ -69,7 +54,6 @@ function moverArquivo(string $fieldName, string $imgDir, string $imgRelBase): ?s
     $destFull = rtrim($imgDir, '/') . '/' . $fileName;
 
     if (move_uploaded_file($_FILES[$fieldName]['tmp_name'], $destFull)) {
-        // caminho relativo para gravar no banco
         return rtrim($imgRelBase, '/') . '/' . $fileName;
     }
 
@@ -96,6 +80,7 @@ $telefone          = mysqli_real_escape_string($conn, $_POST['telefone']        
 $instagram         = mysqli_real_escape_string($conn, $_POST['instagram']           ?? '');
 $status            = mysqli_real_escape_string($conn, $_POST['status']              ?? '');
 
+// --- Insere a nova OSC ---
 $sql_osc = "
     INSERT INTO osc (
         nome, razao_social, cnpj, telefone, email, nome_fantasia, sigla, situacao_cadastral,
@@ -112,7 +97,6 @@ if (!mysqli_query($conn, $sql_osc)) {
 
 $osc_id = (int) mysqli_insert_id($conn);
 
-// Cria os diretórios da OSC
 if (!criarDiretoriosOsc($osc_id)) {
     echo json_encode([
         'success' => false,
@@ -121,17 +105,18 @@ if (!criarDiretoriosOsc($osc_id)) {
     exit;
 }
 
-// Base de diretórios da OSC
 $baseOscDir = __DIR__ . '/assets/oscs/osc-' . $osc_id;
 $imgDir     = $baseOscDir . '/imagens/';
 $imgRelBase = 'assets/oscs/osc-' . $osc_id . '/imagens/';
 
-// --- Salva as ATIVIDADES da OSC (CNAE / Área / Subárea) ---
+// --- Captura as atividades da OSC ---
 $atividadesJson = $_POST['atividades'] ?? '[]';
 $atividades = json_decode($atividadesJson, true);
 if (!is_array($atividades)) {
     $atividades = [];
 }
+
+$atividades_ids = [];
 
 foreach ($atividades as $atv) {
     $cnae    = mysqli_real_escape_string($conn, $atv['cnae']    ?? '');
@@ -148,21 +133,26 @@ foreach ($atividades as $atv) {
     ";
 
     if (!mysqli_query($conn, $sql_atividade)) {
-        echo json_encode(['success' => false, 'error' => 'Erro ao salvar as atividade da OSC: ' . mysqli_error($conn)]);
+        echo json_encode([
+            'success' => false,
+            'error'   => 'Erro ao salvar as atividade da OSC: ' . mysqli_error($conn)
+        ]);
         exit;
     }
+
+    $atividadeId = (int) mysqli_insert_id($conn);
+    $atividades_ids[] = $atividadeId;
 }
 
-// --- Usuário responsável pela OSC (OSC_MASTER) ---
+// --- Captura o usuário responsável pela OSC (OSC_MASTER) ---
 $usuarioNome  = mysqli_real_escape_string($conn, $_POST['usuario_nome']  ?? '');
 $usuarioEmail = mysqli_real_escape_string($conn, $_POST['usuario_email'] ?? '');
 $usuarioSenha = $_POST['usuario_senha'] ?? '';
 
 if ($usuarioNome !== '' && $usuarioEmail !== '' && $usuarioSenha !== '') {
-    // hash seguro da senha
     $senhaHash = password_hash($usuarioSenha, PASSWORD_DEFAULT);
 
-    // cria usuário como OSC_MASTER
+    // Insere o usuário da OSC
     $sqlUsuario = "
         INSERT INTO usuario (nome, email, senha, tipo, ativo)
         VALUES ('$usuarioNome', '$usuarioEmail', '$senhaHash', 'OSC_MASTER', 1)
@@ -178,7 +168,7 @@ if ($usuarioNome !== '' && $usuarioEmail !== '' && $usuarioSenha !== '') {
 
     $usuarioId = (int) mysqli_insert_id($conn);
 
-    // vincula usuário à OSC recém-criada
+    // Vincula usuário à OSC
     $sqlUsuarioOsc = "
         INSERT INTO usuario_osc (usuario_id, osc_id)
         VALUES ('$usuarioId', '$osc_id')
@@ -193,7 +183,7 @@ if ($usuarioNome !== '' && $usuarioEmail !== '' && $usuarioSenha !== '') {
     }
 }
 
-// --- Salva os dados dos envolvidos (registros em envolvido_osc) ---
+// --- Captura os dados dos envolvidos ---
 $envolvidosJson = $_POST['envolvidos'] ?? '[]';
 $envolvidos = json_decode($envolvidosJson, true);
 
@@ -203,23 +193,20 @@ if (!is_array($envolvidos)) {
 
 $envolvidos_ids = [];
 
-// raiz dos envolvidos da OSC
 $envolvidosRootDir     = $baseOscDir . '/envolvidos/';
 $envolvidosRootRelBase = 'assets/oscs/osc-' . $osc_id . '/envolvidos/';
 
+// --- Salva os dados de cada envolvido ---
 foreach ($envolvidos as $idx => $envolvido) {
-    // ignoramos 'tipo' e 'ator_id' no cadastro de OSC: tudo é "novo envolvido desta OSC"
     $nome     = mysqli_real_escape_string($conn, $envolvido['nome']     ?? '');
     $telefone = mysqli_real_escape_string($conn, $envolvido['telefone'] ?? '');
     $emailEnv = mysqli_real_escape_string($conn, $envolvido['email']    ?? '');
     $funcao   = mysqli_real_escape_string($conn, $envolvido['funcao']   ?? '');
 
-    // se não tiver pelo menos nome ou função, pula
     if ($nome === '' && $funcao === '') {
         continue;
     }
 
-    // 1) cria o registro na tabela envolvido_osc (sem foto por enquanto)
     $sql_envolvido = "
         INSERT INTO envolvido_osc (osc_id, foto, nome, telefone, email, funcao)
         VALUES ('$osc_id', NULL, '$nome', '$telefone', '$emailEnv', '$funcao')
@@ -236,7 +223,6 @@ foreach ($envolvidos as $idx => $envolvido) {
     $envolvidoId = (int) mysqli_insert_id($conn);
     $envolvidos_ids[] = $envolvidoId;
 
-    // 2) cria diretórios específicos do envolvido
     $envolvidoBaseDir = $envolvidosRootDir . 'envolvido-' . $envolvidoId . '/';
     $envolvidoDocsDir = $envolvidoBaseDir . 'documentos/';
     $envolvidoImgDir  = $envolvidoBaseDir . 'imagens/';
@@ -257,7 +243,6 @@ foreach ($envolvidos as $idx => $envolvido) {
         }
     }
 
-    // 3) move a foto do envolvido, se enviada
     $fieldNameFoto       = 'fotoEnvolvido_' . $idx;
     $envolvidoImgRelBase = $envolvidosRootRelBase . 'envolvido-' . $envolvidoId . '/imagens/';
 
@@ -274,7 +259,7 @@ foreach ($envolvidos as $idx => $envolvido) {
     }
 }
 
-// --- Salva os dados do imóvel da OSC ---
+// --- Salve os dados do imóvel da OSC ---
 $situacaoImovel = mysqli_real_escape_string($conn, $_POST['situacaoImovel'] ?? '');
 $cep            = mysqli_real_escape_string($conn, $_POST['cep']            ?? '');
 $cidade         = mysqli_real_escape_string($conn, $_POST['cidade']         ?? '');
@@ -296,7 +281,7 @@ if (!mysqli_query($conn, $sql_imovel)) {
 
 $imovel_id = mysqli_insert_id($conn);
 
-// --- Salva as cores na tabela `cores` ---
+// --- Salva as cores da OSC ---
 $cores = $_POST['cores'] ?? [];
 $cor1  = mysqli_real_escape_string($conn, $cores['bg']  ?? '');
 $cor2  = mysqli_real_escape_string($conn, $cores['sec'] ?? '');
@@ -304,6 +289,7 @@ $cor3  = mysqli_real_escape_string($conn, $cores['ter'] ?? '');
 $cor4  = mysqli_real_escape_string($conn, $cores['qua'] ?? '');
 $cor5  = mysqli_real_escape_string($conn, $cores['fon'] ?? '');
 
+// --- Insere as cores ---
 $sql_cores = "
     INSERT INTO cores (osc_id, cor1, cor2, cor3, cor4, cor5)
     VALUES ('$osc_id', '$cor1', '$cor2', '$cor3', '$cor4', '$cor5')
@@ -343,11 +329,13 @@ $template_id = mysqli_insert_id($conn);
 // --- Retorno completo dos cadastros ---
 echo json_encode([
     'success'          => true,
-    'template_id'      => $template_id,
-    'cores_id'         => $cores_id,
     'osc_id'           => $osc_id,
+    'usuario_id'       => $usuarioId,
+    'cores_id'         => $cores_id,
+    'template_id'      => $template_id,
     'imovel_id'        => $imovel_id,
     'envolvidos_ids'   => $envolvidos_ids,
+    'atividades_ids'   => $atividades_ids,
 ]);
 
 mysqli_close($conn);

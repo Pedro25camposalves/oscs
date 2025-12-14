@@ -3,15 +3,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Se o script definir isso antes do require, usamos:
 $tiposPermitidos = $TIPOS_PERMITIDOS ?? null;     // ex: ['OSC_TECH_ADMIN']
 $respostaJson    = $RESPOSTA_JSON   ?? false;     // true para endpoints AJAX
 
-// 1) Verifica se está logado
 if (!isset($_SESSION['usuario_id'])) {
-
-    // Guarda a URL que o usuário tentou acessar
-    // Ex: /oscs/src/cadastro_osc.php?x=1
     $requestedUrl = $_SERVER['REQUEST_URI'] ?? null;
     if ($requestedUrl) {
         $_SESSION['redirect_to'] = $requestedUrl;
@@ -31,7 +26,6 @@ if (!isset($_SESSION['usuario_id'])) {
     exit;
 }
 
-// 2) Verifica tipo de usuário, se foi configurado
 $tipoUsuario = $_SESSION['tipo'] ?? null;
 
 if (is_array($tiposPermitidos) && !in_array($tipoUsuario, $tiposPermitidos, true)) {
@@ -48,5 +42,3 @@ if (is_array($tiposPermitidos) && !in_array($tipoUsuario, $tiposPermitidos, true
     }
     exit;
 }
-
-// Se chegou aqui: autenticado e com tipo permitido.
