@@ -39,14 +39,22 @@ function pick($data, array $paths, $default = null) {
     return $default;
 }
 
-function salvarImagemSeEnviada(string $campo, string $destDirAbs, string $prefixo, string $atual): string{
-    if (!isset($_FILES[$campo]) || $_FILES[$campo]['error'] !== UPLOAD_ERR_OK) return $atual;
+function salvarImagemSeEnviada(
+    string $campo,
+    string $destDirAbs,
+    string $prefixo,
+    string $atualRel,
+    int $osc_id,
+    array &$arquivosParaExcluir
+    ): string {
+    if (!isset($_FILES[$campo]) || $_FILES[$campo]['error'] !== UPLOAD_ERR_OK) {
+        return $atualRel; // não mexe em nada
+    }
 
     $tmp  = $_FILES[$campo]['tmp_name'];
     $name = $_FILES[$campo]['name'] ?? 'img';
     $ext  = strtolower(pathinfo($name, PATHINFO_EXTENSION));
 
-    // básico: evita extensões estranhas
     $permitidas = ['jpg','jpeg','png','webp','gif'];
     if (!in_array($ext, $permitidas, true)) {
         throw new Exception("Arquivo inválido em {$campo} (extensão não permitida)");
@@ -56,6 +64,7 @@ function salvarImagemSeEnviada(string $campo, string $destDirAbs, string $prefix
         throw new Exception("Não foi possível criar diretório de imagens");
     }
 
+    // 1) salva novo arquivo
     $novoNome = $prefixo . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(4)) . '.' . $ext;
     $destAbs  = rtrim($destDirAbs, '/\\') . DIRECTORY_SEPARATOR . $novoNome;
 
@@ -63,9 +72,23 @@ function salvarImagemSeEnviada(string $campo, string $destDirAbs, string $prefix
         throw new Exception("Falha ao salvar {$campo}");
     }
 
-    // caminho relativo para salvar no BD (ajuste conforme seu projeto)
-    $rel = 'assets/oscs/osc-' . (int)($_POST['osc_id'] ?? 0) . '/imagens/' . $novoNome;
-    return $rel;
+    // 2) prepara exclusão do antigo (só se existia)
+    $atualRel = (string)$atualRel;
+    if ($atualRel !== '') {
+        // segurança: só deixa apagar arquivo dentro do diretório esperado
+        $oldBasename = basename($atualRel);
+        if ($oldBasename !== '' && $oldBasename !== '.' && $oldBasename !== '..') {
+            $oldAbs = rtrim($destDirAbs, '/\\') . DIRECTORY_SEPARATOR . $oldBasename;
+
+            // só agenda se existir e não for o mesmo nome (paranóia útil)
+            if (is_file($oldAbs) && $oldAbs !== $destAbs) {
+                $arquivosParaExcluir[] = $oldAbs;
+            }
+        }
+    }
+
+    // 3) caminho relativo pro BD
+    return 'assets/oscs/osc-' . $osc_id . '/imagens/' . $novoNome;
 }
 
 function salvarFotoEnvolvidoSeEnviada(string $campo, string $destDirAbs, string $prefixo, string $atual, int $osc_id): string {
@@ -310,40 +333,40 @@ try {
     // ============================================
     if (isset($data['envolvidos'])) {
         $envolvidos = normalizarLista($data['envolvidos']);
-    
+
         $stmt = $conn->prepare("DELETE FROM envolvido_osc WHERE osc_id = ?");
         $stmt->bind_param("i", $osc_id);
         if (!$stmt->execute()) throw new Exception("Erro ao apagar envolvidos: " . $stmt->error);
         $stmt->close();
-    
+
         $stmt = $conn->prepare("
             INSERT INTO envolvido_osc (osc_id, nome, telefone, email, funcao, foto)
             VALUES (?, ?, ?, ?, ?, ?)
         ");
-    
+
         $destDirAbs = __DIR__ . '/assets/oscs/osc-' . $osc_id . '/envolvidos';
-    
+
         foreach ($envolvidos as $i => $env) {
             if (!is_array($env)) continue;
-        
+
             $nome     = (string)($env['nome'] ?? '');
             $telefone = (string)($env['telefone'] ?? '');
             $emailEnv = (string)($env['email'] ?? '');
             $funcao   = (string)($env['funcao'] ?? '');
-        
+
             // Foto atual (vem do JSON quando é existente)
             $fotoAtual = (string)($env['foto'] ?? '');
-        
+
             // Se veio arquivo novo "fotoEnvolvido_{$i}", salva e substitui
             $campoFile = 'fotoEnvolvido_' . $i;
             $foto = salvarFotoEnvolvidoSeEnviada($campoFile, $destDirAbs, 'envolvido', $fotoAtual, $osc_id);
-        
+
             if ($nome === '' && $funcao === '') continue;
-        
+
             $stmt->bind_param("isssss", $osc_id, $nome, $telefone, $emailEnv, $funcao, $foto);
             if (!$stmt->execute()) throw new Exception("Erro ao inserir envolvido: " . $stmt->error);
         }
-    
+
         $stmt->close();
     }
 
@@ -370,6 +393,8 @@ try {
     // 6) TEMPLATE (logos + banners + label)
     // ============================================
 
+    $arquivosParaExcluir = [];
+
     // 6.1) Começa do que já existe no BD
     $logoSimples  = $logoSimplesAtual;
     $logoCompleta = $logoCompletaAtual;
@@ -383,11 +408,11 @@ try {
     // 6.3) Se enviou arquivos, substitui e salva no disco
     $destDirAbs = __DIR__ . '/assets/oscs/osc-' . $osc_id . '/imagens';
 
-    $logoSimples  = salvarImagemSeEnviada('logoSimples',  $destDirAbs, 'logo-simples',  $logoSimples);
-    $logoCompleta = salvarImagemSeEnviada('logoCompleta', $destDirAbs, 'logo-completa', $logoCompleta);
-    $banner1      = salvarImagemSeEnviada('banner1',      $destDirAbs, 'banner1',       $banner1);
-    $banner2      = salvarImagemSeEnviada('banner2',      $destDirAbs, 'banner2',       $banner2);
-    $banner3      = salvarImagemSeEnviada('banner3',      $destDirAbs, 'banner3',       $banner3);
+    $logoSimples  = salvarImagemSeEnviada('logoSimples',  $destDirAbs, 'logo-simples',  $logoSimples,  $osc_id, $arquivosParaExcluir);
+    $logoCompleta = salvarImagemSeEnviada('logoCompleta', $destDirAbs, 'logo-completa', $logoCompleta, $osc_id, $arquivosParaExcluir);
+    $banner1      = salvarImagemSeEnviada('banner1',      $destDirAbs, 'banner1',       $banner1,      $osc_id, $arquivosParaExcluir);
+    $banner2      = salvarImagemSeEnviada('banner2',      $destDirAbs, 'banner2',       $banner2,      $osc_id, $arquivosParaExcluir);
+    $banner3      = salvarImagemSeEnviada('banner3',      $destDirAbs, 'banner3',       $banner3,      $osc_id, $arquivosParaExcluir);
 
     // 6.4) Atualiza BD
     $stmt = $conn->prepare("
@@ -408,6 +433,12 @@ try {
     // FINAL
     // ============================================
     mysqli_commit($conn);
+
+    foreach ($arquivosParaExcluir as $abs) {
+        if (is_file($abs)) {
+            @unlink($abs);
+        }
+    }
 
     echo json_encode([
         'success' => true,
