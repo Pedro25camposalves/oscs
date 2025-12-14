@@ -139,14 +139,14 @@
             margin: 6px 0
         }
 
-        .directors-list {
+        .envolvidos-list {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
             margin-top: 12px
         }
 
-        .director-card {
+        .envolvido-card {
             background: #fafafa;
             padding: 8px;
             border-radius: 8px;
@@ -156,7 +156,7 @@
             border: 1px solid #f0f0f0
         }
 
-        .director-card img {
+        .envolvido-card img {
             width: 48px;
             height: 48px;
             border-radius: 6px;
@@ -410,9 +410,9 @@
                     <div style="margin-top:14px" class="card">
                         <h2>Envolvidos</h2>
                         <div class="small">Clique em "Adicionar" para incluir as pessoas envolvidas com a OSC.</div>
-                        <div class="directors-list" id="directorsList"></div>
+                        <div class="envolvidos-list" id="listaEnvolvidos"></div>
                         <div style="margin-top:10px">
-                            <button type="button" class="btn btn-ghost" id="openDirectorModal">Adicionar</button>
+                            <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">Adicionar</button>
                         </div>
                     </div>
                 </div>
@@ -504,7 +504,7 @@
                 Clique em "Adicionar" para incluir as atividades econômicas, áreas e subáreas de atuação.
             </div>
             <!-- Lista de atividades -->
-            <div class="directors-list" id="atividadesList"></div>
+            <div class="envolvidos-list" id="atividadesList"></div>
             <div style="margin-top:10px">
                 <button type="button" class="btn btn-ghost" id="openAtividadeModal">
                     Adicionar
@@ -564,8 +564,8 @@
             </div>
         </div>
         <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
-            <button class="btn btn-ghost" id="closeDirectorModal">Cancelar</button>
-            <button class="btn btn-primary" id="addDirectorBtn">Adicionar</button>
+            <button class="btn btn-ghost" id="closeEnvolvidoModal">Cancelar</button>
+            <button class="btn btn-primary" id="addEnvolvidoBtn">Adicionar</button>
         </div>
     </div>
 </div>
@@ -630,7 +630,7 @@
     const swTer = qs('#swTer');
     const swQua = qs('#swQua');
 
-    const directors = [];
+    const envolvidos = [];
 
         async function uploadDocumentoOsc() {
             console.log("Form:", document.getElementById("formDoc"));
@@ -799,14 +799,14 @@
 
     // modal logic envolvidos
     const modalBackdrop = qs('#modalBackdrop');
-    const openDirectorModal = qs('#openDirectorModal');
-    const closeDirectorModal = qs('#closeDirectorModal');
-    const addDirectorBtn = qs('#addDirectorBtn');
+    const openEnvolvidoModal = qs('#openEnvolvidoModal');
+    const closeEnvolvidoModal = qs('#closeEnvolvidoModal');
+    const addEnvolvidoBtn = qs('#addEnvolvidoBtn');
 
-    openDirectorModal.addEventListener('click', () => {
+    openEnvolvidoModal.addEventListener('click', () => {
         modalBackdrop.style.display = 'flex'
     });
-    closeDirectorModal.addEventListener('click', () => {
+    closeEnvolvidoModal.addEventListener('click', () => {
         modalBackdrop.style.display = 'none'
     });
     modalBackdrop.addEventListener('click', (e) => {
@@ -814,7 +814,7 @@
     });
 
     // ADICIONAR ENVOLVIDO
-    async function addDirector() {
+    async function addEnvolvido() {
         const foto = qs('#dirFoto').files[0];
         const nome = qs('#dirNome').value.trim();
         const telefone = qs('#dirTelefone').value.trim();
@@ -832,8 +832,8 @@
             email,
             func
         };
-        directors.push(envolvido);
-        renderDirectors();
+        envolvidos.push(envolvido);
+        renderEnvolvidos();
         qs('#dirFoto').value = '';
         qs('#dirNome').value = '';
         qs('#dirTelefone').value = '';
@@ -841,14 +841,14 @@
         qs('#dirFunc').value = '';
         modalBackdrop.style.display = 'none';
     }
-    addDirectorBtn.addEventListener('click', addDirector);
+    addEnvolvidoBtn.addEventListener('click', addEnvolvido);
 
-    function renderDirectors() {
-        const list = qs('#directorsList');
+    function renderEnvolvidos() {
+        const list = qs('#listaEnvolvidos');
         list.innerHTML = '';
-        directors.forEach((d, i) => {
+        envolvidos.forEach((d, i) => {
             const c = document.createElement('div');
-            c.className = 'director-card';
+            c.className = 'envolvido-card';
             const img = document.createElement('img');
             img.src = d.foto || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
             const info = document.createElement('div');
@@ -862,8 +862,8 @@
             remove.style.padding = '6px 8px';
             remove.style.marginLeft = '8px';
             remove.addEventListener('click', () => {
-                directors.splice(i, 1);
-                renderDirectors()
+                envolvidos.splice(i, 1);
+                renderEnvolvidos()
             });
             c.appendChild(img);
             c.appendChild(info);
@@ -921,7 +921,7 @@
 
         atividades.forEach((a, i) => {
             const c = document.createElement('div');
-            c.className = 'director-card';
+            c.className = 'envolvido-card';
 
             const info = document.createElement('div');
             info.innerHTML = `
@@ -982,9 +982,9 @@
 
         try {
             // limpa arrays e listas visuais antes de carregar a nova OSC
-            directors.length = 0;
+            envolvidos.length = 0;
             atividades.length = 0;
-            renderDirectors();
+            renderEnvolvidos();
             renderAtividades();
 
             // zera paths de imagens existentes
@@ -1052,17 +1052,17 @@
             }
 
             // envolvidos
-            if (Array.isArray(osc.diretores)) {
-                osc.diretores.forEach(d => {
-                    directors.push({
-                        foto: null, // não vem do banco
+            if (Array.isArray(osc.envolvidos)) {
+                osc.envolvidos.forEach(d => {
+                    envolvidos.push({
+                        foto: null,
                         nome: d.nome || '',
                         telefone: d.telefone || '',
                         email: d.email || '',
                         func: d.funcao || ''
                     });
                 });
-                renderDirectors();
+                renderEnvolvidos();
             }
 
             // template / imagens
@@ -1155,7 +1155,7 @@
         data.logradouro = qs("#logradouro").value;
         data.numero = qs("#numero").value;
 
-        data.diretores = directors;
+        data.envolvidos = envolvidos;
         data.id = oscId; // importante para o ajax_atualizar_osc.php
 
         const json = JSON.stringify(data, null, 2);
@@ -1207,9 +1207,9 @@
         const form = document.getElementById('oscForm');
         if (form) form.reset();
 
-        if (Array.isArray(directors)) {
-            directors.length = 0;
-            renderDirectors();
+        if (Array.isArray(envolvidos)) {
+            envolvidos.length = 0;
+            renderEnvolvidos();
         }
 
         if (typeof atividades !== 'undefined' && Array.isArray(atividades) && typeof renderAtividades === 'function') {

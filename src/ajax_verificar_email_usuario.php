@@ -1,5 +1,4 @@
 <?php
-// ajax_verificar_email_usuario.php
 session_start();
 require 'conexao.php';
 
@@ -24,7 +23,6 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
-// verifica se já existe na tabela usuario
 $sql = "SELECT id FROM usuario WHERE email = ? LIMIT 1";
 $stmt = $conn->prepare($sql);
 
