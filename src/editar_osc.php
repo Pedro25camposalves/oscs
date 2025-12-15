@@ -219,122 +219,6 @@ if (!$oscIdVinculada) {
 <form id="oscForm" onsubmit="event.preventDefault();saveData()">
     <input type="hidden" id="oscId" value="<?= (int)$oscIdVinculada ?>" />
 
-    <!-- SEÇÃO 1: TEMPLATE DA OSC -->
-    <div style="margin-top:16px" class="card">
-        <div class="grid cols-2">
-            <!-- LADO ESQUERDO -->
-            <div>
-                <h2>Exibição do site</h2>
-                <div class="grid">
-                    <div class="row">
-                        <div style="flex:1">
-                            <label for="bgColor">Cor de fundo (*)</label>
-                            <input id="bgColor" type="color" value="#f7f7f8" required />
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div style="flex:1">
-                            <label for="secColor">Cor secundária (*)</label>
-                            <input id="secColor" type="color" value="#00aa66" required />
-                        </div>
-                        <div style="flex:1">
-                            <label for="terColor">Cor terciária (*)</label>
-                            <input id="terColor" type="color" value="#ff8a65" required />
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div style="flex:1">
-                            <label for="quaColor">Cor quaternária (*)</label>
-                            <input id="quaColor" type="color" value="#6c5ce7" required />
-                        </div>
-                        <div style="flex:1">
-                            <label for="fonColor">Cor da fonte (*)</label>
-                            <input id="fonColor" type="color" value="#000000" required />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="logoCompleta">Logo completa</label>
-                        <div class="envolvidos-list" id="imgCard_logoCompleta"></div>
-                        <input id="logoCompleta" type="file" accept="image/*" />
-                    </div>
-
-                    <div>
-                        <label for="logoSimples">Logo simples</label>
-                        <div class="envolvidos-list" id="imgCard_logoSimples"></div>
-                        <input id="logoSimples" type="file" accept="image/*" />
-                    </div>
-
-                    <div>
-                        <label for="banner1">Banner principal </label>
-                        <div class="envolvidos-list" id="imgCard_banner1"></div>
-                        <input id="banner1" type="file" accept="image/*" />
-                    </div>
-                    <div>
-                        <label for="labelBanner">Texto do banner</label>
-                        <input id="labelBanner" type="text" placeholder="Texto do banner" />
-                    </div>
-                    <div>
-                        <label for="banner2">Banner 2 </label>
-                        <div class="envolvidos-list" id="imgCard_banner2"></div>
-                        <input id="banner2" type="file" accept="image/*" />
-                    </div>
-
-                    <div>
-                        <label for="banner3">Banner 3 </label>
-                        <div class="envolvidos-list" id="imgCard_banner3"></div>
-                        <input id="banner3" type="file" accept="image/*" />
-                    </div>
-                </div>
-            </div>
-
-            <!-- LADO DIREITO -->
-            <div>
-                <h2 class="section-title">Visualização</h2>
-                <div class="card">
-                    <div class="small">Previews automáticos das imagens e cores selecionadas</div>
-                    <div class="divider"></div>
-                    <div id="previewArea">
-                        <div class="row" style="align-items:center">
-                            <div>
-                                <div class="small">Logo simples</div>
-                                <div class="images-preview" id="previewLogoSimples"></div>
-                            </div>
-                            <div style="margin-left:12px">
-                                <div class="small">Logo completa</div>
-                                <div class="images-preview" id="previewLogoCompleta"></div>
-                            </div>
-                        </div>
-                        <div style="margin-top:12px">
-                            <div class="small">Banners</div>
-                            <div class="images-preview" id="previewBanners"></div>
-                        </div>
-                        <div style="margin-top:12px">
-                            <div class="small">Paleta</div>
-                            <div class="row" id="colorSwatches">
-                                <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">BG<br>
-                                    <div id="swBg">&nbsp;</div>
-                                </div>
-                                <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Sec<br>
-                                    <div id="swSec">&nbsp;</div>
-                                </div>
-                                <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Ter<br>
-                                    <div id="swTer">&nbsp;</div>
-                                </div>
-                                <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Qua<br>
-                                    <div id="swQua">&nbsp;</div>
-                                </div>
-                                <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Fonte<br>
-                                    <div id="swFon">&nbsp;</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- SEÇÃO 2: INFORMAÇÕES BÁSICAS -->
     <div style="margin-top:16px" class="card">
         <div class="grid cols-2">
@@ -424,10 +308,6 @@ if (!$oscIdVinculada) {
             <div>
                 <label for="email">E-mail</label>
                 <input id="email" type="text" />
-            </div>
-            <div>
-                <label for="status">Status</label>
-                <input id="status" type="text" />
             </div>
         </div>
         <div style="margin-top: 10px;">
@@ -550,7 +430,122 @@ if (!$oscIdVinculada) {
         </div>
     </div>
 
-    <!-- BOTÕES -->
+    <!-- SEÇÃO 1: TEMPLATE DA OSC -->
+    <div style="margin-top:16px" class="card">
+        <div class="grid cols-2">
+            <!-- LADO ESQUERDO -->
+            <div>
+                <h2>Exibição do site</h2>
+                <div class="grid">
+                    <div class="row">
+                        <div style="flex:1">
+                            <label for="bgColor">Cor de fundo (*)</label>
+                            <input id="bgColor" type="color" value="#f7f7f8" required />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div style="flex:1">
+                            <label for="secColor">Cor secundária (*)</label>
+                            <input id="secColor" type="color" value="#00aa66" required />
+                        </div>
+                        <div style="flex:1">
+                            <label for="terColor">Cor terciária (*)</label>
+                            <input id="terColor" type="color" value="#ff8a65" required />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div style="flex:1">
+                            <label for="quaColor">Cor quaternária (*)</label>
+                            <input id="quaColor" type="color" value="#6c5ce7" required />
+                        </div>
+                        <div style="flex:1">
+                            <label for="fonColor">Cor da fonte (*)</label>
+                            <input id="fonColor" type="color" value="#000000" required />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="logoCompleta">Logo completa</label>
+                        <div class="envolvidos-list" id="imgCard_logoCompleta"></div>
+                        <input id="logoCompleta" type="file" accept="image/*" />
+                    </div>
+
+                    <div>
+                        <label for="logoSimples">Logo simples</label>
+                        <div class="envolvidos-list" id="imgCard_logoSimples"></div>
+                        <input id="logoSimples" type="file" accept="image/*" />
+                    </div>
+
+                    <div>
+                        <label for="banner1">Banner principal </label>
+                        <div class="envolvidos-list" id="imgCard_banner1"></div>
+                        <input id="banner1" type="file" accept="image/*" />
+                    </div>
+                    <div>
+                        <label for="labelBanner">Texto do banner</label>
+                        <input id="labelBanner" type="text" placeholder="Texto do banner" />
+                    </div>
+                    <div>
+                        <label for="banner2">Banner 2 </label>
+                        <div class="envolvidos-list" id="imgCard_banner2"></div>
+                        <input id="banner2" type="file" accept="image/*" />
+                    </div>
+
+                    <div>
+                        <label for="banner3">Banner 3 </label>
+                        <div class="envolvidos-list" id="imgCard_banner3"></div>
+                        <input id="banner3" type="file" accept="image/*" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- LADO DIREITO -->
+            <div>
+                <h2 class="section-title">Visualização</h2>
+                <div class="card">
+                    <div class="small">Previews automáticos das imagens e cores selecionadas</div>
+                    <div class="divider"></div>
+                    <div id="previewArea">
+                        <div class="row" style="align-items:center">
+                            <div>
+                                <div class="small">Logo simples</div>
+                                <div class="images-preview" id="previewLogoSimples"></div>
+                            </div>
+                            <div style="margin-left:12px">
+                                <div class="small">Logo completa</div>
+                                <div class="images-preview" id="previewLogoCompleta"></div>
+                            </div>
+                        </div>
+                        <div style="margin-top:12px">
+                            <div class="small">Banners</div>
+                            <div class="images-preview" id="previewBanners"></div>
+                        </div>
+                        <div style="margin-top:12px">
+                            <div class="small">Paleta</div>
+                            <div class="row" id="colorSwatches">
+                                <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">BG<br>
+                                    <div id="swBg">&nbsp;</div>
+                                </div>
+                                <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Sec<br>
+                                    <div id="swSec">&nbsp;</div>
+                                </div>
+                                <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Ter<br>
+                                    <div id="swTer">&nbsp;</div>
+                                </div>
+                                <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Qua<br>
+                                    <div id="swQua">&nbsp;</div>
+                                </div>
+                                <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Fonte<br>
+                                    <div id="swFon">&nbsp;</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- BOTÕES FOOTER -->
     <div style="margin-top:16px" class="card">
         <footer>
             <div class="small muted">Edite o que quiser e clique em "Salvar alterações".</div>
@@ -560,16 +555,6 @@ if (!$oscIdVinculada) {
         </footer>
     </div>
 </form>
-
-<!-- JSON PREVIEW -->
-<div style="margin-top:16px" class="card">
-    <h2>JSON DA EDIÇÃO</h2>
-    <div class="divider"></div>
-    <pre id="jsonOut" class="json-out">{}</pre>
-    <div style="margin-top:8px; display:flex; gap:8px">
-        <a id="downloadLink" style="display:none" class="btn btn-ghost">Baixar JSON</a>
-    </div>
-</div>
 
 </main>
 

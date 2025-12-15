@@ -265,7 +265,6 @@ try {
     $telefone  = (string)pick($data, ['telefone'], '');
     $email     = (string)pick($data, ['email'], '');
     $instagram = (string)pick($data, ['instagram'], '');
-    $status    = (string)pick($data, ['status'], '');
 
     $stmt = $conn->prepare("
         UPDATE osc SET
@@ -285,8 +284,7 @@ try {
             cnpj               = ?,
             telefone           = ?,
             email              = ?,
-            instagram          = ?,
-            status             = ?
+            instagram          = ?
         WHERE id = ?
     ");
     $stmt->bind_param(
@@ -308,7 +306,6 @@ try {
         $telefone,
         $email,
         $instagram,
-        $status,
         $osc_id
     );
     if (!$stmt->execute()) throw new Exception("Erro ao atualizar OSC: " . $stmt->error);
