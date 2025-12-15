@@ -1,7 +1,7 @@
 <?php
-    $TIPOS_PERMITIDOS = ['OSC_TECH_ADMIN']; // só usuário OscTech admin
-    $RESPOSTA_JSON    = false;              // resposta é página HTML
-    require 'autenticacao.php';
+$TIPOS_PERMITIDOS = ['OSC_TECH_ADMIN']; // só usuário OscTech admin
+$RESPOSTA_JSON    = false;              // resposta é página HTML
+require 'autenticacao.php';
 ?>
 
 <!doctype html>
@@ -11,13 +11,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Admin — Cadastro de OSC</title>
-
-   
-    
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.css" rel="stylesheet">
-    
-    
 
     <style>
         :root {
@@ -280,37 +273,18 @@
         }
 
         .senha-ok {
-            color: #0a6;        
+            color: #0a6;
             font-weight: 600;
         }
 
         .senha-erro {
-            color: #c00;        
+            color: #c00;
             font-weight: 600;
         }
-
     </style>
 </head>
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.js"></script>
-    <script>
-    $(document).ready(function() {
-        $('#historia').summernote({
-            height: 300,
-            placeholder: 'Escreva aqui...',
-            toolbar: [
-                ['style', ['style']],
-                ['font', ['bold', 'italic', 'underline']],
-                ['para', ['ul', 'ol', 'paragraph']],
-                ['insert', ['link']], // 👈 removido 'picture'
-                ['view', ['codeview']]
-            ]
-        });
-    });
-
-    </script>
+</script>
 
 <body>
     <header>
@@ -329,19 +303,19 @@
     </header>
 
     <main>
-        
+
         <form id="oscForm" onsubmit="event.preventDefault();saveData()">
             <!-- SEÇÃO 1: TEMPLATE DA OSC -->
-            <div style="margin-top:16px" class="card">  
+            <div style="margin-top:16px" class="card">
                 <div class="grid cols-2">
                     <!-- LADO ESQUERDO -->
                     <div>
                         <h2>Exibição do site</h2>
                         <div class="grid">
                             <div class="row">
-                               <div style="flex:1">
+                                <div style="flex:1">
                                     <label for="bgColor">Cor de fundo (*)</label>
-                                   <input id="bgColor" type="color" value="#f7f7f8" required />
+                                    <input id="bgColor" type="color" value="#f7f7f8" required />
                                 </div>
                             </div>
                             <div class="row">
@@ -392,7 +366,7 @@
                     </div>
 
                     <!-- LADO DIREITO -->
-                    <div> 
+                    <div>
                         <h2 class="section-title">Visualização</h2>
                         <div class="card">
                             <div class="small">Previews automáticos das imagens e cores selecionadas</div>
@@ -437,7 +411,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- SEÇÃO 2: INFORMAÇÕES BASICAS DA OSC -->
             <div style="margin-top:16px" class="card">
                 <div class="grid cols-2">
@@ -463,19 +437,19 @@
                             </div>
                             <div>
                                 <label for="historia">História (*)</label>
-                                <textarea id="historia" class="historia" placeholder="Conte a história da OSC" required ></textarea>
+                                <textarea id="historia" class="historia" placeholder="Conte a história da OSC" required></textarea>
                             </div>
                             <div>
                                 <label for="missao">Missão (*)</label>
-                                <textarea id="missao" placeholder="Descreva a missão da OSC" required ></textarea>
+                                <textarea id="missao" placeholder="Descreva a missão da OSC" required></textarea>
                             </div>
                             <div>
                                 <label for="visao">Visão (*)</label>
-                                <textarea id="visao" placeholder="Descreva a visão da OSC" required ></textarea>
+                                <textarea id="visao" placeholder="Descreva a visão da OSC" required></textarea>
                             </div>
                             <div>
                                 <label for="valores">Valores (*)</label>
-                                <textarea id="valores" placeholder="Descreva os valores da OSC" required ></textarea>
+                                <textarea id="valores" placeholder="Descreva os valores da OSC" required></textarea>
                             </div>
                         </div>
                     </div>
@@ -489,7 +463,7 @@
                             <div style="margin-top:10px">
                                 <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">Adicionar</button>
                             </div>
-                        </div>                
+                        </div>
                     </div>
                 </div>
             </div>
@@ -537,7 +511,7 @@
                 </div>
                 <div style="margin-top: 10px;">
                     <label for="oQueFaz">O que a OSC faz? (*)</label>
-                    <textarea id="oQueFaz" placeholder="Descreva a finalidade da OSC" required ></textarea>
+                    <textarea id="oQueFaz" placeholder="Descreva a finalidade da OSC" required></textarea>
                 </div>
             </div>
 
@@ -551,7 +525,7 @@
                     </div>
                     <div>
                         <label for="cep">CEP (*)</label>
-                        <input id="cep" inputmode="numeric" type="text" required/>
+                        <input id="cep" inputmode="numeric" type="text" required />
                     </div>
                     <div>
                         <label for="cidade">Cidade</label>
@@ -571,7 +545,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- SEÇÃO 5: ÁREAS DE ATUAÇÃO DA OSC -->
             <div style="margin-top:16px" class="card">
                 <h2>Área e Subárea de Atuação</h2>
@@ -703,7 +677,7 @@
                     </div>
                 </footer>
             </div>
-        </form>        
+        </form>
 
         <!-- EXIBIÇÃO DO JSON PARA TESTE -->
         <div style="margin-top:16px" class="card">
@@ -731,7 +705,7 @@
                     </div>
                     <div>
                         <label for="envNome">Nome (*)</label>
-                        <input id="envNome" type="text" required/>
+                        <input id="envNome" type="text" required />
                     </div>
                     <div>
                         <label for="envTelefone">Telefone</label>
@@ -862,42 +836,42 @@
         const swFon = qs('#swFon');
 
         // Campos do usuário responsável
-        const usuarioNome       = qs('#usuarioNome');
-        const usuarioEmail      = qs('#usuarioEmail');
-        const usuarioSenha      = qs('#usuarioSenha');
-        const usuarioSenhaConf  = qs('#usuarioSenhaConf');
-        const toggleSenha       = qs('#toggleSenha');
-        const senhaMsg          = qs('#senhaMsg');
-        const emailMsg          = qs('#emailMsg');
+        const usuarioNome = qs('#usuarioNome');
+        const usuarioEmail = qs('#usuarioEmail');
+        const usuarioSenha = qs('#usuarioSenha');
+        const usuarioSenhaConf = qs('#usuarioSenhaConf');
+        const toggleSenha = qs('#toggleSenha');
+        const senhaMsg = qs('#senhaMsg');
+        const emailMsg = qs('#emailMsg');
 
         // Toggle de exibição das senhas
         if (toggleSenha) {
             toggleSenha.addEventListener('change', () => {
                 const tipo = toggleSenha.checked ? 'text' : 'password';
-                if (usuarioSenha)     usuarioSenha.type = tipo;
+                if (usuarioSenha) usuarioSenha.type = tipo;
                 if (usuarioSenhaConf) usuarioSenhaConf.type = tipo;
             });
         }
 
         // Inputs de documentos "fixos"
-        const docEstatuto     = qs('#docEstatuto');
-        const docAta          = qs('#docAta');
-        const docCndFederal   = qs('#docCndFederal');
-        const docCndEstadual  = qs('#docCndEstadual');
+        const docEstatuto = qs('#docEstatuto');
+        const docAta = qs('#docAta');
+        const docCndFederal = qs('#docCndFederal');
+        const docCndEstadual = qs('#docCndEstadual');
         const docCndMunicipal = qs('#docCndMunicipal');
-        const docFgts         = qs('#docFgts');
-        const docTrabalhista  = qs('#docTrabalhista');
-        const balancos   = []; // { ano, file }
-        const dres       = []; // { ano, file }
+        const docFgts = qs('#docFgts');
+        const docTrabalhista = qs('#docTrabalhista');
+        const balancos = []; // { ano, file }
+        const dres = []; // { ano, file }
 
         const envolvidos = [];
         const atividades = [];
 
         // modal balanços patrimoniais
         const modalBalancoBackdrop = qs('#modalBalancoBackdrop');
-        const openBalancoModal     = qs('#openBalancoModal');
-        const closeBalancoModal    = qs('#closeBalancoModal');
-        const addBalancoBtn        = qs('#addBalancoBtn');
+        const openBalancoModal = qs('#openBalancoModal');
+        const closeBalancoModal = qs('#closeBalancoModal');
+        const addBalancoBtn = qs('#addBalancoBtn');
 
         if (openBalancoModal) {
             openBalancoModal.addEventListener('click', () => {
@@ -929,19 +903,19 @@
         function renderBalancos() {
             const list = qs('#balancosList');
             if (!list) return;
-        
+
             list.innerHTML = '';
-        
+
             balancos.forEach((b, i) => {
                 const c = document.createElement('div');
                 c.className = 'envolvido-card';
-            
+
                 const info = document.createElement('div');
                 info.innerHTML = `
                     <div style="font-weight:600">Ano: ${escapeHtml(b.ano)}</div>
                     <div class="small">Arquivo: ${escapeHtml(b.file?.name || '')}</div>
                 `;
-            
+
                 const remove = document.createElement('button');
                 remove.className = 'btn';
                 remove.textContent = '✕';
@@ -951,7 +925,7 @@
                     balancos.splice(i, 1);
                     renderBalancos();
                 });
-            
+
                 c.appendChild(info);
                 c.appendChild(remove);
                 list.appendChild(c);
@@ -961,17 +935,20 @@
         function addBalanco() {
             const anoInput = qs('#balancoAno');
             const arqInput = qs('#balancoArquivo');
-        
+
             const ano = anoInput ? anoInput.value.trim() : '';
             const file = arqInput && arqInput.files ? arqInput.files[0] : null;
-        
+
             if (!ano || !file) {
                 alert('Informe o ano e selecione o arquivo do Balanço Patrimonial.');
                 return;
             }
-        
-            balancos.push({ ano, file });
-        
+
+            balancos.push({
+                ano,
+                file
+            });
+
             renderBalancos();
             limparCamposBalanco();
             modalBalancoBackdrop.style.display = 'none';
@@ -983,9 +960,9 @@
 
         // ===== MODAL DRE =====
         const modalDreBackdrop = qs('#modalDreBackdrop');
-        const openDreModal     = qs('#openDreModal');
-        const closeDreModal    = qs('#closeDreModal');
-        const addDreBtn        = qs('#addDreBtn');
+        const openDreModal = qs('#openDreModal');
+        const closeDreModal = qs('#closeDreModal');
+        const addDreBtn = qs('#addDreBtn');
 
         if (openDreModal) {
             openDreModal.addEventListener('click', () => {
@@ -1017,19 +994,19 @@
         function renderDres() {
             const list = qs('#dresList');
             if (!list) return;
-        
+
             list.innerHTML = '';
-        
+
             dres.forEach((d, i) => {
                 const c = document.createElement('div');
                 c.className = 'envolvido-card';
-            
+
                 const info = document.createElement('div');
                 info.innerHTML = `
                     <div style="font-weight:600">Ano: ${escapeHtml(d.ano)}</div>
                     <div class="small">Arquivo: ${escapeHtml(d.file?.name || '')}</div>
                 `;
-            
+
                 const remove = document.createElement('button');
                 remove.className = 'btn';
                 remove.textContent = '✕';
@@ -1039,7 +1016,7 @@
                     dres.splice(i, 1);
                     renderDres();
                 });
-            
+
                 c.appendChild(info);
                 c.appendChild(remove);
                 list.appendChild(c);
@@ -1049,17 +1026,20 @@
         function addDre() {
             const anoInput = qs('#dreAno');
             const arqInput = qs('#dreArquivo');
-        
-            const ano  = anoInput ? anoInput.value.trim() : '';
+
+            const ano = anoInput ? anoInput.value.trim() : '';
             const file = arqInput && arqInput.files ? arqInput.files[0] : null;
-        
+
             if (!ano || !file) {
                 alert('Informe o ano e selecione o arquivo da DRE.');
                 return;
             }
-        
-            dres.push({ ano, file });
-        
+
+            dres.push({
+                ano,
+                file
+            });
+
             renderDres();
             limparCamposDre();
             modalDreBackdrop.style.display = 'none';
@@ -1073,12 +1053,12 @@
         function validarSenhaLive() {
             const s1 = usuarioSenha.value;
             const s2 = usuarioSenhaConf.value;
-                
+
             senhaMsg.textContent = '';
             senhaMsg.classList.remove('senha-ok', 'senha-erro');
-                
+
             if (!s2) return;
-                
+
             if (s1 === s2) {
                 senhaMsg.textContent = '✔ As senhas coincidem.';
                 senhaMsg.classList.add('senha-ok');
@@ -1093,47 +1073,66 @@
             if (emailMsg) {
                 emailMsg.textContent = '';
             }
-        
+
             if (!email) {
                 if (emailMsg) emailMsg.textContent = 'Preencha o e-mail do administrador.';
-                return { ok: false, motivo: 'Preencha o e-mail do administrador.' };
+                return {
+                    ok: false,
+                    motivo: 'Preencha o e-mail do administrador.'
+                };
             }
-        
+
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 if (emailMsg) emailMsg.textContent = 'E-mail inválido.';
-                return { ok: false, motivo: 'E-mail inválido.' };
+                return {
+                    ok: false,
+                    motivo: 'E-mail inválido.'
+                };
             }
-        
+
             try {
                 const resp = await fetch('ajax_verificar_email_usuario.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     },
-                    body: new URLSearchParams({ email })
+                    body: new URLSearchParams({
+                        email
+                    })
                 });
-            
+
                 const result = await resp.json();
-            
+
                 if (!result.success) {
                     console.error('Erro na verificação de e-mail:', result.error);
                     if (emailMsg) emailMsg.textContent = 'Erro ao verificar e-mail. Tente novamente.';
-                    return { ok: false, motivo: 'Erro na verificação.' };
+                    return {
+                        ok: false,
+                        motivo: 'Erro na verificação.'
+                    };
                 }
-            
+
                 if (result.exists) {
                     if (emailMsg) emailMsg.textContent = 'Este e-mail já está cadastrado para outro usuário.';
-                    return { ok: false, motivo: 'E-mail já cadastrado.' };
+                    return {
+                        ok: false,
+                        motivo: 'E-mail já cadastrado.'
+                    };
                 }
-            
+
                 if (emailMsg) emailMsg.textContent = 'E-mail disponível.';
-                return { ok: true };
-            
+                return {
+                    ok: true
+                };
+
             } catch (e) {
                 console.error('Falha na requisição de verificação de e-mail:', e);
                 if (emailMsg) emailMsg.textContent = 'Erro ao verificar e-mail.';
-                return { ok: false, motivo: 'Erro na verificação.' };
+                return {
+                    ok: false,
+                    motivo: 'Erro na verificação.'
+                };
             }
         }
 
@@ -1172,8 +1171,8 @@
                 const img = document.createElement('img');
                 img.src = src;
                 previewLogoCompleta.appendChild(img)
-            }
-            ;[b1, b2, b3].forEach(async (b) => {
+            };
+            [b1, b2, b3].forEach(async (b) => {
                 if (b) {
                     const src = await readFileAsDataURL(b);
                     const img = document.createElement('img');
@@ -1199,10 +1198,10 @@
         [bgColor, secColor, terColor, quaColor, fonColor].forEach(el => el.addEventListener('input', updatePreviews));
 
         // MODAL ENVOLVIDOS 
-        const modalBackdrop       = qs('#modalBackdrop');
-        const openEnvolvidoModal  = qs('#openEnvolvidoModal');
+        const modalBackdrop = qs('#modalBackdrop');
+        const openEnvolvidoModal = qs('#openEnvolvidoModal');
         const closeEnvolvidoModal = qs('#closeEnvolvidoModal');
-        const addEnvolvidoBtn     = qs('#addEnvolvidoBtn');
+        const addEnvolvidoBtn = qs('#addEnvolvidoBtn');
 
         openEnvolvidoModal.addEventListener('click', () => {
             modalBackdrop.style.display = 'flex';
@@ -1226,10 +1225,10 @@
         // ADICIONAR ENVOLVIDO 
         async function addEnvolvido() {
             const fotoFile = qs('#envFoto').files[0] || null;
-            const nome     = qs('#envNome').value.trim();
+            const nome = qs('#envNome').value.trim();
             const telefone = qs('#envTelefone').value.trim();
-            const email    = qs('#envEmail').value.trim();
-            const funcao   = qs('#envFuncaoNovo').value.trim();
+            const email = qs('#envEmail').value.trim();
+            const funcao = qs('#envFuncaoNovo').value.trim();
 
             if (!nome || !funcao) {
                 alert('Preencha pelo menos o Nome e a Função do envolvido!');
@@ -1276,22 +1275,22 @@
         function renderEnvolvidos() {
             const list = qs('#listaEnvolvidos');
             list.innerHTML = '';
-                
+
             envolvidos.forEach((e, i) => {
                 const c = document.createElement('div');
                 c.className = 'envolvido-card';
-            
+
                 const img = document.createElement('img');
                 img.src = e.fotoPreview || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
-            
+
                 const funcaoLabel = FUNCAO_LABELS[e.funcao] || e.funcao;
-            
+
                 const info = document.createElement('div');
                 info.innerHTML = `
                     <div style="font-weight:600">${escapeHtml(e.nome)}</div>
                     <div class="small">${escapeHtml(funcaoLabel)}</div>
                 `;
-            
+
                 const remove = document.createElement('button');
                 remove.className = 'btn';
                 remove.textContent = '✕';
@@ -1301,7 +1300,7 @@
                     envolvidos.splice(i, 1);
                     renderEnvolvidos();
                 });
-            
+
                 c.appendChild(img);
                 c.appendChild(info);
                 c.appendChild(remove);
@@ -1314,61 +1313,65 @@
         const openAtividadeModal = qs('#openAtividadeModal');
         const closeAtividadeModal = qs('#closeAtividadeModal');
         const addAtividadeBtn = qs('#addAtividadeBtn');
-            
+
         openAtividadeModal.addEventListener('click', () => {
             modalAtividadeBackdrop.style.display = 'flex';
         });
-        
+
         closeAtividadeModal.addEventListener('click', () => {
             modalAtividadeBackdrop.style.display = 'none';
         });
-        
+
         modalAtividadeBackdrop.addEventListener('click', (e) => {
             if (e.target === modalAtividadeBackdrop) modalAtividadeBackdrop.style.display = 'none';
         });
-        
+
         function limparCamposAtividade() {
             qs('#atvCnae').value = '';
             qs('#atvArea').value = '';
             qs('#atvSubarea').value = '';
         }
-        
+
         // ADICIONAR ATIVIDADE
         function addAtividade() {
             const cnae = qs('#atvCnae').value.trim();
             const area = qs('#atvArea').value.trim();
             const subarea = qs('#atvSubarea').value.trim();
-        
+
             if (!cnae || !area) {
                 alert('Preencha pelo menos CNAE e Área de atuação');
                 return;
             }
-        
-            const atv = { cnae, area, subarea };
+
+            const atv = {
+                cnae,
+                area,
+                subarea
+            };
             atividades.push(atv);
             renderAtividades();
             limparCamposAtividade();
             modalAtividadeBackdrop.style.display = 'none';
         }
-        
+
         addAtividadeBtn.addEventListener('click', addAtividade);
-        
+
         // RENDERIZA A LISTA DE ATIVIDADES
         function renderAtividades() {
             const list = qs('#atividadesList');
             list.innerHTML = '';
-        
+
             atividades.forEach((a, i) => {
                 const c = document.createElement('div');
                 c.className = 'envolvido-card';
-            
+
                 const info = document.createElement('div');
                 info.innerHTML = `
                     <div style="font-weight:600">CNAE: ${escapeHtml(a.cnae)}</div>
                     <div class="small">Área: ${escapeHtml(a.area)}</div>
                     ${a.subarea ? `<div class="small">Subárea: ${escapeHtml(a.subarea)}</div>` : ''}
                 `;
-            
+
                 const remove = document.createElement('button');
                 remove.className = 'btn';
                 remove.textContent = '✕';
@@ -1378,7 +1381,7 @@
                     atividades.splice(i, 1);
                     renderAtividades();
                 });
-            
+
                 c.appendChild(info);
                 c.appendChild(remove);
                 list.appendChild(c);
@@ -1392,7 +1395,7 @@
                     '<': '&lt;',
                     '>': '&gt;',
                     '"': '&quot;'
-                }[match]
+                } [match]
             })
         }
 
@@ -1402,19 +1405,19 @@
             if (!fileInput || !fileInput.files || !fileInput.files[0]) {
                 return null;
             }
-        
+
             const fdDoc = new FormData();
             fdDoc.append('id_osc', oscId);
             fdDoc.append('categoria', categoria);
             fdDoc.append('subtipo', subtipo);
             fdDoc.append('arquivo', fileInput.files[0]);
-        
+
             try {
                 const resp = await fetch('ajax_upload_documento.php', {
                     method: 'POST',
                     body: fdDoc
                 });
-            
+
                 const text = await resp.text();
                 let data;
                 try {
@@ -1423,13 +1426,13 @@
                     console.error('Erro ao parsear JSON no upload de documento:', subtipo, text);
                     return `(${categoria}/${subtipo}) resposta inválida do servidor.`;
                 }
-            
+
                 if (data.status !== 'ok') {
                     return `(${categoria}/${subtipo}) ${data.mensagem || 'erro ao enviar documento.'}`;
                 }
-            
+
                 return null;
-            
+
             } catch (e) {
                 console.error('Erro na requisição de upload de documento:', subtipo, e);
                 return `(${categoria}/${subtipo}) erro de comunicação com o servidor.`;
@@ -1438,44 +1441,71 @@
 
         async function enviarDocumentosFixos(oscId) {
             const erros = [];
-        
-            const docs = [
-                { el: docEstatuto,     cat: 'INSTITUCIONAL', subtipo: 'ESTATUTO' },
-                { el: docAta,          cat: 'INSTITUCIONAL', subtipo: 'ATA' },
-                { el: docCndFederal,   cat: 'CERTIDAO',      subtipo: 'CND_FEDERAL' },
-                { el: docCndEstadual,  cat: 'CERTIDAO',      subtipo: 'CND_ESTADUAL' },
-                { el: docCndMunicipal, cat: 'CERTIDAO',      subtipo: 'CND_MUNICIPAL' },
-                { el: docFgts,         cat: 'CERTIDAO',      subtipo: 'FGTS' },
-                { el: docTrabalhista,  cat: 'CERTIDAO',      subtipo: 'TRABALHISTA' },
+
+            const docs = [{
+                    el: docEstatuto,
+                    cat: 'INSTITUCIONAL',
+                    subtipo: 'ESTATUTO'
+                },
+                {
+                    el: docAta,
+                    cat: 'INSTITUCIONAL',
+                    subtipo: 'ATA'
+                },
+                {
+                    el: docCndFederal,
+                    cat: 'CERTIDAO',
+                    subtipo: 'CND_FEDERAL'
+                },
+                {
+                    el: docCndEstadual,
+                    cat: 'CERTIDAO',
+                    subtipo: 'CND_ESTADUAL'
+                },
+                {
+                    el: docCndMunicipal,
+                    cat: 'CERTIDAO',
+                    subtipo: 'CND_MUNICIPAL'
+                },
+                {
+                    el: docFgts,
+                    cat: 'CERTIDAO',
+                    subtipo: 'FGTS'
+                },
+                {
+                    el: docTrabalhista,
+                    cat: 'CERTIDAO',
+                    subtipo: 'TRABALHISTA'
+                },
             ];
-        
+
             for (const cfg of docs) {
                 const erro = await enviarDocumentoSimples(oscId, cfg.el, cfg.cat, cfg.subtipo);
                 if (erro) erros.push(erro);
             }
-        
+
             return erros;
         }
 
         async function enviarBalancos(oscId) {
             const erros = [];
-        
+
             for (const b of balancos) {
                 if (!b.file) continue;
-            
+
                 const fdDoc = new FormData();
                 fdDoc.append('id_osc', oscId);
                 fdDoc.append('categoria', 'CONTABIL');
                 fdDoc.append('subtipo', 'BALANCO_PATRIMONIAL');
                 fdDoc.append('ano_referencia', b.ano);
                 fdDoc.append('arquivo', b.file);
-            
+
                 try {
                     const resp = await fetch('ajax_upload_documento.php', {
                         method: 'POST',
                         body: fdDoc
                     });
-                
+
                     const text = await resp.text();
                     let data;
                     try {
@@ -1485,39 +1515,39 @@
                         erros.push(`(Balanço ${b.ano}) resposta inválida do servidor.`);
                         continue;
                     }
-                
+
                     if (data.status !== 'ok') {
                         erros.push(`(Balanço ${b.ano}) ${data.mensagem || 'erro ao enviar documento.'}`);
                     }
-                
+
                 } catch (e) {
                     console.error('Erro de requisição no upload Balanço:', e);
                     erros.push(`(Balanço ${b.ano}) erro de comunicação com o servidor.`);
                 }
             }
-        
+
             return erros;
         }
 
         async function enviarDres(oscId) {
             const erros = [];
-        
+
             for (const d of dres) {
                 if (!d.file) continue;
-            
+
                 const fdDoc = new FormData();
                 fdDoc.append('id_osc', oscId);
                 fdDoc.append('categoria', 'CONTABIL');
                 fdDoc.append('subtipo', 'DRE');
                 fdDoc.append('ano_referencia', d.ano);
                 fdDoc.append('arquivo', d.file);
-            
+
                 try {
                     const resp = await fetch('ajax_upload_documento.php', {
                         method: 'POST',
                         body: fdDoc
                     });
-                
+
                     const text = await resp.text();
                     let data;
                     try {
@@ -1527,17 +1557,17 @@
                         erros.push(`(DRE ${d.ano}) resposta inválida do servidor.`);
                         continue;
                     }
-                
+
                     if (data.status !== 'ok') {
                         erros.push(`(DRE ${d.ano}) ${data.mensagem || 'erro ao enviar documento.'}`);
                     }
-                
+
                 } catch (e) {
                     console.error('Erro de requisição no upload DRE:', e);
                     erros.push(`(DRE ${d.ano}) erro de comunicação com o servidor.`);
                 }
             }
-        
+
             return erros;
         }
 
@@ -1550,30 +1580,30 @@
 
             const s1 = usuarioSenha.value.trim();
             const s2 = usuarioSenhaConf.value.trim();
-            
+
             if (!s1 || !s2) {
                 alert('Preencha a senha e a confirmação de senha do administrador da OSC.');
                 usuarioSenha.focus();
                 return;
             }
-        
+
             if (s1 !== s2) {
                 alert('As senhas não coincidem. Corrija antes de continuar.');
                 usuarioSenhaConf.focus();
                 return;
             }
 
-            const nomeAdmin  = usuarioNome.value.trim();
+            const nomeAdmin = usuarioNome.value.trim();
             const emailAdmin = usuarioEmail.value.trim();
-            
+
             if (!nomeAdmin || !emailAdmin) {
                 alert('Preencha nome e e-mail do administrador da OSC.');
                 usuarioNome.focus();
                 return;
             }
-        
+
             const resultadoEmail = await verificarEmailAdmin();
-                
+
             if (!resultadoEmail.ok) {
                 alert(resultadoEmail.motivo || 'Erro ao verificar e-mail do administrador.');
                 return;
@@ -1581,51 +1611,51 @@
 
             const fd = new FormData();
 
-            fd.append('cores[bg]',  bgColor.value);
+            fd.append('cores[bg]', bgColor.value);
             fd.append('cores[sec]', secColor.value);
             fd.append('cores[ter]', terColor.value);
             fd.append('cores[qua]', quaColor.value);
             fd.append('cores[fon]', fonColor.value);
 
-            fd.append('nomeOsc',          qs("#nomeOsc").value);
-            fd.append('historia',         qs("#historia").value);
-            fd.append('missao',           qs("#missao").value);
-            fd.append('visao',            qs("#visao").value);
-            fd.append('valores',          qs("#valores").value);
+            fd.append('nomeOsc', qs("#nomeOsc").value);
+            fd.append('historia', qs("#historia").value);
+            fd.append('missao', qs("#missao").value);
+            fd.append('visao', qs("#visao").value);
+            fd.append('valores', qs("#valores").value);
 
-            fd.append('razaoSocial',      qs("#razaoSocial").value);
-            fd.append('nomeFantasia',     qs("#nomeFantasia").value);
-            fd.append('sigla',            qs("#sigla").value);
-            fd.append('situacaoCadastral',qs("#situacaoCadastral").value);
-            fd.append('anoCNPJ',          qs("#anoCNPJ").value);
-            fd.append('anoFundacao',      qs("#anoFundacao").value);
+            fd.append('razaoSocial', qs("#razaoSocial").value);
+            fd.append('nomeFantasia', qs("#nomeFantasia").value);
+            fd.append('sigla', qs("#sigla").value);
+            fd.append('situacaoCadastral', qs("#situacaoCadastral").value);
+            fd.append('anoCNPJ', qs("#anoCNPJ").value);
+            fd.append('anoFundacao', qs("#anoFundacao").value);
             fd.append('responsavelLegal', qs("#responsavelLegal").value);
-            fd.append('email',            qs("#email").value);
-            fd.append('oQueFaz',          qs("#oQueFaz").value);
-            fd.append('cnpj',             qs("#CNPJ").value);
-            fd.append('telefone',         qs("#telefone").value);
-            fd.append('instagram',        qs("#instagram").value);
-            fd.append('status',           qs("#status").value);
+            fd.append('email', qs("#email").value);
+            fd.append('oQueFaz', qs("#oQueFaz").value);
+            fd.append('cnpj', qs("#CNPJ").value);
+            fd.append('telefone', qs("#telefone").value);
+            fd.append('instagram', qs("#instagram").value);
+            fd.append('status', qs("#status").value);
 
-            fd.append('usuario_nome',  usuarioNome.value);
+            fd.append('usuario_nome', usuarioNome.value);
             fd.append('usuario_email', usuarioEmail.value);
             fd.append('usuario_senha', usuarioSenha.value);
 
-            const docEstatutoInput    = qs('#docEstatuto');
-            const docAtaInput         = qs('#docAta');
-            const docCndFederalInput  = qs('#docCndFederal');
+            const docEstatutoInput = qs('#docEstatuto');
+            const docAtaInput = qs('#docAta');
+            const docCndFederalInput = qs('#docCndFederal');
             const docCndEstadualInput = qs('#docCndEstadual');
-            const docCndMunicipalInput= qs('#docCndMunicipal');
-            const docFgtsInput        = qs('#docFgts');
+            const docCndMunicipalInput = qs('#docCndMunicipal');
+            const docFgtsInput = qs('#docFgts');
             const docTrabalhistaInput = qs('#docTrabalhista');
             const getFileName = (input) => (input && input.files && input.files[0]) ? input.files[0].name : null;
 
-            fd.append('situacaoImovel',   qs("#situacaoImovel").value);
-            fd.append('cep',              qs("#cep").value);
-            fd.append('cidade',           qs("#cidade").value);
-            fd.append('bairro',           qs("#bairro").value);
-            fd.append('logradouro',       qs("#logradouro").value);
-            fd.append('numero',           qs("#numero").value);
+            fd.append('situacaoImovel', qs("#situacaoImovel").value);
+            fd.append('cep', qs("#cep").value);
+            fd.append('cidade', qs("#cidade").value);
+            fd.append('bairro', qs("#bairro").value);
+            fd.append('logradouro', qs("#logradouro").value);
+            fd.append('numero', qs("#numero").value);
 
             fd.append('labelBanner', qs("#labelBanner").value);
 
@@ -1647,16 +1677,16 @@
                 }
             });
 
-            if (logoSimples.files[0])  fd.append('logoSimples',  logoSimples.files[0]);
+            if (logoSimples.files[0]) fd.append('logoSimples', logoSimples.files[0]);
             if (logoCompleta.files[0]) fd.append('logoCompleta', logoCompleta.files[0]);
-            if (banner1.files[0])      fd.append('banner1',      banner1.files[0]);
-            if (banner2.files[0])      fd.append('banner2',      banner2.files[0]);
-            if (banner3.files[0])      fd.append('banner3',      banner3.files[0]);
+            if (banner1.files[0]) fd.append('banner1', banner1.files[0]);
+            if (banner2.files[0]) fd.append('banner2', banner2.files[0]);
+            if (banner3.files[0]) fd.append('banner3', banner3.files[0]);
 
             const previewData = {
                 labelBanner: qs("#labelBanner").value,
                 cores: {
-                    bg:  bgColor.value,
+                    bg: bgColor.value,
                     sec: secColor.value,
                     ter: terColor.value,
                     qua: quaColor.value,
@@ -1687,22 +1717,22 @@
                 logradouro: qs("#logradouro").value,
                 numero: qs("#numero").value,
                 usuario: {
-                    nome:  usuarioNome.value,
+                    nome: usuarioNome.value,
                     email: usuarioEmail.value
                 },
                 envolvidos: envolvidosParaEnvio,
                 atividades,
                 documentos: {
                     institucionais: {
-                        estatuto:    getFileName(docEstatutoInput),
-                        ata:         getFileName(docAtaInput),
+                        estatuto: getFileName(docEstatutoInput),
+                        ata: getFileName(docAtaInput),
                     },
                     certidoes: {
-                        cnd_federal:   getFileName(docCndFederalInput),
-                        cnd_estadual:  getFileName(docCndEstadualInput),
+                        cnd_federal: getFileName(docCndFederalInput),
+                        cnd_estadual: getFileName(docCndEstadualInput),
                         cnd_municipal: getFileName(docCndMunicipalInput),
-                        fgts:          getFileName(docFgtsInput),
-                        trabalhista:   getFileName(docTrabalhistaInput),
+                        fgts: getFileName(docFgtsInput),
+                        trabalhista: getFileName(docTrabalhistaInput),
                     },
                     contabeis: {
                         balancos: balancos.map(b => ({
@@ -1720,7 +1750,9 @@
             const jsonPreview = JSON.stringify(previewData, null, 2);
             qs("#jsonOut").textContent = jsonPreview;
 
-            const blob = new Blob([jsonPreview], { type: "application/json" });
+            const blob = new Blob([jsonPreview], {
+                type: "application/json"
+            });
             const url = URL.createObjectURL(blob);
             const dl = qs("#downloadLink");
             dl.style.display = "inline-block";
@@ -1747,14 +1779,14 @@
 
                 if (result.success) {
                     const oscId = result.osc_id;
-                            
+
                     let errosDocs = [];
-                            
+
                     try {
-                        const errosFixos    = await enviarDocumentosFixos(oscId);
+                        const errosFixos = await enviarDocumentosFixos(oscId);
                         const errosBalancos = await enviarBalancos(oscId);
-                        const errosDres     = await enviarDres(oscId);
-                    
+                        const errosDres = await enviarDres(oscId);
+
                         errosDocs = [
                             ...errosFixos,
                             ...errosBalancos,
@@ -1764,7 +1796,7 @@
                         console.error('Falha geral ao enviar documentos da OSC:', e);
                         errosDocs.push('Falha inesperada ao enviar alguns documentos.');
                     }
-                
+
                     if (errosDocs.length === 0) {
                         alert("OSC criada com sucesso! Todos os documentos foram enviados.");
                     } else {
@@ -1773,9 +1805,9 @@
                             errosDocs.map(e => "- " + e).join("\n")
                         );
                     }
-                
+
                     resetForm();
-                
+
                 } else {
                     alert("Erro ao criar OSC: " + (result.error || "desconhecido"));
                 }
@@ -1790,44 +1822,44 @@
             if (!confirm('Limpar todos os campos?')) {
                 return;
             }
-        
+
             const form = document.getElementById('oscForm');
             form.reset();
-        
+
             envolvidos.length = 0;
             atividades.length = 0;
-            balancos.length   = 0;
-            dres.length       = 0;
-        
+            balancos.length = 0;
+            dres.length = 0;
+
             renderEnvolvidos();
             renderAtividades();
-            renderBalancos(); 
-            renderDres();         
-        
+            renderBalancos();
+            renderDres();
+
             updatePreviews();
             qs('#jsonOut').textContent = '{}';
             qs('#downloadLink').style.display = 'none';
-        
-            const usuarioSenha     = qs('#usuarioSenha');
+
+            const usuarioSenha = qs('#usuarioSenha');
             const usuarioSenhaConf = qs('#usuarioSenhaConf');
-            const toggleSenha      = qs('#toggleSenha');
-        
+            const toggleSenha = qs('#toggleSenha');
+
             const senhaMsgEl = document.getElementById('senhaMsg');
             if (senhaMsgEl) {
                 senhaMsgEl.textContent = '';
                 senhaMsgEl.className = 'small';
             }
-        
+
             const emailMsgEl = document.getElementById('emailMsg');
             if (emailMsgEl) {
                 emailMsgEl.textContent = '';
                 emailMsgEl.className = 'small';
             }
-        
+
             if (toggleSenha) {
                 toggleSenha.checked = false;
             }
-        
+
             setTimeout(() => {
                 if (usuarioSenha) {
                     usuarioSenha.type = 'password';
@@ -1839,9 +1871,6 @@
         }
 
         updatePreviews();
-
-
-
     </script>
 </body>
 
