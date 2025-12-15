@@ -11,6 +11,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Admin — Cadastro de OSC</title>
+
+   
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.css" rel="stylesheet">
+    
+    
+
     <style>
         :root {
             --bg: #f7f7f8;
@@ -284,6 +292,26 @@
     </style>
 </head>
 
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        $('#historia').summernote({
+            height: 300,
+            placeholder: 'Escreva aqui...',
+            toolbar: [
+                ['style', ['style']],
+                ['font', ['bold', 'italic', 'underline']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['insert', ['link']], // 👈 removido 'picture'
+                ['view', ['codeview']]
+            ]
+        });
+    });
+
+    </script>
+
 <body>
     <header>
         <h1>Painel de Controle — Cadastro de OSC</h1>
@@ -426,28 +454,28 @@
                                 <input id="sigla" type="text" required />
                             </div>
                             <div>
-                                <label for="anoFundacao">Ano de fundação</label>
-                                <input id="anoFundacao" inputmode="numeric" type="text" />
+                                <label for="anoFundacao">Ano de fundação (*)</label>
+                                <input id="anoFundacao" inputmode="numeric" type="text" required />
                             </div>
                             <div>
-                                <label for="instagram">Instagram</label>
-                                <input id="instagram" type="text" />
+                                <label for="instagram">Instagram (*)</label>
+                                <input id="instagram" type="text" required />
                             </div>
                             <div>
-                                <label for="historia">História</label>
-                                <textarea id="historia" placeholder="Conte a história da OSC"></textarea>
+                                <label for="historia">História (*)</label>
+                                <textarea id="historia" class="historia" placeholder="Conte a história da OSC" required ></textarea>
                             </div>
                             <div>
-                                <label for="missao">Missão</label>
-                                <textarea id="missao" placeholder="Descreva a missão da OSC"></textarea>
+                                <label for="missao">Missão (*)</label>
+                                <textarea id="missao" placeholder="Descreva a missão da OSC" required ></textarea>
                             </div>
                             <div>
-                                <label for="visao">Visão</label>
-                                <textarea id="visao" placeholder="Descreva a visão da OSC"></textarea>
+                                <label for="visao">Visão (*)</label>
+                                <textarea id="visao" placeholder="Descreva a visão da OSC" required ></textarea>
                             </div>
                             <div>
-                                <label for="valores">Valores</label>
-                                <textarea id="valores" placeholder="Descreva os valores da OSC"></textarea>
+                                <label for="valores">Valores (*)</label>
+                                <textarea id="valores" placeholder="Descreva os valores da OSC" required ></textarea>
                             </div>
                         </div>
                     </div>
@@ -475,41 +503,41 @@
                         <input id="CNPJ" inputmode="numeric" type="text" required />
                     </div>
                     <div>
-                        <label for="razaoSocial">Razão Social</label>
-                        <input id="razaoSocial" type="text" />
+                        <label for="razaoSocial">Razão Social (*)</label>
+                        <input id="razaoSocial" type="text" required />
                     </div>
                     <div>
-                        <label for="nomeFantasia">Nome fantasia</label>
-                        <input id="nomeFantasia" type="text" />
+                        <label for="nomeFantasia">Nome fantasia (*)</label>
+                        <input id="nomeFantasia" type="text" required />
                     </div>
                     <div>
-                        <label for="anoCNPJ">Ano de cadastro do CNPJ</label>
-                        <input id="anoCNPJ" inputmode="numeric" type="text" />
+                        <label for="anoCNPJ">Ano de cadastro do CNPJ (*)</label>
+                        <input id="anoCNPJ" inputmode="numeric" type="text" required />
                     </div>
                     <div>
-                        <label for="responsavelLegal">Responsável legal</label>
-                        <input id="responsavelLegal" type="text" />
+                        <label for="responsavelLegal">Responsável legal (*)</label>
+                        <input id="responsavelLegal" type="text" required />
                     </div>
                     <div>
-                        <label for="situacaoCadastral">Situação cadastral</label>
-                        <input id="situacaoCadastral" type="text" />
+                        <label for="situacaoCadastral">Situação cadastral (*)</label>
+                        <input id="situacaoCadastral" type="text" required />
                     </div>
                     <div>
-                        <label for="telefone">Telefone</label>
-                        <input id="telefone" inputmode="numeric" type="text" />
+                        <label for="telefone">Telefone (*)</label>
+                        <input id="telefone" inputmode="numeric" type="text" required />
                     </div>
                     <div>
-                        <label for="email">E-mail</label>
-                        <input id="email" type="text" />
+                        <label for="email">E-mail (*)</label>
+                        <input id="email" type="text" required />
                     </div>
                     <div>
-                        <label for="status">Status</label>
-                        <input id="status" type="text" />
+                        <label for="status">Status (*)</label>
+                        <input id="status" type="text" required />
                     </div>
                 </div>
                 <div style="margin-top: 10px;">
-                    <label for="oQueFaz">O que a OSC faz?</label>
-                    <textarea id="oQueFaz" placeholder="Descreva a finalidade da OSC"></textarea>
+                    <label for="oQueFaz">O que a OSC faz? (*)</label>
+                    <textarea id="oQueFaz" placeholder="Descreva a finalidade da OSC" required ></textarea>
                 </div>
             </div>
 
@@ -1811,6 +1839,9 @@
         }
 
         updatePreviews();
+
+
+
     </script>
 </body>
 
