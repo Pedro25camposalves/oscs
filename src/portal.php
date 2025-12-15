@@ -1,7 +1,7 @@
 <?php
     include 'conexao.php';
 
-    $sql = "SELECT osc.sigla, osc.missao, tw.logo_simples FROM osc LEFT JOIN template_web AS tw ON osc.id = tw.osc_id;";
+    $sql = "SELECT osc.id, osc.sigla, osc.missao, tw.logo_simples FROM osc LEFT JOIN template_web AS tw ON osc.id = tw.osc_id;";
 
     $result = $conn->query($sql);
 ?>
@@ -223,7 +223,7 @@
                     echo "<div class='card-body'>";
                         echo "<h5 class='card-title'>" . $row['sigla'] . "</h5>";
                         echo "<p class='card-text'>" . substr($row['missao'], 0, 100) . "</p>";
-                        echo "<a href='" . $row['sigla'] . "/index.php' class='btn btn-acessar'>Visitar Página<i class='bi bi-arrow-right'></i></a>";
+                        echo "<a href='teste.php?osc=" . $row['id'] . "' class='btn btn-acessar'>Visitar Página<i class='bi bi-arrow-right'></i></a>";
                     echo "</div>";
                 echo "</div>";
             echo "</div>";
