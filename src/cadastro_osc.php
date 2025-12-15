@@ -210,7 +210,7 @@
             background: rgba(0, 0, 0, 0.45);
             display: none;
             align-items: center;
-            justify-content: center
+            justify-content: center;
         }
 
         .modal {
@@ -218,7 +218,7 @@
             width: 520px;
             max-width: 94%;
             border-radius: 10px;
-            padding: 16px
+            padding: 16px;
         }
 
         @media (max-width:880px) {
@@ -530,10 +530,6 @@
                         <label for="email">E-mail (*)</label>
                         <input id="email" type="text" required />
                     </div>
-                    <div>
-                        <label for="status">Status (*)</label>
-                        <input id="status" type="text" required />
-                    </div>
                 </div>
                 <div style="margin-top: 10px;">
                     <label for="oQueFaz">O que a OSC faz? (*)</label>
@@ -704,16 +700,6 @@
                 </footer>
             </div>
         </form>        
-
-        <!-- EXIBIÇÃO DO JSON PARA TESTE -->
-        <div style="margin-top:16px" class="card">
-            <h2>JSON DO CADASTRO</h2>
-            <div class="divider"></div>
-            <pre id="jsonOut" class="json-out">{}</pre>
-            <div style="margin-top:8px; display:flex; gap:8px">
-                <a id="downloadLink" style="display:none" class="btn btn-ghost">Baixar JSON</a>
-            </div>
-        </div>
 
     </main>
 
@@ -1537,7 +1523,6 @@
                     erros.push(`(DRE ${d.ano}) erro de comunicação com o servidor.`);
                 }
             }
-        
             return erros;
         }
 
@@ -1605,7 +1590,6 @@
             fd.append('cnpj',             qs("#CNPJ").value);
             fd.append('telefone',         qs("#telefone").value);
             fd.append('instagram',        qs("#instagram").value);
-            fd.append('status',           qs("#status").value);
 
             fd.append('usuario_nome',  usuarioNome.value);
             fd.append('usuario_email', usuarioEmail.value);
@@ -1679,7 +1663,6 @@
                 cnpj: qs("#CNPJ").value,
                 telefone: qs("#telefone").value,
                 instagram: qs("#instagram").value,
-                status: qs("#status").value,
                 situacaoImovel: qs("#situacaoImovel").value,
                 cep: qs("#cep").value,
                 cidade: qs("#cidade").value,
