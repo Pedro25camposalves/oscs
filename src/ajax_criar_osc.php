@@ -78,16 +78,15 @@ $oQueFaz           = mysqli_real_escape_string($conn, $_POST['oQueFaz']         
 $cnpj              = mysqli_real_escape_string($conn, $_POST['cnpj']                ?? '');
 $telefone          = mysqli_real_escape_string($conn, $_POST['telefone']            ?? '');
 $instagram         = mysqli_real_escape_string($conn, $_POST['instagram']           ?? '');
-$status            = mysqli_real_escape_string($conn, $_POST['status']              ?? '');
 
 // --- Insere a nova OSC ---
 $sql_osc = "
     INSERT INTO osc (
         nome, razao_social, cnpj, telefone, email, nome_fantasia, sigla, situacao_cadastral,
-        ano_cnpj, ano_fundacao, responsavel, missao, visao, valores, instagram, status, historia, oque_faz
+        ano_cnpj, ano_fundacao, responsavel, missao, visao, valores, instagram, historia, oque_faz
     ) VALUES (
         '$nomeOsc', '$razaoSocial', '$cnpj', '$telefone', '$email', '$nomeFantasia', '$sigla', '$situacaoCadastral',
-        '$anoCNPJ', '$anoFundacao', '$responsavel', '$missao', '$visao', '$valores', '$instagram', '$status', '$historia', '$oQueFaz'
+        '$anoCNPJ', '$anoFundacao', '$responsavel', '$missao', '$visao', '$valores', '$instagram', '$historia', '$oQueFaz'
     )";
 
 if (!mysqli_query($conn, $sql_osc)) {
