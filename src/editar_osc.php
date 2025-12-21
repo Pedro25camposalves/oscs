@@ -425,10 +425,6 @@ if (!$oscIdVinculada) {
                 <label for="email">E-mail</label>
                 <input id="email" type="text" />
             </div>
-            <div>
-                <label for="status">Status</label>
-                <input id="status" type="text" />
-            </div>
         </div>
         <div style="margin-top: 10px;">
             <label for="oQueFaz">O que a OSC faz?</label>
@@ -1787,7 +1783,6 @@ if (!$oscIdVinculada) {
         if (osc.situacaoCadastral) setVal('#situacaoCadastral', osc.situacaoCadastral);
         if (osc.telefone) setVal('#telefone', osc.telefone);
         if (osc.email) setVal('#email', osc.email);
-        if (osc.status) setVal('#status', osc.status);
         if (osc.oQueFaz) setVal('#oQueFaz', osc.oQueFaz);
     
         // atividades
@@ -1911,7 +1906,6 @@ if (!$oscIdVinculada) {
         fd.append('oQueFaz',           qs("#oQueFaz").value);
         fd.append('cnpj',              qs("#CNPJ").value);
         fd.append('telefone',          qs("#telefone").value);
-        fd.append('status',            qs("#status").value);
 
         // imóvel
         fd.append('situacaoImovel', qs("#situacaoImovel").value);
@@ -1979,7 +1973,6 @@ if (!$oscIdVinculada) {
             oQueFaz: qs("#oQueFaz").value,
             cnpj: qs("#CNPJ").value,
             telefone: qs("#telefone").value,
-            status: qs("#status").value,
             situacaoImovel: qs("#situacaoImovel").value,
             cep: qs("#cep").value,
             cidade: qs("#cidade").value,

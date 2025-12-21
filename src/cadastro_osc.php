@@ -504,10 +504,6 @@ require 'autenticacao.php';
                         <label for="email">E-mail (*)</label>
                         <input id="email" type="text" required />
                     </div>
-                    <div>
-                        <label for="status">Status (*)</label>
-                        <input id="status" type="text" required />
-                    </div>
                 </div>
                 <div style="margin-top: 10px;">
                     <label for="oQueFaz">O que a OSC faz? (*)</label>
@@ -688,7 +684,7 @@ require 'autenticacao.php';
                 <a id="downloadLink" style="display:none" class="btn btn-ghost">Baixar JSON</a>
             </div>
         </div>
-
+        
     </main>
 
     <!-- MODAL DOS ENVOLVIDOS (apenas "novo envolvido") -->
@@ -1635,7 +1631,6 @@ require 'autenticacao.php';
             fd.append('cnpj', qs("#CNPJ").value);
             fd.append('telefone', qs("#telefone").value);
             fd.append('instagram', qs("#instagram").value);
-            fd.append('status', qs("#status").value);
 
             fd.append('usuario_nome', usuarioNome.value);
             fd.append('usuario_email', usuarioEmail.value);
@@ -1709,7 +1704,6 @@ require 'autenticacao.php';
                 cnpj: qs("#CNPJ").value,
                 telefone: qs("#telefone").value,
                 instagram: qs("#instagram").value,
-                status: qs("#status").value,
                 situacaoImovel: qs("#situacaoImovel").value,
                 cep: qs("#cep").value,
                 cidade: qs("#cidade").value,
