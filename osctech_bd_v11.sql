@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS `osc` (
   `ano_cnpj`           VARCHAR(45)  NULL     DEFAULT NULL,
   `ano_fundacao`       VARCHAR(45)  NULL     DEFAULT NULL,
   `situacao_cadastral` VARCHAR(30)  NULL     DEFAULT NULL,
+  `status`             VARCHAR(45)  NULL     DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   AUTO_INCREMENT = 1

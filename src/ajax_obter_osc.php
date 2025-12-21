@@ -164,6 +164,7 @@ try {
         'nomeFantasia'       => $osc['nome_fantasia'] ?? '',
         'sigla'              => $osc['sigla'] ?? '',
         'situacaoCadastral'  => $osc['situacao_cadastral'] ?? '',
+        'status'             => $osc['status'] ?? '',
 
         'cnpj'       => $osc['cnpj'] ?? '',
         'email'      => $osc['email'] ?? '',
