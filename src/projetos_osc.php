@@ -75,266 +75,330 @@ try {
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Painel — Projetos</title>
 
-    <style>
-        :root {
-            --bg: #f7f7f8;
-            --sec: #0a6;
-            --ter: #ff8a65;
-            --qua: #6c5ce7;
-            --fon: #000000;
-            --card-bg: #ffffff;
-            --text: #222;
-            --muted: #666;
-        }
+<style>
+    :root {
+        --bg: #f7f7f8;
+        --sec: #0a6;
+        --ter: #ff8a65;
+        --qua: #6c5ce7;
+        --fon: #000000;
+        --card-bg: #ffffff;
+        --text: #222;
+        --muted: #666;
+    }
 
-        * { box-sizing: border-box }
-        body {
-            font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-            margin: 0;
-            background: var(--bg);
-            color: var(--text);
-        }
+    * { box-sizing: border-box }
+    body {
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+    }
 
-        header {
-            padding: 20px 24px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.6));
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-        }
+    header {
+        padding: 20px 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.6));
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
 
-        header h1 { font-size: 18px; margin: 0; line-height: 1.2; }
+    header h1 { font-size: 18px; margin: 0; line-height: 1.2; }
 
-        .muted { color: var(--muted); font-size: 13px; }
+    .muted { color: var(--muted); font-size: 13px; }
 
-        .header-right {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+    .header-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
 
-        .logout-link {
-            padding: 6px 12px;
-            border-radius: 999px;
-            border: 1px solid #ddd;
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 500;
-            background: #fff;
-            color: #444;
-            cursor: pointer;
-        }
-        .logout-link:hover { background: #f0f0f0; }
+    .logout-link {
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid #ddd;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 500;
+        background: #fff;
+        color: #444;
+        cursor: pointer;
+    }
+    .logout-link:hover { background: #f0f0f0; }
 
-        main { padding: 20px; max-width: 1100px; margin: 20px auto; }
+    main { padding: 20px; max-width: 1100px; margin: 20px auto; }
 
-        .card {
-            background: var(--card-bg);
-            border-radius: 10px;
-            padding: 16px;
-            box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
-        }
+    /* container branco (painel) */
+    .card {
+        background: var(--card-bg);
+        border-radius: 10px;
+        padding: 16px;
+        box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
+    }
 
-        /* ===== TABS (OSC / PROJETOS) ===== */
-        .tabs-top {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin: 12px 0 16px 0;
-        }
+    /* Tabs abaixo do header */
+    .tabs-top{
+        display:flex;
+        gap:10px;
+        margin: 0 0 16px 0;
+    }
+    .tab-btn{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:10px 14px;
+        border-radius:999px;
+        border:1px solid #ddd;
+        background:#fff;
+        color:#333;
+        text-decoration:none;
+        font-weight:600;
+        font-size:13px;
+        box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
+    }
+    .tab-btn:hover{ background:#f6f6f7; }
+    .tab-btn .dot{
+        width:10px;
+        height:10px;
+        border-radius:999px;
+        background:#cfcfd6;
+    }
+    .tab-btn.is-active{
+        border-color: rgba(108, 92, 231, .35);
+        background: rgba(108, 92, 231, .08);
+    }
+    .tab-btn.is-active .dot{
+        background: var(--qua);
+    }
 
-        .tab-btn {
-            appearance: none;
-            border: 1px solid #ddd;
-            background: #fff;
-            color: #444;
-            padding: 10px 14px;
-            border-radius: 999px;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: transform .08s ease, background .15s ease, border-color .15s ease;
-            text-decoration: none;
-        }
+    /* ===== Cabeçalho da área de projetos ===== */
+    .projects-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+    .projects-head h2 {
+        margin: 0;
+        font-size: 16px;
+    }
 
-        .tab-btn:hover { background: #f6f6f6; }
-        .tab-btn:active { transform: scale(0.98); }
+    /* ===== GRID IGUAL AO DE OSCs (3 colunas, depois 2, depois 1) ===== */
+    .projects-grid{
+        display:grid;
+        gap:14px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 12px;
+    }
 
-        .tab-btn.is-active {
-            background: var(--qua);
-            color: #fff;
-            border-color: transparent;
-        }
+    /* ===== CARD PROJETO (estilo OSCs) ===== */
+    .project-card{
+        position:relative;
+        overflow:hidden;
+        border-radius:14px;
+        background: var(--card-bg);
+        box-shadow: 0 10px 26px rgba(16, 24, 40, 0.08);
+        border:1px solid rgba(0,0,0,.05);
+        min-height:170px;
 
-        .tab-btn .dot {
-            width: 9px;
-            height: 9px;
-            border-radius: 999px;
-            background: currentColor;
-            opacity: .6;
-        }
+        display:block;
+        text-decoration:none;
+        color:inherit;
 
-        .tab-btn.is-active .dot { opacity: 1; }
+        transition: transform .15s ease, box-shadow .15s ease;
+        transform: translateZ(0);
+    }
 
-        /* ===== GRID DE PROJETOS ===== */
-        .projects-head {
-            display: flex;
-            align-items: baseline;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 10px;
-        }
+    .project-card:hover{
+        transform: translateY(-2px);
+        box-shadow: 0 16px 34px rgba(16, 24, 40, 0.12);
+    }
 
-        .projects-head h2 {
-            margin: 0;
-            font-size: 16px;
-        }
+    /* fundo (banner) vem da variável --bgimg que você já seta no style="" */
+    .project-card::before{
+        content:"";
+        position:absolute;
+        inset:0;
+        background-size:cover;
+        background-position:center;
+        transform: scale(1.05);
+        filter: saturate(1.05);
+        opacity:.95;
 
-        .projects-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 14px;
-            margin-top: 12px;
-        }
+        background-image: var(--bgimg, linear-gradient(135deg, rgba(108,92,231,.95), rgba(0,170,102,.88)));
+    }
 
-        /* ===== CARD PROJETO ===== */
-        .project-card {
-            position: relative;
-            border-radius: 14px;
-            overflow: hidden;
-            min-height: 170px;
-            box-shadow: 0 10px 26px rgba(16, 24, 40, 0.08);
-            transform: translateZ(0);
-            transition: transform .15s ease, box-shadow .15s ease;
-            text-decoration: none;
-            color: inherit;
-            background: #111; /* fallback */
-        }
+    /* overlay igual ao de OSCs pra legibilidade */
+    .project-card::after{
+        content:"";
+        position:absolute;
+        inset:0;
+        background:
+            linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.45) 45%, rgba(0,0,0,.65) 100%);
+    }
 
-        .project-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 16px 34px rgba(16, 24, 40, 0.12);
-        }
+    /* como agora usamos ::before/::after, escondemos as camadas antigas */
+    .project-bg,
+    .project-overlay{
+        display:none;
+    }
 
-        .project-bg {
-            position: absolute;
-            inset: 0;
-            background-image: var(--bgimg);
-            background-size: cover;
-            background-position: center;
-            filter: saturate(1.02);
-            opacity: .92;
-        }
+    .project-content{
+        position:relative;
+        z-index:2;
+        padding:14px;
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+        height:100%;
+        color:#fff;
+        justify-content: flex-start; /* igual o card-content */
+    }
 
-        .project-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, rgba(0,0,0,.72), rgba(0,0,0,.35), rgba(0,0,0,.20));
-        }
+    .project-title{
+        margin:0;
+        font-size:16px;
+        font-weight:800;
+        letter-spacing:.2px;
+        text-shadow: 0 2px 10px rgba(0,0,0,.35);
+        color:#fff;
+    }
 
-        .project-content {
-            position: relative;
-            z-index: 1;
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            height: 100%;
-            justify-content: flex-end;
-        }
+    .project-chip{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        padding:6px 10px;
+        border-radius:999px;
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.18);
+        backdrop-filter: blur(6px);
+        font-size:12px;
+        width:fit-content;
+        color:#fff;
+        font-weight:700;
+    }
 
-        .project-title {
-            margin: 0;
-            color: #fff;
-            font-size: 16px;
-            font-weight: 800;
-            letter-spacing: .2px;
-            text-shadow: 0 2px 12px rgba(0,0,0,.35);
-        }
+    .project-desc{
+        margin:0;
+        font-size:12px;
+        opacity:.95;
+        line-height:1.25;
+        word-break: break-word;
+        text-shadow: 0 2px 10px rgba(0,0,0,.35);
 
-        .project-desc {
-            margin: 0;
-            color: rgba(255,255,255,.88);
-            font-size: 13px;
-            line-height: 1.35;
-            text-shadow: 0 2px 12px rgba(0,0,0,.35);
+        /* segura texto grande (igual “kv” das OSCs) */
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
 
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
+        margin-top:auto; /* empurra a descrição pro final, igual o efeito do kv */
+        color: rgba(255,255,255,.92);
+    }
 
-        .project-chip {
-            align-self: flex-start;
-            margin-top: 2px;
-            padding: 6px 10px;
-            border-radius: 999px;
-            background: rgba(255,255,255,.14);
-            border: 1px solid rgba(255,255,255,.18);
-            color: rgba(255,255,255,.95);
-            font-size: 12px;
-            font-weight: 700;
-            backdrop-filter: blur(6px);
-        }
+    /* ===== CARD "NOVO PROJETO" (agora igual “Cadastrar OSC”) ===== */
+    .plus-card{
+        position:relative;
+        overflow:hidden;
+        border-radius:14px;
+        min-height:170px;
+        background: var(--card-bg);
+        box-shadow: 0 10px 26px rgba(16, 24, 40, 0.08);
+        border:1px solid rgba(0,0,0,.05);
 
-        /* ===== CARD + (NOVO PROJETO) ===== */
-        .plus-card {
-            display: grid;
-            place-items: center;
-            min-height: 170px;
-            border-radius: 14px;
-            border: 2px dashed rgba(108, 92, 231, .55);
-            background: rgba(108, 92, 231, .06);
-            text-decoration: none;
-            color: var(--qua);
-            transition: transform .15s ease, background .15s ease, border-color .15s ease;
-        }
+        display:block;
+        text-decoration:none;
+        transition: transform .15s ease, box-shadow .15s ease;
+        transform: translateZ(0);
+        cursor:pointer;
+        color:inherit;
+    }
 
-        .plus-card:hover {
-            transform: translateY(-2px);
-            background: rgba(108, 92, 231, .10);
-            border-color: rgba(108, 92, 231, .75);
-        }
+    .plus-card:hover{
+        transform: translateY(-2px);
+        box-shadow: 0 16px 34px rgba(16, 24, 40, 0.12);
+    }
 
-        .plus-inner {
-            text-align: center;
-            padding: 10px;
-        }
+    .plus-card::before{
+        content:"";
+        position:absolute;
+        inset:0;
+        background-image: linear-gradient(135deg, rgba(108,92,231,.95), rgba(0,170,102,.88));
+        background-size:cover;
+        background-position:center;
+        transform: scale(1.05);
+        filter: saturate(1.05);
+        opacity:.95;
+    }
 
-        .plus-icon {
-            font-size: 42px;
-            font-weight: 900;
-            line-height: 1;
-            margin-bottom: 6px;
-        }
+    .plus-card::after{
+        content:"";
+        position:absolute;
+        inset:0;
+        background: linear-gradient(180deg, rgba(0,0,0,.40) 0%, rgba(0,0,0,.28) 45%, rgba(0,0,0,.45) 100%);
+    }
 
-        .plus-text {
-            font-size: 13px;
-            font-weight: 800;
-            letter-spacing: .2px;
-        }
+    .plus-inner{
+        position:relative;
+        z-index:2;
+        height:100%;
+        padding:14px;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        color:#fff;
+        gap:10px;
+    }
 
-        .empty-state {
-            padding: 14px;
-            border-radius: 12px;
-            background: #fafafa;
-            border: 1px solid #eee;
-            color: #444;
-            font-size: 13px;
-            line-height: 1.35;
-            margin-top: 12px;
-        }
+    .plus-icon{
+        font-size:32px;
+        font-weight:900;
+        line-height:1;
+        margin:0;
+        width:38px;
+        height:38px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:999px;
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.18);
+        backdrop-filter: blur(6px);
+    }
 
-        @media (max-width:880px) {
-            header { padding: 14px; }
-        }
-    </style>
+    .plus-text{
+        font-size:18px;
+        font-weight:800;
+        letter-spacing:.2px;
+        text-shadow: 0 2px 10px rgba(0,0,0,.35);
+    }
+
+    .empty-state {
+        padding: 14px;
+        border-radius: 12px;
+        background: #fafafa;
+        border: 1px solid #eee;
+        color: #444;
+        font-size: 13px;
+        line-height: 1.35;
+        margin-top: 12px;
+    }
+
+    @media (max-width: 980px){
+        .projects-grid{ grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px){
+        .projects-grid{ grid-template-columns: 1fr; }
+        header { padding: 14px; }
+    }
+</style>
+
 </head>
 
 <body>
@@ -357,8 +421,7 @@ try {
 </header>
 
 <main>
-
-    <!-- TABS DE NAVEGAÇÃO (OSC / PROJETOS) -->
+<!-- TABS DE NAVEGAÇÃO (OSC / PROJETOS) -->
     <div class="tabs-top" id="tabsTop">
         <a class="tab-btn" href="editar_osc.php">
             <span class="dot"></span>
@@ -374,14 +437,7 @@ try {
     <div class="card">
         <div class="projects-head">
             <h2>Projetos da sua OSC</h2>
-            <div class="muted">Clique em um projeto para abrir • ou use o “+” para criar um novo</div>
         </div>
-
-        <?php if (empty($projetos)): ?>
-            <div class="empty-state">
-                Ainda não tem projetos cadastrados por aqui!
-            </div>
-        <?php endif; ?>
 
         <div class="projects-grid">
 

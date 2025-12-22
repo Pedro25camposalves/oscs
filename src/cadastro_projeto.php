@@ -108,49 +108,40 @@ try {
             box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
         }
 
-        /* ===== TABS (OSC / PROJETOS) ===== */
-        .tabs-top {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin: 12px 0 16px 0;
-        }
-
-        .tab-btn {
-            appearance: none;
-            border: 1px solid #ddd;
-            background: #fff;
-            color: #444;
-            padding: 10px 14px;
-            border-radius: 999px;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: transform .08s ease, background .15s ease, border-color .15s ease;
-            text-decoration: none;
-        }
-
-        .tab-btn:hover { background: #f6f6f6; }
-        .tab-btn:active { transform: scale(0.98); }
-
-        .tab-btn.is-active {
-            background: var(--qua);
-            color: #fff;
-            border-color: transparent;
-        }
-
-        .tab-btn .dot {
-            width: 9px;
-            height: 9px;
-            border-radius: 999px;
-            background: currentColor;
-            opacity: .6;
-        }
-
-        .tab-btn.is-active .dot { opacity: 1; }
+    /* Tabs abaixo do header */
+    .tabs-top{
+        display:flex;
+        gap:10px;
+        margin: 0 0 16px 0;
+    }
+    .tab-btn{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:10px 14px;
+        border-radius:999px;
+        border:1px solid #ddd;
+        background:#fff;
+        color:#333;
+        text-decoration:none;
+        font-weight:600;
+        font-size:13px;
+        box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
+    }
+    .tab-btn:hover{ background:#f6f6f7; }
+    .tab-btn .dot{
+        width:10px;
+        height:10px;
+        border-radius:999px;
+        background:#cfcfd6;
+    }
+    .tab-btn.is-active{
+        border-color: rgba(108, 92, 231, .35);
+        background: rgba(108, 92, 231, .08);
+    }
+    .tab-btn.is-active .dot{
+        background: var(--qua);
+    }
 
         @media (max-width:880px) {
             header { padding: 14px; }
