@@ -305,6 +305,44 @@ require 'autenticacao.php';
     <main>
 
         <form id="oscForm" onsubmit="event.preventDefault();saveData()">
+            
+            <!-- SEÇÃO 6: USUÁRIO RESPONSÁVEL PELA OSC -->
+            <div style="margin-top:16px" class="card">
+                <h2>Usuário responsável pela OSC</h2>
+                <div>
+                    <div>
+                        <label for="usuarioNome">Nome (*)</label>
+                        <input id="usuarioNome" type="text" required />
+                    </div>
+                    <div style="margin-top: 5px">
+                        <label for="usuarioEmail">E-mail de acesso (*)</label>
+                        <input id="usuarioEmail" type="email" required />
+                    </div>
+                </div>
+                <div id="emailMsg" class="small"></div>
+                <div class="row" style="margin-top:10px">
+                    <div style="flex:1">
+                        <label for="usuarioSenha">Senha do usuário (*)</label>
+                        <input id="usuarioSenha" type="password" required />
+                    </div>
+                    <div style="flex:1">
+                        <label for="usuarioSenhaConf">Confirmar senha (*)</label>
+                        <input id="usuarioSenhaConf" type="password" required />
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top:8px; text-align:center">
+                    <label class="label-inline">
+                        <input type="checkbox" id="toggleSenha" />
+                        <span class="small">Exibir senha</span>
+                    </label>
+                    <div id="senhaMsg" class="small"></div>
+                </div>
+                <div class="small muted" style="margin-top:6px">
+                    Este usuário será criado como Administrador, com permissão para gerenciar apenas esta OSC.
+                </div>
+            </div>
+
             <!-- SEÇÃO 1: TEMPLATE DA OSC -->
             <div style="margin-top:16px" class="card">
                 <div class="grid cols-2">
@@ -557,43 +595,6 @@ require 'autenticacao.php';
                 </div>
             </div>
 
-            <!-- SEÇÃO 6: USUÁRIO RESPONSÁVEL PELA OSC -->
-            <div style="margin-top:16px" class="card">
-                <h2>Usuário responsável pela OSC</h2>
-                <div>
-                    <div>
-                        <label for="usuarioNome">Nome (*)</label>
-                        <input id="usuarioNome" type="text" required />
-                    </div>
-                    <div style="margin-top: 5px">
-                        <label for="usuarioEmail">E-mail de acesso (*)</label>
-                        <input id="usuarioEmail" type="email" required />
-                    </div>
-                </div>
-                <div id="emailMsg" class="small"></div>
-                <div class="row" style="margin-top:10px">
-                    <div style="flex:1">
-                        <label for="usuarioSenha">Senha do usuário (*)</label>
-                        <input id="usuarioSenha" type="password" required />
-                    </div>
-                    <div style="flex:1">
-                        <label for="usuarioSenhaConf">Confirmar senha (*)</label>
-                        <input id="usuarioSenhaConf" type="password" required />
-                    </div>
-                </div>
-
-                <div class="row" style="margin-top:8px; text-align:center">
-                    <label class="label-inline">
-                        <input type="checkbox" id="toggleSenha" />
-                        <span class="small">Exibir senha</span>
-                    </label>
-                    <div id="senhaMsg" class="small"></div>
-                </div>
-                <div class="small muted" style="margin-top:6px">
-                    Este usuário será criado como Administrador, com permissão para gerenciar apenas esta OSC.
-                </div>
-            </div>
-
             <!-- SEÇÃO 7: DOCUMENTOS DA OSC -->
             <div style="margin-top:16px" class="card">
                 <h2>Documentos da OSC</h2>
@@ -636,6 +637,10 @@ require 'autenticacao.php';
                         <label for="docTrabalhista">Trabalhista</label>
                         <input id="docTrabalhista" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
                     </div>
+                    <div>
+                        <label for="docCartCnpj">Cartão CNPJ</label>
+                        <input id="docCartCnpj" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+                    </div>
                 </div>
 
                 <!-- 3. Contábeis -->
@@ -675,16 +680,6 @@ require 'autenticacao.php';
             </div>
         </form>
 
-        <!-- EXIBIÇÃO DO JSON PARA TESTE -->
-        <div style="margin-top:16px" class="card">
-            <h2>JSON DO CADASTRO</h2>
-            <div class="divider"></div>
-            <pre id="jsonOut" class="json-out">{}</pre>
-            <div style="margin-top:8px; display:flex; gap:8px">
-                <a id="downloadLink" style="display:none" class="btn btn-ghost">Baixar JSON</a>
-            </div>
-        </div>
-        
     </main>
 
     <!-- MODAL DOS ENVOLVIDOS (apenas "novo envolvido") -->
@@ -857,6 +852,7 @@ require 'autenticacao.php';
         const docCndMunicipal = qs('#docCndMunicipal');
         const docFgts = qs('#docFgts');
         const docTrabalhista = qs('#docTrabalhista');
+        const docCartCnpj = qs('#docCartCnpj');
         const balancos = []; // { ano, file }
         const dres = []; // { ano, file }
 
@@ -1473,6 +1469,11 @@ require 'autenticacao.php';
                     cat: 'CERTIDAO',
                     subtipo: 'TRABALHISTA'
                 },
+                {
+                    el: docCartCnpj,
+                    cat: 'CERTIDAO',
+                    subtipo: 'CARTAO_CNPJ'
+                },
             ];
 
             for (const cfg of docs) {
@@ -1643,6 +1644,7 @@ require 'autenticacao.php';
             const docCndMunicipalInput = qs('#docCndMunicipal');
             const docFgtsInput = qs('#docFgts');
             const docTrabalhistaInput = qs('#docTrabalhista');
+            const docCartCnpjInput = qs('#docCartCnpj');
             const getFileName = (input) => (input && input.files && input.files[0]) ? input.files[0].name : null;
 
             fd.append('situacaoImovel', qs("#situacaoImovel").value);
@@ -1677,81 +1679,6 @@ require 'autenticacao.php';
             if (banner1.files[0]) fd.append('banner1', banner1.files[0]);
             if (banner2.files[0]) fd.append('banner2', banner2.files[0]);
             if (banner3.files[0]) fd.append('banner3', banner3.files[0]);
-
-            const previewData = {
-                labelBanner: qs("#labelBanner").value,
-                cores: {
-                    bg: bgColor.value,
-                    sec: secColor.value,
-                    ter: terColor.value,
-                    qua: quaColor.value,
-                    fon: fonColor.value,
-                },
-                nomeOsc: qs("#nomeOsc").value,
-                historia: qs("#historia").value,
-                missao: qs("#missao").value,
-                visao: qs("#visao").value,
-                valores: qs("#valores").value,
-                razaoSocial: qs("#razaoSocial").value,
-                nomeFantasia: qs("#nomeFantasia").value,
-                sigla: qs("#sigla").value,
-                situacaoCadastral: qs("#situacaoCadastral").value,
-                anoCNPJ: qs("#anoCNPJ").value,
-                anoFundacao: qs("#anoFundacao").value,
-                responsavelLegal: qs("#responsavelLegal").value,
-                email: qs("#email").value,
-                oQueFaz: qs("#oQueFaz").value,
-                cnpj: qs("#CNPJ").value,
-                telefone: qs("#telefone").value,
-                instagram: qs("#instagram").value,
-                situacaoImovel: qs("#situacaoImovel").value,
-                cep: qs("#cep").value,
-                cidade: qs("#cidade").value,
-                bairro: qs("#bairro").value,
-                logradouro: qs("#logradouro").value,
-                numero: qs("#numero").value,
-                usuario: {
-                    nome: usuarioNome.value,
-                    email: usuarioEmail.value
-                },
-                envolvidos: envolvidosParaEnvio,
-                atividades,
-                documentos: {
-                    institucionais: {
-                        estatuto: getFileName(docEstatutoInput),
-                        ata: getFileName(docAtaInput),
-                    },
-                    certidoes: {
-                        cnd_federal: getFileName(docCndFederalInput),
-                        cnd_estadual: getFileName(docCndEstadualInput),
-                        cnd_municipal: getFileName(docCndMunicipalInput),
-                        fgts: getFileName(docFgtsInput),
-                        trabalhista: getFileName(docTrabalhistaInput),
-                    },
-                    contabeis: {
-                        balancos: balancos.map(b => ({
-                            ano: b.ano,
-                            fileName: b.file?.name || ''
-                        })),
-                        dres: dres.map(d => ({
-                            ano: d.ano,
-                            fileName: d.file?.name || ''
-                        })),
-                    }
-                }
-            };
-
-            const jsonPreview = JSON.stringify(previewData, null, 2);
-            qs("#jsonOut").textContent = jsonPreview;
-
-            const blob = new Blob([jsonPreview], {
-                type: "application/json"
-            });
-            const url = URL.createObjectURL(blob);
-            const dl = qs("#downloadLink");
-            dl.style.display = "inline-block";
-            dl.href = url;
-            dl.download = (qs("#nomeOsc").value || "osc") + ".json";
 
             try {
                 const response = await fetch("ajax_criar_osc.php", {
@@ -1831,8 +1758,6 @@ require 'autenticacao.php';
             renderDres();
 
             updatePreviews();
-            qs('#jsonOut').textContent = '{}';
-            qs('#downloadLink').style.display = 'none';
 
             const usuarioSenha = qs('#usuarioSenha');
             const usuarioSenhaConf = qs('#usuarioSenhaConf');

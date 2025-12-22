@@ -178,15 +178,6 @@ if (!$oscIdVinculada) {
 
         .muted { color: var(--muted); font-size: 13px }
 
-        pre.json-out {
-            white-space: pre-wrap;
-            background: #111;
-            color: #e6e6e6;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 12px
-        }
-
         .header-right {
             margin-left: auto;
             display: flex;
@@ -210,7 +201,7 @@ if (!$oscIdVinculada) {
 
 <body>
 <header>
-    <h1>Painel de Controle — Editar OSC</h1>
+    <h1>Painel de Controle — Editar OSC <span id="oscNomeHeader"></span></h1>
     <div class="header-right">
         <div class="muted">
             <?php if (!empty($_SESSION['nome'])): ?>
@@ -226,6 +217,231 @@ if (!$oscIdVinculada) {
 <form id="oscForm" onsubmit="event.preventDefault();saveData()">
     <input type="hidden" id="oscId" value="<?= (int)$oscIdVinculada ?>" />
 
+        <!-- BOTÕES -->
+    <div style="margin-top:16px" class="card">
+        <footer>
+            <div class="small muted">Edite o que quiser e clique em "Salvar alterações" para concluir a edição!</div>
+            <div style="display:flex; gap:8px">
+                <button type="submit" class="btn btn-primary">SALVAR ALTERAÇÕES</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- SEÇÃO 2: INFORMAÇÕES BÁSICAS -->
+    <div style="margin-top:16px" class="card">
+        <div class="grid cols-2">
+            <div>
+                <h2>Informações da OSC</h2>
+                <div class="grid">
+                    <div>
+                        <label for="nomeOsc">Nome (*)</label>
+                        <input id="nomeOsc" type="text" required />
+                    </div>
+                    <div>
+                        <label for="sigla">Sigla (*)</label>
+                        <input id="sigla" type="text" required />
+                    </div>
+                    <div>
+                        <label for="anoFundacao">Ano de fundação</label>
+                        <input id="anoFundacao" inputmode="numeric" type="text" />
+                    </div>
+                    <div>
+                        <label for="instagram">Instagram</label>
+                        <input id="instagram" type="text" />
+                    </div>
+                    <div>
+                        <label for="historia">História</label>
+                        <textarea id="historia" placeholder="Conte a história da OSC"></textarea>
+                    </div>
+                    <div>
+                        <label for="missao">Missão</label>
+                        <textarea id="missao" placeholder="Descreva a missão da OSC"></textarea>
+                    </div>
+                    <div>
+                        <label for="visao">Visão</label>
+                        <textarea id="visao" placeholder="Descreva a visão da OSC"></textarea>
+                    </div>
+                    <div>
+                        <label for="valores">Valores</label>
+                        <textarea id="valores" placeholder="Descreva os valores da OSC"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div style="margin-top:14px" class="card">
+                    <h2>Envolvidos</h2>
+                    <div class="small">Clique em "Adicionar", "Edite" ou "Delete" as pessoas envolvidas com a OSC.</div>
+                    <div class="envolvidos-list" id="listaEnvolvidos"></div>
+                    <div style="margin-top:10px">
+                        <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">Adicionar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEÇÃO 3: TRANSPARÊNCIA -->
+    <div style="margin-top:16px" class="card">
+        <h2>Transparência</h2>
+        <div class="grid cols-3">
+            <div>
+                <label for="CNPJ">CNPJ (*)</label>
+                <input id="CNPJ" inputmode="numeric" type="text" required />
+            </div>
+            <div>
+                <label for="razaoSocial">Razão Social</label>
+                <input id="razaoSocial" type="text" />
+            </div>
+            <div>
+                <label for="nomeFantasia">Nome fantasia</label>
+                <input id="nomeFantasia" type="text" />
+            </div>
+            <div>
+                <label for="anoCNPJ">Ano de cadastro do CNPJ</label>
+                <input id="anoCNPJ" inputmode="numeric" type="text" />
+            </div>
+            <div>
+                <label for="responsavelLegal">Responsável legal</label>
+                <input id="responsavelLegal" type="text" />
+            </div>
+            <div>
+                <label for="situacaoCadastral">Situação cadastral</label>
+                <input id="situacaoCadastral" type="text" />
+            </div>
+            <div>
+                <label for="telefone">Telefone</label>
+                <input id="telefone" inputmode="numeric" type="text" />
+            </div>
+            <div>
+                <label for="email">E-mail</label>
+                <input id="email" type="text" />
+            </div>
+        </div>
+        <div style="margin-top: 10px;">
+            <label for="oQueFaz">O que a OSC faz?</label>
+            <textarea id="oQueFaz" placeholder="Descreva a finalidade da OSC"></textarea>
+        </div>
+    </div>
+
+    <!-- SEÇÃO 4: IMÓVEL -->
+    <div style="margin-top:16px" class="card">
+        <h2>Imóvel</h2>
+        <div class="grid cols-3">
+            <div>
+                <label for="situacaoImovel">Situação do imóvel</label>
+                <input id="situacaoImovel" type="text" />
+            </div>
+            <div>
+                <label for="cep">CEP (*)</label>
+                <input id="cep" inputmode="numeric" type="text" required />
+            </div>
+            <div>
+                <label for="cidade">Cidade</label>
+                <input id="cidade" type="text" />
+            </div>
+            <div>
+                <label for="bairro">Bairro</label>
+                <input id="bairro" type="text" />
+            </div>
+            <div>
+                <label for="logradouro">Logradouro</label>
+                <input id="logradouro" type="text" />
+            </div>
+            <div>
+                <label for="numero">Número</label>
+                <input id="numero" inputmode="numeric" type="text" />
+            </div>
+        </div>
+    </div>
+
+    <!-- SEÇÃO 5: ÁREA / SUBÁREA -->
+    <div style="margin-top:16px" class="card">
+        <h2>Área e Subárea de Atuação</h2>
+        <div class="small">
+            Clique em "Adicionar" para incluir as atividades econômicas, áreas e subáreas de atuação.
+        </div>
+        <div class="envolvidos-list" id="atividadesList"></div>
+        <div style="margin-top:10px">
+            <button type="button" class="btn btn-ghost" id="openAtividadeModal">
+                Adicionar
+            </button>
+        </div>
+    </div>
+
+    <!-- SEÇÃO 7: DOCUMENTOS (opcional na edição) -->
+    <div style="margin-top:16px" class="card">
+        <h2>Documentos da OSC</h2>
+        <div class="small">Envie documentos novos para complementar ou substituir.</div>
+        <div class="small"><b>Formatos permitidos:</b> .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf</div>
+        <div class="divider"></div>
+
+        <h3 class="section-title">1. Institucionais</h3>
+        <div class="grid cols-2">
+            <div>
+                <label for="docEstatuto">Estatuto</label>
+                <div class="envolvidos-list" id="docCard_ESTATUTO"></div>
+                <input id="docEstatuto" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+            </div>
+            <div>
+                <label for="docAta">Ata</label>
+                <div class="envolvidos-list" id="docCard_ATA"></div>
+                <input id="docAta" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+            </div>
+        </div>
+
+
+        <h3 class="section-title" style="margin-top:16px">2. Certidões</h3>
+        <div class="grid cols-3">
+            <div>
+                <label for="docCndFederal">CND Federal</label>
+                <div class="envolvidos-list" id="docCard_CND_FEDERAL"></div>
+                <input id="docCndFederal" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+            </div>
+            <div>
+                <label for="docCndEstadual">CND Estadual</label>
+                <div class="envolvidos-list" id="docCard_CND_ESTADUAL"></div>
+                <input id="docCndEstadual" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+            </div>
+            <div>
+                <label for="docCndMunicipal">CND Municipal</label>
+                <div class="envolvidos-list" id="docCard_CND_MUNICIPAL"></div>
+                <input id="docCndMunicipal" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+            </div>
+            <div>
+                <label for="docFgts">FGTS</label>
+                <div class="envolvidos-list" id="docCard_FGTS"></div>
+                <input id="docFgts" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+            </div>
+            <div>
+                <label for="docTrabalhista">Trabalhista</label>
+                <div class="envolvidos-list" id="docCard_TRABALHISTA"></div>
+                <input id="docTrabalhista" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+            </div>
+            <div>
+                <label for="docCartCnpj">Cartão CNPJ</label>
+                <div class="envolvidos-list" id="docCard_CARTAO_CNPJ"></div>
+                <input id="docCartCnpj" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+            </div>
+        </div>
+
+        <h3 class="section-title" style="margin-top:16px">3. Contábeis</h3>
+        <div class="small">Adicione um ou mais Balanços Patrimoniais, informando o ano de referência.</div>
+        <div class="envolvidos-list" id="balancosList"></div>
+        <div style="margin-top:10px; margin-bottom:16px;">
+            <button type="button" class="btn btn-ghost" id="openBalancoModal">
+                Adicionar Balanço Patrimonial
+            </button>
+        </div>
+
+        <div class="small">Adicione um ou mais DRE, informando o ano de referência.</div>
+        <div class="envolvidos-list" id="dresList"></div>
+        <div style="margin-top:10px;">
+            <button type="button" class="btn btn-ghost" id="openDreModal">
+                Adicionar DRE
+            </button>
+        </div>
+    </div>
     <!-- SEÇÃO 1: TEMPLATE DA OSC -->
     <div style="margin-top:16px" class="card">
         <div class="grid cols-2">
@@ -341,238 +557,7 @@ if (!$oscIdVinculada) {
             </div>
         </div>
     </div>
-
-    <!-- SEÇÃO 2: INFORMAÇÕES BÁSICAS -->
-    <div style="margin-top:16px" class="card">
-        <div class="grid cols-2">
-            <div>
-                <h2>Informações da OSC</h2>
-                <div class="grid">
-                    <div>
-                        <label for="nomeOsc">Nome (*)</label>
-                        <input id="nomeOsc" type="text" required />
-                    </div>
-                    <div>
-                        <label for="sigla">Sigla (*)</label>
-                        <input id="sigla" type="text" required />
-                    </div>
-                    <div>
-                        <label for="anoFundacao">Ano de fundação</label>
-                        <input id="anoFundacao" inputmode="numeric" type="text" />
-                    </div>
-                    <div>
-                        <label for="instagram">Instagram</label>
-                        <input id="instagram" type="text" />
-                    </div>
-                    <div>
-                        <label for="historia">História</label>
-                        <textarea id="historia" placeholder="Conte a história da OSC"></textarea>
-                    </div>
-                    <div>
-                        <label for="missao">Missão</label>
-                        <textarea id="missao" placeholder="Descreva a missão da OSC"></textarea>
-                    </div>
-                    <div>
-                        <label for="visao">Visão</label>
-                        <textarea id="visao" placeholder="Descreva a visão da OSC"></textarea>
-                    </div>
-                    <div>
-                        <label for="valores">Valores</label>
-                        <textarea id="valores" placeholder="Descreva os valores da OSC"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <div>
-                <div style="margin-top:14px" class="card">
-                    <h2>Envolvidos</h2>
-                    <div class="small">Clique em "Adicionar" para incluir as pessoas envolvidas com a OSC.</div>
-                    <div class="envolvidos-list" id="listaEnvolvidos"></div>
-                    <div style="margin-top:10px">
-                        <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">Adicionar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- SEÇÃO 3: TRANSPARÊNCIA -->
-    <div style="margin-top:16px" class="card">
-        <h2>Transparência</h2>
-        <div class="grid cols-3">
-            <div>
-                <label for="CNPJ">CNPJ (*)</label>
-                <input id="CNPJ" inputmode="numeric" type="text" required />
-            </div>
-            <div>
-                <label for="razaoSocial">Razão Social</label>
-                <input id="razaoSocial" type="text" />
-            </div>
-            <div>
-                <label for="nomeFantasia">Nome fantasia</label>
-                <input id="nomeFantasia" type="text" />
-            </div>
-            <div>
-                <label for="anoCNPJ">Ano de cadastro do CNPJ</label>
-                <input id="anoCNPJ" inputmode="numeric" type="text" />
-            </div>
-            <div>
-                <label for="responsavelLegal">Responsável legal</label>
-                <input id="responsavelLegal" type="text" />
-            </div>
-            <div>
-                <label for="situacaoCadastral">Situação cadastral</label>
-                <input id="situacaoCadastral" type="text" />
-            </div>
-            <div>
-                <label for="telefone">Telefone</label>
-                <input id="telefone" inputmode="numeric" type="text" />
-            </div>
-            <div>
-                <label for="email">E-mail</label>
-                <input id="email" type="text" />
-            </div>
-        </div>
-        <div style="margin-top: 10px;">
-            <label for="oQueFaz">O que a OSC faz?</label>
-            <textarea id="oQueFaz" placeholder="Descreva a finalidade da OSC"></textarea>
-        </div>
-    </div>
-
-    <!-- SEÇÃO 4: IMÓVEL -->
-    <div style="margin-top:16px" class="card">
-        <h2>Imóvel</h2>
-        <div class="grid cols-3">
-            <div>
-                <label for="situacaoImovel">Situação do imóvel</label>
-                <input id="situacaoImovel" type="text" />
-            </div>
-            <div>
-                <label for="cep">CEP (*)</label>
-                <input id="cep" inputmode="numeric" type="text" required />
-            </div>
-            <div>
-                <label for="cidade">Cidade</label>
-                <input id="cidade" type="text" />
-            </div>
-            <div>
-                <label for="bairro">Bairro</label>
-                <input id="bairro" type="text" />
-            </div>
-            <div>
-                <label for="logradouro">Logradouro</label>
-                <input id="logradouro" type="text" />
-            </div>
-            <div>
-                <label for="numero">Número</label>
-                <input id="numero" inputmode="numeric" type="text" />
-            </div>
-        </div>
-    </div>
-
-    <!-- SEÇÃO 5: ÁREA / SUBÁREA -->
-    <div style="margin-top:16px" class="card">
-        <h2>Área e Subárea de Atuação</h2>
-        <div class="small">
-            Clique em "Adicionar" para incluir as atividades econômicas, áreas e subáreas de atuação.
-        </div>
-        <div class="envolvidos-list" id="atividadesList"></div>
-        <div style="margin-top:10px">
-            <button type="button" class="btn btn-ghost" id="openAtividadeModal">
-                Adicionar
-            </button>
-        </div>
-    </div>
-
-    <!-- SEÇÃO 7: DOCUMENTOS (opcional na edição) -->
-    <div style="margin-top:16px" class="card">
-        <h2>Documentos da OSC</h2>
-        <div class="small">Envie documentos novos para complementar ou substituir (conforme regra do servidor).</div>
-        <div class="small">Formatos permitidos: .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf</div>
-        <div class="divider"></div>
-
-        <h3 class="section-title">1. Institucionais</h3>
-        <div class="grid cols-2">
-            <div>
-                <label for="docEstatuto">Estatuto</label>
-                <div class="envolvidos-list" id="docCard_ESTATUTO"></div>
-                <input id="docEstatuto" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-            </div>
-            <div>
-                <label for="docAta">Ata</label>
-                <div class="envolvidos-list" id="docCard_ATA"></div>
-                <input id="docAta" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-            </div>
-        </div>
-
-
-        <h3 class="section-title" style="margin-top:16px">2. Certidões</h3>
-        <div class="grid cols-3">
-            <div>
-                <label for="docCndFederal">CND Federal</label>
-                <div class="envolvidos-list" id="docCard_CND_FEDERAL"></div>
-                <input id="docCndFederal" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-            </div>
-            <div>
-                <label for="docCndEstadual">CND Estadual</label>
-                <div class="envolvidos-list" id="docCard_CND_ESTADUAL"></div>
-                <input id="docCndEstadual" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-            </div>
-            <div>
-                <label for="docCndMunicipal">CND Municipal</label>
-                <div class="envolvidos-list" id="docCard_CND_MUNICIPAL"></div>
-                <input id="docCndMunicipal" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-            </div>
-            <div>
-                <label for="docFgts">FGTS</label>
-                <div class="envolvidos-list" id="docCard_FGTS"></div>
-                <input id="docFgts" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-            </div>
-            <div>
-                <label for="docTrabalhista">Trabalhista</label>
-                <div class="envolvidos-list" id="docCard_TRABALHISTA"></div>
-                <input id="docTrabalhista" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-            </div>
-        </div>
-
-        <h3 class="section-title" style="margin-top:16px">3. Contábeis</h3>
-        <div class="small">Adicione um ou mais Balanços Patrimoniais, informando o ano de referência.</div>
-        <div class="envolvidos-list" id="balancosList"></div>
-        <div style="margin-top:10px; margin-bottom:16px;">
-            <button type="button" class="btn btn-ghost" id="openBalancoModal">
-                Adicionar Balanço Patrimonial
-            </button>
-        </div>
-
-        <div class="small">Adicione uma DRE para cada ano de referência.</div>
-        <div class="envolvidos-list" id="dresList"></div>
-        <div style="margin-top:10px;">
-            <button type="button" class="btn btn-ghost" id="openDreModal">
-                Adicionar DRE
-            </button>
-        </div>
-    </div>
-
-    <!-- BOTÕES -->
-    <div style="margin-top:16px" class="card">
-        <footer>
-            <div class="small muted">Edite o que quiser e clique em "Salvar alterações".</div>
-            <div style="display:flex; gap:8px">
-                <button type="submit" class="btn btn-primary">SALVAR ALTERAÇÕES</button>
-            </div>
-        </footer>
-    </div>
 </form>
-
-<!-- JSON PREVIEW -->
-<div style="margin-top:16px" class="card">
-    <h2>JSON DA EDIÇÃO</h2>
-    <div class="divider"></div>
-    <pre id="jsonOut" class="json-out">{}</pre>
-    <div style="margin-top:8px; display:flex; gap:8px">
-        <a id="downloadLink" style="display:none" class="btn btn-ghost">Baixar JSON</a>
-    </div>
-</div>
 
 </main>
 
@@ -797,6 +782,7 @@ if (!$oscIdVinculada) {
     const docCndMunicipal = qs('#docCndMunicipal');
     const docFgts         = qs('#docFgts');
     const docTrabalhista  = qs('#docTrabalhista');
+    const docCartCnpj     = qs('#docCartCnpj');
 
     // listas
     const envolvidos = []; // { tipo, envolvidoId, fotoPreview|fotoUrl, fotoFile, nome, telefone, email, funcao }
@@ -904,6 +890,7 @@ if (!$oscIdVinculada) {
     instalarConfirmacaoSubstituicaoDocFixo(docCndMunicipal, 'CERTIDAO',      'CND_MUNICIPAL','CND Municipal');
     instalarConfirmacaoSubstituicaoDocFixo(docFgts,         'CERTIDAO',      'FGTS',         'FGTS');
     instalarConfirmacaoSubstituicaoDocFixo(docTrabalhista,  'CERTIDAO',      'TRABALHISTA',  'Trabalhista');
+    instalarConfirmacaoSubstituicaoDocFixo(docCartCnpj,     'CERTIDAO',      'CARTAO_CNPJ',  'Cartão CNPJ');
     
     function normalizarUrlDoc(url) {
         if (!url) return '';
@@ -1077,6 +1064,7 @@ if (!$oscIdVinculada) {
         { cat: 'CERTIDAO', subtipo: 'CND_MUNICIPAL', titulo: 'CND Municipal' },
         { cat: 'CERTIDAO', subtipo: 'FGTS', titulo: 'FGTS' },
         { cat: 'CERTIDAO', subtipo: 'TRABALHISTA', titulo: 'Trabalhista' },
+        { cat: 'CERTIDAO', subtipo: 'CARTAO_CNPJ', titulo: 'Cartão CNPJ' }
       ];
 
       fixos.forEach(cfg => {
@@ -1125,12 +1113,12 @@ if (!$oscIdVinculada) {
             const ok = await confirmModal({
               title: 'Remover documento?',
               html: `
-                <div>Você vai marcar este documento para remoção:</div>
+                <div>A deleção deste documento é permanente!</div>
                 <div style="margin-top:8px; padding:10px; background:#fafafa; border:1px solid #f0f0f0; border-radius:8px">
                   <b>${escapeHtml(nomeAtual)}</b>
                 </div>
                 <div class="small muted" style="margin-top:10px">
-                  A remoção será aplicada quando você clicar em <b>SALVAR ALTERAÇÕES</b>.
+                  A deleção será aplicada quando você clicar em <b>SALVAR ALTERAÇÕES</b>.
                 </div>
               `
             });
@@ -1974,7 +1962,7 @@ if (!$oscIdVinculada) {
               <div style="margin-top:4px"><b>Novo:</b> ${escapeHtml(file.name)}</div>
             </div>
             <div class="small muted" style="margin-top:10px">
-              A troca será aplicada quando você clicar em <b>SALVAR</b> (dentro do modal) e depois <b>SALVAR ALTERAÇÕES</b>.
+              A troca será aplicada quando você clicar em <b>SALVAR</b> e depois em <b>SALVAR ALTERAÇÕES</b>.
             </div>
           `
         });
@@ -2276,6 +2264,7 @@ if (!$oscIdVinculada) {
             { el: docCndMunicipal, cat: 'CERTIDAO',      subtipo: 'CND_MUNICIPAL' },
             { el: docFgts,         cat: 'CERTIDAO',      subtipo: 'FGTS' },
             { el: docTrabalhista,  cat: 'CERTIDAO',      subtipo: 'TRABALHISTA' },
+            { el: docCartCnpj,     cat: 'CERTIDAO',      subtipo: 'CARTAO_CNPJ' },
         ];
 
         for (const cfg of docs) {
@@ -2388,6 +2377,9 @@ if (!$oscIdVinculada) {
         }
     
         const osc = result.data;
+
+        const h = qs('#oscNomeHeader');
+        if (h) h.textContent = osc.nomeOsc ? `— ${osc.nomeOsc}` : '';
     
         // cores
         if (osc.cores) {
@@ -2585,62 +2577,6 @@ if (!$oscIdVinculada) {
         if (banner1.files[0])      fd.append('banner1',      banner1.files[0]);
         if (banner2.files[0])      fd.append('banner2',      banner2.files[0]);
         if (banner3.files[0])      fd.append('banner3',      banner3.files[0]);
-
-        // JSON preview
-        const previewData = {
-            osc_id: oscId,
-            labelBanner: qs("#labelBanner").value,
-            cores: { bg:bgColor.value, sec:secColor.value, ter:terColor.value, qua:quaColor.value, fon:fonColor.value },
-            nomeOsc: qs("#nomeOsc").value,
-            sigla: qs("#sigla").value,
-            anoFundacao: qs("#anoFundacao").value,
-            instagram: qs("#instagram").value,
-            historia: qs("#historia").value,
-            missao: qs("#missao").value,
-            visao: qs("#visao").value,
-            valores: qs("#valores").value,
-            razaoSocial: qs("#razaoSocial").value,
-            nomeFantasia: qs("#nomeFantasia").value,
-            situacaoCadastral: qs("#situacaoCadastral").value,
-            anoCNPJ: qs("#anoCNPJ").value,
-            responsavelLegal: qs("#responsavelLegal").value,
-            email: qs("#email").value,
-            oQueFaz: qs("#oQueFaz").value,
-            cnpj: qs("#CNPJ").value,
-            telefone: qs("#telefone").value,
-            situacaoImovel: qs("#situacaoImovel").value,
-            cep: qs("#cep").value,
-            cidade: qs("#cidade").value,
-            bairro: qs("#bairro").value,
-            logradouro: qs("#logradouro").value,
-            numero: qs("#numero").value,
-            envolvidos: envolvidosParaEnvio,
-            atividades,
-            documentos: {
-                institucionais: { estatuto: docEstatuto?.files?.[0]?.name || null, ata: docAta?.files?.[0]?.name || null },
-                certidoes: {
-                    cnd_federal: docCndFederal?.files?.[0]?.name || null,
-                    cnd_estadual: docCndEstadual?.files?.[0]?.name || null,
-                    cnd_municipal: docCndMunicipal?.files?.[0]?.name || null,
-                    fgts: docFgts?.files?.[0]?.name || null,
-                    trabalhista: docTrabalhista?.files?.[0]?.name || null,
-                },
-                contabeis: {
-                    balancos: balancos.map(b => ({ ano: b.ano, fileName: b.file?.name || '' })),
-                    dres: dres.map(d => ({ ano: d.ano, fileName: d.file?.name || '' })),
-                }
-            }
-        };
-
-        const jsonPreview = JSON.stringify(previewData, null, 2);
-        qs("#jsonOut").textContent = jsonPreview;
-
-        const blob = new Blob([jsonPreview], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const dl = qs("#downloadLink");
-        dl.style.display = "inline-block";
-        dl.href = url;
-        dl.download = (qs("#nomeOsc").value || "osc") + ".json";
 
         try {
             const response = await fetch("ajax_atualizar_osc.php", { method: "POST", body: fd });
