@@ -256,6 +256,45 @@ require 'autenticacao.php';
             gap: 12px;
         }
 
+        .tabs-top{
+            display:flex;
+            gap:10px;
+            margin: 0 0 16px 0;
+        }
+
+        .tab-btn{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            padding:10px 14px;
+            border-radius:999px;
+            border:1px solid #ddd;
+            background:#fff;
+            color:#333;
+            text-decoration:none;
+            font-weight:600;
+            font-size:13px;
+            box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
+        }
+
+        .tab-btn:hover{ background:#f6f6f7; }
+
+        .tab-btn .dot{
+            width:10px;
+            height:10px;
+            border-radius:999px;
+            background:#cfcfd6;
+        }
+
+        .tab-btn.is-active{
+            border-color: rgba(108, 92, 231, .35);
+            background: rgba(108, 92, 231, .08);
+        }
+
+        .tab-btn.is-active .dot{
+            background: var(--qua);
+        }
+
         .logout-link {
             padding: 6px 12px;
             border-radius: 999px;
@@ -284,8 +323,6 @@ require 'autenticacao.php';
     </style>
 </head>
 
-</script>
-
 <body>
     <header>
         <h1>Painel de Controle — Cadastro de OSC</h1>
@@ -303,8 +340,54 @@ require 'autenticacao.php';
     </header>
 
     <main>
+        <?php $activePage = basename($_SERVER['PHP_SELF']); ?>
 
+        <!-- TABS DE NAVEGAÇÃO (abaixo do header) -->
+        <div class="tabs-top" id="tabsTop">
+            <a class="tab-btn <?= ($activePage === 'oscs_cadastradas.php') ? 'is-active' : '' ?>" href="oscs_cadastradas.php"><span class="dot"></span>OSCs</a>
+            <a class="tab-btn <?= ($activePage === 'cadastro_osc.php') ? 'is-active' : '' ?>" href="cadastro_osc.php"><span class="dot"></span>Nova OSC</a>
+            <a class="tab-btn" href="config_osc.php"><span class="dot"></span>Configurações OSC</a>
+        </div>
+        
         <form id="oscForm" onsubmit="event.preventDefault();saveData()">
+            
+            <!-- SEÇÃO 6: USUÁRIO RESPONSÁVEL PELA OSC -->
+            <div style="margin-top:1px" class="card">
+                <h2>Usuário responsável pela OSC</h2>
+                <div>
+                    <div>
+                        <label for="usuarioNome">Nome (*)</label>
+                        <input id="usuarioNome" type="text" required />
+                    </div>
+                    <div style="margin-top: 5px">
+                        <label for="usuarioEmail">E-mail de acesso (*)</label>
+                        <input id="usuarioEmail" type="email" required />
+                    </div>
+                </div>
+                <div id="emailMsg" class="small"></div>
+                <div class="row" style="margin-top:10px">
+                    <div style="flex:1">
+                        <label for="usuarioSenha">Senha do usuário (*)</label>
+                        <input id="usuarioSenha" type="password" required />
+                    </div>
+                    <div style="flex:1">
+                        <label for="usuarioSenhaConf">Confirmar senha (*)</label>
+                        <input id="usuarioSenhaConf" type="password" required />
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top:8px; text-align:center">
+                    <label class="label-inline">
+                        <input type="checkbox" id="toggleSenha" />
+                        <span class="small">Exibir senha</span>
+                    </label>
+                    <div id="senhaMsg" class="small"></div>
+                </div>
+                <div class="small muted" style="margin-top:6px">
+                    Este usuário será criado como Administrador, com permissão para gerenciar apenas esta OSC.
+                </div>
+            </div>
+
             <!-- SEÇÃO 1: TEMPLATE DA OSC -->
             <div style="margin-top:16px" class="card">
                 <div class="grid cols-2">
@@ -504,10 +587,6 @@ require 'autenticacao.php';
                         <label for="email">E-mail (*)</label>
                         <input id="email" type="text" required />
                     </div>
-                    <div>
-                        <label for="status">Status (*)</label>
-                        <input id="status" type="text" required />
-                    </div>
                 </div>
                 <div style="margin-top: 10px;">
                     <label for="oQueFaz">O que a OSC faz? (*)</label>
@@ -561,43 +640,6 @@ require 'autenticacao.php';
                 </div>
             </div>
 
-            <!-- SEÇÃO 6: USUÁRIO RESPONSÁVEL PELA OSC -->
-            <div style="margin-top:16px" class="card">
-                <h2>Usuário responsável pela OSC</h2>
-                <div>
-                    <div>
-                        <label for="usuarioNome">Nome (*)</label>
-                        <input id="usuarioNome" type="text" required />
-                    </div>
-                    <div style="margin-top: 5px">
-                        <label for="usuarioEmail">E-mail de acesso (*)</label>
-                        <input id="usuarioEmail" type="email" required />
-                    </div>
-                </div>
-                <div id="emailMsg" class="small"></div>
-                <div class="row" style="margin-top:10px">
-                    <div style="flex:1">
-                        <label for="usuarioSenha">Senha do usuário (*)</label>
-                        <input id="usuarioSenha" type="password" required />
-                    </div>
-                    <div style="flex:1">
-                        <label for="usuarioSenhaConf">Confirmar senha (*)</label>
-                        <input id="usuarioSenhaConf" type="password" required />
-                    </div>
-                </div>
-
-                <div class="row" style="margin-top:8px; text-align:center">
-                    <label class="label-inline">
-                        <input type="checkbox" id="toggleSenha" />
-                        <span class="small">Exibir senha</span>
-                    </label>
-                    <div id="senhaMsg" class="small"></div>
-                </div>
-                <div class="small muted" style="margin-top:6px">
-                    Este usuário será criado como Administrador, com permissão para gerenciar apenas esta OSC.
-                </div>
-            </div>
-
             <!-- SEÇÃO 7: DOCUMENTOS DA OSC -->
             <div style="margin-top:16px" class="card">
                 <h2>Documentos da OSC</h2>
@@ -640,6 +682,10 @@ require 'autenticacao.php';
                         <label for="docTrabalhista">Trabalhista</label>
                         <input id="docTrabalhista" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
                     </div>
+                    <div>
+                        <label for="docCartCnpj">Cartão CNPJ</label>
+                        <input id="docCartCnpj" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+                    </div>
                 </div>
 
                 <!-- 3. Contábeis -->
@@ -678,16 +724,6 @@ require 'autenticacao.php';
                 </footer>
             </div>
         </form>
-
-        <!-- EXIBIÇÃO DO JSON PARA TESTE -->
-        <div style="margin-top:16px" class="card">
-            <h2>JSON DO CADASTRO</h2>
-            <div class="divider"></div>
-            <pre id="jsonOut" class="json-out">{}</pre>
-            <div style="margin-top:8px; display:flex; gap:8px">
-                <a id="downloadLink" style="display:none" class="btn btn-ghost">Baixar JSON</a>
-            </div>
-        </div>
 
     </main>
 
@@ -861,6 +897,7 @@ require 'autenticacao.php';
         const docCndMunicipal = qs('#docCndMunicipal');
         const docFgts = qs('#docFgts');
         const docTrabalhista = qs('#docTrabalhista');
+        const docCartCnpj = qs('#docCartCnpj');
         const balancos = []; // { ano, file }
         const dres = []; // { ano, file }
 
@@ -1477,6 +1514,11 @@ require 'autenticacao.php';
                     cat: 'CERTIDAO',
                     subtipo: 'TRABALHISTA'
                 },
+                {
+                    el: docCartCnpj,
+                    cat: 'CERTIDAO',
+                    subtipo: 'CARTAO_CNPJ'
+                },
             ];
 
             for (const cfg of docs) {
@@ -1635,7 +1677,6 @@ require 'autenticacao.php';
             fd.append('cnpj', qs("#CNPJ").value);
             fd.append('telefone', qs("#telefone").value);
             fd.append('instagram', qs("#instagram").value);
-            fd.append('status', qs("#status").value);
 
             fd.append('usuario_nome', usuarioNome.value);
             fd.append('usuario_email', usuarioEmail.value);
@@ -1648,6 +1689,7 @@ require 'autenticacao.php';
             const docCndMunicipalInput = qs('#docCndMunicipal');
             const docFgtsInput = qs('#docFgts');
             const docTrabalhistaInput = qs('#docTrabalhista');
+            const docCartCnpjInput = qs('#docCartCnpj');
             const getFileName = (input) => (input && input.files && input.files[0]) ? input.files[0].name : null;
 
             fd.append('situacaoImovel', qs("#situacaoImovel").value);
@@ -1682,82 +1724,6 @@ require 'autenticacao.php';
             if (banner1.files[0]) fd.append('banner1', banner1.files[0]);
             if (banner2.files[0]) fd.append('banner2', banner2.files[0]);
             if (banner3.files[0]) fd.append('banner3', banner3.files[0]);
-
-            const previewData = {
-                labelBanner: qs("#labelBanner").value,
-                cores: {
-                    bg: bgColor.value,
-                    sec: secColor.value,
-                    ter: terColor.value,
-                    qua: quaColor.value,
-                    fon: fonColor.value,
-                },
-                nomeOsc: qs("#nomeOsc").value,
-                historia: qs("#historia").value,
-                missao: qs("#missao").value,
-                visao: qs("#visao").value,
-                valores: qs("#valores").value,
-                razaoSocial: qs("#razaoSocial").value,
-                nomeFantasia: qs("#nomeFantasia").value,
-                sigla: qs("#sigla").value,
-                situacaoCadastral: qs("#situacaoCadastral").value,
-                anoCNPJ: qs("#anoCNPJ").value,
-                anoFundacao: qs("#anoFundacao").value,
-                responsavelLegal: qs("#responsavelLegal").value,
-                email: qs("#email").value,
-                oQueFaz: qs("#oQueFaz").value,
-                cnpj: qs("#CNPJ").value,
-                telefone: qs("#telefone").value,
-                instagram: qs("#instagram").value,
-                status: qs("#status").value,
-                situacaoImovel: qs("#situacaoImovel").value,
-                cep: qs("#cep").value,
-                cidade: qs("#cidade").value,
-                bairro: qs("#bairro").value,
-                logradouro: qs("#logradouro").value,
-                numero: qs("#numero").value,
-                usuario: {
-                    nome: usuarioNome.value,
-                    email: usuarioEmail.value
-                },
-                envolvidos: envolvidosParaEnvio,
-                atividades,
-                documentos: {
-                    institucionais: {
-                        estatuto: getFileName(docEstatutoInput),
-                        ata: getFileName(docAtaInput),
-                    },
-                    certidoes: {
-                        cnd_federal: getFileName(docCndFederalInput),
-                        cnd_estadual: getFileName(docCndEstadualInput),
-                        cnd_municipal: getFileName(docCndMunicipalInput),
-                        fgts: getFileName(docFgtsInput),
-                        trabalhista: getFileName(docTrabalhistaInput),
-                    },
-                    contabeis: {
-                        balancos: balancos.map(b => ({
-                            ano: b.ano,
-                            fileName: b.file?.name || ''
-                        })),
-                        dres: dres.map(d => ({
-                            ano: d.ano,
-                            fileName: d.file?.name || ''
-                        })),
-                    }
-                }
-            };
-
-            const jsonPreview = JSON.stringify(previewData, null, 2);
-            qs("#jsonOut").textContent = jsonPreview;
-
-            const blob = new Blob([jsonPreview], {
-                type: "application/json"
-            });
-            const url = URL.createObjectURL(blob);
-            const dl = qs("#downloadLink");
-            dl.style.display = "inline-block";
-            dl.href = url;
-            dl.download = (qs("#nomeOsc").value || "osc") + ".json";
 
             try {
                 const response = await fetch("ajax_criar_osc.php", {
@@ -1837,8 +1803,6 @@ require 'autenticacao.php';
             renderDres();
 
             updatePreviews();
-            qs('#jsonOut').textContent = '{}';
-            qs('#downloadLink').style.display = 'none';
 
             const usuarioSenha = qs('#usuarioSenha');
             const usuarioSenhaConf = qs('#usuarioSenhaConf');
