@@ -195,7 +195,67 @@ if (!$oscIdVinculada) {
             color: #444;
             cursor: pointer;
         }
-        .logout-link:hover { background: #f0f0f0; }
+        .logout-link:hover { background: #f0f0f0; 
+        }
+
+        /* ===== CARD SANDUÍCHE (COLAPSÁVEL) ===== */
+        .card.card-collapse {
+          padding: 0;                 /* tira padding do card inteiro */
+          overflow: hidden;           /* esconde conteúdo quando fechado */
+        }
+
+        .card-collapse .card-head {
+          padding: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          cursor: pointer;
+          user-select: none;
+        }
+
+        .card-collapse .card-head h2 {
+          margin: 0;
+          font-size: 16px;
+        }
+
+        .card-collapse .card-toggle {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 12px;
+          border-radius: 999px;
+          border: 1px solid #ddd;
+          background: #fff;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .card-collapse .card-toggle:hover {
+          background: #f0f0f0;
+        }
+
+        .card-collapse .chev {
+          display: inline-block;
+          transition: transform .18s ease;
+        }
+
+        /* Corpo do card */
+        .card-collapse .card-body {
+          padding: 0 16px 16px 16px;
+          border-top: 1px solid #efefef;
+        }
+
+        /* Estado fechado */
+        .card-collapse:not(.is-open) .card-body {
+          display: none;
+        }
+
+        /* Estado aberto */
+        .card-collapse.is-open .chev {
+          transform: rotate(180deg);
+        }
     </style>
 </head>
 
@@ -227,335 +287,406 @@ if (!$oscIdVinculada) {
         </footer>
     </div>
 
-    <!-- SEÇÃO 2: INFORMAÇÕES BÁSICAS -->
-    <div style="margin-top:16px" class="card">
+    <!-- SEÇÃO 1: INFORMAÇÕES BÁSICAS -->
+    <div class="card card-collapse is-open" data-collapse-id="info-osc">
+      <div class="card-head" data-collapse-head>
+        <h2>Informações da OSC</h2>
+
+        <button type="button" class="card-toggle" data-collapse-btn>
+          <span class="label">Fechar</span>
+          <span class="chev">▾</span>
+        </button>
+      </div>
+
+      <div class="card-body" data-collapse-body>
         <div class="grid cols-2">
-            <div>
-                <h2>Informações da OSC</h2>
-                <div class="grid">
-                    <div>
-                        <label for="nomeOsc">Nome (*)</label>
-                        <input id="nomeOsc" type="text" required />
-                    </div>
-                    <div>
-                        <label for="sigla">Sigla (*)</label>
-                        <input id="sigla" type="text" required />
-                    </div>
-                    <div>
-                        <label for="anoFundacao">Ano de fundação</label>
-                        <input id="anoFundacao" inputmode="numeric" type="text" />
-                    </div>
-                    <div>
-                        <label for="instagram">Instagram</label>
-                        <input id="instagram" type="text" />
-                    </div>
-                    <div>
-                        <label for="historia">História</label>
-                        <textarea id="historia" placeholder="Conte a história da OSC"></textarea>
-                    </div>
-                    <div>
-                        <label for="missao">Missão</label>
-                        <textarea id="missao" placeholder="Descreva a missão da OSC"></textarea>
-                    </div>
-                    <div>
-                        <label for="visao">Visão</label>
-                        <textarea id="visao" placeholder="Descreva a visão da OSC"></textarea>
-                    </div>
-                    <div>
-                        <label for="valores">Valores</label>
-                        <textarea id="valores" placeholder="Descreva os valores da OSC"></textarea>
-                    </div>
-                </div>
+          <div>
+            <div class="grid">
+              <div>
+                <label style="margin-top: 10px;" for="nomeOsc">Nome (*)</label>
+                <input id="nomeOsc" type="text" required />
+              </div>
+              <div>
+                <label for="sigla">Sigla (*)</label>
+                <input id="sigla" type="text" required />
+              </div>
+              <div>
+                <label for="anoFundacao">Ano de fundação</label>
+                <input id="anoFundacao" inputmode="numeric" type="text" />
+              </div>
+              <div>
+                <label for="instagram">Instagram</label>
+                <input id="instagram" type="text" />
+              </div>
+              <div>
+                <label for="historia">História</label>
+                <textarea id="historia" placeholder="Conte a história da OSC"></textarea>
+              </div>
+              <div>
+                <label for="missao">Missão</label>
+                <textarea id="missao" placeholder="Descreva a missão da OSC"></textarea>
+              </div>
+              <div>
+                <label for="visao">Visão</label>
+                <textarea id="visao" placeholder="Descreva a visão da OSC"></textarea>
+              </div>
+              <div>
+                <label for="valores">Valores</label>
+                <textarea id="valores" placeholder="Descreva os valores da OSC"></textarea>
+              </div>
             </div>
+          </div>
 
-            <div>
-                <div style="margin-top:14px" class="card">
-                    <h2>Envolvidos</h2>
-                    <div class="small">Clique em "Adicionar", "Edite" ou "Delete" as pessoas envolvidas com a OSC.</div>
-                    <div class="envolvidos-list" id="listaEnvolvidos"></div>
-                    <div style="margin-top:10px">
-                        <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">Adicionar</button>
-                    </div>
-                </div>
+          <div>
+            <div style="margin-top: 10px;" class="card">
+              <h2>Envolvidos</h2>
+              <div class="small">Clique em "Adicionar", "Edite" ou "Delete" as pessoas envolvidas com a OSC.</div>
+              <div class="envolvidos-list" id="listaEnvolvidos"></div>
+              <div style="margin-top:10px">
+                <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">Adicionar</button>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
     </div>
 
-    <!-- SEÇÃO 3: TRANSPARÊNCIA -->
-    <div style="margin-top:16px" class="card">
+    <!-- SEÇÃO 2: TRANSPARÊNCIA -->
+    <div style="margin-top:16px" class="card card-collapse" data-collapse-id="transparencia">
+      <div class="card-head" data-collapse-head>
         <h2>Transparência</h2>
+
+        <button type="button" class="card-toggle" data-collapse-btn>
+          <span class="label">Abrir</span>
+          <span class="chev">▾</span>
+        </button>
+      </div>
+
+      <div class="card-body" data-collapse-body>
         <div class="grid cols-3">
-            <div>
-                <label for="CNPJ">CNPJ (*)</label>
-                <input id="CNPJ" inputmode="numeric" type="text" required />
-            </div>
-            <div>
-                <label for="razaoSocial">Razão Social</label>
-                <input id="razaoSocial" type="text" />
-            </div>
-            <div>
-                <label for="nomeFantasia">Nome fantasia</label>
-                <input id="nomeFantasia" type="text" />
-            </div>
-            <div>
-                <label for="anoCNPJ">Ano de cadastro do CNPJ</label>
-                <input id="anoCNPJ" inputmode="numeric" type="text" />
-            </div>
-            <div>
-                <label for="responsavelLegal">Responsável legal</label>
-                <input id="responsavelLegal" type="text" />
-            </div>
-            <div>
-                <label for="situacaoCadastral">Situação cadastral</label>
-                <input id="situacaoCadastral" type="text" />
-            </div>
-            <div>
-                <label for="telefone">Telefone</label>
-                <input id="telefone" inputmode="numeric" type="text" />
-            </div>
-            <div>
-                <label for="email">E-mail</label>
-                <input id="email" type="text" />
-            </div>
+          <div>
+            <label style="margin-top: 10px;" for="CNPJ">CNPJ (*)</label>
+            <input id="CNPJ" inputmode="numeric" type="text" required />
+          </div>
+          <div>
+            <label style="margin-top: 10px;" for="razaoSocial">Razão Social</label>
+            <input id="razaoSocial" type="text" />
+          </div>
+          <div>
+            <label style="margin-top: 10px;" for="nomeFantasia">Nome fantasia</label>
+            <input id="nomeFantasia" type="text" />
+          </div>
+          <div>
+            <label for="anoCNPJ">Ano de cadastro do CNPJ</label>
+            <input id="anoCNPJ" inputmode="numeric" type="text" />
+          </div>
+          <div>
+            <label for="responsavelLegal">Responsável legal</label>
+            <input id="responsavelLegal" type="text" />
+          </div>
+          <div>
+            <label for="situacaoCadastral">Situação cadastral</label>
+            <input id="situacaoCadastral" type="text" />
+          </div>
+          <div>
+            <label for="telefone">Telefone</label>
+            <input id="telefone" inputmode="numeric" type="text" />
+          </div>
+          <div>
+            <label for="email">E-mail</label>
+            <input id="email" type="text" />
+          </div>
         </div>
+
         <div style="margin-top: 10px;">
-            <label for="oQueFaz">O que a OSC faz?</label>
-            <textarea id="oQueFaz" placeholder="Descreva a finalidade da OSC"></textarea>
+          <label for="oQueFaz">O que a OSC faz?</label>
+          <textarea id="oQueFaz" placeholder="Descreva a finalidade da OSC"></textarea>
         </div>
+      </div>
     </div>
 
-    <!-- SEÇÃO 4: IMÓVEL -->
-    <div style="margin-top:16px" class="card">
+    <!-- SEÇÃO 3: IMÓVEL -->
+    <div style="margin-top:16px" class="card card-collapse" data-collapse-id="imovel">
+      <div class="card-head" data-collapse-head>
         <h2>Imóvel</h2>
+
+        <button type="button" class="card-toggle" data-collapse-btn>
+          <span class="label">Abrir</span>
+          <span class="chev">▾</span>
+        </button>
+      </div>
+
+      <div class="card-body" data-collapse-body>
         <div class="grid cols-3">
-            <div>
-                <label for="situacaoImovel">Situação do imóvel</label>
-                <input id="situacaoImovel" type="text" />
-            </div>
-            <div>
-                <label for="cep">CEP (*)</label>
-                <input id="cep" inputmode="numeric" type="text" required />
-            </div>
-            <div>
-                <label for="cidade">Cidade</label>
-                <input id="cidade" type="text" />
-            </div>
-            <div>
-                <label for="bairro">Bairro</label>
-                <input id="bairro" type="text" />
-            </div>
-            <div>
-                <label for="logradouro">Logradouro</label>
-                <input id="logradouro" type="text" />
-            </div>
-            <div>
-                <label for="numero">Número</label>
-                <input id="numero" inputmode="numeric" type="text" />
-            </div>
+          <div>
+            <label style="margin-top: 10px;" for="situacaoImovel">Situação do imóvel</label>
+            <input id="situacaoImovel" type="text" />
+          </div>
+          <div>
+            <label style="margin-top: 10px;" for="cep">CEP (*)</label>
+            <input id="cep" inputmode="numeric" type="text" required />
+          </div>
+          <div>
+            <label style="margin-top: 10px;" for="cidade">Cidade</label>
+            <input id="cidade" type="text" />
+          </div>
+          <div>
+            <label for="bairro">Bairro</label>
+            <input id="bairro" type="text" />
+          </div>
+          <div>
+            <label for="logradouro">Logradouro</label>
+            <input id="logradouro" type="text" />
+          </div>
+          <div>
+            <label for="numero">Número</label>
+            <input id="numero" inputmode="numeric" type="text" />
+          </div>
         </div>
+      </div>
     </div>
 
-    <!-- SEÇÃO 5: ÁREA / SUBÁREA -->
-    <div style="margin-top:16px" class="card">
+    <!-- SEÇÃO 4: ÁREA / SUBÁREA -->
+    <div style="margin-top:16px" class="card card-collapse" data-collapse-id="areas">
+      <div class="card-head" data-collapse-head>
         <h2>Área e Subárea de Atuação</h2>
-        <div class="small">
-            Clique em "Adicionar" para incluir as atividades econômicas, áreas e subáreas de atuação.
+
+        <button type="button" class="card-toggle" data-collapse-btn>
+          <span class="label">Abrir</span>
+          <span class="chev">▾</span>
+        </button>
+      </div>
+
+      <div class="card-body" data-collapse-body>
+        <div style="margin-top: 10px;" class="small">Clique em "Adicionar" para incluir as atividades econômicas, áreas e subáreas de atuação.
         </div>
+
         <div class="envolvidos-list" id="atividadesList"></div>
+
         <div style="margin-top:10px">
-            <button type="button" class="btn btn-ghost" id="openAtividadeModal">
-                Adicionar
-            </button>
+          <button type="button" class="btn btn-ghost" id="openAtividadeModal">
+            Adicionar
+          </button>
         </div>
+      </div>
     </div>
 
-    <!-- SEÇÃO 7: DOCUMENTOS (opcional na edição) -->
-    <div style="margin-top:16px" class="card">
+    <!-- SEÇÃO 5: DOCUMENTOS (opcional na edição) -->
+    <div style="margin-top:16px" class="card card-collapse" data-collapse-id="docs">
+      <div class="card-head" data-collapse-head>
         <h2>Documentos da OSC</h2>
-        <div class="small">Envie documentos novos para complementar ou substituir.</div>
+
+        <button type="button" class="card-toggle" data-collapse-btn>
+          <span class="label">Abrir</span>
+          <span class="chev">▾</span>
+        </button>
+      </div>
+
+      <div class="card-body" data-collapse-body>
+        <div style="margin-top: 10px;" class="small">Envie documentos novos para complementar ou substituir.</div>
         <div class="small"><b>Formatos permitidos:</b> .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf</div>
         <div class="divider"></div>
 
         <h3 class="section-title">1. Institucionais</h3>
         <div class="grid cols-2">
-            <div>
-                <label for="docEstatuto">Estatuto</label>
-                <div class="envolvidos-list" id="docCard_ESTATUTO"></div>
-                <input id="docEstatuto" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-            </div>
-            <div>
-                <label for="docAta">Ata</label>
-                <div class="envolvidos-list" id="docCard_ATA"></div>
-                <input id="docAta" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-            </div>
+          <div>
+            <label for="docEstatuto">Estatuto</label>
+            <div class="envolvidos-list" id="docCard_ESTATUTO"></div>
+            <input id="docEstatuto" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+          </div>
+          <div>
+            <label for="docAta">Ata</label>
+            <div class="envolvidos-list" id="docCard_ATA"></div>
+            <input id="docAta" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+          </div>
         </div>
-
 
         <h3 class="section-title" style="margin-top:16px">2. Certidões</h3>
         <div class="grid cols-3">
-            <div>
-                <label for="docCndFederal">CND Federal</label>
-                <div class="envolvidos-list" id="docCard_CND_FEDERAL"></div>
-                <input id="docCndFederal" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-            </div>
-            <div>
-                <label for="docCndEstadual">CND Estadual</label>
-                <div class="envolvidos-list" id="docCard_CND_ESTADUAL"></div>
-                <input id="docCndEstadual" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-            </div>
-            <div>
-                <label for="docCndMunicipal">CND Municipal</label>
-                <div class="envolvidos-list" id="docCard_CND_MUNICIPAL"></div>
-                <input id="docCndMunicipal" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-            </div>
-            <div>
-                <label for="docFgts">FGTS</label>
-                <div class="envolvidos-list" id="docCard_FGTS"></div>
-                <input id="docFgts" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-            </div>
-            <div>
-                <label for="docTrabalhista">Trabalhista</label>
-                <div class="envolvidos-list" id="docCard_TRABALHISTA"></div>
-                <input id="docTrabalhista" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-            </div>
-            <div>
-                <label for="docCartCnpj">Cartão CNPJ</label>
-                <div class="envolvidos-list" id="docCard_CARTAO_CNPJ"></div>
-                <input id="docCartCnpj" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-            </div>
+          <div>
+            <label for="docCndFederal">CND Federal</label>
+            <div class="envolvidos-list" id="docCard_CND_FEDERAL"></div>
+            <input id="docCndFederal" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+          </div>
+          <div>
+            <label for="docCndEstadual">CND Estadual</label>
+            <div class="envolvidos-list" id="docCard_CND_ESTADUAL"></div>
+            <input id="docCndEstadual" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+          </div>
+          <div>
+            <label for="docCndMunicipal">CND Municipal</label>
+            <div class="envolvidos-list" id="docCard_CND_MUNICIPAL"></div>
+            <input id="docCndMunicipal" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+          </div>
+          <div>
+            <label for="docFgts">FGTS</label>
+            <div class="envolvidos-list" id="docCard_FGTS"></div>
+            <input id="docFgts" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+          </div>
+          <div>
+            <label for="docTrabalhista">Trabalhista</label>
+            <div class="envolvidos-list" id="docCard_TRABALHISTA"></div>
+            <input id="docTrabalhista" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+          </div>
+          <div>
+            <label for="docCartCnpj">Cartão CNPJ</label>
+            <div class="envolvidos-list" id="docCard_CARTAO_CNPJ"></div>
+            <input id="docCartCnpj" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+          </div>
         </div>
 
         <h3 class="section-title" style="margin-top:16px">3. Contábeis</h3>
         <div class="small">Adicione um ou mais Balanços Patrimoniais, informando o ano de referência.</div>
         <div class="envolvidos-list" id="balancosList"></div>
         <div style="margin-top:10px; margin-bottom:16px;">
-            <button type="button" class="btn btn-ghost" id="openBalancoModal">
-                Adicionar Balanço Patrimonial
-            </button>
+          <button type="button" class="btn btn-ghost" id="openBalancoModal">
+            Adicionar Balanço Patrimonial
+          </button>
         </div>
 
         <div class="small">Adicione um ou mais DRE, informando o ano de referência.</div>
         <div class="envolvidos-list" id="dresList"></div>
         <div style="margin-top:10px;">
-            <button type="button" class="btn btn-ghost" id="openDreModal">
-                Adicionar DRE
-            </button>
+          <button type="button" class="btn btn-ghost" id="openDreModal">
+            Adicionar DRE
+          </button>
         </div>
+      </div>
     </div>
-    <!-- SEÇÃO 1: TEMPLATE DA OSC -->
-    <div style="margin-top:16px" class="card">
+
+    <!-- SEÇÃO 6: TEMPLATE DA OSC -->
+    <div style="margin-top:16px" class="card card-collapse" data-collapse-id="template">
+      <div class="card-head" data-collapse-head>
+        <h2>Exibição do site</h2>
+                
+        <button type="button" class="card-toggle" data-collapse-btn>
+          <span class="label">Abrir</span>
+          <span class="chev">▾</span>
+        </button>
+      </div>
+                
+      <div class="card-body" data-collapse-body>
         <div class="grid cols-2">
-            <!-- LADO ESQUERDO -->
-            <div>
-                <h2>Exibição do site</h2>
-                <div class="grid">
-                    <div class="row">
-                        <div style="flex:1">
-                            <label for="bgColor">Cor de fundo (*)</label>
-                            <input id="bgColor" type="color" value="#f7f7f8" required />
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div style="flex:1">
-                            <label for="secColor">Cor secundária (*)</label>
-                            <input id="secColor" type="color" value="#00aa66" required />
-                        </div>
-                        <div style="flex:1">
-                            <label for="terColor">Cor terciária (*)</label>
-                            <input id="terColor" type="color" value="#ff8a65" required />
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div style="flex:1">
-                            <label for="quaColor">Cor quaternária (*)</label>
-                            <input id="quaColor" type="color" value="#6c5ce7" required />
-                        </div>
-                        <div style="flex:1">
-                            <label for="fonColor">Cor da fonte (*)</label>
-                            <input id="fonColor" type="color" value="#000000" required />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="logoCompleta">Logo completa</label>
-                        <div class="envolvidos-list" id="imgCard_logoCompleta"></div>
-                        <input id="logoCompleta" type="file" accept="image/*" />
-                    </div>
-
-                    <div>
-                        <label for="logoSimples">Logo simples</label>
-                        <div class="envolvidos-list" id="imgCard_logoSimples"></div>
-                        <input id="logoSimples" type="file" accept="image/*" />
-                    </div>
-
-                    <div>
-                        <label for="banner1">Banner principal </label>
-                        <div class="envolvidos-list" id="imgCard_banner1"></div>
-                        <input id="banner1" type="file" accept="image/*" />
-                    </div>
-                    <div>
-                        <label for="labelBanner">Texto do banner</label>
-                        <input id="labelBanner" type="text" placeholder="Texto do banner" />
-                    </div>
-                    <div>
-                        <label for="banner2">Banner 2 </label>
-                        <div class="envolvidos-list" id="imgCard_banner2"></div>
-                        <input id="banner2" type="file" accept="image/*" />
-                    </div>
-
-                    <div>
-                        <label for="banner3">Banner 3 </label>
-                        <div class="envolvidos-list" id="imgCard_banner3"></div>
-                        <input id="banner3" type="file" accept="image/*" />
-                    </div>
+          <!-- LADO ESQUERDO -->
+          <div>
+            <div class="grid">
+              <div class="row">
+                <div style="flex:1">
+                  <label style="margin-top: 10px;" for="bgColor">Cor de fundo (*)</label>
+                  <input id="bgColor" type="color" value="#f7f7f8" required />
                 </div>
-            </div>
-
-            <!-- LADO DIREITO -->
-            <div>
-                <h2 class="section-title">Visualização</h2>
-                <div class="card">
-                    <div class="small">Previews automáticos das imagens e cores selecionadas</div>
-                    <div class="divider"></div>
-                    <div id="previewArea">
-                        <div class="row" style="align-items:center">
-                            <div>
-                                <div class="small">Logo simples</div>
-                                <div class="images-preview" id="previewLogoSimples"></div>
-                            </div>
-                            <div style="margin-left:12px">
-                                <div class="small">Logo completa</div>
-                                <div class="images-preview" id="previewLogoCompleta"></div>
-                            </div>
-                        </div>
-                        <div style="margin-top:12px">
-                            <div class="small">Banners</div>
-                            <div class="images-preview" id="previewBanners"></div>
-                        </div>
-                        <div style="margin-top:12px">
-                            <div class="small">Paleta</div>
-                            <div class="row" id="colorSwatches">
-                                <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">BG<br>
-                                    <div id="swBg">&nbsp;</div>
-                                </div>
-                                <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Sec<br>
-                                    <div id="swSec">&nbsp;</div>
-                                </div>
-                                <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Ter<br>
-                                    <div id="swTer">&nbsp;</div>
-                                </div>
-                                <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Qua<br>
-                                    <div id="swQua">&nbsp;</div>
-                                </div>
-                                <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Fonte<br>
-                                    <div id="swFon">&nbsp;</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+              </div>
+                
+              <div class="row">
+                <div style="flex:1">
+                  <label for="secColor">Cor secundária (*)</label>
+                  <input id="secColor" type="color" value="#00aa66" required />
                 </div>
+                <div style="flex:1">
+                  <label for="terColor">Cor terciária (*)</label>
+                  <input id="terColor" type="color" value="#ff8a65" required />
+                </div>
+              </div>
+                
+              <div class="row">
+                <div style="flex:1">
+                  <label for="quaColor">Cor quaternária (*)</label>
+                  <input id="quaColor" type="color" value="#6c5ce7" required />
+                </div>
+                <div style="flex:1">
+                  <label for="fonColor">Cor da fonte (*)</label>
+                  <input id="fonColor" type="color" value="#000000" required />
+                </div>
+              </div>
+                
+              <div>
+                <label for="logoCompleta">Logo completa</label>
+                <div class="envolvidos-list" id="imgCard_logoCompleta"></div>
+                <input id="logoCompleta" type="file" accept="image/*" />
+              </div>
+                
+              <div>
+                <label for="logoSimples">Logo simples</label>
+                <div class="envolvidos-list" id="imgCard_logoSimples"></div>
+                <input id="logoSimples" type="file" accept="image/*" />
+              </div>
+                
+              <div>
+                <label for="banner1">Banner principal</label>
+                <div class="envolvidos-list" id="imgCard_banner1"></div>
+                <input id="banner1" type="file" accept="image/*" />
+              </div>
+                
+              <div>
+                <label for="labelBanner">Texto do banner</label>
+                <input id="labelBanner" type="text" placeholder="Texto do banner" />
+              </div>
+                
+              <div>
+                <label for="banner2">Banner 2</label>
+                <div class="envolvidos-list" id="imgCard_banner2"></div>
+                <input id="banner2" type="file" accept="image/*" />
+              </div>
+                
+              <div>
+                <label for="banner3">Banner 3</label>
+                <div class="envolvidos-list" id="imgCard_banner3"></div>
+                <input id="banner3" type="file" accept="image/*" />
+              </div>
             </div>
+          </div>
+                
+          <!-- LADO DIREITO -->
+          <div>
+            <h2 style="margin-top: 10px;" class="section-title">Visualização</h2>
+            <div class="card">
+              <div class="small">Previews automáticos das imagens e cores selecionadas</div>
+              <div class="divider"></div>
+                
+              <div id="previewArea">
+                <div class="row" style="align-items:center">
+                  <div>
+                    <div class="small">Logo simples</div>
+                    <div class="images-preview" id="previewLogoSimples"></div>
+                  </div>
+                
+                  <div style="margin-left:12px">
+                    <div class="small">Logo completa</div>
+                    <div class="images-preview" id="previewLogoCompleta"></div>
+                  </div>
+                </div>
+                
+                <div style="margin-top:12px">
+                  <div class="small">Banners</div>
+                  <div class="images-preview" id="previewBanners"></div>
+                </div>
+                
+                <div style="margin-top:12px">
+                  <div class="small">Paleta</div>
+                  <div class="row" id="colorSwatches">
+                    <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">
+                      BG<br><div id="swBg">&nbsp;</div>
+                    </div>
+                    <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">
+                      Sec<br><div id="swSec">&nbsp;</div>
+                    </div>
+                    <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">
+                      Ter<br><div id="swTer">&nbsp;</div>
+                    </div>
+                    <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">
+                      Qua<br><div id="swQua">&nbsp;</div>
+                    </div>
+                    <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">
+                      Fonte<br><div id="swFon">&nbsp;</div>
+                    </div>
+                  </div>
+                </div>
+                
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
 </form>
 
@@ -2744,6 +2875,52 @@ if (!$oscIdVinculada) {
             alert("Erro ao enviar dados ao servidor.");
         }
     }
+
+    // ===== COLLAPSE "CARD SANDUÍCHE" =====
+    function initCardCollapse() {
+      const cards = document.querySelectorAll('.card-collapse[data-collapse-id]');
+      cards.forEach(card => {
+        const id = card.getAttribute('data-collapse-id');
+        const head = card.querySelector('[data-collapse-head]');
+        const btn = card.querySelector('[data-collapse-btn]');
+        const label = btn?.querySelector('.label');
+    
+        // restaura estado salvo (se existir)
+        const saved = localStorage.getItem('collapse:' + id);
+        if (saved === 'open') card.classList.add('is-open');
+        if (saved === 'closed') card.classList.remove('is-open');
+    
+        function syncLabel() {
+          const open = card.classList.contains('is-open');
+          if (label) label.textContent = open ? 'Fechar' : 'Abrir';
+          localStorage.setItem('collapse:' + id, open ? 'open' : 'closed');
+        }
+    
+        function toggle() {
+          card.classList.toggle('is-open');
+          syncLabel();
+        }
+    
+        // clica no cabeçalho: abre/fecha
+        head?.addEventListener('click', (e) => {
+          // se clicou no botão, deixa o handler do botão fazer o trabalho
+          if (e.target.closest('[data-collapse-btn]')) return;
+          toggle();
+        });
+    
+        // botão também abre/fecha
+        btn?.addEventListener('click', (e) => {
+          e.preventDefault();
+          toggle();
+        });
+    
+        // estado inicial do texto
+        syncLabel();
+      });
+    }
+    
+    // chama uma vez no carregamento
+    initCardCollapse();
 
     updatePreviews();
     renderTemplateImageCards();
