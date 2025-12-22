@@ -96,7 +96,22 @@ if (!is_dir($pastaDestino)) {
     exit;
 }
 
-$nomeArquivo = uniqid() . "-" . preg_replace('/[^A-Za-z0-9._-]/', '_', $nomeOriginal);
+$base = pathinfo($nomeOriginal, PATHINFO_FILENAME);
+
+// 1) tira acentos (ex: "Balanço Patrimonial" -> "Balanco Patrimonial")
+$base = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $base);
+
+// 2) transforma em "humano": letras/números viram, o resto vira hífen
+$base = strtolower($base);
+$base = preg_replace('/[^a-z0-9]+/', '-', $base);
+$base = trim($base, '-');
+$base = preg_replace('/-+/', '-', $base);
+
+if ($base === '') $base = 'arquivo';
+
+$id = uniqid();
+$nomeArquivo = $ext ? "{$base}-{$id}.{$ext}" : "{$base}-{$id}";
+
 $caminhoCompletoFs = $pastaDestino . $nomeArquivo;
 
 $caminhoRelativo = "assets/oscs/osc-$id_osc/" .

@@ -288,7 +288,7 @@ try {
         WHERE id = ?
     ");
     $stmt->bind_param(
-        "ssssssssssssssssssi",
+        "sssssssssssssssssi",
         $nomeOsc,
         $razaoSocial,
         $nomeFantasia,
