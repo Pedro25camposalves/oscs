@@ -256,12 +256,62 @@ if (!$oscIdVinculada) {
         .card-collapse.is-open .chev {
           transform: rotate(180deg);
         }
+
+        /* ===== TABS (OSC / PROJETOS) ===== */
+        .tabs-top {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin: 12px 0 6px 0; /* espaço abaixo do header e antes do card salvar */
+        }
+
+        .tab-btn {
+            appearance: none;
+            border: 1px solid #ddd;
+            background: #fff;
+            color: #444;
+            padding: 10px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform .08s ease, background .15s ease, border-color .15s ease;
+        }
+
+        .tab-btn:hover {
+            background: #f6f6f6;
+        }
+
+        .tab-btn:active {
+            transform: scale(0.98);
+        }
+
+        .tab-btn.is-active {
+            background: var(--qua);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .tab-btn .dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 999px;
+            background: currentColor;
+            opacity: .6;
+        }
+
+        .tab-btn.is-active .dot {
+            opacity: 1;
+        }
     </style>
 </head>
 
 <body>
 <header>
-    <h1>Painel de Controle — Editar OSC <span id="oscNomeHeader"></span></h1>
+    <h1>Painel de Controle — Editar OSC</h1>
     <div class="header-right">
         <div class="muted">
             <?php if (!empty($_SESSION['nome'])): ?>
@@ -277,14 +327,17 @@ if (!$oscIdVinculada) {
 <form id="oscForm" onsubmit="event.preventDefault();saveData()">
     <input type="hidden" id="oscId" value="<?= (int)$oscIdVinculada ?>" />
 
-        <!-- BOTÕES -->
-    <div style="margin-top:16px" class="card">
-        <footer>
-            <div class="small muted">Edite o que quiser e clique em "Salvar alterações" para concluir a edição!</div>
-            <div style="display:flex; gap:8px">
-                <button type="submit" class="btn btn-primary">SALVAR ALTERAÇÕES</button>
-            </div>
-        </footer>
+    <!-- TABS DE NAVEGAÇÃO (OSC / PROJETOS) -->
+    <div class="tabs-top" id="tabsTop">
+        <button type="button" class="tab-btn" id="tabOsc">
+            <span class="dot"></span>
+            OSC
+        </button>
+
+        <button type="button" class="tab-btn" id="tabProjetos">
+            <span class="dot"></span>
+            Projetos
+        </button>
     </div>
 
     <!-- SEÇÃO 1: INFORMAÇÕES BÁSICAS -->
@@ -688,6 +741,17 @@ if (!$oscIdVinculada) {
         </div>
       </div>
     </div>
+
+    <!-- BOTÕES -->
+    <div style="margin-top:16px" class="card">
+        <footer>
+            <div class="small muted">Edite o que quiser e clique em "Salvar alterações" para concluir a edição!</div>
+            <div style="display:flex; gap:8px">
+                <button type="submit" class="btn btn-primary">SALVAR ALTERAÇÕES</button>
+            </div>
+        </footer>
+    </div>
+
 </form>
 
 </main>
@@ -2508,9 +2572,6 @@ if (!$oscIdVinculada) {
         }
     
         const osc = result.data;
-
-        const h = qs('#oscNomeHeader');
-        if (h) h.textContent = osc.nomeOsc ? `— ${osc.nomeOsc}` : '';
     
         // cores
         if (osc.cores) {
@@ -2875,6 +2936,47 @@ if (!$oscIdVinculada) {
             alert("Erro ao enviar dados ao servidor.");
         }
     }
+
+    // ===== TABS (OSC / PROJETOS) =====
+    function initTabsTopo() {
+      const tabOsc = qs('#tabOsc');
+      const tabProjetos = qs('#tabProjetos');
+      if (!tabOsc || !tabProjetos) return;
+
+      // Ajuste aqui para os nomes reais dos seus endpoints
+      const ENDPOINT_OSC = 'editar_osc.php';
+      const ENDPOINT_PROJETOS = 'projetos_osc.php';
+
+      const path = (window.location.pathname || '').toLowerCase();
+
+      // Heurística: se a URL atual contém "projet" => ativa Projetos, senão OSC
+      const estouEmProjetos = path.includes('projet');
+
+      tabOsc.classList.toggle('is-active', !estouEmProjetos);
+      tabProjetos.classList.toggle('is-active', estouEmProjetos);
+
+      // Mantém o oscId no redirect (se você usar ?id=)
+      const id = Number(qs('#oscId')?.value || 0);
+
+      tabOsc.addEventListener('click', () => {
+        // já está em OSC? não faz nada
+        if (!estouEmProjetos) return;
+
+        const url = id ? `${ENDPOINT_OSC}?id=${encodeURIComponent(id)}` : ENDPOINT_OSC;
+        window.location.href = url;
+      });
+
+      tabProjetos.addEventListener('click', () => {
+        // já está em Projetos? não faz nada
+        if (estouEmProjetos) return;
+
+        const url = id ? `${ENDPOINT_PROJETOS}?id=${encodeURIComponent(id)}` : ENDPOINT_PROJETOS;
+        window.location.href = url;
+      });
+    }
+
+    // chama no carregamento
+    initTabsTopo();
 
     // ===== COLLAPSE "CARD SANDUÍCHE" =====
     function initCardCollapse() {
