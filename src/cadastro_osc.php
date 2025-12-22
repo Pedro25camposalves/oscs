@@ -256,6 +256,45 @@ require 'autenticacao.php';
             gap: 12px;
         }
 
+        .tabs-top{
+            display:flex;
+            gap:10px;
+            margin: 0 0 16px 0;
+        }
+
+        .tab-btn{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            padding:10px 14px;
+            border-radius:999px;
+            border:1px solid #ddd;
+            background:#fff;
+            color:#333;
+            text-decoration:none;
+            font-weight:600;
+            font-size:13px;
+            box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
+        }
+
+        .tab-btn:hover{ background:#f6f6f7; }
+
+        .tab-btn .dot{
+            width:10px;
+            height:10px;
+            border-radius:999px;
+            background:#cfcfd6;
+        }
+
+        .tab-btn.is-active{
+            border-color: rgba(108, 92, 231, .35);
+            background: rgba(108, 92, 231, .08);
+        }
+
+        .tab-btn.is-active .dot{
+            background: var(--qua);
+        }
+
         .logout-link {
             padding: 6px 12px;
             border-radius: 999px;
@@ -284,8 +323,6 @@ require 'autenticacao.php';
     </style>
 </head>
 
-</script>
-
 <body>
     <header>
         <h1>Painel de Controle — Cadastro de OSC</h1>
@@ -303,11 +340,19 @@ require 'autenticacao.php';
     </header>
 
     <main>
+        <?php $activePage = basename($_SERVER['PHP_SELF']); ?>
 
+        <!-- TABS DE NAVEGAÇÃO (abaixo do header) -->
+        <div class="tabs-top" id="tabsTop">
+            <a class="tab-btn <?= ($activePage === 'oscs_cadastradas.php') ? 'is-active' : '' ?>" href="oscs_cadastradas.php"><span class="dot"></span>OSCs</a>
+            <a class="tab-btn <?= ($activePage === 'cadastro_osc.php') ? 'is-active' : '' ?>" href="cadastro_osc.php"><span class="dot"></span>Nova OSC</a>
+            <a class="tab-btn" href="config_osc.php"><span class="dot"></span>Configurações OSC</a>
+        </div>
+        
         <form id="oscForm" onsubmit="event.preventDefault();saveData()">
             
             <!-- SEÇÃO 6: USUÁRIO RESPONSÁVEL PELA OSC -->
-            <div style="margin-top:16px" class="card">
+            <div style="margin-top:1px" class="card">
                 <h2>Usuário responsável pela OSC</h2>
                 <div>
                     <div>
