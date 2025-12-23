@@ -929,13 +929,27 @@ $oscNome = $row['nome'] ?? 'OSC';
       const opt = payload
         ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
         : { method: 'GET' };
-
+    
       const res = await fetch(url, opt);
-      const data = await res.json().catch(() => ({}));
-      if (!data || data.ok === false) {
-        throw new Error(data?.message || 'Falha na requisição.');
+    
+      // pega o corpo cru (pode ser JSON ou HTML/erro)
+      const raw = await res.text();
+    
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = null; }
+    
+      // Se veio HTTP 4xx/5xx, joga erro com detalhes
+      if (!res.ok) {
+        const msg = (data && data.message) ? data.message : raw.slice(0, 400);
+        throw new Error(`HTTP ${res.status} — ${msg}`);
       }
-      return data;
+    
+      // Se veio JSON do seu padrão com ok=false
+      if (data && data.ok === false) {
+        throw new Error(data.message || 'Falha na requisição.');
+      }
+    
+      return data ?? { ok: true, raw };
     }
 
     function fmtDataBR(dtStr) {
@@ -1111,6 +1125,19 @@ $oscNome = $row['nome'] ?? 'OSC';
 
     // ===== salvar modal =====
     modalSave.addEventListener('click', async () => {
+        
+      // ✅ deleteOsc não precisa de currentUserId
+      if (currentModalType === 'deleteOsc') {
+        try {
+          await api('ajax_deletar_osc.php', { osc_id: oscId });
+          closeModal();
+          window.location.href = 'oscs_cadastradas.php';
+        } catch (e) {
+          alert(e.message || 'Não foi possível excluir a OSC.');
+        }
+        return;
+      }
+      
       if(!currentUserId) return;
 
       if(currentModalType === 'edit'){
@@ -1163,16 +1190,6 @@ $oscNome = $row['nome'] ?? 'OSC';
           alert(e.message);
         }
       }
-
-      if(currentModalType === 'deleteOsc'){
-          try {
-            await api('ajax_deletar_osc.php', { osc_id: oscId });
-            closeModal();
-            window.location.href = 'oscs_cadastradas.php';
-          } catch (e) {
-            alert(e.message || 'Não foi possível excluir a OSC.');
-          }
-        }
 
     });
 
