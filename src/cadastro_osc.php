@@ -1,6 +1,6 @@
 <?php
-$TIPOS_PERMITIDOS = ['OSC_TECH_ADMIN']; // só usuário OscTech admin
-$RESPOSTA_JSON    = false;              // resposta é página HTML
+$TIPOS_PERMITIDOS = ['OSC_TECH_ADMIN']; 
+$RESPOSTA_JSON    = false;              
 require 'autenticacao.php';
 ?>
 

@@ -282,6 +282,11 @@ require 'autenticacao.php';
             pointer-events: none;
         }
 
+        .card::before,
+        .card::after{
+          pointer-events: none;
+        }
+
         @media (max-width: 980px){
             .grid{ grid-template-columns: repeat(2, 1fr); }
         }
@@ -315,7 +320,7 @@ require 'autenticacao.php';
     <div class="tabs-top" id="tabsTop">
         <a class="tab-btn is-active" href="oscs_cadastradas.php"><span class="dot"></span>OSCs</a>
         <a class="tab-btn" href="cadastro_osc.php"><span class="dot"></span>Nova OSC</a>
-        <a class="tab-btn" href="config_osc.php"><span class="dot"></span>Configurações OSC</a>
+        <span class="tab-btn" style="opacity:.55; cursor:not-allowed;"><span class="dot"></span>Configurações OSC</span>
     </div>
 
     <div class="top-row">
@@ -335,6 +340,17 @@ require 'autenticacao.php';
     const status = document.getElementById('status');
     const empty  = document.getElementById('empty');
     const search = document.getElementById('search');
+
+    grid.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action="config"]');
+        if (!btn) return;
+
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        if (!id) return;    
+        
+        window.location.href = `config_osc.php?osc_id=${encodeURIComponent(id)}`;
+    });
 
     let cache = [];
 
@@ -458,21 +474,6 @@ require 'autenticacao.php';
         // 3) adiciona o card “Nova OSC”
         grid.appendChild(criarCardNovaOsc());
 
-        // listeners dos botões dos cards (inclui o "nova")
-        grid.querySelectorAll('button[data-action]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-
-                const action = btn.getAttribute('data-action');
-                const id = btn.getAttribute('data-id');
-
-                if (action === 'config'){
-                    window.location.href = `config_osc.php?id=${encodeURIComponent(id)}`;
-                } else if (action === 'nova'){
-                    window.location.href = `cadastro_osc.php`;
-                }
-            });
-        });
     }
 
     function filtrar(){
