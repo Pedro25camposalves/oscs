@@ -292,7 +292,6 @@ try {
 
         /* segura texto grande (igual “kv” das OSCs) */
         display: -webkit-box;
-        -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
 
