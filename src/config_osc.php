@@ -686,7 +686,15 @@ $oscNome = $row['nome'] ?? 'OSC';
             </div>
 
             <div style="grid-column: 1 / -1;">
-              <div class="small" id="editUserMsg"></div>
+              <label class="label-inline" style="margin-top:6px;">
+                <input type="checkbox" id="toggleSenhaEdit" />
+                <span class="small">Exibir senha</span>
+                <div class="small" id="editUserMsg"></div>
+              </label>
+            </div>
+            <div style="grid-column: 1 / -1;">
+              
+
             </div>
           </div>
         </section>
@@ -713,7 +721,6 @@ $oscNome = $row['nome'] ?? 'OSC';
 
     </div>
     <div class="divider"></div>
-    <p class="modal-subtitle">Alterações só serão aplicadas ao clicar em “Salvar”.</p>
 
     <!-- Rodapé do modal -->
     <div class="modal-footer">
@@ -890,6 +897,9 @@ $oscNome = $row['nome'] ?? 'OSC';
           editMsg.textContent = '';
           editMsg.classList.remove('senha-ok', 'senha-erro');
         }
+        if (toggleSenhaEdit) toggleSenhaEdit.checked = false;
+        if (editUserSenha) editUserSenha.type = 'password';
+        if (editUserSenha2) editUserSenha2.type = 'password';
     }
 
     // ===== clique nos ícones (engrenagem/lixeira) =====
@@ -1119,14 +1129,23 @@ $oscNome = $row['nome'] ?? 'OSC';
           editUserSenha.value = '';
           editUserSenha2.value = '';
           if (editUserMsg) editUserMsg.textContent = '';
+          if (toggleSenhaEdit) toggleSenhaEdit.checked = false;
+          editUserSenha.type = 'password';
+          editUserSenha2.type = 'password';
         }
       }
     };
 
+    const toggleSenhaEdit = document.getElementById('toggleSenhaEdit');
+
+    toggleSenhaEdit?.addEventListener('change', (e) => {
+      const tipo = e.target.checked ? 'text' : 'password';
+      editUserSenha.type = tipo;
+      editUserSenha2.type = tipo;
+    });
+
     // ===== salvar modal =====
     modalSave.addEventListener('click', async () => {
-        
-      // ✅ deleteOsc não precisa de currentUserId
       if (currentModalType === 'deleteOsc') {
         try {
           await api('ajax_deletar_osc.php', { osc_id: oscId });

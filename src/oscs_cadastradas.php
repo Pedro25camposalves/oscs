@@ -136,6 +136,18 @@ require 'autenticacao.php';
             box-shadow: 0 10px 26px rgba(16, 24, 40, 0.08);
             border:1px solid rgba(0,0,0,.05);
             min-height:170px;
+            transition: transform .15s ease, box-shadow .15s ease;
+            transform: translateZ(0);
+        }
+
+        .card:hover{
+          transform: translateY(-2px);
+          box-shadow: 0 16px 34px rgba(16, 24, 40, 0.12);
+        }
+
+        .card-spacer:hover{
+          transform: none;
+          box-shadow: none;
         }
 
         .card::before{
@@ -287,6 +299,98 @@ require 'autenticacao.php';
           pointer-events: none;
         }
 
+.plus-card{
+        position:relative;
+        overflow:hidden;
+        border-radius:14px;
+        min-height:170px;
+        background: var(--card-bg);
+        box-shadow: 0 10px 26px rgba(16, 24, 40, 0.08);
+        border:1px solid rgba(0,0,0,.05);
+
+        display:block;
+        text-decoration:none;
+        transition: transform .15s ease, box-shadow .15s ease;
+        transform: translateZ(0);
+        cursor:pointer;
+        color:inherit;
+    }
+
+    .plus-card:hover{
+        transform: translateY(-2px);
+        box-shadow: 0 16px 34px rgba(16, 24, 40, 0.12);
+    }
+
+    .plus-card::before{
+        content:"";
+        position:absolute;
+        inset:0;
+        background-image: linear-gradient(135deg, rgba(108,92,231,.95), rgba(0,170,102,.88));
+        background-size:cover;
+        background-position:center;
+        transform: scale(1.05);
+        filter: saturate(1.05);
+        opacity:.95;
+    }
+
+    .plus-card::after{
+        content:"";
+        position:absolute;
+        inset:0;
+        background: linear-gradient(180deg, rgba(0,0,0,.40) 0%, rgba(0,0,0,.28) 45%, rgba(0,0,0,.45) 100%);
+    }
+
+    .plus-inner{
+        position:relative;
+        z-index:2;
+        height:100%;
+        padding:14px;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        color:#fff;
+        gap:10px;
+    }
+
+    .plus-icon{
+      position: relative;
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(6px);
+
+      display: grid;
+      place-items: center;
+
+      font-size: 0; /* garante que não sobra texto e nada “puxa” o centro */
+    }
+
+    /* desenha o + perfeito, geometricamente centralizado */
+    .plus-icon::before,
+    .plus-icon::after{
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,.95);
+      border-radius: 999px;
+    }
+    
+    .plus-icon::before{ width: 16px; height: 2.5px; } /* barra horizontal */
+    .plus-icon::after{ width: 2.5px; height: 16px; }  /* barra vertical */
+
+    .plus-text{
+        font-size:18px;
+        font-weight:800;
+        letter-spacing:.2px;
+        text-shadow: 0 2px 10px rgba(0,0,0,.35);
+    }
+
         @media (max-width: 980px){
             .grid{ grid-template-columns: repeat(2, 1fr); }
         }
@@ -389,14 +493,14 @@ require 'autenticacao.php';
 
     function criarCardNovaOsc(){
         const el = document.createElement('div');
-        el.className = 'card card-add';
+        el.className = 'plus-card';
         el.setAttribute('data-osc-id', 'nova');
 
         el.innerHTML = `
-            <div style="align-items:center; display:flex; flex-direction:column; justify-content:center;" class="card-content">
-                <h3 class="card-title">Cadastrar OSC</h3>
-                <div class="pill"><span style="font-weight:900; font-size:16px;">＋</span> <span style="opacity:.9">Nova OSC</span></div>
-            </div>
+          <div class="plus-inner">
+            <div class="plus-icon" aria-hidden="true"></div>
+            <div class="plus-text">Nova OSC</div>
+          </div>
         `;
 
         // clique no card todo também funciona

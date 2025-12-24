@@ -357,20 +357,34 @@ try {
     }
 
     .plus-icon{
-        font-size:32px;
-        font-weight:900;
-        line-height:1;
-        margin:0;
-        width:38px;
-        height:38px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        border-radius:999px;
-        background: rgba(255,255,255,.14);
-        border: 1px solid rgba(255,255,255,.18);
-        backdrop-filter: blur(6px);
+      position: relative;
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(6px);
+
+      display: grid;
+      place-items: center;
+
+      font-size: 0; /* garante que não sobra texto e nada “puxa” o centro */
     }
+
+    /* desenha o + perfeito, geometricamente centralizado */
+    .plus-icon::before,
+    .plus-icon::after{
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,.95);
+      border-radius: 999px;
+    }
+    
+    .plus-icon::before{ width: 16px; height: 2.5px; } /* barra horizontal */
+    .plus-icon::after{ width: 2.5px; height: 16px; }  /* barra vertical */
 
     .plus-text{
         font-size:18px;
@@ -471,7 +485,7 @@ try {
             <!-- CARD + (NOVO PROJETO) -->
             <a class="plus-card" href="cadastro_projeto.php?osc_id=<?= (int)$oscIdVinculada ?>">
                 <div class="plus-inner">
-                    <div class="plus-icon">+</div>
+                    <div class="plus-icon" aria-hidden="true"></div>
                     <div class="plus-text">Novo Projeto</div>
                 </div>
             </a>
