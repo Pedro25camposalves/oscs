@@ -686,7 +686,15 @@ $oscNome = $row['nome'] ?? 'OSC';
             </div>
 
             <div style="grid-column: 1 / -1;">
-              <div class="small" id="editUserMsg"></div>
+              <label class="label-inline" style="margin-top:6px;">
+                <input type="checkbox" id="toggleSenhaEdit" />
+                <span class="small">Exibir senha</span>
+                <div class="small" id="editUserMsg"></div>
+              </label>
+            </div>
+            <div style="grid-column: 1 / -1;">
+              
+
             </div>
           </div>
         </section>
@@ -713,7 +721,6 @@ $oscNome = $row['nome'] ?? 'OSC';
 
     </div>
     <div class="divider"></div>
-    <p class="modal-subtitle">Alterações só serão aplicadas ao clicar em “Salvar”.</p>
 
     <!-- Rodapé do modal -->
     <div class="modal-footer">
@@ -890,6 +897,9 @@ $oscNome = $row['nome'] ?? 'OSC';
           editMsg.textContent = '';
           editMsg.classList.remove('senha-ok', 'senha-erro');
         }
+        if (toggleSenhaEdit) toggleSenhaEdit.checked = false;
+        if (editUserSenha) editUserSenha.type = 'password';
+        if (editUserSenha2) editUserSenha2.type = 'password';
     }
 
     // ===== clique nos ícones (engrenagem/lixeira) =====
@@ -929,13 +939,27 @@ $oscNome = $row['nome'] ?? 'OSC';
       const opt = payload
         ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
         : { method: 'GET' };
-
+    
       const res = await fetch(url, opt);
-      const data = await res.json().catch(() => ({}));
-      if (!data || data.ok === false) {
-        throw new Error(data?.message || 'Falha na requisição.');
+    
+      // pega o corpo cru (pode ser JSON ou HTML/erro)
+      const raw = await res.text();
+    
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = null; }
+    
+      // Se veio HTTP 4xx/5xx, joga erro com detalhes
+      if (!res.ok) {
+        const msg = (data && data.message) ? data.message : raw.slice(0, 400);
+        throw new Error(`HTTP ${res.status} — ${msg}`);
       }
-      return data;
+    
+      // Se veio JSON do seu padrão com ok=false
+      if (data && data.ok === false) {
+        throw new Error(data.message || 'Falha na requisição.');
+      }
+    
+      return data ?? { ok: true, raw };
     }
 
     function fmtDataBR(dtStr) {
@@ -1105,12 +1129,34 @@ $oscNome = $row['nome'] ?? 'OSC';
           editUserSenha.value = '';
           editUserSenha2.value = '';
           if (editUserMsg) editUserMsg.textContent = '';
+          if (toggleSenhaEdit) toggleSenhaEdit.checked = false;
+          editUserSenha.type = 'password';
+          editUserSenha2.type = 'password';
         }
       }
     };
 
+    const toggleSenhaEdit = document.getElementById('toggleSenhaEdit');
+
+    toggleSenhaEdit?.addEventListener('change', (e) => {
+      const tipo = e.target.checked ? 'text' : 'password';
+      editUserSenha.type = tipo;
+      editUserSenha2.type = tipo;
+    });
+
     // ===== salvar modal =====
     modalSave.addEventListener('click', async () => {
+      if (currentModalType === 'deleteOsc') {
+        try {
+          await api('ajax_deletar_osc.php', { osc_id: oscId });
+          closeModal();
+          window.location.href = 'oscs_cadastradas.php';
+        } catch (e) {
+          alert(e.message || 'Não foi possível excluir a OSC.');
+        }
+        return;
+      }
+      
       if(!currentUserId) return;
 
       if(currentModalType === 'edit'){
@@ -1163,16 +1209,6 @@ $oscNome = $row['nome'] ?? 'OSC';
           alert(e.message);
         }
       }
-
-      if(currentModalType === 'deleteOsc'){
-          try {
-            await api('ajax_deletar_osc.php', { osc_id: oscId });
-            closeModal();
-            window.location.href = 'oscs_cadastradas.php';
-          } catch (e) {
-            alert(e.message || 'Não foi possível excluir a OSC.');
-          }
-        }
 
     });
 

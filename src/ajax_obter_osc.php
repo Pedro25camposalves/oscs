@@ -50,9 +50,22 @@ try {
     }
 
     // ============================================
-    // 4) IMÓVEL
+    // 4) IMÓVEL + ENDEREÇO (nova estrutura)
     // ============================================
-    $stmt = $conn->prepare("SELECT * FROM imovel WHERE osc_id = ? LIMIT 1");
+    $stmt = $conn->prepare("
+        SELECT 
+            i.id        AS imovel_id,
+            i.situacao  AS imovel_situacao,
+            e.cep       AS imovel_cep,
+            e.cidade    AS imovel_cidade,
+            e.bairro    AS imovel_bairro,
+            e.logradouro AS imovel_logradouro,
+            e.numero    AS imovel_numero
+        FROM imovel i
+        LEFT JOIN endereco e ON e.id = i.endereco_id
+        WHERE i.osc_id = ?
+        LIMIT 1
+    ");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $imovel = $stmt->get_result()->fetch_assoc();
@@ -200,12 +213,13 @@ try {
         ],
 
         'imovel' => [
-            'cep'       => $imovel['cep'] ?? '',
-            'cidade'    => $imovel['cidade'] ?? '',
-            'bairro'    => $imovel['bairro'] ?? '',
-            'logradouro'=> $imovel['logradouro'] ?? '',
-            'numero'    => $imovel['numero'] ?? '',
-            'situacao'  => $imovel['situacao'] ?? '',
+                'id'         => isset($imovel['imovel_id']) ? (int)$imovel['imovel_id'] : null,
+                'cep'        => $imovel['imovel_cep'] ?? '',
+                'cidade'     => $imovel['imovel_cidade'] ?? '',
+                'bairro'     => $imovel['imovel_bairro'] ?? '',
+                'logradouro' => $imovel['imovel_logradouro'] ?? '',
+                'numero'     => $imovel['imovel_numero'] ?? '',
+                'situacao'   => $imovel['imovel_situacao'] ?? '',
         ],
 
         'atividades' => $atividades,

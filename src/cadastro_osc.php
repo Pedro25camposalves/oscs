@@ -383,9 +383,6 @@ require 'autenticacao.php';
                     </label>
                     <div id="senhaMsg" class="small"></div>
                 </div>
-                <div class="small muted" style="margin-top:6px">
-                    Este usuário será criado como Administrador, com permissão para gerenciar apenas esta OSC.
-                </div>
             </div>
 
             <!-- SEÇÃO 1: TEMPLATE DA OSC -->
@@ -604,7 +601,7 @@ require 'autenticacao.php';
                     </div>
                     <div>
                         <label for="cep">CEP (*)</label>
-                        <input id="cep" inputmode="numeric" type="text" required />
+                        <input id="cep" inputmode="numeric" type="text" />
                     </div>
                     <div>
                         <label for="cidade">Cidade</label>

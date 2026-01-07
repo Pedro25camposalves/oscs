@@ -17,58 +17,77 @@ $status    = strtoupper(trim($body['status'] ?? 'ATIVO')); // ATIVO | DESATIVADO
 $senha     = (string)($body['senha'] ?? ''); // opcional
 
 if ($oscId <= 0 || $usuarioId <= 0 || $nome === '' || $email === '') {
-  echo json_encode(['ok' => false, 'message' => 'Dados insuficientes para atualizar.']);
-  exit;
+    echo json_encode(['ok' => false, 'message' => 'Dados insuficientes para atualizar.']);
+    exit;
 }
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-  echo json_encode(['ok' => false, 'message' => 'E-mail inválido.']);
-  exit;
+    echo json_encode(['ok' => false, 'message' => 'E-mail inválido.']);
+    exit;
 }
 
 $ativo = ($status === 'DESATIVADO') ? 0 : 1;
 
-// garante que esse usuário está vinculado a essa OSC
-$stmt = $conn->prepare("SELECT 1 FROM usuario_osc WHERE usuario_id = ? AND osc_id = ? LIMIT 1");
+// garante que esse usuário está vinculado a essa OSC e é OSC_MASTER
+$stmt = $conn->prepare("
+    SELECT 1
+      FROM usuario
+     WHERE id = ?
+       AND osc_id = ?
+       AND tipo = 'OSC_MASTER'
+     LIMIT 1
+");
 $stmt->bind_param("ii", $usuarioId, $oscId);
 $stmt->execute();
 if (!$stmt->get_result()->fetch_assoc()) {
-  echo json_encode(['ok' => false, 'message' => 'Usuário não pertence a esta OSC.']);
-  exit;
+    echo json_encode(['ok' => false, 'message' => 'Usuário não pertence a esta OSC ou não é um OSC_MASTER.']);
+    $stmt->close();
+    exit;
 }
+$stmt->close();
 
 try {
-  if ($senha !== '') {
-    if (mb_strlen($senha) < 6) {
-      echo json_encode(['ok' => false, 'message' => 'Senha muito curta (mínimo 6 caracteres).']);
-      exit;
+    if ($senha !== '') {
+        if (mb_strlen($senha) < 6) {
+            echo json_encode(['ok' => false, 'message' => 'Senha muito curta (mínimo 6 caracteres).']);
+            exit;
+        }
+
+        $hash = password_hash($senha, PASSWORD_BCRYPT);
+
+        $stmt = $conn->prepare("
+            UPDATE usuario
+               SET nome  = ?,
+                   email = ?,
+                   ativo = ?,
+                   senha = ?
+             WHERE id    = ?
+        ");
+        $stmt->bind_param("ssisi", $nome, $email, $ativo, $hash, $usuarioId);
+    } else {
+        $stmt = $conn->prepare("
+            UPDATE usuario
+               SET nome  = ?,
+                   email = ?,
+                   ativo = ?
+             WHERE id    = ?
+        ");
+        $stmt->bind_param("ssii", $nome, $email, $ativo, $usuarioId);
     }
 
-    $hash = password_hash($senha, PASSWORD_BCRYPT);
+    $stmt->execute();
+    $stmt->close();
 
-    $stmt = $conn->prepare("
-      UPDATE usuario
-      SET nome = ?, email = ?, ativo = ?, senha = ?
-      WHERE id = ?
-    ");
-    $stmt->bind_param("ssisi", $nome, $email, $ativo, $hash, $usuarioId);
-  } else {
-    $stmt = $conn->prepare("
-      UPDATE usuario
-      SET nome = ?, email = ?, ativo = ?
-      WHERE id = ?
-    ");
-    $stmt->bind_param("ssii", $nome, $email, $ativo, $usuarioId);
-  }
-
-  $stmt->execute();
-
-  echo json_encode(['ok' => true, 'message' => 'Usuário atualizado.']);
+    echo json_encode(['ok' => true, 'message' => 'Usuário atualizado.']);
 } catch (mysqli_sql_exception $e) {
-  // Email duplicado
-  if ((int)$e->getCode() === 1062) {
-    echo json_encode(['ok' => false, 'message' => 'Este e-mail já está em uso.']);
-    exit;
-  }
-  echo json_encode(['ok' => false, 'message' => 'Erro ao atualizar usuário.', 'detail' => $e->getMessage()]);
+    // Email duplicado
+    if ((int)$e->getCode() === 1062) {
+        echo json_encode(['ok' => false, 'message' => 'Este e-mail já está em uso.']);
+        exit;
+    }
+    echo json_encode([
+        'ok'      => false,
+        'message' => 'Erro ao atualizar usuário.',
+        'detail'  => $e->getMessage()
+    ]);
 }

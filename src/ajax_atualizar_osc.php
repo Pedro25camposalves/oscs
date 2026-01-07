@@ -314,35 +314,125 @@ try {
     // ============================================
     // 2) UPDATE IMÓVEL
     // ============================================
-    $cep       = (string)pick($data, ['imovel.cep', 'cep'], '');
-    $cidade    = (string)pick($data, ['imovel.cidade', 'cidade'], '');
-    $bairro    = (string)pick($data, ['imovel.bairro', 'bairro'], '');
-    $logradouro= (string)pick($data, ['imovel.logradouro', 'logradouro'], '');
-    $numero    = (string)pick($data, ['imovel.numero', 'numero'], '');
-    $situacao  = (string)pick($data, ['imovel.situacao', 'situacaoImovel'], '');
+    $cep        = (string)pick($data, ['imovel.cep', 'cep'], '');
+    $cidade     = (string)pick($data, ['imovel.cidade', 'cidade'], '');
+    $bairro     = (string)pick($data, ['imovel.bairro', 'bairro'], '');
+    $logradouro = (string)pick($data, ['imovel.logradouro', 'logradouro'], '');
+    $numero     = (string)pick($data, ['imovel.numero', 'numero'], '');
+    $situacao   = (string)pick($data, ['imovel.situacao', 'situacaoImovel'], '');
 
-    // garante que exista registro
-    $stmt = $conn->prepare("SELECT id FROM imovel WHERE osc_id = ? LIMIT 1");
+    // Verifica se já existe imóvel para essa OSC
+    $stmt = $conn->prepare("SELECT id, endereco_id FROM imovel WHERE osc_id = ? LIMIT 1");
     $stmt->bind_param("i", $osc_id);
     $stmt->execute();
     $imv = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
+    $temEndereco =
+        ($cep !== '' ||
+         $cidade !== '' ||
+         $bairro !== '' ||
+         $logradouro !== '' ||
+         $numero !== '');
+
     if ($imv) {
+        $imovelId   = (int)$imv['id'];
+        $enderecoId = (int)($imv['endereco_id'] ?? 0);
+
+        // Já existe imóvel
+        if ($enderecoId > 0) {
+            // Atualiza o endereço existente
+            if ($temEndereco) {
+                $stmt = $conn->prepare("
+                    UPDATE endereco
+                       SET cep = ?, cidade = ?, bairro = ?, logradouro = ?, numero = ?
+                     WHERE id = ?
+                ");
+                $stmt->bind_param("sssssi", $cep, $cidade, $bairro, $logradouro, $numero, $enderecoId);
+                if (!$stmt->execute()) {
+                    throw new Exception("Erro ao atualizar endereço: " . $stmt->error);
+                }
+                $stmt->close();
+            }
+            // Se não tem dados de endereço, mantemos o que já está no BD
+
+        } else {
+            // Imóvel existe, mas ainda não tem endereco_id
+            if ($temEndereco) {
+                // Cria um novo endereço
+                $stmt = $conn->prepare("
+                    INSERT INTO endereco (cep, cidade, bairro, logradouro, numero)
+                    VALUES (?, ?, ?, ?, ?)
+                ");
+                $stmt->bind_param("sssss", $cep, $cidade, $bairro, $logradouro, $numero);
+                if (!$stmt->execute()) {
+                    throw new Exception("Erro ao inserir endereço: " . $stmt->error);
+                }
+                $enderecoId = (int)$stmt->insert_id;
+                $stmt->close();
+
+                // Vincula no imóvel
+                $stmt = $conn->prepare("
+                    UPDATE imovel
+                       SET endereco_id = ?
+                     WHERE id = ?
+                ");
+                $stmt->bind_param("ii", $enderecoId, $imovelId);
+                if (!$stmt->execute()) {
+                    throw new Exception("Erro ao vincular endereço ao imóvel: " . $stmt->error);
+                }
+                $stmt->close();
+            }
+        }
+
+        // Atualiza sempre a situação do imóvel
         $stmt = $conn->prepare("
-            UPDATE imovel SET cep=?, cidade=?, bairro=?, logradouro=?, numero=?, situacao=?
-            WHERE osc_id=?
+            UPDATE imovel
+               SET situacao = ?
+             WHERE id = ?
         ");
-        $stmt->bind_param("ssssssi", $cep, $cidade, $bairro, $logradouro, $numero, $situacao, $osc_id);
-        if (!$stmt->execute()) throw new Exception("Erro ao atualizar imóvel: " . $stmt->error);
+        $stmt->bind_param("si", $situacao, $imovelId);
+        if (!$stmt->execute()) {
+            throw new Exception("Erro ao atualizar situação do imóvel: " . $stmt->error);
+        }
         $stmt->close();
+
     } else {
-        $stmt = $conn->prepare("
-            INSERT INTO imovel (osc_id, cep, cidade, bairro, logradouro, numero, situacao)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ");
-        $stmt->bind_param("issssss", $osc_id, $cep, $cidade, $bairro, $logradouro, $numero, $situacao);
-        if (!$stmt->execute()) throw new Exception("Erro ao inserir imóvel: " . $stmt->error);
+        // Ainda não existe imóvel para essa OSC
+        $enderecoId = null;
+
+        if ($temEndereco) {
+            // Cria endereço
+            $stmt = $conn->prepare("
+                INSERT INTO endereco (cep, cidade, bairro, logradouro, numero)
+                VALUES (?, ?, ?, ?, ?)
+            ");
+            $stmt->bind_param("sssss", $cep, $cidade, $bairro, $logradouro, $numero);
+            if (!$stmt->execute()) {
+                throw new Exception("Erro ao inserir endereço: " . $stmt->error);
+            }
+            $enderecoId = (int)$stmt->insert_id;
+            $stmt->close();
+        }
+
+        if ($enderecoId !== null) {
+            $stmt = $conn->prepare("
+                INSERT INTO imovel (osc_id, endereco_id, situacao)
+                VALUES (?, ?, ?)
+            ");
+            $stmt->bind_param("iis", $osc_id, $enderecoId, $situacao);
+        } else {
+            // Nenhum dado de endereço informado: cria imóvel só com situação
+            $stmt = $conn->prepare("
+                INSERT INTO imovel (osc_id, situacao)
+                VALUES (?, ?)
+            ");
+            $stmt->bind_param("is", $osc_id, $situacao);
+        }
+
+        if (!$stmt->execute()) {
+            throw new Exception("Erro ao inserir imóvel: " . $stmt->error);
+        }
         $stmt->close();
     }
 

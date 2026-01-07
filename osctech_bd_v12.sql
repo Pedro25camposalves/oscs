@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS `osc_atividade` (
   DEFAULT CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_general_ci;
 
+
 -- -----------------------------------------------------
 -- Tabela ENVOLVIDO_OSC
 -- -----------------------------------------------------
@@ -80,18 +81,22 @@ CREATE TABLE IF NOT EXISTS `envolvido_osc` (
   DEFAULT CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_general_ci;
 
+
 -- -----------------------------------------------------
 -- Tabela PROJETO
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `projeto` (
-  `id`          INT          NOT NULL AUTO_INCREMENT,
-  `osc_id`      INT          NOT NULL,
-  `nome`        VARCHAR(120) NULL     DEFAULT NULL,
-  `sobre`       LONGTEXT     NULL     DEFAULT NULL,
-  `data_inicio` DATE         NULL     DEFAULT NULL,
-  `data_fim`    DATE         NULL     DEFAULT NULL,
-  `status`      VARCHAR(30)  NULL     DEFAULT NULL,
-  `objetivos`   LONGTEXT     NULL     DEFAULT NULL,
+  `id`            INT             NOT NULL AUTO_INCREMENT,
+  `osc_id`        INT             NOT NULL,
+  `nome`          VARCHAR(120)    NOT NULL,
+  `email`         VARCHAR(120)    NULL     DEFAULT NULL,
+  `telefone`      VARCHAR(11)     NULL     DEFAULT NULL,
+  `logo`          VARCHAR(255)    NOT NULL,
+  `img_descricao` VARCHAR(255)    NOT NULL,
+  `descricao`     LONGTEXT        NULL     DEFAULT NULL,
+  `data_inicio`   DATE            NOT NULL,
+  `data_fim`      DATE            NULL     DEFAULT NULL,
+  `status`        ENUM('EXECUCAO','ENCERRADO','PLANEJAMENTO','PENDENTE') NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `uk_projeto_id_osc` (`id` ASC, `osc_id` ASC),
   INDEX `fk_projeto_osc1_idx` (`osc_id` ASC),
@@ -105,17 +110,21 @@ CREATE TABLE IF NOT EXISTS `projeto` (
   DEFAULT CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_general_ci;
 
+
 -- -----------------------------------------------------
 -- Tabela EVENTO_OFICINA
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `evento_oficina` (
-  `id`         INT          NOT NULL AUTO_INCREMENT,
-  `projeto_id` INT          NOT NULL,
-  `pai_id`     INT          NULL     DEFAULT NULL,
-  `tipo`       VARCHAR(45)  NULL     DEFAULT NULL,
-  `nome`       VARCHAR(120) NULL     DEFAULT NULL,
-  `descricao`  LONGTEXT     NULL     DEFAULT NULL,
-  `caminho`    VARCHAR(45)  NULL     DEFAULT NULL,
+  `id`         INT                       NOT NULL AUTO_INCREMENT,
+  `projeto_id` INT                       NOT NULL,
+  `pai_id`     INT                       NULL     DEFAULT NULL,
+  `tipo`       ENUM('EVENTO', 'OFICINA') NULL     DEFAULT NULL,
+  `img_capa`   VARCHAR(255)              NULL     DEFAULT NULL,
+  `nome`       VARCHAR(120)              NULL     DEFAULT NULL,
+  `descricao`  LONGTEXT                  NULL     DEFAULT NULL,
+  `data_inicio`   DATE                   NULL     DEFAULT NULL,
+  `data_fim`      DATE                   NULL     DEFAULT NULL,
+  `status`     ENUM('EXECUCAO','ENCERRADO','PLANEJAMENTO','PENDENTE') NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `uk_eo_id_proj` (`id` ASC, `projeto_id` ASC),
   INDEX `fk_evento_oficina_evento_oficina1_idx` (`pai_id` ASC),
@@ -135,6 +144,72 @@ CREATE TABLE IF NOT EXISTS `evento_oficina` (
   DEFAULT CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_general_ci;
 
+
+-- -----------------------------------------------------
+-- Tabela ENDERECO
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `endereco` (
+  `id`          INT          NOT NULL AUTO_INCREMENT,
+  `descricao`   VARCHAR(60)  NULL DEFAULT NULL,
+  `cep`         VARCHAR(8)   NULL DEFAULT NULL,
+  `cidade`      VARCHAR(45)  NULL DEFAULT NULL,
+  `logradouro`  VARCHAR(45)  NULL DEFAULT NULL,
+  `bairro`      VARCHAR(45)  NULL DEFAULT NULL,
+  `numero`      VARCHAR(6)   NULL DEFAULT NULL,
+  `complemento` VARCHAR(45)  NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 1
+  DEFAULT CHARACTER SET = utf8mb4
+  COLLATE = utf8mb4_general_ci;
+
+
+-- -----------------------------------------------------
+-- Tabela ENDERECO_PROJETO
+-- -----------------------------------------------------
+  CREATE TABLE IF NOT EXISTS `endereco_projeto` (
+  `projeto_id`  INT NOT NULL,
+  `endereco_id` INT NOT NULL,
+  PRIMARY KEY (`projeto_id`, `endereco_id`),
+  INDEX `idx_projeto_endereco_endereco` (`endereco_id`),
+  CONSTRAINT `fk_endereco_projeto_projeto`
+    FOREIGN KEY (`projeto_id`)
+    REFERENCES `projeto` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_endereco_projeto_endereco`
+    FOREIGN KEY (`endereco_id`)
+    REFERENCES `endereco` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB
+  DEFAULT CHARACTER SET = utf8mb4
+  COLLATE = utf8mb4_general_ci;
+
+
+-- -----------------------------------------------------
+-- Tabela ENDERECO_EVENTO_OFICINA
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `endereco_evento_oficina` (
+  `evento_oficina_id` INT NOT NULL,
+  `endereco_id`       INT NOT NULL,
+  PRIMARY KEY (`evento_oficina_id`, `endereco_id`),
+  INDEX `idx_eo_endereco_endereco` (`endereco_id`),
+  CONSTRAINT `fk_eo_endereco_evento_oficina`
+    FOREIGN KEY (`evento_oficina_id`)
+    REFERENCES `evento_oficina` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_eo_endereco_endereco`
+    FOREIGN KEY (`endereco_id`)
+    REFERENCES `endereco` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB
+  DEFAULT CHARACTER SET = utf8mb4
+  COLLATE = utf8mb4_general_ci;
+
+
 -- -----------------------------------------------------
 -- Tabela ENVOLVIDO_PROJETO
 -- -----------------------------------------------------
@@ -142,6 +217,10 @@ CREATE TABLE IF NOT EXISTS `envolvido_projeto` (
   `envolvido_osc_id` INT         NOT NULL,
   `projeto_id`       INT         NOT NULL,
   `funcao`           VARCHAR(60) NULL     DEFAULT NULL,
+  `data_inicio`      DATE NULL DEFAULT NULL,
+  `data_fim`         DATE NULL DEFAULT NULL,
+  `salario`          DECIMAL(10,2) NULL DEFAULT NULL,
+  `ativo`            TINYINT(1)   NOT NULL DEFAULT 1,
   PRIMARY KEY (`envolvido_osc_id`, `projeto_id`),
   INDEX `fk_ep_projeto_idx` (`projeto_id` ASC),
   CONSTRAINT `fk_ep_envolvido_osc`
@@ -157,6 +236,7 @@ CREATE TABLE IF NOT EXISTS `envolvido_projeto` (
 ) ENGINE = InnoDB
   DEFAULT CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_general_ci;
+
 
 -- -----------------------------------------------------
 -- Tabela ENVOLVIDO_EVENTO_OFICINA
@@ -183,6 +263,7 @@ CREATE TABLE IF NOT EXISTS `envolvido_evento_oficina` (
   DEFAULT CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_general_ci;
 
+
 -- -----------------------------------------------------
 -- Tabela CORES
 -- -----------------------------------------------------
@@ -206,6 +287,7 @@ CREATE TABLE IF NOT EXISTS `cores` (
   DEFAULT CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_general_ci;
 
+
 -- -----------------------------------------------------
 -- Tabela DOCUMENTO
 -- -----------------------------------------------------
@@ -213,8 +295,8 @@ CREATE TABLE IF NOT EXISTS `documento` (
   `id_documento`   INT         NOT NULL AUTO_INCREMENT,
   `osc_id`         INT         NOT NULL,
   `projeto_id`     INT         NULL     DEFAULT NULL,
-  `categoria`      ENUM('INSTITUCIONAL','CERTIDAO','CONTABIL') NOT NULL,
-  `subtipo`        VARCHAR(45) NOT NULL,   -- ESTATUTO, ATA, CND_FEDERAL, CND_ESTADUAL, CND_MUNICIPAL, FGTS, TRABALHISTA, BALANCO_PATRIMONIAL, DRE
+  `categoria`      ENUM('INSTITUCIONAL','CERTIDAO','CONTABIL','EXECUCAO','ESPECIFICOS') NOT NULL,
+  `subtipo`        VARCHAR(45) NOT NULL,   -- ESTATUTO, ATA, CND_FEDERAL, CND_ESTADUAL, CND_MUNICIPAL, FGTS, TRABALHISTA, BALANCO_PATRIMONIAL, DRE, PLANO_TRABALHO, PLANILHA_ORCAMENTARIA, TERMO_COLABORACAO, APTIDAO
   `ano_referencia` YEAR        NULL,       -- usado pra BALANCO_PATRIMONIAL e DRE
   `documento`      TINYTEXT    NOT NULL,
   `data_upload`    DATETIME    NOT NULL DEFAULT       CURRENT_TIMESTAMP,
@@ -237,6 +319,7 @@ CREATE TABLE IF NOT EXISTS `documento` (
   AUTO_INCREMENT = 1
   DEFAULT CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_general_ci;
+
 
 -- -----------------------------------------------------
 -- Tabela EDITAL
@@ -265,29 +348,33 @@ CREATE TABLE IF NOT EXISTS `edital` (
   DEFAULT CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_general_ci;
 
+
 -- -----------------------------------------------------
 -- Tabela IMOVEL
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `imovel` (
-  `id`         INT         NOT NULL AUTO_INCREMENT,
-  `osc_id`     INT         NOT NULL,
-  `cep`        VARCHAR(8)  NULL     DEFAULT NULL,
-  `cidade`     VARCHAR(45) NULL     DEFAULT NULL,
-  `logradouro` VARCHAR(45) NULL     DEFAULT NULL,
-  `bairro`     VARCHAR(45) NULL     DEFAULT NULL,
-  `numero`     VARCHAR(5)  NULL     DEFAULT NULL,
-  `situacao`   VARCHAR(60) NULL     DEFAULT NULL,
+  `id`          INT         NOT NULL AUTO_INCREMENT,
+  `osc_id`      INT         NOT NULL,
+  `endereco_id` INT         NULL     DEFAULT NULL,
+  `situacao`    VARCHAR(60) NULL     DEFAULT NULL,
   PRIMARY KEY (`id`),
-  INDEX `fk_imovel_osc1_idx` (`osc_id` ASC),
+  INDEX `fk_imovel_osc1_idx` (`osc_id`),
+  INDEX `idx_imovel_endereco` (`endereco_id`),
   CONSTRAINT `fk_imovel_osc1`
     FOREIGN KEY (`osc_id`)
     REFERENCES `osc` (`id`)
     ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_imovel_endereco`
+    FOREIGN KEY (`endereco_id`)
+    REFERENCES `endereco` (`id`)
+    ON DELETE SET NULL
     ON UPDATE CASCADE
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 1
+) ENGINE=InnoDB
+  AUTO_INCREMENT=1
   DEFAULT CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_general_ci;
+
 
 -- -----------------------------------------------------
 -- Tabela TEMPLATE_WEB
@@ -330,47 +417,15 @@ CREATE TABLE IF NOT EXISTS `usuario` (
   `email`            VARCHAR(150) NOT NULL,
   `senha`            VARCHAR(255) NOT NULL,
   `tipo`             ENUM('OSC_TECH_ADMIN', 'OSC_MASTER') NOT NULL,
+  `osc_id`           INT NULL,
   `ativo`            TINYINT(1)   NOT NULL DEFAULT 1,
-  `data_criacao`     DATETIME     NOT NULL DEFAULT       CURRENT_TIMESTAMP,
-  `data_atualizacao` DATETIME     NOT NULL DEFAULT       CURRENT_TIMESTAMP
+  `data_criacao`     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `data_atualizacao` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
     ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `uk_usuario_email` (`email` ASC)
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 1
-  DEFAULT CHARACTER SET = utf8mb4
-  COLLATE = utf8mb4_general_ci;
-
--- -----------------------------------------------------
--- Usuário padrão OscTech
--- -----------------------------------------------------
-INSERT INTO usuario (nome, email, senha, tipo, ativo)
-VALUES (
-  'Administrador OscTech',
-  'admin@osctech.com',
-  '$2y$10$gYD5.Gy0vPRH6tEC3odP.Ok.JSpE.qMi4hjDp6VX6KwejHTXDK.cO',
-  'OSC_TECH_ADMIN',
-  1
-);
-
--- -----------------------------------------------------
--- Tabela USUARIO_OSC
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `usuario_osc` (
-  `id`           INT      NOT NULL AUTO_INCREMENT,
-  `usuario_id`   INT      NOT NULL,
-  `osc_id`       INT      NOT NULL,
-  `data_criacao` DATETIME NOT NULL DEFAULT        CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE INDEX `uk_usuario_osc` (`usuario_id` ASC, `osc_id` ASC),
-  INDEX `fk_usuario_osc_usuario_idx` (`usuario_id` ASC),
-  INDEX `fk_usuario_osc_osc_idx` (`osc_id` ASC),
-  CONSTRAINT `fk_usuario_osc_usuario`
-    FOREIGN KEY (`usuario_id`)
-    REFERENCES `usuario` (`id`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT `fk_usuario_osc_osc`
+  UNIQUE INDEX `uk_usuario_email` (`email` ASC),
+  INDEX `fk_usuario_osc_idx` (`osc_id` ASC),
+  CONSTRAINT `fk_usuario_osc`
     FOREIGN KEY (`osc_id`)
     REFERENCES `osc` (`id`)
     ON DELETE CASCADE
@@ -379,6 +434,19 @@ CREATE TABLE IF NOT EXISTS `usuario_osc` (
   AUTO_INCREMENT = 1
   DEFAULT CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_general_ci;
+
+-- -----------------------------------------------------
+-- Usuário padrão OscTech
+-- -----------------------------------------------------
+INSERT INTO usuario (nome, email, senha, tipo, osc_id, ativo)
+VALUES (
+  'Administrador OscTech',
+  'admin@osctech.com',
+  '$2y$10$gYD5.Gy0vPRH6tEC3odP.Ok.JSpE.qMi4hjDp6VX6KwejHTXDK.cO',
+  'OSC_TECH_ADMIN',
+  NULL,
+  1
+);
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;

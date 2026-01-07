@@ -1,8 +1,10 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require 'conexao.php';
 
-$email = $_POST['email'] ?? '';
+$email = $_POST['email']    ?? '';
 $senha = $_POST['password'] ?? '';
 
 // 1) Validações básicas
@@ -19,14 +21,13 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 }
 
 // 2) Busca usuário na tabela `usuario`
-$sql = "SELECT id, nome, email, senha, tipo, ativo 
-        FROM usuario 
+$sql = "SELECT id, nome, email, senha, tipo, osc_id, ativo
+        FROM usuario
         WHERE email = ?
         LIMIT 1";
 
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
-    // Se der erro de prepare, melhor não expor detalhe técnico pro usuário
     $_SESSION['erro'] = "Erro interno ao preparar a consulta.";
     header("Location: ./login.php");
     exit;
@@ -34,7 +35,7 @@ if (!$stmt) {
 
 $stmt->bind_param("s", $email);
 $stmt->execute();
-$result = $stmt->get_result();
+$result  = $stmt->get_result();
 $usuario = $result->fetch_assoc();
 $stmt->close();
 
@@ -51,7 +52,7 @@ if ((int)$usuario['ativo'] !== 1) {
     exit;
 }
 
-// 4) Valida senha
+// 4) Valida senha (hash BCRYPT salvo no banco)
 if (!password_verify($senha, $usuario['senha'])) {
     $_SESSION['erro'] = "Email ou senha incorretos!";
     header("Location: ./login.php");
@@ -62,46 +63,29 @@ if (!password_verify($senha, $usuario['senha'])) {
 session_regenerate_id(true);
 
 $_SESSION['usuario_id'] = (int)$usuario['id'];
+$_SESSION['id']         = (int)$usuario['id'];   // compat com scripts que usam 'id'
 $_SESSION['nome']       = $usuario['nome'];
 $_SESSION['email']      = $usuario['email'];
 $_SESSION['tipo']       = $usuario['tipo'];
+$_SESSION['osc_id']     = $usuario['osc_id'];
 
-// 6) Se for OSC_MASTER, carrega as OSCs vinculadas
+// 6) Se for OSC_MASTER, define as OSCs vinculadas a partir do campo osc_id
 if ($usuario['tipo'] === 'OSC_MASTER') {
-    $sqlOsc = "SELECT osc_id 
-               FROM usuario_osc 
-               WHERE usuario_id = ?";
-    $stmtOsc = $conn->prepare($sqlOsc);
-    if ($stmtOsc) {
-        $stmtOsc->bind_param("i", $_SESSION['usuario_id']);
-        $stmtOsc->execute();
-        $resultOsc = $stmtOsc->get_result();
+    $oscId = $usuario['osc_id'] ? (int)$usuario['osc_id'] : null;
 
-        $oscIds = [];
-        while ($row = $resultOsc->fetch_assoc()) {
-            $oscIds[] = (int)$row['osc_id'];
-        }
-        $stmtOsc->close();
-
-        // guarda na sessão as OSCs que ele pode gerenciar
-        $_SESSION['osc_ids'] = $oscIds;
-
-        // Se quiser já definir uma "OSC atual" padrão:
-        if (!empty($oscIds)) {
-            $_SESSION['osc_atual_id'] = $oscIds[0];
-        }
+    // mantém a mesma ideia de osc_ids/osc_atual_id
+    $_SESSION['osc_ids'] = $oscId ? [$oscId] : [];
+    if ($oscId) {
+        $_SESSION['osc_atual_id'] = $oscId;
     }
 }
 
 // 7) Redireciona para a área logada
 $redirectTo = $_POST['redirect_to'] ?? ($_SESSION['redirect_to'] ?? './cadastro_osc.php');
 
-// Limpa pra não ficar lixo na sessão
 unset($_SESSION['redirect_to']);
 
-// Pequena proteção contra open redirect externo
 if (strpos($redirectTo, '://') !== false) {
-    // se tiver "http://", "https://" etc, ignora e manda pra padrão
     $redirectTo = './cadastro_osc.php';
 }
 

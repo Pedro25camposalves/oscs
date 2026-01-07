@@ -8,8 +8,6 @@ require_once 'conexao.php';
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    if (!isset($_SESSION)) session_start();
-
     $tipoUsuario = $_SESSION['tipo'] ?? null;
     $usuarioId   = $_SESSION['id'] ?? $_SESSION['usuario_id'] ?? null;
 
@@ -19,7 +17,7 @@ try {
         exit;
     }
 
-    // Query base: traz OSC + email do responsável (OSC_MASTER) + banner principal
+    // Query base: traz OSC + e-mail do responsável (OSC_MASTER) + banner principal
     $sqlBase = "
         SELECT
             o.id,
@@ -28,11 +26,10 @@ try {
             o.cnpj,
             (
                 SELECT u.email
-                FROM usuario_osc uo
-                INNER JOIN usuario u ON u.id = uo.usuario_id
-                WHERE uo.osc_id = o.id
-                  AND u.tipo = 'OSC_MASTER'
-                ORDER BY uo.data_criacao ASC, uo.id ASC
+                FROM usuario u
+                WHERE u.osc_id = o.id
+                  AND u.tipo   = 'OSC_MASTER'
+                ORDER BY u.data_criacao ASC, u.id ASC
                 LIMIT 1
             ) AS email_responsavel,
             (
@@ -45,7 +42,7 @@ try {
         FROM osc o
     ";
 
-    // OSC_MASTER: só as OSCs vinculadas ao usuário logado
+    // Se for OSC_MASTER, lista apenas a OSC vinculada a ele
     if ($tipoUsuario === 'OSC_MASTER') {
         if (!$usuarioId) {
             http_response_code(401);
@@ -53,23 +50,37 @@ try {
             exit;
         }
 
+        // Busca as OSC esse usuário master controla
+        $stmt = $conn->prepare("
+            SELECT osc_id
+            FROM usuario
+            WHERE id = ? AND tipo = 'OSC_MASTER'
+            LIMIT 1
+        ");
+        $stmt->bind_param("i", $usuarioId);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        $oscIdVinculada = (int)($row['osc_id'] ?? 0);
+        if ($oscIdVinculada <= 0) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Usuário não possui OSC vinculada.']);
+            exit;
+        }
+
         $sql = $sqlBase . "
-            WHERE EXISTS (
-                SELECT 1
-                FROM usuario_osc uo2
-                WHERE uo2.osc_id = o.id
-                  AND uo2.usuario_id = ?
-            )
+            WHERE o.id = ?
             ORDER BY o.nome
         ";
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $usuarioId);
+        $stmt->bind_param("i", $oscIdVinculada);
         $stmt->execute();
         $result = $stmt->get_result();
 
     } else {
-        // OSC_TECH_ADMIN: todas
+        // OSC_TECH_ADMIN: vê todas as OSCs
         $sql = $sqlBase . " ORDER BY o.nome";
         $result = $conn->query($sql);
     }
@@ -78,9 +89,9 @@ try {
     while ($row = $result->fetch_assoc()) {
         $lista[] = [
             'id'               => (int)$row['id'],
-            'nome'             => $row['nome'] ?? '',
-            'sigla'             => $row['sigla'] ?? '',
-            'cnpj'             => $row['cnpj'] ?? '',
+            'nome'             => $row['nome']  ?? '',
+            'sigla'            => $row['sigla'] ?? '',
+            'cnpj'             => $row['cnpj']  ?? '',
             'emailResponsavel' => $row['email_responsavel'] ?? '',
             'banner1'          => $row['banner1'] ?? ''
         ];
