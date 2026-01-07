@@ -12,17 +12,14 @@ if (!$usuarioId) {
     exit('Sessão inválida. Faça login novamente.');
 }
 
-// OSC vinculada ao usuário master
-$stmt = $conn->prepare("SELECT osc_id FROM usuario_osc WHERE usuario_id = ? LIMIT 1");
-$stmt->bind_param("i", $usuarioId);
-$stmt->execute();
-$res = $stmt->get_result()->fetch_assoc();
-$oscIdVinculada = $res['osc_id'] ?? null;
+// OSC vinculada ao usuário master vem direto da sessão agora
+$oscIdVinculada = $_SESSION['osc_id'] ?? null;
 
 if (!$oscIdVinculada) {
     http_response_code(403);
     exit('Este usuário não possui OSC vinculada. Contate o administrador do sistema.');
 }
+
 ?>
 <!doctype html>
 <html lang="pt-BR">

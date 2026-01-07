@@ -20,8 +20,8 @@ if (!$idDocumento) {
     exit;
 }
 
-// 1) Descobre a OSC vinculada ao usuário master
-$stmt = $conn->prepare("SELECT osc_id FROM usuario_osc WHERE usuario_id = ? LIMIT 1");
+// 1) Descobre a OSC vinculada diretamente ao usuário (tabela usuario)
+$stmt = $conn->prepare("SELECT osc_id FROM usuario WHERE id = ? LIMIT 1");
 $stmt->bind_param("i", $usuarioId);
 $stmt->execute();
 $res = $stmt->get_result()->fetch_assoc();
@@ -63,7 +63,7 @@ try {
     $caminhoRel = $doc['documento'] ?? '';
     $apagouArquivo = false;
 
-    // 3) Apaga no banco primeiro (ou depois, tanto faz; eu prefiro garantir DB consistente)
+    // 3) Apaga no banco
     $stmt = $conn->prepare("DELETE FROM documento WHERE id_documento = ?");
     $stmt->bind_param("i", $idDocumento);
     $stmt->execute();
@@ -89,8 +89,8 @@ try {
     }
 
     echo json_encode([
-        'success' => true,
-        'id_documento' => $idDocumento,
+        'success'        => true,
+        'id_documento'   => $idDocumento,
         'apagou_arquivo' => $apagouArquivo
     ]);
 

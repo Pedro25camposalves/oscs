@@ -12,8 +12,11 @@ if (!$usuarioId) {
     exit('Sessão inválida. Faça login novamente.');
 }
 
+// =============================================
 // OSC vinculada ao usuário master
-$stmt = $conn->prepare("SELECT osc_id FROM usuario_osc WHERE usuario_id = ? LIMIT 1");
+// agora pela coluna usuario.osc_id (FK pra osc.id)
+// =============================================
+$stmt = $conn->prepare("SELECT osc_id FROM usuario WHERE id = ? LIMIT 1");
 $stmt->bind_param("i", $usuarioId);
 $stmt->execute();
 $res = $stmt->get_result()->fetch_assoc();
@@ -24,25 +27,12 @@ if (!$oscIdVinculada) {
     exit('Este usuário não possui OSC vinculada. Contate o administrador do sistema.');
 }
 
-// (Opcional) Nome da OSC para colocar no título
-$nomeOsc = '';
-try {
-    $stmtNome = $conn->prepare("SELECT nomeOsc FROM osc WHERE id = ? LIMIT 1");
-    if ($stmtNome) {
-        $stmtNome->bind_param("i", $oscIdVinculada);
-        $stmtNome->execute();
-        $rNome = $stmtNome->get_result()->fetch_assoc();
-        $nomeOsc = $rNome['nomeOsc'] ?? '';
-    }
-} catch (Throwable $e) {
-    $nomeOsc = '';
-}
-
-// ===== BUSCA PROJETOS =====
-// ⚠️ AJUSTE AQUI conforme o seu banco (tabela/colunas):
-// Esperado:
-//  - tabela: projeto
-//  - colunas: id, osc_id, nome, descricao, imagem_capa
+// =============================================
+// BUSCA PROJETOS
+// tabela projeto: id, osc_id, nome, email, telefone,
+// logo, img_descricao, descricao, data_inicio, data_fim,
+// depoimento, status
+// =============================================
 $projetos = [];
 try {
     $sql = "
@@ -50,7 +40,7 @@ try {
             p.id,
             p.nome,
             p.descricao,
-            p.imagem_capa
+            p.img_descricao AS imagem_capa
         FROM projeto p
         WHERE p.osc_id = ?
         ORDER BY p.id DESC
@@ -418,9 +408,6 @@ try {
 <header>
     <h1>
         Painel de Controle — Projetos
-        <?php if (!empty($nomeOsc)): ?>
-            <div class="muted" style="margin-top:4px;">OSC: <?= htmlspecialchars($nomeOsc) ?></div>
-        <?php endif; ?>
     </h1>
 
     <div class="header-right">
@@ -434,7 +421,7 @@ try {
 </header>
 
 <main>
-<!-- TABS DE NAVEGAÇÃO (OSC / PROJETOS) -->
+    <!-- TABS DE NAVEGAÇÃO (OSC / PROJETOS) -->
     <div class="tabs-top" id="tabsTop">
         <a class="tab-btn" href="editar_osc.php">
             <span class="dot"></span>
@@ -459,7 +446,7 @@ try {
                     $id   = (int)($p['id'] ?? 0);
                     $nome = $p['nome'] ?? 'Projeto sem nome';
                     $desc = $p['descricao'] ?? '';
-                    $img  = $p['imagem_capa'] ?? '';
+                    $img  = $p['imagem_capa'] ?? ''; // vem de img_descricao (alias no SELECT)
 
                     $bgFallback = "linear-gradient(135deg, rgba(108,92,231,.85), rgba(0,170,102,.65))";
                     $bgImg = $img ? "url('" . htmlspecialchars($img, ENT_QUOTES) . "')" : $bgFallback;

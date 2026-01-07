@@ -5,6 +5,11 @@ require 'autenticacao.php';
 
 include 'conexao.php';
 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+
 function criarDiretoriosOsc(int $oscId): bool
 {
     $baseDir = __DIR__ . '/assets/oscs';
@@ -147,14 +152,15 @@ foreach ($atividades as $atv) {
 $usuarioNome  = mysqli_real_escape_string($conn, $_POST['usuario_nome']  ?? '');
 $usuarioEmail = mysqli_real_escape_string($conn, $_POST['usuario_email'] ?? '');
 $usuarioSenha = $_POST['usuario_senha'] ?? '';
+$usuarioId    = null;
 
 if ($usuarioNome !== '' && $usuarioEmail !== '' && $usuarioSenha !== '') {
     $senhaHash = password_hash($usuarioSenha, PASSWORD_DEFAULT);
 
     // Insere o usuário da OSC
     $sqlUsuario = "
-        INSERT INTO usuario (nome, email, senha, tipo, ativo)
-        VALUES ('$usuarioNome', '$usuarioEmail', '$senhaHash', 'OSC_MASTER', 1)
+        INSERT INTO usuario (nome, email, senha, tipo, osc_id, ativo)
+        VALUES ('$usuarioNome', '$usuarioEmail', '$senhaHash', 'OSC_MASTER', '$osc_id', 1)
     ";
 
     if (!mysqli_query($conn, $sqlUsuario)) {
@@ -166,20 +172,6 @@ if ($usuarioNome !== '' && $usuarioEmail !== '' && $usuarioSenha !== '') {
     }
 
     $usuarioId = (int) mysqli_insert_id($conn);
-
-    // Vincula usuário à OSC
-    $sqlUsuarioOsc = "
-        INSERT INTO usuario_osc (usuario_id, osc_id)
-        VALUES ('$usuarioId', '$osc_id')
-    ";
-
-    if (!mysqli_query($conn, $sqlUsuarioOsc)) {
-        echo json_encode([
-            'success' => false,
-            'error'   => 'Usuário criado, mas erro ao vincular à OSC: ' . mysqli_error($conn)
-        ]);
-        exit;
-    }
 }
 
 // --- Captura os dados dos envolvidos ---
@@ -271,7 +263,7 @@ foreach ($envolvidos as $idx => $envolvido) {
     }
 }
 
-// --- Salve os dados do imóvel da OSC ---
+// --- Salva os dados do imóvel da OSC / endereço ---
 $situacaoImovel = mysqli_real_escape_string($conn, $_POST['situacaoImovel'] ?? '');
 $cep            = mysqli_real_escape_string($conn, $_POST['cep']            ?? '');
 $cidade         = mysqli_real_escape_string($conn, $_POST['cidade']         ?? '');
@@ -279,11 +271,27 @@ $bairro         = mysqli_real_escape_string($conn, $_POST['bairro']         ?? '
 $logradouro     = mysqli_real_escape_string($conn, $_POST['logradouro']     ?? '');
 $numero         = mysqli_real_escape_string($conn, $_POST['numero']         ?? '');
 
+// Cria o endereço
+$sql_endereco = "
+    INSERT INTO endereco (
+        descricao, cep, cidade, logradouro, bairro, numero
+    ) VALUES (
+        'Endereço da OSC', '$cep', '$cidade', '$logradouro', '$bairro', '$numero'
+    )";
+
+if (!mysqli_query($conn, $sql_endereco)) {
+    echo json_encode(['success' => false, 'error' => 'Erro ao salvar Endereco: ' . mysqli_error($conn)]);
+    exit;
+}
+
+$endereco_id = (int) mysqli_insert_id($conn);
+
+// Vincula o imóvel à OSC e ao endereço
 $sql_imovel = "
     INSERT INTO imovel (
-        osc_id, cep, cidade, logradouro, bairro, numero, situacao
+        osc_id, endereco_id, situacao
     ) VALUES (
-        '$osc_id', '$cep', '$cidade', '$logradouro', '$bairro', '$numero', '$situacaoImovel'
+        '$osc_id', '$endereco_id', '$situacaoImovel'
     )";
 
 if (!mysqli_query($conn, $sql_imovel)) {

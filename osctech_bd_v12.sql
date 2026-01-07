@@ -218,6 +218,10 @@ CREATE TABLE IF NOT EXISTS `envolvido_projeto` (
   `envolvido_osc_id` INT         NOT NULL,
   `projeto_id`       INT         NOT NULL,
   `funcao`           VARCHAR(60) NULL     DEFAULT NULL,
+  `data_inicio`      DATE NULL DEFAULT NULL,
+  `data_fim`         DATE NULL DEFAULT NULL,
+  `salario`          DECIMAL(10,2) NULL DEFAULT NULL,
+  `ativo`            TINYINT(1)   NOT NULL DEFAULT 1,
   PRIMARY KEY (`envolvido_osc_id`, `projeto_id`),
   INDEX `fk_ep_projeto_idx` (`projeto_id` ASC),
   CONSTRAINT `fk_ep_envolvido_osc`
@@ -231,28 +235,6 @@ CREATE TABLE IF NOT EXISTS `envolvido_projeto` (
     ON DELETE CASCADE
     ON UPDATE CASCADE
 ) ENGINE = InnoDB
-  DEFAULT CHARACTER SET = utf8mb4
-  COLLATE = utf8mb4_general_ci;
-
-
--- -----------------------------------------------------
--- Tabela CONTRATO_ENVOLVIDO_PROJETO
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `contrato_envolvido_projeto` (
-  `envolvido_osc_id` INT NOT NULL,
-  `projeto_id`       INT NOT NULL,
-  `data_inicio`      DATE NULL DEFAULT NULL,
-  `data_fim`         DATE NULL DEFAULT NULL,
-  `salario`          DECIMAL(10,2) NULL DEFAULT NULL,
-  PRIMARY KEY (`envolvido_osc_id`, `projeto_id`),
-  INDEX `idx_cep_proj` (`projeto_id`),
-  CONSTRAINT `fk_contrato_env_osc`
-    FOREIGN KEY (`envolvido_osc_id`) REFERENCES `envolvido_osc` (`id`)
-    ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_contrato_proj`
-    FOREIGN KEY (`projeto_id`) REFERENCES `projeto` (`id`)
-    ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB
   DEFAULT CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_general_ci;
 
@@ -436,47 +418,15 @@ CREATE TABLE IF NOT EXISTS `usuario` (
   `email`            VARCHAR(150) NOT NULL,
   `senha`            VARCHAR(255) NOT NULL,
   `tipo`             ENUM('OSC_TECH_ADMIN', 'OSC_MASTER') NOT NULL,
+  `osc_id`           INT NULL,
   `ativo`            TINYINT(1)   NOT NULL DEFAULT 1,
-  `data_criacao`     DATETIME     NOT NULL DEFAULT       CURRENT_TIMESTAMP,
-  `data_atualizacao` DATETIME     NOT NULL DEFAULT       CURRENT_TIMESTAMP
+  `data_criacao`     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `data_atualizacao` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
     ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `uk_usuario_email` (`email` ASC)
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 1
-  DEFAULT CHARACTER SET = utf8mb4
-  COLLATE = utf8mb4_general_ci;
-
--- -----------------------------------------------------
--- Usuário padrão OscTech
--- -----------------------------------------------------
-INSERT INTO usuario (nome, email, senha, tipo, ativo)
-VALUES (
-  'Administrador OscTech',
-  'admin@osctech.com',
-  '$2y$10$gYD5.Gy0vPRH6tEC3odP.Ok.JSpE.qMi4hjDp6VX6KwejHTXDK.cO',
-  'OSC_TECH_ADMIN',
-  1
-);
-
--- -----------------------------------------------------
--- Tabela USUARIO_OSC
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `usuario_osc` (
-  `id`           INT      NOT NULL AUTO_INCREMENT,
-  `usuario_id`   INT      NOT NULL,
-  `osc_id`       INT      NOT NULL,
-  `data_criacao` DATETIME NOT NULL DEFAULT        CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE INDEX `uk_usuario_osc` (`usuario_id` ASC, `osc_id` ASC),
-  INDEX `fk_usuario_osc_usuario_idx` (`usuario_id` ASC),
-  INDEX `fk_usuario_osc_osc_idx` (`osc_id` ASC),
-  CONSTRAINT `fk_usuario_osc_usuario`
-    FOREIGN KEY (`usuario_id`)
-    REFERENCES `usuario` (`id`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT `fk_usuario_osc_osc`
+  UNIQUE INDEX `uk_usuario_email` (`email` ASC),
+  INDEX `fk_usuario_osc_idx` (`osc_id` ASC),
+  CONSTRAINT `fk_usuario_osc`
     FOREIGN KEY (`osc_id`)
     REFERENCES `osc` (`id`)
     ON DELETE CASCADE
@@ -485,6 +435,19 @@ CREATE TABLE IF NOT EXISTS `usuario_osc` (
   AUTO_INCREMENT = 1
   DEFAULT CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_general_ci;
+
+-- -----------------------------------------------------
+-- Usuário padrão OscTech
+-- -----------------------------------------------------
+INSERT INTO usuario (nome, email, senha, tipo, osc_id, ativo)
+VALUES (
+  'Administrador OscTech',
+  'admin@osctech.com',
+  '$2y$10$gYD5.Gy0vPRH6tEC3odP.Ok.JSpE.qMi4hjDp6VX6KwejHTXDK.cO',
+  'OSC_TECH_ADMIN',
+  NULL,
+  1
+);
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;

@@ -13,31 +13,12 @@ if (!$usuarioId) {
     exit('Sessão inválida. Faça login novamente.');
 }
 
-// OSC vinculada ao usuário master
-$stmt = $conn->prepare("SELECT osc_id FROM usuario_osc WHERE usuario_id = ? LIMIT 1");
+// OSC vinculada ao usuário master (agora pegando direto da tabela usuario)
+$stmt = $conn->prepare("SELECT osc_id FROM usuario WHERE id = ? LIMIT 1");
 $stmt->bind_param("i", $usuarioId);
 $stmt->execute();
 $res = $stmt->get_result()->fetch_assoc();
 $oscIdVinculada = (int)($res['osc_id'] ?? 0);
-
-if (!$oscIdVinculada) {
-    http_response_code(403);
-    exit('Este usuário não possui OSC vinculada. Contate o administrador do sistema.');
-}
-
-// Nome da OSC
-$nomeOsc = '';
-try {
-    $stmtNome = $conn->prepare("SELECT nome FROM osc WHERE id = ? LIMIT 1");
-    if ($stmtNome) {
-        $stmtNome->bind_param("i", $oscIdVinculada);
-        $stmtNome->execute();
-        $rNome = $stmtNome->get_result()->fetch_assoc();
-        $nomeOsc = $rNome['nome'] ?? '';
-    }
-} catch (Throwable $e) {
-    $nomeOsc = '';
-}
 
 // Envolvidos da OSC
 $envolvidosOsc = [];
@@ -259,9 +240,6 @@ try {
 <body>
 <header>
     <h1>
-        <?php if (!empty($nomeOsc)): ?>
-            <div class="muted" style="margin-top:4px;"><?= htmlspecialchars($nomeOsc) ?></div>
-        <?php endif; ?>
         Painel de Controle — Novo Projeto
     </h1>
 
