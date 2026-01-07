@@ -487,7 +487,7 @@ try {
             </div>
 
             <div style="margin-bottom: 5px;">
-              <label for="funcaoNoProjeto">Função no Projeto (*)</label>
+              <label for="funcaoNoProjeto">Função (*)</label>
               <select id="funcaoNoProjeto">
                 <option value="">Selecione...</option>
                 <option value="DIRETOR">Diretor(a)</option>

@@ -96,7 +96,6 @@ CREATE TABLE IF NOT EXISTS `projeto` (
   `descricao`     LONGTEXT        NULL     DEFAULT NULL,
   `data_inicio`   DATE            NOT NULL,
   `data_fim`      DATE            NULL     DEFAULT NULL,
-  `depoimento`    VARCHAR(255)    NULL     DEFAULT NULL,
   `status`        ENUM('EXECUCAO','ENCERRADO','PLANEJAMENTO','PENDENTE') NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `uk_projeto_id_osc` (`id` ASC, `osc_id` ASC),
