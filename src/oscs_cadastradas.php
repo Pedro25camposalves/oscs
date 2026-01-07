@@ -568,11 +568,12 @@ require 'autenticacao.php';
         // então inserimos spacers suficientes pra ele ser o último slot da linha
         let spacers = 0;
 
-        // Só empurra pra direita quando a última linha NÃO está completa.
-        // Se estiver completa (resto === 0), o "Nova OSC" começa na próxima linha à esquerda.
         if (resto !== 0) {
-            spacers = Math.max(0, cols - 1 - resto);
+            // Se tem só 1 item na última linha, queremos "Nova OSC" na 2ª coluna (sem spacer)
+            if (resto === 1) spacers = 0;
+            else spacers = Math.max(0, cols - 1 - resto);
         }
+        
         criarSpacers(spacers);
 
         // 3) adiciona o card “Nova OSC”
