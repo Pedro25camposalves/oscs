@@ -229,6 +229,12 @@ try {
             padding:16px;
         }
 
+        input:disabled, textarea:disabled, select:disabled{
+          background:#f3f3f5;
+          color:#666;
+          cursor:not-allowed;
+        }
+
         @media (max-width:880px){
             .cols-2{ grid-template-columns:1fr; }
             .cols-3{ grid-template-columns:1fr; }
@@ -406,11 +412,10 @@ try {
 
         <div class="grid" style="margin-top:10px;">
           <div>
-            <label for="selectEnderecoOsc">Selecionar endereço já cadastrado (opcional)</label>
+            <label for="selectEnderecoOsc">Utilizar endereço já cadastrado anteriormente (opcional)</label>
             <select id="selectEnderecoOsc">
               <option value="">Selecione...</option>
             </select>
-            <div class="small" id="enderecoExistenteInfo" style="margin-top:6px;"></div>
           </div>
         </div>
 
@@ -702,7 +707,6 @@ try {
     const addEnderecoProjetoBtn = qs('#addEnderecoProjetoBtn');
 
     const selectEnderecoOsc = qs('#selectEnderecoOsc');
-    const enderecoExistenteInfo = qs('#enderecoExistenteInfo');
 
     const endDescricao = qs('#endDescricao');
     const endCep = qs('#endCep');
@@ -711,6 +715,18 @@ try {
     const endBairro = qs('#endBairro');
     const endNumero = qs('#endNumero');
     const endComplemento = qs('#endComplemento');
+
+    function setCamposEnderecoDisabled(disabled){
+      [
+        endDescricao,
+        endCep,
+        endCidade,
+        endLogradouro,
+        endBairro,
+        endNumero,
+        endComplemento
+      ].forEach(el => el.disabled = disabled);
+    }
 
     function labelEndereco(e){
       const p = [];
@@ -758,6 +774,24 @@ try {
       endComplemento.value = e.complemento || '';
     }
 
+    selectEnderecoOsc.addEventListener('change', () => {
+      const id = selectEnderecoOsc.value;
+
+      // Se limpou o select -> modo "novo"
+      if (!id){
+        limparCamposEndereco();
+        setCamposEnderecoDisabled(false);
+        return;
+      }
+    
+      // Se escolheu um existente -> preenche e trava
+      const e = getEnderecoById(id);
+      if (!e) return;
+    
+      preencherCamposComEndereco(e);
+      setCamposEnderecoDisabled(true);
+    });
+
     function renderEnderecosProjeto(){
       listaEnderecosProjeto.innerHTML = '';
 
@@ -792,35 +826,20 @@ try {
       });
     }
 
-    // Quando seleciona um endereço existente -> carrega nos campos
-    selectEnderecoOsc.addEventListener('change', () => {
-      enderecoExistenteInfo.textContent = '';
-
-      const id = selectEnderecoOsc.value;
-      if (!id){
-        // modo criar novo
-        limparCamposEndereco();
-        return;
-      }
-
-      const e = getEnderecoById(id);
-      if (!e) return;
-
-      enderecoExistenteInfo.textContent = labelEndereco(e);
-      preencherCamposComEndereco(e);
-    });
-
     // Abre modal
     openEnderecoProjetoModal.addEventListener('click', () => {
       preencherSelectEnderecos();
       selectEnderecoOsc.value = '';
-      enderecoExistenteInfo.textContent = '';
       limparCamposEndereco();
+      setCamposEnderecoDisabled(false);
       modalEnderecoProjetoBackdrop.style.display = 'flex';
     });
 
     closeEnderecoProjetoModal.addEventListener('click', () => {
       modalEnderecoProjetoBackdrop.style.display = 'none';
+      selectEnderecoOsc.value = '';
+      limparCamposEndereco();
+      setCamposEnderecoDisabled(false);
     });
 
     modalEnderecoProjetoBackdrop.addEventListener('click', (e) => {
@@ -907,7 +926,6 @@ try {
     const novoEnvNome = qs('#novoEnvNome');
     const novoEnvTelefone = qs('#novoEnvTelefone');
     const novoEnvEmail = qs('#novoEnvEmail');
-    const novoEnvFuncaoOsc = qs('#novoEnvFuncaoOsc');
     const novoEnvFuncaoProjeto = qs('#novoEnvFuncaoProjeto');
     const previewNovoEnvolvido = qs('#previewNovoEnvolvido');
     const addNovoEnvolvidoProjetoBtn = qs('#addNovoEnvolvidoProjetoBtn');
@@ -1114,10 +1132,9 @@ try {
       const nome = novoEnvNome.value.trim();
       const telefone = onlyDigits(novoEnvTelefone.value.trim()).slice(0,11);
       const email = novoEnvEmail.value.trim();
-      const funcaoOsc = novoEnvFuncaoOsc.value.trim();
       const funcaoProj = novoEnvFuncaoProjeto.value.trim();
 
-      if (!nome || !funcaoOsc || !funcaoProj){
+      if (!nome || !funcaoProj){
         alert('Preencha Nome e Função no projeto.');
         return;
       }
@@ -1149,7 +1166,6 @@ try {
         nome,
         telefone,
         email,
-        funcao_osc: funcaoOsc,
         funcao_projeto: funcaoProj,
         fotoFile,
         fotoPreview,
@@ -1342,7 +1358,6 @@ try {
           nome: e.nome,
           telefone: e.telefone || '',
           email: e.email || '',
-          funcao_osc: e.funcao_osc,
           funcao_projeto: e.funcao_projeto,
           foto_key: fotoKey,
           contrato_data_inicio: e.contrato_data_inicio || '',

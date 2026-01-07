@@ -182,10 +182,9 @@ try {
     ensure_dir($imgDirFs);
     ensure_dir($docDirFs);
 
-    // Também um lugar pra fotos de envolvidos da OSC (fora do projeto)
-    $envUrlBase = "/assets/oscs/osc-{$oscId}/imagens/envolvidos";
-    $envDirFs   = fs_path_from_url($envUrlBase);
-    ensure_dir($envDirFs);
+    $envRootUrl = "/assets/oscs/osc-{$oscId}/envolvidos";
+    $envRootFs  = fs_path_from_url($envRootUrl);
+    ensure_dir($envRootFs);
 
     // ====== Salva logo e imagem descrição ======
     $logoUrl = save_uploaded_image('logo', $imgDirFs, $imgUrlBase, 'logo');
@@ -246,8 +245,13 @@ try {
 
         $stInsEO = $conn->prepare("
             INSERT INTO envolvido_osc (osc_id, foto, nome, telefone, email, funcao)
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (?, NULL, ?, ?, ?, ?)
         ");
+
+        $stUpdEOFoto = $conn->prepare("
+            UPDATE envolvido_osc SET foto = ? WHERE id = ? AND osc_id = ?
+        ");
+
         $stInsEP2 = $conn->prepare("
             INSERT INTO envolvido_projeto (envolvido_osc_id, projeto_id, funcao, data_inicio, data_fim, salario, ativo)
             VALUES (?, ?, ?, ?, ?, ?, 1)
@@ -262,47 +266,59 @@ try {
         foreach ($envNovos as $e) {
             $nomeN = trim((string)($e['nome'] ?? ''));
             if ($nomeN === '') continue;
-
+        
             $telN  = only_digits($e['telefone'] ?? '');
             if ($telN !== '' && strlen($telN) > 11) $telN = substr($telN, 0, 11);
-
+        
             $emailN = trim((string)($e['email'] ?? ''));
             if ($emailN !== '' && strlen($emailN) > 100) $emailN = substr($emailN, 0, 100);
-
+        
             $funcaoOsc = trim((string)($e['funcao_osc'] ?? 'PARTICIPANTE'));
             if (!in_array($funcaoOsc, $funcaoOscAllowed, true)) $funcaoOsc = 'PARTICIPANTE';
-
+        
             $funcaoProj = trim((string)($e['funcao_projeto'] ?? 'PARTICIPANTE'));
             if ($funcaoProj === '') $funcaoProj = 'PARTICIPANTE';
-
+        
             $cIni = trim((string)($e['contrato_data_inicio'] ?? ''));
             $cFim = trim((string)($e['contrato_data_fim'] ?? ''));
             $sal  = trim((string)($e['contrato_salario'] ?? ''));
-
+        
             $cIniDb = (is_valid_date($cIni) ? $cIni : null);
             $cFimDb = (is_valid_date($cFim) ? $cFim : null);
             if ($cIniDb && $cFimDb && $cFimDb < $cIniDb) {
                 throw new RuntimeException("Contrato do novo envolvido '{$nomeN}': data fim menor que início.");
             }
             $salDb = ($sal !== '') ? (float)$sal : null;
-
-            // foto do novo envolvido (opcional)
+        
+            // 1) insere sem foto
+            $stInsEO->bind_param("issss", $oscId, $nomeN, $telN, $emailN, $funcaoOsc);
+            $stInsEO->execute();
+            $novoEnvId = (int)$conn->insert_id;
+        
+            // 2) cria pastas do envolvido conforme seu padrão
+            $envBaseUrl     = $envRootUrl . "/envolvido-{$novoEnvId}";
+            $envImgUrlBase  = $envBaseUrl . "/imagens";
+            $envDocUrlBase  = $envBaseUrl . "/documentos";
+        
+            ensure_dir(fs_path_from_url($envImgUrlBase));
+            ensure_dir(fs_path_from_url($envDocUrlBase));
+        
+            // 3) salva foto
             $fotoUrl = null;
             $fotoKey = trim((string)($e['foto_key'] ?? ''));
             if ($fotoKey !== '' && isset($_FILES[$fotoKey]) && ($_FILES[$fotoKey]['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
-                // Reaproveita a função, mas com field dinâmico
-                // Faz um "alias" temporário no $_FILES pra chamar o helper
                 $backup = $_FILES['__tmp__'] ?? null;
                 $_FILES['__tmp__'] = $_FILES[$fotoKey];
-                $fotoUrl = save_uploaded_image('__tmp__', $envDirFs, $envUrlBase, 'envolvido');
+            
+                $fotoUrl = save_uploaded_image('__tmp__', fs_path_from_url($envImgUrlBase), $envImgUrlBase, 'foto');
+            
                 if ($backup !== null) $_FILES['__tmp__'] = $backup; else unset($_FILES['__tmp__']);
+            
+                // 4) update no banco com a URL final
+                $stUpdEOFoto->bind_param("sii", $fotoUrl, $novoEnvId, $oscId);
+                $stUpdEOFoto->execute();
             }
-
-            $stInsEO->bind_param("isssss", $oscId, $fotoUrl, $nomeN, $telN, $emailN, $funcaoOsc);
-            $stInsEO->execute();
-
-            $novoEnvId = (int)$conn->insert_id;
-
+        
             $stInsEP2->bind_param("iisssd", $novoEnvId, $projetoId, $funcaoProj, $cIniDb, $cFimDb, $salDb);
             $stInsEP2->execute();
         }

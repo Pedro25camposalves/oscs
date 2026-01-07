@@ -436,7 +436,7 @@ try {
 
     <div class="card">
         <div class="projects-head">
-            <h2>Projetos da sua OSC</h2>
+            <h2>Projetos da OSC</h2>
         </div>
 
         <div class="projects-grid">
