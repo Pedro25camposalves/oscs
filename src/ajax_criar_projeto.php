@@ -107,6 +107,7 @@ try {
     $dataInicio = trim((string)($_POST['data_inicio'] ?? ''));
     $dataFim    = trim((string)($_POST['data_fim'] ?? ''));
     $descricao  = trim((string)($_POST['descricao'] ?? ''));
+    $depoimento = trim((string)($_POST['depoimento'] ?? ''));
 
     $statusAllowed = ['PENDENTE','PLANEJAMENTO','EXECUCAO','ENCERRADO'];
 
@@ -150,12 +151,12 @@ try {
 
     $stIns = $conn->prepare("
         INSERT INTO projeto
-          (osc_id, nome, email, telefone, logo, img_descricao, descricao, data_inicio, data_fim, status)
+          (osc_id, nome, email, telefone, logo, img_descricao, descricao, depoimento, data_inicio, data_fim, status)
         VALUES
-          (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
     $stIns->bind_param(
-        "isssssssss",
+        "issssssssss",
         $oscId,
         $nome,
         $emailDb,
@@ -163,6 +164,7 @@ try {
         $placeholder,
         $placeholder,
         $descDb,
+        $depoimento,
         $dataInicio,
         $dataFimDb,
         $status

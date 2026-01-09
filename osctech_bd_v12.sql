@@ -94,6 +94,7 @@ CREATE TABLE IF NOT EXISTS `projeto` (
   `logo`          VARCHAR(255)    NOT NULL,
   `img_descricao` VARCHAR(255)    NOT NULL,
   `descricao`     LONGTEXT        NULL     DEFAULT NULL,
+  `depoimento`    VARCHAR(120)    NULL     DEFAULT NULL,
   `data_inicio`   DATE            NOT NULL,
   `data_fim`      DATE            NULL     DEFAULT NULL,
   `status`        ENUM('EXECUCAO','ENCERRADO','PLANEJAMENTO','PENDENTE') NOT NULL,
@@ -216,7 +217,7 @@ CREATE TABLE IF NOT EXISTS `endereco_evento_oficina` (
 CREATE TABLE IF NOT EXISTS `envolvido_projeto` (
   `envolvido_osc_id` INT         NOT NULL,
   `projeto_id`       INT         NOT NULL,
-  `funcao`           VARCHAR(60) NULL     DEFAULT NULL,
+  `funcao`           ENUM('DIRETOR','COORDENADOR','FINANCEIRO','MARKETING','RH', 'PARTICIPANTE') NOT NULL,
   `data_inicio`      DATE NULL DEFAULT NULL,
   `data_fim`         DATE NULL DEFAULT NULL,
   `salario`          DECIMAL(10,2) NULL DEFAULT NULL,
@@ -292,14 +293,16 @@ CREATE TABLE IF NOT EXISTS `cores` (
 -- Tabela DOCUMENTO
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `documento` (
-  `id_documento`   INT         NOT NULL AUTO_INCREMENT,
-  `osc_id`         INT         NOT NULL,
-  `projeto_id`     INT         NULL     DEFAULT NULL,
+  `id_documento`   INT          NOT NULL AUTO_INCREMENT,
+  `osc_id`         INT          NOT NULL,
+  `projeto_id`     INT          NULL     DEFAULT NULL,
   `categoria`      ENUM('INSTITUCIONAL','CERTIDAO','CONTABIL','EXECUCAO','ESPECIFICOS') NOT NULL,
-  `subtipo`        VARCHAR(45) NOT NULL,   -- ESTATUTO, ATA, CND_FEDERAL, CND_ESTADUAL, CND_MUNICIPAL, FGTS, TRABALHISTA, BALANCO_PATRIMONIAL, DRE, PLANO_TRABALHO, PLANILHA_ORCAMENTARIA, TERMO_COLABORACAO, APTIDAO
-  `ano_referencia` YEAR        NULL,       -- usado pra BALANCO_PATRIMONIAL e DRE
-  `documento`      TINYTEXT    NOT NULL,
-  `data_upload`    DATETIME    NOT NULL DEFAULT       CURRENT_TIMESTAMP,
+  `subtipo`        VARCHAR(45)  NOT NULL,   -- ESTATUTO, ATA, CND_FEDERAL, CND_ESTADUAL, CND_MUNICIPAL, FGTS, TRABALHISTA, BALANCO_PATRIMONIAL, DRE, PLANO_TRABALHO, PLANILHA_ORCAMENTARIA, TERMO_COLABORACAO, APTIDAO
+  `descricao`      VARCHAR(100) NULL,   
+  `link`           VARCHAR(100) NULL,   
+  `ano_referencia` YEAR         NULL,  
+  `documento`      TINYTEXT     NULL,
+  `data_upload`    DATETIME     NOT NULL DEFAULT       CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_documento`),
   INDEX `fk_documento_osc_idx` (`osc_id` ASC),
   INDEX `fk_documento_projeto_idx` (`projeto_id` ASC),

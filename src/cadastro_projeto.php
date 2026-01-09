@@ -235,6 +235,10 @@ try {
           cursor:not-allowed;
         }
 
+        h3 {
+            margin: 5px 0 5px 0;
+        }
+
         @media (max-width:880px){
             .cols-2{ grid-template-columns:1fr; }
             .cols-3{ grid-template-columns:1fr; }
@@ -270,7 +274,7 @@ try {
         <!-- SEÇÃO 1: INFORMAÇÕES DO PROJETO -->
         <div class="card">
             <h2>Informações do Projeto</h2>
-
+            <div class="divider"></div>
             <div class="grid cols-2">
                 <div>
                     <label for="projNome">Nome (*)</label>
@@ -309,49 +313,62 @@ try {
                     <input id="projDataFim" type="date" />
                 </div>
             </div>
-
-            <div style="margin-top:10px;">
-                <label for="projDescricao">Descrição</label>
-                <textarea id="projDescricao" placeholder="Explique objetivo, público-alvo e impacto do projeto..."></textarea>
-            </div>
         </div>
 
         <!-- SEÇÃO 2: ENVOLVIDOS DO PROJETO -->
         <div class="card">
             <h2>Envolvidos</h2>
-
+            <div class="divider"></div>
             <div class="chips-list" id="listaEnvolvidosProjeto"></div>
 
             <div style="margin-top:10px;">
-                <button type="button" class="btn btn-ghost" id="openEnvolvidoProjetoModal">Adicionar</button>
+                <button type="button" class="btn btn-ghost" id="openEnvolvidoProjetoModal">+ Adicionar</button>
             </div>
         </div>
 
         <!-- SEÇÃO 3: ENDEREÇOS DO PROJETO -->
         <div class="card">
             <h2>Endereços de Execução</h2>
-
+            <div class="divider"></div>
             <div class="chips-list" id="listaEnderecosProjeto"></div>
 
             <div style="margin-top:10px;">
-                <button type="button" class="btn btn-ghost" id="openEnderecoProjetoModal">Adicionar</button>
+                <button type="button" class="btn btn-ghost" id="openEnderecoProjetoModal">+ Adicionar</button>
             </div>
         </div>
 
-        <!-- SEÇÃO 4: IMAGENS DO PROJETO -->
+        <!-- SEÇÃO 4: DOCUMENTOS -->
+        <div class="card">
+            <h2>Documentos</h2>
+
+            <div class="divider"></div>
+
+            <div class="chips-list" id="docsProjetoList" style="margin-top:12px;"></div>
+
+              <div class="envolvidos-list" id="dresList"></div>
+              <div style="margin-top:10px;">
+                  <button type="button" class="btn btn-ghost" id="openDocProjetoModal">+ Adicionar</button>
+              </div>
+            </div>
+        </div>
+
+        <!-- SEÇÃO 5: EXIBIÇÃO DO SITE -->
         <div class="card">
             <div class="grid cols-2">
                 <div>
-                    <h2>Imagens</h2>
+                    <h2>Exibição no Site</h2>
                     <div class="grid">
+                        <div>
+                            <label for="projDepoimento">Vídeo de Depoimento</label>
+                            <input id="projDepoimento" type="text" />
+                        </div>
                         <div>
                             <label for="projLogo">Logo (*)</label>
                             <input id="projLogo" type="file" accept="image/*" required />
                         </div>
                         <div>
-                            <label for="projImgDescricao">Imagem de descrição / capa (*)</label>
+                            <label for="projImgDescricao">Capa (*)</label>
                             <input id="projImgDescricao" type="file" accept="image/*" required />
-                            <div class="small">No teu banco (<code>projeto.img_descricao</code>) agora é obrigatório.</div>
                         </div>
                     </div>
                 </div>
@@ -371,25 +388,9 @@ try {
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- SEÇÃO 5: DOCUMENTOS DO PROJETO -->
-        <div class="card">
-            <h2>Documentos do Projeto</h2>
-            <div class="small">
-                Formatos permitidos: .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="small">
-                Aqui você adiciona documentos que vão ficar vinculados ao <b>projeto</b> (campo <code>documento.projeto_id</code>).
-            </div>
-
-            <div class="chips-list" id="docsProjetoList" style="margin-top:12px;"></div>
-
             <div style="margin-top:10px;">
-                <button type="button" class="btn btn-ghost" id="openDocProjetoModal">Adicionar Documento</button>
+                <label for="projDescricao">Descrição</label>
+                <textarea id="projDescricao" placeholder="Explique objetivo, público-alvo e impacto do projeto..."></textarea>
             </div>
         </div>
 
@@ -412,7 +413,7 @@ try {
 
         <div class="grid" style="margin-top:10px;">
           <div>
-            <label for="selectEnderecoOsc">Utilizar endereço já cadastrado anteriormente (opcional)</label>
+            <label for="selectEnderecoOsc">Utilizar endereço já cadastrado (opcional)</label>
             <select id="selectEnderecoOsc">
               <option value="">Selecione...</option>
             </select>
@@ -595,44 +596,73 @@ try {
       </div>
     </div>
 
-    <!-- MODAL DOCUMENTO PROJETO -->
-    <div id="modalDocProjetoBackdrop" class="modal-backdrop">
-        <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Documento do Projeto">
-            <h3>Adicionar Documento do Projeto</h3>
-
+        <!-- MODAL DOCUMENTO PROJETO -->
+        <div id="modalDocProjetoBackdrop" class="modal-backdrop">
+          <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Documento">
+            <h3>Adicionar Documento</h3>
+            <div class="small">Formatos permitidos: .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf</div>
+            <div class="divider"></div>
             <div class="grid" style="margin-top:10px;">
-                <div>
-                    <label for="docCategoria">Categoria (*)</label>
-                    <select id="docCategoria" required>
-                        <option value="">Selecione...</option>
-                        <option value="EXECUCAO">EXECUCAO</option>
-                        <option value="ESPECIFICOS">ESPECIFICOS</option>
-                        <option value="CONTABIL">CONTABIL</option>
-                        <option value="INSTITUCIONAL">INSTITUCIONAL</option>
-                        <option value="CERTIDAO">CERTIDAO</option>
-                    </select>
-                </div>
+              <!-- CATEGORIA -->
+              <div>
+                <label for="docCategoria">Categoria (*)</label>
+                <select id="docCategoria">
+                  <option value="">Selecione...</option>
+                  <option value="EXECUCAO">Início e Execução</option>
+                  <option value="ESPECIFICOS">Específicos e Relacionados</option>
+                  <option value="CONTABIL">Contábeis</option>
+                </select>
+              </div>
 
-                <div>
-                    <label for="docSubtipo">Subtipo (*)</label>
-                    <input id="docSubtipo" type="text" placeholder="Ex: PLANO_TRABALHO, TERMO_COLABORACAO, APTIDAO..." required />
-                </div>
+              <!-- TIPO (aparece depois da categoria) -->
+              <div id="docTipoGroup" style="display:none;">
+                <label for="docTipo">Tipo (*)</label>
+                <select id="docTipo">
+                  <option value="">Selecione...</option>
+                </select>
+              </div>
 
-                <div>
-                    <label for="docAnoRef">Ano de referência (opcional)</label>
-                    <input id="docAnoRef" type="text" inputmode="numeric" placeholder="Ex: 2024" />
-                </div>
+              <!-- SUBTIPO (só para CND) -->
+              <div id="docSubtipoGroup" style="display:none;">
+                <label for="docSubtipo">SubTipo (*)</label>
+                <select id="docSubtipo">
+                  <option value="">Selecione...</option>
+                  <option value="FEDERAL">Federal</option>
+                  <option value="ESTADUAL">Estadual</option>
+                  <option value="MUNICIPAL">Municipal</option>
+                </select>
+              </div>
 
-                <div>
-                    <label for="docArquivo">Arquivo (*)</label>
-                    <input id="docArquivo" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" required />
-                </div>
+              <!-- Só para Tipo = OUTRO -->
+              <div id="docDescricaoGroup" style="display:none;">
+                <label for="docDescricao">Descrição (*)</label>
+                <input id="docDescricao" type="text" />
+              </div>
+
+              <!-- Só para Decreto/Portaria -->
+              <div id="docLinkGroup" style="display:none;">
+                <label for="docLink">Link (*)</label>
+                <input id="docLink" type="text" />
+              </div>
+
+              <!-- Só para BALANCO e DRE -->
+              <div id="docAnoRefGroup" style="display:none;">
+                <label for="docAnoRef">Ano de referência (*)</label>
+                <input id="docAnoRef" type="text" inputmode="numeric" />
+              </div>
+
+              <!-- ARQUIVO -->
+              <div>
+                <label for="docArquivo">Arquivo (*)</label>
+                <input id="docArquivo" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+              </div>
             </div>
 
             <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
-                <button class="btn btn-ghost" id="closeDocProjetoModal" type="button">Cancelar</button>
-                <button class="btn btn-primary" id="addDocProjetoBtn" type="button">Adicionar</button>
+              <button class="btn btn-ghost" id="closeDocProjetoModal" type="button">Cancelar</button>
+              <button class="btn btn-primary" id="addDocProjetoBtn" type="button">Adicionar</button>
             </div>
+          </div>
         </div>
     </div>
 </main>
@@ -1027,7 +1057,7 @@ try {
           : '';
         info.innerHTML = `
           <div style="font-weight:600">${escapeHtml(e.nome)} ${badge}</div>
-          <div class="small">Função no projeto: ${escapeHtml(e.funcao_projeto)}</div>
+          <div class="small">Função: ${escapeHtml(e.funcao_projeto)}</div>
           ${contratoResumo}
         `;
 
@@ -1180,33 +1210,167 @@ try {
     });
 
     // ====== DOCUMENTOS DO PROJETO ======
-    const docsProjeto = []; // {categoria, subtipo, ano_referencia, file}
+    const docsProjeto = []; // cada item: {categoria, tipo, subtipo, ano_referencia, descricao, link, file}
     const docsProjetoList = qs('#docsProjetoList');
-
+  
     const modalDocProjetoBackdrop = qs('#modalDocProjetoBackdrop');
     const openDocProjetoModal = qs('#openDocProjetoModal');
     const closeDocProjetoModal = qs('#closeDocProjetoModal');
     const addDocProjetoBtn = qs('#addDocProjetoBtn');
+  
+    const docCategoria      = qs('#docCategoria');
+    const docTipoGroup      = qs('#docTipoGroup');
+    const docTipo           = qs('#docTipo');
+    const docSubtipoGroup   = qs('#docSubtipoGroup');
+    const docSubtipo        = qs('#docSubtipo');
+    const docDescricaoGroup = qs('#docDescricaoGroup');
+    const docDescricao      = qs('#docDescricao');
+    const docAnoRefGroup    = qs('#docAnoRefGroup');
+    const docAnoRef         = qs('#docAnoRef');
+    const docArquivo        = qs('#docArquivo');
+    const docLinkGroup      = qs('#docLinkGroup');
+    const docLink           = qs('#docLink');
+  
+    // Mapeamento Categoria -> Tipos
+    // (já usando valores "técnicos" compatíveis com o banco em subtipo)
+    const TIPOS_POR_CATEGORIA = {
+      EXECUCAO: [
+        { value: 'PLANO_TRABALHO',      label: 'Plano de Trabalho' },
+        { value: 'PLANILHA_ORCAMENTARIA', label: 'Planilha Orçamentária' },
+        { value: 'TERMO_COLABORACAO',   label: 'Termo de Colaboração' },
+      ],
+      ESPECIFICOS: [
+        { value: 'APOSTILAMENTO',       label: 'Termo de Apostilamento' },
+        { value: 'CND',                 label: 'Certidão Negativa de Débito (CND)' },
+        { value: 'DECRETO',             label: 'Decreto/Portaria' },
+        { value: 'APTIDAO',             label: 'Aptidão para Receber Recursos' },
+      ],
+      CONTABIL: [
+        { value: 'BALANCO_PATRIMONIAL', label: 'Balanço Patrimonial' },
+        { value: 'DRE',                 label: 'Demonstração de Resultados (DRE)' },
+        { value: 'OUTRO',               label: 'Outro' },
+      ],
+    };
+  
+    const LABEL_CATEGORIA = {
+      EXECUCAO:   'Início e Execução',
+      ESPECIFICOS:'Específicos e Relacionados',
+      CONTABIL:   'Contábeis',
+    };
+  
+    function resetDocCampos() {
+      docCategoria.value = '';
+    
+      docTipo.innerHTML = '<option value="">Selecione...</option>';
+      docTipoGroup.style.display = 'none';
+    
+      docSubtipo.value = '';
+      docSubtipoGroup.style.display = 'none';
+    
+      docDescricao.value = '';
+      docDescricaoGroup.style.display = 'none';
 
-    const docCategoria = qs('#docCategoria');
-    const docSubtipo = qs('#docSubtipo');
-    const docAnoRef = qs('#docAnoRef');
-    const docArquivo = qs('#docArquivo');
+      docLink.value = '';
+      docLinkGroup.style.display = 'none';
+    
+      docAnoRef.value = '';
+      docAnoRefGroup.style.display = 'none';
+    
+      docArquivo.value = '';
+    }
+  
+    // Categoria selecionada -> mostra/gera opções de Tipo
+    docCategoria.addEventListener('change', () => {
+      const cat = docCategoria.value;
+    
+      // limpa dependentes
+      docTipo.innerHTML = '<option value="">Selecione...</option>';
+      docTipoGroup.style.display = 'none';
+    
+      docSubtipo.value = '';
+      docSubtipoGroup.style.display = 'none';
+    
+      docDescricao.value = '';
+      docDescricaoGroup.style.display = 'none';
 
-    function renderDocsProjeto(){
+      docLink.value = '';
+      docLinkGroup.style.display = 'none';
+
+    
+      docAnoRef.value = '';
+      docAnoRefGroup.style.display = 'none';
+    
+      if (!cat || !TIPOS_POR_CATEGORIA[cat]) {
+        return;
+      }
+    
+      TIPOS_POR_CATEGORIA[cat].forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.value;
+        opt.textContent = t.label;
+        docTipo.appendChild(opt);
+      });
+      docTipoGroup.style.display = 'block';
+    });
+  
+    // Tipo selecionado -> decide se mostra Subtipo / Descrição / Ano
+    docTipo.addEventListener('change', () => {
+      const tipo = docTipo.value;
+
+      // Reseta tudo que depende do tipo
+      docSubtipo.value = '';
+      docSubtipoGroup.style.display = 'none';
+
+      docDescricao.value = '';
+      docDescricaoGroup.style.display = 'none';
+    
+      docLink.value = '';
+      docLinkGroup.style.display = 'none';
+
+      docAnoRef.value = '';
+      docAnoRefGroup.style.display = 'none';
+
+      if (!tipo) return;
+
+      if (tipo === 'CND') {
+        docSubtipoGroup.style.display = 'block';
+      }
+      else if (tipo === 'DECRETO') {
+        docLinkGroup.style.display = 'block';
+      }
+      else if (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE') {
+        docAnoRefGroup.style.display = 'block';
+      }
+      else if (tipo === 'OUTRO') {
+        docDescricaoGroup.style.display = 'block';
+      }
+    });
+  
+    function renderDocsProjeto() {
       docsProjetoList.innerHTML = '';
-
+    
       docsProjeto.forEach((d, i) => {
         const c = document.createElement('div');
         c.className = 'chip';
-
+      
+        const catLabel = LABEL_CATEGORIA[d.categoria] || d.categoria;
+      
+        let linha = d.tipo_label || d.tipo || '';
+        if (d.tipo === 'CND' && d.subtipo_label) {
+          linha += ' — ' + d.subtipo_label;         // CND — Federal/Estadual/Municipal
+        } else if (d.tipo === 'OUTRO' && d.descricao) {
+          linha += ' — ' + d.descricao;             // Outros — descrição
+        }
+      
         const info = document.createElement('div');
         info.innerHTML = `
-          <div style="font-weight:600">${escapeHtml(d.categoria)} • ${escapeHtml(d.subtipo)}</div>
+          <div style="font-weight:600">${escapeHtml(catLabel)} • ${escapeHtml(linha)}</div>
           ${d.ano_referencia ? `<div class="small">Ano: ${escapeHtml(d.ano_referencia)}</div>` : ''}
-          <div class="small">Arquivo: ${escapeHtml(d.file?.name || '')}</div>
+          ${d.link ? `<div class="small">Link: ${escapeHtml(d.link)}</div>` : ''}
+          <div class="small">Arquivo: ${escapeHtml(d.file?.name || '—')}</div>
         `;
 
+      
         const remove = document.createElement('button');
         remove.className = 'btn';
         remove.textContent = '✕';
@@ -1216,51 +1380,113 @@ try {
           docsProjeto.splice(i, 1);
           renderDocsProjeto();
         });
-
+      
         c.appendChild(info);
         c.appendChild(remove);
         docsProjetoList.appendChild(c);
       });
     }
-
+  
     function limparCamposDoc(){
-      docCategoria.value = '';
-      docSubtipo.value = '';
-      docAnoRef.value = '';
-      docArquivo.value = '';
+      resetDocCampos();
     }
-
+  
+    // abrir/fechar modal
     openDocProjetoModal.addEventListener('click', () => {
-      limparCamposDoc();
+      resetDocCampos();
       modalDocProjetoBackdrop.style.display = 'flex';
     });
-    closeDocProjetoModal.addEventListener('click', () => modalDocProjetoBackdrop.style.display = 'none');
-    modalDocProjetoBackdrop.addEventListener('click', (e) => {
-      if (e.target === modalDocProjetoBackdrop) modalDocProjetoBackdrop.style.display = 'none';
+  
+    closeDocProjetoModal.addEventListener('click', () => {
+      modalDocProjetoBackdrop.style.display = 'none';
     });
-
+  
+    modalDocProjetoBackdrop.addEventListener('click', (e) => {
+      if (e.target === modalDocProjetoBackdrop) {
+        modalDocProjetoBackdrop.style.display = 'none';
+      }
+    });
+  
+    // Adicionar documento (valida tudo segundo suas regras)
     addDocProjetoBtn.addEventListener('click', () => {
-      const cat = docCategoria.value.trim();
-      const sub = docSubtipo.value.trim();
-      const ano = docAnoRef.value.trim();
+      const cat = docCategoria.value;
+      const tipo = docTipo.value;
+      const tipoLabel = docTipo.options[docTipo.selectedIndex]?.text || '';
+    
+      if (!cat) {
+        alert('Selecione a categoria.');
+        return;
+      }
+      if (!tipo) {
+        alert('Selecione o tipo.');
+        return;
+      }
+    
+      let subtipoDb   = '';
+      let subtipoLabel= '';
+      let descricao   = docDescricao.value.trim();
+      let ano         = docAnoRef.value.trim();
+      let link        = docLink.value.trim();
+
+      // 6) SubTipo de CND
+      if (tipo === 'CND') {
+        const sub = docSubtipo.value;
+        if (!sub) {
+          alert('Selecione o subtipo (Federal, Estadual ou Municipal).');
+          return;
+        }
+        subtipoDb    = 'CND_' + sub; // CND_FEDERAL etc.
+        subtipoLabel = docSubtipo.options[docSubtipo.selectedIndex]?.text || '';
+      }
+      // Decreto/Portaria -> link obrigatório, arquivo opcional
+      else if (tipo === 'DECRETO') {
+        if (!link) {
+          alert('Informe o link do documento oficial.');
+          return;
+        }
+        subtipoDb = 'DECRETO';
+      }
+      // Balanço / DRE -> ano obrigatório
+      else if (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE') {
+        if (!ano || !/^\d{4}$/.test(ano)) {
+          alert('Informe um ano de referência válido (4 dígitos, ex: 2024).');
+          return;
+        }
+        subtipoDb = tipo;
+      }
+      // Tipo OUTRO -> descrição obrigatória
+      else if (tipo === 'OUTRO') {
+        if (!descricao) {
+          alert('Descreva o documento no campo Descrição.');
+          return;
+        }
+        subtipoDb = descricao;
+      }
+      // Demais tipos 1:1
+      else {
+        subtipoDb = tipo;
+      }
+    
       const file = docArquivo.files?.[0] || null;
 
-      if (!cat || !sub || !file){
-        alert('Preencha categoria, subtipo e selecione o arquivo.');
+      // Para todos os tipos, exceto DECRETO, o arquivo continua obrigatório
+      if (!file && tipo !== 'DECRETO') {
+        alert('Selecione o arquivo do documento.');
         return;
       }
-      if (ano && !/^\d{4}$/.test(ano)){
-        alert('Ano de referência deve ter 4 dígitos (ex: 2024).');
-        return;
-      }
-
+    
       docsProjeto.push({
-        categoria: cat,
-        subtipo: sub,
+        categoria:      cat,
+        tipo,
+        tipo_label:     tipoLabel,
+        subtipo:        subtipoDb,
+        subtipo_label:  subtipoLabel,
+        descricao,
         ano_referencia: ano || '',
+        link,
         file
       });
-
+    
       renderDocsProjeto();
       modalDocProjetoBackdrop.style.display = 'none';
     });
@@ -1292,7 +1518,7 @@ try {
       }
     }
 
-    // ====== SALVAR PROJETO (agora manda email/telefone + endereços + envolvidos novos) ======
+    // ====== SALVAR PROJETO ======
     async function saveProjeto(){
       const nome = qs('#projNome').value.trim();
       const status = qs('#projStatus').value.trim();
@@ -1305,6 +1531,7 @@ try {
 
       const logoFile = projLogo.files?.[0] || null;
       const imgDescFile = projImgDescricao.files?.[0] || null;
+      const depoimento = qs('#projDepoimento').value.trim();
 
       if (!nome || !status){
         alert('Preencha nome e status do projeto.');
@@ -1335,8 +1562,8 @@ try {
 
       fd.append('logo', logoFile);
       fd.append('img_descricao', imgDescFile);
+      fd.append('depoimento', depoimento);
 
-      // Envolvidos: separar existentes x novos
       const existentes = envolvidosProjeto
       .filter(e => e.tipo === 'existente')
       .map(e => ({
@@ -1368,7 +1595,6 @@ try {
 
       fd.append('envolvidos', JSON.stringify({ existentes, novos }));
 
-      // Endereços: separar existentes x novos
       const endExistentes = enderecosProjeto
         .filter(e => e.tipo === 'existente')
         .map(e => ({ endereco_id: e.endereco_id }));
