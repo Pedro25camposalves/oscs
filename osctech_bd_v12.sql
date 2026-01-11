@@ -298,9 +298,9 @@ CREATE TABLE IF NOT EXISTS `documento` (
   `projeto_id`     INT          NULL     DEFAULT NULL,
   `categoria`      ENUM('INSTITUCIONAL','CERTIDAO','CONTABIL','EXECUCAO','ESPECIFICOS') NOT NULL,
   `subtipo`        VARCHAR(45)  NOT NULL,   -- ESTATUTO, ATA, CND_FEDERAL, CND_ESTADUAL, CND_MUNICIPAL, FGTS, TRABALHISTA, BALANCO_PATRIMONIAL, DRE, PLANO_TRABALHO, PLANILHA_ORCAMENTARIA, TERMO_COLABORACAO, APTIDAO
-  `descricao`      VARCHAR(100) NULL,   
-  `link`           VARCHAR(100) NULL,   
-  `ano_referencia` YEAR         NULL,  
+  `descricao`      VARCHAR(100) NULL,
+  `link`           VARCHAR(100) NULL,
+  `ano_referencia` YEAR         NULL,
   `documento`      TINYTEXT     NULL,
   `data_upload`    DATETIME     NOT NULL DEFAULT       CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_documento`),

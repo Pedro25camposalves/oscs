@@ -1454,13 +1454,13 @@ try {
         }
         subtipoDb = tipo;
       }
-      // Tipo OUTRO -> descrição obrigatória
+      // Tipo OUTRO -> descrição obrigatória,
       else if (tipo === 'OUTRO') {
         if (!descricao) {
           alert('Descreva o documento no campo Descrição.');
           return;
         }
-        subtipoDb = descricao;
+        subtipoDb = 'OUTRO'; // ← valor técnico
       }
       // Demais tipos 1:1
       else {
@@ -1491,32 +1491,50 @@ try {
       modalDocProjetoBackdrop.style.display = 'none';
     });
 
-    // ====== UPLOAD DOCUMENTO (mantém seu endpoint) ======
-    async function enviarDocumentoProjeto(projetoId, docCfg){
-      const fd = new FormData();
-      fd.append('id_osc', String(OSC_ID));
-      fd.append('projeto_id', String(projetoId));
-      fd.append('categoria', docCfg.categoria);
-      fd.append('subtipo', docCfg.subtipo);
-      if (docCfg.ano_referencia) fd.append('ano_referencia', docCfg.ano_referencia);
-      fd.append('arquivo', docCfg.file);
+async function enviarDocumentoProjeto(projetoId, docCfg){
+  const fd = new FormData();
+  fd.append('id_osc', String(OSC_ID));
+  fd.append('projeto_id', String(projetoId));
+  fd.append('categoria', docCfg.categoria);
+  fd.append('subtipo', docCfg.subtipo);
+  fd.append('tipo', docCfg.tipo); // << novo: tipo técnico (PLANO_TRABALHO, CND, DECRETO, OUTRO etc.)
 
-      try{
-        const resp = await fetch('ajax_upload_documento.php', { method:'POST', body: fd });
-        const text = await resp.text();
+  if (docCfg.ano_referencia) {
+    fd.append('ano_referencia', docCfg.ano_referencia);
+  }
 
-        let data;
-        try { data = JSON.parse(text); }
-        catch { return `(${docCfg.categoria}/${docCfg.subtipo}) resposta inválida do servidor.`; }
+  // descrição só existe pra tipo OUTRO
+  if (docCfg.tipo === 'OUTRO' && docCfg.descricao) {
+    fd.append('descricao', docCfg.descricao);
+  }
 
-        if (data.status !== 'ok'){
-          return `(${docCfg.categoria}/${docCfg.subtipo}) ${data.mensagem || 'erro ao enviar.'}`;
-        }
-        return null;
-      }catch{
-        return `(${docCfg.categoria}/${docCfg.subtipo}) erro de comunicação.`;
-      }
+  // link só faz sentido pra DECRETO
+  if (docCfg.tipo === 'DECRETO' && docCfg.link) {
+    fd.append('link', docCfg.link);
+  }
+
+  // arquivo é opcional só pra DECRETO; pros demais é obrigatório
+  if (docCfg.file) {
+    fd.append('arquivo', docCfg.file);
+  }
+
+  try{
+    const resp = await fetch('ajax_upload_documento.php', { method:'POST', body: fd });
+    const text = await resp.text();
+
+    let data;
+    try { data = JSON.parse(text); }
+    catch { return `(${docCfg.categoria}/${docCfg.subtipo}) resposta inválida do servidor.`; }
+
+    if (data.status !== 'ok'){
+      return `(${docCfg.categoria}/${docCfg.subtipo}) ${data.mensagem || 'erro ao enviar.'}`;
     }
+    return null;
+  }catch{
+    return `(${docCfg.categoria}/${docCfg.subtipo}) erro de comunicação.`;
+  }
+}
+
 
     // ====== SALVAR PROJETO ======
     async function saveProjeto(){
