@@ -107,6 +107,7 @@ try {
     $dataInicio = trim((string)($_POST['data_inicio'] ?? ''));
     $dataFim    = trim((string)($_POST['data_fim'] ?? ''));
     $descricao  = trim((string)($_POST['descricao'] ?? ''));
+    $depoimento = trim((string)($_POST['depoimento'] ?? ''));
 
     $statusAllowed = ['PENDENTE','PLANEJAMENTO','EXECUCAO','ENCERRADO'];
 
@@ -150,12 +151,12 @@ try {
 
     $stIns = $conn->prepare("
         INSERT INTO projeto
-          (osc_id, nome, email, telefone, logo, img_descricao, descricao, data_inicio, data_fim, status)
+          (osc_id, nome, email, telefone, logo, img_descricao, descricao, depoimento, data_inicio, data_fim, status)
         VALUES
-          (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
     $stIns->bind_param(
-        "isssssssss",
+        "issssssssss",
         $oscId,
         $nome,
         $emailDb,
@@ -163,6 +164,7 @@ try {
         $placeholder,
         $placeholder,
         $descDb,
+        $depoimento,
         $dataInicio,
         $dataFimDb,
         $status
@@ -172,7 +174,7 @@ try {
     $projetoId = (int)$conn->insert_id;
 
     // ====== Pastas do projeto ======
-    $baseUrlProjeto = "/assets/oscs/osc-{$oscId}/projetos/projeto-{$projetoId}";
+    $baseUrlProjeto = "assets/oscs/osc-{$oscId}/projetos/projeto-{$projetoId}";
     $imgUrlBase     = $baseUrlProjeto . "/imagens";
     $docUrlBase     = $baseUrlProjeto . "/documentos";
 
@@ -182,7 +184,7 @@ try {
     ensure_dir($imgDirFs);
     ensure_dir($docDirFs);
 
-    $envRootUrl = "/assets/oscs/osc-{$oscId}/envolvidos";
+    $envRootUrl = "assets/oscs/osc-{$oscId}/envolvidos";
     $envRootFs  = fs_path_from_url($envRootUrl);
     ensure_dir($envRootFs);
 

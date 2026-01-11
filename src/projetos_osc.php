@@ -40,10 +40,13 @@ try {
             p.id,
             p.nome,
             p.descricao,
-            p.img_descricao AS imagem_capa
+            p.img_descricao AS imagem_capa,
+            p.data_inicio,
+            p.data_fim,
+            p.status
         FROM projeto p
         WHERE p.osc_id = ?
-        ORDER BY p.id DESC
+        ORDER BY p.nome ASC, p.id DESC
     ";
     $stmtProj = $conn->prepare($sql);
     if ($stmtProj) {
@@ -257,6 +260,108 @@ try {
         color:#fff;
     }
 
+    .project-content{
+        position:relative;
+        z-index:2;
+        padding:14px;
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+        height:100%;
+        color:#fff;
+    }
+    
+    .pill{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        padding:6px 10px;
+        border-radius:999px;
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.18);
+        backdrop-filter: blur(6px);
+        font-size:12px;
+        width:fit-content;
+    }
+
+    /* grid de infos (datas) igual à .kv das OSCs */
+    .kv{
+        display:grid;
+        gap:6px;
+        margin-top:auto; /* empurra pro “pé” do card */
+    }
+
+    .kv div{
+        font-size:12px;
+        opacity:.95;
+        line-height:1.25;
+        word-break: break-word;
+    }
+
+    .kv b{
+        opacity:.95;
+    }
+
+    .project-dates{
+        margin: 0;
+        margin-top: 2px;
+        font-size: 12px;
+        opacity: .95;
+        line-height: 1.25;
+        color: rgba(255,255,255,.92);
+        text-shadow: 0 2px 10px rgba(0,0,0,.35);
+    }
+
+    .search{
+        width: min(360px, 100%);
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid #e6e6e9;
+        background: #fff;
+        font-size: 14px;
+    }
+
+    .project-actions{
+        display:flex;
+        gap:8px;
+        margin-top:10px;
+    }
+
+    /* Reaproveitando o estilo dos botões das OSCs */
+    .btn{
+        padding:9px 12px;
+        border-radius:12px;
+        border:0;
+        cursor:pointer;
+        font-weight:800;
+        font-size:12px;
+    }
+
+    .btn-ghost{
+        background: rgba(255,255,255,.14);
+        border:1px solid rgba(255,255,255,.20);
+        color:#fff;
+    }
+
+    .btn:hover{
+        filter: brightness(1.03);
+    }
+
+    .btn-icon{
+        width: 40px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding: 9px 0;
+    }
+
+    .icon-pencil{
+        display:inline-block;
+        transform: rotate(-225deg); /* inclinado tipo / */
+        font-size:16px;
+        line-height:1;
+    }
+
     .project-chip{
         display:inline-flex;
         align-items:center;
@@ -437,37 +542,88 @@ try {
     <div class="card">
         <div class="projects-head">
             <h2>Projetos da OSC</h2>
+
+            <input id="searchProjetos"
+                   class="search"
+                   type="text"
+                   placeholder="Filtrar por nome..." />
         </div>
 
         <div class="projects-grid">
 
             <?php foreach ($projetos as $p): ?>
                 <?php
-                    $id   = (int)($p['id'] ?? 0);
-                    $nome = $p['nome'] ?? 'Projeto sem nome';
-                    $desc = $p['descricao'] ?? '';
-                    $img  = $p['imagem_capa'] ?? ''; // vem de img_descricao (alias no SELECT)
-
+                    $id          = (int)($p['id'] ?? 0);
+                    $nome        = $p['nome'] ?? 'Projeto sem nome';
+                    $img         = $p['imagem_capa'] ?? '';
+                    $dataInicio  = $p['data_inicio'] ?? null;
+                    $dataFim     = $p['data_fim'] ?? null;
+                    $statusProj  = $p['status'] ?? '';
+            
                     $bgFallback = "linear-gradient(135deg, rgba(108,92,231,.85), rgba(0,170,102,.65))";
-                    $bgImg = $img ? "url('" . htmlspecialchars($img, ENT_QUOTES) . "')" : $bgFallback;
-
-                    $hrefProjeto = "editar_projeto.php?id=" . $id;
+                    $bgImg      = $img ? "url('" . htmlspecialchars($img, ENT_QUOTES) . "')" : $bgFallback;
+            
+                    // datas
+                    $textoDatas = '';
+                    if (!empty($dataInicio)) {
+                        try {
+                            $dtInicioFmt = (new DateTime($dataInicio))->format('d/m/Y');
+                        } catch (Throwable $e) {
+                            $dtInicioFmt = $dataInicio;
+                        }
+            
+                        if (!empty($dataFim)) {
+                            try {
+                                $dtFimFmt = (new DateTime($dataFim))->format('d/m/Y');
+                            } catch (Throwable $e) {
+                                $dtFimFmt = $dataFim;
+                            }
+                            $textoDatas = "Início: {$dtInicioFmt} • Fim: {$dtFimFmt}";
+                        } else {
+                            $textoDatas = "Início: {$dtInicioFmt}";
+                        }
+                    }
+            
+                    $statusLabel = $statusProj !== '' ? $statusProj : 'SEM STATUS';
                 ?>
-                <a class="project-card" href="<?= htmlspecialchars($hrefProjeto) ?>" style="--bgimg: <?= $bgImg ?>;">
+                <a class="project-card"
+                   style="--bgimg: <?= $bgImg ?>;"
+                   data-nome="<?= htmlspecialchars($nome, ENT_QUOTES) ?>">
                     <div class="project-bg"></div>
                     <div class="project-overlay"></div>
                     <div class="project-content">
-                        <span class="project-chip">ver projeto</span>
+                        <span class="project-chip">
+                            <?= htmlspecialchars($statusLabel) ?>
+                        </span>
+            
                         <h3 class="project-title"><?= htmlspecialchars($nome) ?></h3>
-                        <?php if (!empty($desc)): ?>
-                            <p class="project-desc"><?= htmlspecialchars($desc) ?></p>
-                        <?php else: ?>
-                            <p class="project-desc" style="opacity:.8">Sem descrição por enquanto — mas o enredo pode nascer daqui.</p>
+            
+                        <?php if ($textoDatas !== ''): ?>
+                            <p class="project-dates"><?= htmlspecialchars($textoDatas) ?></p>
                         <?php endif; ?>
+                        
+                        <div class="project-actions">
+                            <button
+                                type="button"
+                                class="btn btn-ghost btn-icon"
+                                title="Editar projeto"
+                                data-action="editar-projeto"
+                                data-id="<?= (int)$id ?>">
+                                <span class="icon-pencil">✏</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn btn-ghost"
+                                data-action="eventos-projeto"
+                                data-id="<?= (int)$id ?>">
+                                Eventos
+                            </button>
+                        </div>
                     </div>
                 </a>
             <?php endforeach; ?>
-
+                        
             <!-- CARD + (NOVO PROJETO) -->
             <a class="plus-card" href="cadastro_projeto.php?osc_id=<?= (int)$oscIdVinculada ?>">
                 <div class="plus-inner">
@@ -480,6 +636,55 @@ try {
     </div>
 
 </main>
+<script>
+    (function(){
+        const input = document.getElementById('searchProjetos');
+        const cards = Array.from(document.querySelectorAll('.project-card'));
 
+        function normalizar(str){
+            return (str || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '');
+        }
+
+        function filtrar(){
+            const q = normalizar(input.value.trim());
+
+            cards.forEach(card => {
+                const nome = normalizar(card.getAttribute('data-nome') || '');
+                if (!q || nome.includes(q)){
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        if (input){
+            input.addEventListener('input', filtrar);
+        }
+
+        // cliques nos botões dentro dos cards de projeto
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-action="editar-projeto"], [data-action="eventos-projeto"]');
+            if (!btn) return;
+
+            const id = btn.getAttribute('data-id');
+            if (!id) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            const acao = btn.getAttribute('data-action');
+
+            if (acao === 'editar-projeto') {
+                window.location.href = 'editar_projeto.php?id=' + encodeURIComponent(id);
+            } else if (acao === 'eventos-projeto') {
+                window.location.href = 'eventos_projeto.php?id=' + encodeURIComponent(id);
+            }
+        });
+    })();
+</script>
 </body>
 </html>
