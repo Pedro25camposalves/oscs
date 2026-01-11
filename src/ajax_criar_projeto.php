@@ -174,7 +174,7 @@ try {
     $projetoId = (int)$conn->insert_id;
 
     // ====== Pastas do projeto ======
-    $baseUrlProjeto = "/assets/oscs/osc-{$oscId}/projetos/projeto-{$projetoId}";
+    $baseUrlProjeto = "assets/oscs/osc-{$oscId}/projetos/projeto-{$projetoId}";
     $imgUrlBase     = $baseUrlProjeto . "/imagens";
     $docUrlBase     = $baseUrlProjeto . "/documentos";
 
@@ -184,7 +184,7 @@ try {
     ensure_dir($imgDirFs);
     ensure_dir($docDirFs);
 
-    $envRootUrl = "/assets/oscs/osc-{$oscId}/envolvidos";
+    $envRootUrl = "assets/oscs/osc-{$oscId}/envolvidos";
     $envRootFs  = fs_path_from_url($envRootUrl);
     ensure_dir($envRootFs);
 
