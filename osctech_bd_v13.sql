@@ -116,16 +116,16 @@ CREATE TABLE IF NOT EXISTS `projeto` (
 -- Tabela EVENTO_OFICINA
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `evento_oficina` (
-  `id`         INT                       NOT NULL AUTO_INCREMENT,
-  `projeto_id` INT                       NOT NULL,
-  `pai_id`     INT                       NULL     DEFAULT NULL,
-  `tipo`       ENUM('EVENTO', 'OFICINA') NULL     DEFAULT NULL,
-  `img_capa`   VARCHAR(255)              NULL     DEFAULT NULL,
-  `nome`       VARCHAR(120)              NULL     DEFAULT NULL,
-  `descricao`  LONGTEXT                  NULL     DEFAULT NULL,
-  `data_inicio`   DATE                   NULL     DEFAULT NULL,
-  `data_fim`      DATE                   NULL     DEFAULT NULL,
-  `status`     ENUM('EXECUCAO','ENCERRADO','PLANEJAMENTO','PENDENTE') NOT NULL,
+  `id`            INT                       NOT NULL AUTO_INCREMENT,
+  `projeto_id`    INT                       NOT NULL,
+  `pai_id`        INT                       NULL     DEFAULT NULL,
+  `tipo`          ENUM('EVENTO', 'OFICINA') NULL     DEFAULT NULL,
+  `img_capa`      VARCHAR(255)              NULL     DEFAULT NULL,
+  `nome`          VARCHAR(120)              NULL     DEFAULT NULL,
+  `descricao`     LONGTEXT                  NULL     DEFAULT NULL,
+  `data_inicio`   DATE                      NULL     DEFAULT NULL,
+  `data_fim`      DATE                      NULL     DEFAULT NULL,
+  `status`        ENUM('EXECUCAO','ENCERRADO','PLANEJAMENTO','PENDENTE') NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `uk_eo_id_proj` (`id` ASC, `projeto_id` ASC),
   INDEX `fk_evento_oficina_evento_oficina1_idx` (`pai_id` ASC),
@@ -166,11 +166,36 @@ CREATE TABLE IF NOT EXISTS `endereco` (
 
 
 -- -----------------------------------------------------
+-- Tabela ENDERECO_OSC
+-- -----------------------------------------------------
+  CREATE TABLE IF NOT EXISTS `endereco_osc` (
+  `osc_id`      INT         NOT NULL,
+  `endereco_id` INT         NOT NULL,
+  `situacao`    VARCHAR(30) NOT NULL,
+  `principal`   TINYINT(1)  NOT NULL DEFAULT 0,
+  PRIMARY KEY (`osc_id`, `endereco_id`),
+  INDEX `idx_osc_endereco_endereco` (`endereco_id`),
+  CONSTRAINT `fk_endereco_osc_osc`
+    FOREIGN KEY (`osc_id`)
+    REFERENCES `osc` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_endereco_osc_endereco`
+    FOREIGN KEY (`endereco_id`)
+    REFERENCES `endereco` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB
+  DEFAULT CHARACTER SET = utf8mb4
+  COLLATE = utf8mb4_general_ci;
+
+-- -----------------------------------------------------
 -- Tabela ENDERECO_PROJETO
 -- -----------------------------------------------------
   CREATE TABLE IF NOT EXISTS `endereco_projeto` (
   `projeto_id`  INT NOT NULL,
   `endereco_id` INT NOT NULL,
+  `principal`   TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`projeto_id`, `endereco_id`),
   INDEX `idx_projeto_endereco_endereco` (`endereco_id`),
   CONSTRAINT `fk_endereco_projeto_projeto`

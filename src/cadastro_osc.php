@@ -320,6 +320,21 @@ require 'autenticacao.php';
             color: #c00;
             font-weight: 600;
         }
+        .chips-list{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+            margin-top:12px;
+        }
+        .chip{
+            background:#fafafa;
+            padding:8px;
+            border-radius:8px;
+            display:flex;
+            gap:10px;
+            align-items:center;
+            border:1px solid #f0f0f0;
+        }
     </style>
 </head>
 
@@ -452,8 +467,6 @@ require 'autenticacao.php';
                         <h2 class="section-title">Visualização</h2>
                         <div class="divider"></div>
                         <div class="card">
-                            <div class="small">Previews automáticos das imagens e cores selecionadas</div>
-                            <div class="divider"></div>
                             <div id="previewArea">
                                 <div class="row" style="align-items:center">
                                     <div>
@@ -542,10 +555,9 @@ require 'autenticacao.php';
                     <div>
                         <div style="margin-top:14px" class="card">
                             <h2>Envolvidos (*)</h2>
-                            <div class="small">Clique em "Adicionar" para incluir as pessoas envolvidas com a OSC.</div>
                             <div class="envolvidos-list" id="listaEnvolvidos"></div>
                             <div style="margin-top:10px">
-                                <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">Adicionar</button>
+                                <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">+ Adicionar</button>
                             </div>
                         </div>
                     </div>
@@ -596,35 +608,16 @@ require 'autenticacao.php';
                 </div>
             </div>
 
-            <!-- SEÇÃO 4: INFORMAÇÕES DO IMÓVEL (ENDEREÇO DA OSC) -->
+            <!-- SEÇÃO 4: IMÓVEIS DA OSC (MÚLTIPLOS) -->
             <div style="margin-top:16px" class="card">
                 <h2>Imóveis</h2>
                 <div class="divider"></div>
-                <div class="grid cols-3">
-                    <div>
-                        <label for="situacaoImovel">Situação do imóvel</label>
-                        <input id="situacaoImovel" type="text" />
-                    </div>
-                    <div>
-                        <label for="cep">CEP (*)</label>
-                        <input id="cep" inputmode="numeric" type="text" />
-                    </div>
-                    <div>
-                        <label for="cidade">Cidade</label>
-                        <input id="cidade" type="text" />
-                    </div>
-                    <div>
-                        <label for="bairro">Bairro</label>
-                        <input id="bairro" type="text" />
-                    </div>
-                    <div>
-                        <label for="logradouro">Logradouro</label>
-                        <input id="logradouro" type="text" />
-                    </div>
-                    <div>
-                        <label for="numero">Número</label>
-                        <input id="numero" inputmode="numeric" type="text" />
-                    </div>
+                            
+                <!-- Lista de imóveis cadastrados -->
+                <div class="chips-list" id="listaImoveisOsc"></div>
+                            
+                <div style="margin-top:10px">
+                    <button type="button" class="btn btn-ghost" id="openImovelOscModal">+ Adicionar</button>
                 </div>
             </div>
 
@@ -710,6 +703,70 @@ require 'autenticacao.php';
                 <button class="btn btn-ghost" id="closeEnvolvidoModal" type="button">Cancelar</button>
                 <button class="btn btn-primary" id="addEnvolvidoBtn" type="button">Adicionar</button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL IMÓVEIS DA OSC -->
+    <div id="modalImovelOscBackdrop" class="modal-backdrop">
+        <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Imóvel da OSC">
+            <h3>Adicionar Imóvel</h3>
+            <div class="divider"></div>
+
+            <div class="grid cols-2" style="margin-top:10px;">
+                <div style="grid-column:1 / -1; margin-top:4px;">
+                    <label class="label-inline">
+                        <input type="checkbox" id="imovelPrincipal" />
+                        <span class="small">Endereço principal</span>
+                    </label>
+                </div>
+
+                <div style="grid-column:1 / -1;">
+                    <label for="imovelDescricao">Descrição</label>
+                    <input id="imovelDescricao" type="text" placeholder="Ex: Sede, Ponto de apoio..." />
+                </div>
+
+                <div style="grid-column:1 / -1;">
+                    <label for="imovelSituacao">Situação do imóvel (*)</label>
+                    <input id="imovelSituacao" type="text" placeholder="Ex: Próprio, Alugado, Cedido..." />
+                </div>
+
+                <div>
+                    <label for="imovelCep">CEP (*)</label>
+                    <input id="imovelCep" type="text" inputmode="numeric" />
+                </div>
+
+                <div>
+                    <label for="imovelCidade">Cidade (*)</label>
+                    <input id="imovelCidade" type="text" />
+                </div>
+
+                <div>
+                    <label for="imovelLogradouro">Logradouro (*)</label>
+                    <input id="imovelLogradouro" type="text" />
+                </div>
+
+                <div>
+                    <label for="imovelBairro">Bairro (*)</label>
+                    <input id="imovelBairro" type="text" />
+                </div>
+
+                <div>
+                    <label for="imovelNumero">Número (*)</label>
+                    <input id="imovelNumero" type="text" inputmode="numeric" />
+                </div>
+
+                <div>
+                    <label for="imovelComplemento">Complemento</label>
+                    <input id="imovelComplemento" type="text" />
+                </div>
+
+            </div>
+
+            <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+                <button class="btn btn-ghost" id="closeImovelOscModal" type="button">Cancelar</button>
+                <button class="btn btn-primary" id="addImovelOscBtn" type="button">Adicionar</button>
+            </div>
+
         </div>
     </div>
 
@@ -814,6 +871,10 @@ require 'autenticacao.php';
         const qs = s => document.querySelector(s);
         const qsa = s => document.querySelectorAll(s);
 
+        function onlyDigits(str) {
+            return (str || '').replace(/\D+/g, '');
+        }
+
         const logoSimples = qs('#logoSimples');
         const logoCompleta = qs('#logoCompleta');
         const banner1 = qs('#banner1');
@@ -854,11 +915,169 @@ require 'autenticacao.php';
             });
         }
 
-        // Documentos da OSC (nova lógica, igual à dos projetos)
+        // Documentos da OSC
         const docsOsc = []; // cada item: {categoria, tipo, subtipo, ...}
 
         const envolvidos = [];
         const atividades = [];
+
+        // Imóveis da OSC (cada item: {descricao, situacao, cep, cidade, logradouro, bairro, numero, complemento})
+        const imoveisOsc = [];
+
+        // ====== IMÓVEIS DA OSC ======
+        const listaImoveisOsc          = qs('#listaImoveisOsc');
+        const modalImovelOscBackdrop   = qs('#modalImovelOscBackdrop');
+        const openImovelOscModal       = qs('#openImovelOscModal');
+        const closeImovelOscModal      = qs('#closeImovelOscModal');
+        const addImovelOscBtn          = qs('#addImovelOscBtn');
+
+        const imovelDescricao   = qs('#imovelDescricao');
+        const imovelSituacao    = qs('#imovelSituacao');
+        const imovelCep         = qs('#imovelCep');
+        const imovelCidade      = qs('#imovelCidade');
+        const imovelLogradouro  = qs('#imovelLogradouro');
+        const imovelBairro      = qs('#imovelBairro');
+        const imovelNumero      = qs('#imovelNumero');
+        const imovelComplemento = qs('#imovelComplemento');
+        const imovelPrincipal   = qs('#imovelPrincipal');
+
+        function limparCamposImovel() {
+            if (!imovelDescricao) return;
+
+            imovelDescricao.value   = '';
+            imovelSituacao.value    = '';
+            imovelCep.value         = '';
+            imovelCidade.value      = '';
+            imovelLogradouro.value  = '';
+            imovelBairro.value      = '';
+            imovelNumero.value      = '';
+            imovelComplemento.value = '';
+            if (imovelPrincipal) {
+                imovelPrincipal.checked = false;
+            }
+        }
+
+        function labelImovel(e) {
+            const partes = [];
+
+            if (e.descricao) partes.push(e.descricao);
+            if (e.situacao) partes.push(`(${e.situacao})`);
+
+            const rua    = [e.logradouro, e.numero].filter(Boolean).join(', ');
+            const bairro = e.bairro ? ` - ${e.bairro}` : '';
+            const cidade = e.cidade ? ` • ${e.cidade}` : '';
+            const cep    = e.cep    ? ` • CEP ${e.cep}` : '';
+
+            const core = [rua + bairro, cidade, cep].filter(Boolean).join('');
+            if (core.trim()) partes.push(core.trim());
+
+            return partes.join(' — ') || 'Imóvel sem descrição';
+        }
+
+        function renderImoveisOsc() {
+            if (!listaImoveisOsc) return;
+            listaImoveisOsc.innerHTML = '';
+
+            imoveisOsc.forEach((imo, i) => {
+                const c = document.createElement('div');
+                c.className = 'chip';
+
+                const info = document.createElement('div');
+
+                const principalTag = imo.principal
+                    ? `<span class="small" style="display:inline-block; padding:2px 8px; border-radius:999px; margin-left:6px; background:#e8f5e9; border:1px solid #b2dfdb;">principal</span>`
+                    : '';
+
+                info.innerHTML = `
+                    <div style="font-weight:600">
+                        ${escapeHtml(labelImovel(imo))} ${principalTag}
+                    </div>
+                `;
+
+                const remove = document.createElement('button');
+                remove.className = 'btn';
+                remove.textContent = '✕';
+                remove.style.padding = '6px 8px';
+                remove.style.marginLeft = '8px';
+                remove.addEventListener('click', () => {
+                    imoveisOsc.splice(i, 1);
+                    renderImoveisOsc();
+                });
+
+                c.appendChild(info);
+                c.appendChild(remove);
+                listaImoveisOsc.appendChild(c);
+            });
+        }
+
+        if (openImovelOscModal) {
+            openImovelOscModal.addEventListener('click', () => {
+                limparCamposImovel();
+                modalImovelOscBackdrop.style.display = 'flex';
+            });
+        }
+
+        if (closeImovelOscModal) {
+            closeImovelOscModal.addEventListener('click', () => {
+                modalImovelOscBackdrop.style.display = 'none';
+            });
+        }
+
+        if (modalImovelOscBackdrop) {
+            modalImovelOscBackdrop.addEventListener('click', (e) => {
+                if (e.target === modalImovelOscBackdrop) {
+                    modalImovelOscBackdrop.style.display = 'none';
+                }
+            });
+        }
+
+        if (addImovelOscBtn) {
+            addImovelOscBtn.addEventListener('click', () => {
+                const descricao   = (imovelDescricao.value   || '').trim();
+                const situacao    = (imovelSituacao.value    || '').trim();
+                const cep         = onlyDigits(imovelCep.value || '').slice(0, 8);
+                const cidade      = (imovelCidade.value      || '').trim();
+                const logradouro  = (imovelLogradouro.value  || '').trim();
+                const bairro      = (imovelBairro.value      || '').trim();
+                const numero      = (imovelNumero.value      || '').trim();
+                const complemento = (imovelComplemento.value || '').trim();
+                const principal   = !!(imovelPrincipal && imovelPrincipal.checked);
+
+                if (!situacao || !cep || !cidade || !logradouro || !bairro || !numero) {
+                    alert(
+                        'Preencha todos os campos do imóvel antes de adicionar:' +
+                        '\n- Situação' +
+                        '\n- CEP' +
+                        '\n- Cidade' +
+                        '\n- Logradouro' +
+                        '\n- Bairro' +
+                        '\n- Número'
+                    );
+                    return;
+                }
+
+                const novo = {
+                    descricao,
+                    situacao,
+                    cep,
+                    cidade,
+                    logradouro,
+                    bairro,
+                    numero,
+                    complemento,
+                    principal
+                };
+
+                // Se este imóvel foi marcado como principal, desmarca os outros
+                if (novo.principal) {
+                    imoveisOsc.forEach(i => { i.principal = false; });
+                }
+
+                imoveisOsc.push(novo);
+                renderImoveisOsc();
+                modalImovelOscBackdrop.style.display = 'none';
+            });
+        }
 
         function validarSenhaLive() {
             const s1 = usuarioSenha.value || '';
@@ -1628,6 +1847,18 @@ require 'autenticacao.php';
                 return;
             }
 
+            if (!imoveisOsc.length) {
+                alert('Cadastre pelo menos um imóvel da OSC antes de salvar.');
+                return;
+            }
+
+            const temPrincipal = imoveisOsc.some(i => i.principal);
+
+            if (!temPrincipal) {
+                alert('Selecione pelo menos um imóvel como endereço principal da OSC.');
+                return;
+            }
+
             const fd = new FormData();
 
             fd.append('cores[bg]', bgColor.value);
@@ -1669,12 +1900,7 @@ require 'autenticacao.php';
             const docCartCnpjInput = qs('#docCartCnpj');
             const getFileName = (input) => (input && input.files && input.files[0]) ? input.files[0].name : null;
 
-            fd.append('situacaoImovel', qs("#situacaoImovel").value);
-            fd.append('cep', qs("#cep").value);
-            fd.append('cidade', qs("#cidade").value);
-            fd.append('bairro', qs("#bairro").value);
-            fd.append('logradouro', qs("#logradouro").value);
-            fd.append('numero', qs("#numero").value);
+            fd.append('imoveis', JSON.stringify(imoveisOsc));
 
             fd.append('labelBanner', qs("#labelBanner").value);
 
@@ -1767,10 +1993,12 @@ require 'autenticacao.php';
             envolvidos.length = 0;
             atividades.length = 0;
             docsOsc.length = 0;
+            imoveisOsc.length = 0;
 
             renderEnvolvidos();
             renderAtividades();
             renderDocsOsc();
+            renderImoveisOsc();
 
             updatePreviews();
 

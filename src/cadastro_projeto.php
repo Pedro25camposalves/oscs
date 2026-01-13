@@ -229,6 +229,12 @@ try {
             padding:16px;
         }
 
+        .label-inline{
+            display:flex;
+            align-items:center;
+            gap:8px;
+        }
+
         input:disabled, textarea:disabled, select:disabled{
           background:#f3f3f5;
           color:#666;
@@ -423,6 +429,12 @@ try {
         <div class="divider"></div>
 
         <div class="grid cols-2" style="margin-top:10px;">
+          <div style="grid-column:1 / -1; margin-top:4px;">
+            <label class="label-inline">
+              <input type="checkbox" id="endPrincipal" />
+              <span class="small">Endereço principal</span>
+            </label>
+          </div>
           <div style="grid-column:1/-1;">
             <label for="endDescricao">Descrição</label>
             <input id="endDescricao" type="text" placeholder="Ex: Sede, Ponto de apoio..." />
@@ -743,6 +755,7 @@ try {
     const endBairro = qs('#endBairro');
     const endNumero = qs('#endNumero');
     const endComplemento = qs('#endComplemento');
+    const endPrincipal = qs('#endPrincipal');
 
     function setCamposEnderecoDisabled(disabled){
       [
@@ -822,22 +835,26 @@ try {
 
     function renderEnderecosProjeto(){
       listaEnderecosProjeto.innerHTML = '';
-
+                
       enderecosProjeto.forEach((e, i) => {
         const c = document.createElement('div');
         c.className = 'chip';
-
+                
         const info = document.createElement('div');
         const badge = e.tipo === 'novo'
           ? `<span class="small" style="display:inline-block; padding:2px 8px; border:1px solid #ddd; border-radius:999px; margin-left:6px;">novo</span>`
           : '';
-
+                
+        const principalTag = e.principal
+          ? `<span class="small" style="display:inline-block; padding:2px 8px; border-radius:999px; margin-left:6px; background:#e8f5e9; border:1px solid #b2dfdb;">principal</span>`
+          : '';
+                
         const label = e.tipo === 'existente'
           ? e.label
           : labelEndereco(e);
-
-        info.innerHTML = `<div style="font-weight:600">${escapeHtml(label)} ${badge}</div>`;
-
+                
+        info.innerHTML = `<div style="font-weight:600">${escapeHtml(label)} ${badge} ${principalTag}</div>`;
+                
         const remove = document.createElement('button');
         remove.className = 'btn';
         remove.textContent = '✕';
@@ -860,6 +877,7 @@ try {
       selectEnderecoOsc.value = '';
       limparCamposEndereco();
       setCamposEnderecoDisabled(false);
+      if (endPrincipal) endPrincipal.checked = false;
       modalEnderecoProjetoBackdrop.style.display = 'flex';
     });
 
@@ -868,16 +886,29 @@ try {
       selectEnderecoOsc.value = '';
       limparCamposEndereco();
       setCamposEnderecoDisabled(false);
+      if (endPrincipal) endPrincipal.checked = false;
     });
 
     modalEnderecoProjetoBackdrop.addEventListener('click', (e) => {
-      if (e.target === modalEnderecoProjetoBackdrop) modalEnderecoProjetoBackdrop.style.display = 'none';
+      if (e.target === modalEnderecoProjetoBackdrop) {
+        modalEnderecoProjetoBackdrop.style.display = 'none';
+        selectEnderecoOsc.value = '';
+        limparCamposEndereco();
+        setCamposEnderecoDisabled(false);
+        if (endPrincipal) endPrincipal.checked = false;
+      }
     });
 
     // Botão "Adicionar" com regra: selecionou -> existente, senão -> novo
     addEnderecoProjetoBtn.addEventListener('click', () => {
       const id = selectEnderecoOsc.value;
-
+      const principalMarcado = !!(endPrincipal && endPrincipal.checked);
+                
+      // Se marcou como principal, desmarca todos os outros
+      if (principalMarcado) {
+        enderecosProjeto.forEach(e => { e.principal = false; });
+      }
+                
       // Caso 1: selecionou um endereço existente
       if (id){
         const ja = enderecosProjeto.some(x => x.tipo === 'existente' && String(x.endereco_id) === String(id));
@@ -885,24 +916,26 @@ try {
           alert('Esse endereço já foi adicionado.');
           return;
         }
-
+                
         const e = getEnderecoById(id);
         if (!e){
           alert('Endereço inválido.');
           return;
         }
-
+                
         enderecosProjeto.push({
           tipo: 'existente',
           endereco_id: e.id,
-          label: labelEndereco(e)
+          label: labelEndereco(e),
+          principal: principalMarcado
         });
-
+                
         renderEnderecosProjeto();
         modalEnderecoProjetoBackdrop.style.display = 'none';
+        if (endPrincipal) endPrincipal.checked = false;
         return;
       }
-
+                
       // Caso 2: não selecionou -> criar novo com base nos campos
       const novo = {
         tipo: 'novo',
@@ -913,18 +946,20 @@ try {
         bairro: endBairro.value.trim(),
         numero: endNumero.value.trim(),
         complemento: endComplemento.value.trim(),
+        principal: principalMarcado
       };
-
+                
       // validação mínima
       if (!novo.cidade || !novo.logradouro){
         alert('Para cadastrar um novo endereço, preencha pelo menos Cidade e Logradouro.');
         return;
       }
-
+                
       enderecosProjeto.push(novo);
       renderEnderecosProjeto();
-
+                
       modalEnderecoProjetoBackdrop.style.display = 'none';
+      if (endPrincipal) endPrincipal.checked = false;
     });
 
     // ====== ENVOLVIDOS DO PROJETO ======
@@ -1647,7 +1682,7 @@ try {
 
       const endExistentes = enderecosProjeto
         .filter(e => e.tipo === 'existente')
-        .map(e => ({ endereco_id: e.endereco_id }));
+        .map(e => ({ endereco_id: e.endereco_id, principal: !!e.principal}));
 
       const endNovos = enderecosProjeto
         .filter(e => e.tipo === 'novo')
@@ -1658,7 +1693,8 @@ try {
           logradouro: e.logradouro || '',
           bairro: e.bairro || '',
           numero: e.numero || '',
-          complemento: e.complemento || ''
+          complemento: e.complemento || '',
+          principal: !!e.principal
         }));
 
       fd.append('enderecos', JSON.stringify({ existentes: endExistentes, novos: endNovos }));

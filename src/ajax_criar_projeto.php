@@ -328,19 +328,20 @@ try {
 
     // ====== Endereços existentes ======
     if (count($endExistentes) > 0) {
-        $stInsEndProj = $conn->prepare("INSERT IGNORE INTO endereco_projeto (projeto_id, endereco_id) VALUES (?, ?)");
+        $stInsEndProj = $conn->prepare("INSERT IGNORE INTO endereco_projeto (projeto_id, endereco_id, principal) VALUES (?, ?, ?)");
         $stCheckEnd = $conn->prepare("SELECT id FROM endereco WHERE id = ? LIMIT 1");
 
         foreach ($endExistentes as $e) {
             $endId = (int)($e['endereco_id'] ?? 0);
             if ($endId <= 0) continue;
+            $principal = !empty($e['principal']) ? 1 : 0;
 
             $stCheckEnd->bind_param("i", $endId);
             $stCheckEnd->execute();
             $ok = $stCheckEnd->get_result()->fetch_assoc();
             if (!$ok) throw new RuntimeException("Endereço #{$endId} não existe.");
 
-            $stInsEndProj->bind_param("ii", $projetoId, $endId);
+            $stInsEndProj->bind_param("iii", $projetoId, $endId, $principal);
             $stInsEndProj->execute();
         }
     }
@@ -351,7 +352,7 @@ try {
             INSERT INTO endereco (descricao, cep, cidade, logradouro, bairro, numero, complemento)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
-        $stInsEndProj2 = $conn->prepare("INSERT IGNORE INTO endereco_projeto (projeto_id, endereco_id) VALUES (?, ?)");
+        $stInsEndProj2 = $conn->prepare("INSERT IGNORE INTO endereco_projeto (projeto_id, endereco_id, principal) VALUES (?, ?, ?)");
 
         foreach ($endNovos as $e) {
             $cidade = trim((string)($e['cidade'] ?? ''));
@@ -366,13 +367,14 @@ try {
             $bairro = trim((string)($e['bairro'] ?? '')) ?: null;
             $numero = trim((string)($e['numero'] ?? '')) ?: null;
             $compl  = trim((string)($e['complemento'] ?? '')) ?: null;
+            $principal = !empty($e['principal']) ? 1 : 0;
 
             $stInsEnd->bind_param("sssssss", $desc, $cep, $cidade, $logradouro, $bairro, $numero, $compl);
             $stInsEnd->execute();
 
             $endId = (int)$conn->insert_id;
 
-            $stInsEndProj2->bind_param("ii", $projetoId, $endId);
+            $stInsEndProj2->bind_param("iii", $projetoId, $endId, $principal);
             $stInsEndProj2->execute();
         }
     }
