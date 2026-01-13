@@ -637,75 +637,20 @@ require 'autenticacao.php';
                 </div>
             </div>
 
-            <!-- SEÇÃO 7: DOCUMENTOS DA OSC -->
+            <!-- SEÇÃO 7: DOCUMENTOS DA OSC (nova lógica, igual à dos projetos) -->
             <div style="margin-top:16px" class="card">
                 <h2>Documentos da OSC</h2>
-                <div class="small">Formatos permitidos: .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf</div>
+                <div class="small">
+                    Formatos permitidos: .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf
+                </div>
                 <div class="divider"></div>
 
-                <!-- 1. INSTITUCIONAIS -->
-                <h3 class="section-title">1. Institucionais</h3>
-                <div class="grid cols-2">
-                    <div>
-                        <label for="docEstatuto">Estatuto</label>
-                        <input id="docEstatuto" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-                    </div>
-                    <div>
-                        <label for="docAta">Ata</label>
-                        <input id="docAta" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-                    </div>
-                </div>
+                <!-- Lista de documentos adicionados -->
+                <div class="envolvidos-list" id="docsOscList"></div>
 
-                <!-- 2. CERTIDÕES -->
-                <h3 class="section-title" style="margin-top:16px">2. Certidões</h3>
-                <div class="grid cols-3">
-                    <div>
-                        <label for="docCndFederal">CND Federal</label>
-                        <input id="docCndFederal" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-                    </div>
-                    <div>
-                        <label for="docCndEstadual">CND Estadual</label>
-                        <input id="docCndEstadual" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-                    </div>
-                    <div>
-                        <label for="docCndMunicipal">CND Municipal</label>
-                        <input id="docCndMunicipal" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-                    </div>
-                    <div>
-                        <label for="docFgts">FGTS</label>
-                        <input id="docFgts" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-                    </div>
-                    <div>
-                        <label for="docTrabalhista">Trabalhista</label>
-                        <input id="docTrabalhista" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-                    </div>
-                    <div>
-                        <label for="docCartCnpj">Cartão CNPJ</label>
-                        <input id="docCartCnpj" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-                    </div>
-                </div>
-
-                <!-- 3. Contábeis -->
-                <h3 class="section-title" style="margin-top:16px">3. Contábeis</h3>
-                <!-- Balanços Patrimoniais -->
-                <div class="small">
-                    Adicione um ou mais Balanços Patrimoniais, informando o ano de referência.
-                </div>
-                <div class="envolvidos-list" id="balancosList"></div>
-                <div style="margin-top:10px; margin-bottom:16px;">
-                    <button type="button" class="btn btn-ghost" id="openBalancoModal">
-                        Adicionar Balanço Patrimonial
-                    </button>
-                </div>
-
-                <!-- DRE -->
-                <div class="small">
-                    Adicione uma DRE para cada ano de referência.
-                </div>
-                <div class="envolvidos-list" id="dresList"></div>
-                <div style="margin-top:10px;">
-                    <button type="button" class="btn btn-ghost" id="openDreModal">
-                        Adicionar DRE
+                <div style="margin-top:10px">
+                    <button type="button" class="btn btn-ghost" id="openDocOscModal">
+                        Adicionar documento
                     </button>
                 </div>
             </div>
@@ -795,48 +740,76 @@ require 'autenticacao.php';
         </div>
     </div>
 
-    <!-- MODAL DOS BALANÇOS PATRIMONIAIS -->
-    <div id="modalBalancoBackdrop" class="modal-backdrop">
-        <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Balanço Patrimonial">
-            <h3>Adicionar Balanço Patrimonial</h3>
-
-            <div style="margin-top:8px" class="grid">
+    <!-- MODAL DOCUMENTOS OSC (mesma lógica do projeto) -->
+    <div id="modalDocOscBackdrop" class="modal-backdrop">
+        <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Documento da OSC">
+            <h3>Adicionar Documento</h3>
+            <div class="small">
+                Formatos permitidos: .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf
+            </div>
+                    
+            <div class="divider"></div>
+                    
+            <div class="grid" style="margin-top:10px;">
+                <!-- CATEGORIA -->
                 <div>
-                    <label for="balancoAno">Ano de referência (*)</label>
-                    <input id="balancoAno" type="text" inputmode="numeric" placeholder="Ex: 2024" required />
+                    <label for="docCategoria">Categoria (*)</label>
+                    <select id="docCategoria">
+                        <option value="">Selecione...</option>
+                        <option value="INSTITUCIONAL">Institucionais</option>
+                        <option value="CERTIDAO">Certidões</option>
+                        <option value="CONTABIL">Contábeis</option>
+                    </select>
                 </div>
+                    
+                <!-- TIPO -->
+                <div id="docTipoGroup" style="display:none;">
+                    <label for="docTipo">Tipo (*)</label>
+                    <select id="docTipo">
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                    
+                <!-- SUBTIPO (CND) -->
+                <div id="docSubtipoGroup" style="display:none;">
+                    <label for="docSubtipo">Subtipo (*)</label>
+                    <select id="docSubtipo">
+                        <option value="">Selecione...</option>
+                        <option value="FEDERAL">Federal</option>
+                        <option value="ESTADUAL">Estadual</option>
+                        <option value="MUNICIPAL">Municipal</option>
+                    </select>
+                </div>
+                    
+                <!-- DESCRIÇÃO (OUTROS) -->
+                <div id="docDescricaoGroup" style="display:none;">
+                    <label for="docDescricao">Descrição (*)</label>
+                    <input id="docDescricao" type="text" />
+                </div>
+                    
+                <!-- LINK (se quiser reaproveitar para DECRETO futuramente) -->
+                <div id="docLinkGroup" style="display:none;">
+                    <label for="docLink">Link (*)</label>
+                    <input id="docLink" type="text" />
+                </div>
+                    
+                <!-- ANO DE REFERÊNCIA (Balanço/DRE) -->
+                <div id="docAnoRefGroup" style="display:none;">
+                    <label for="docAnoRef">Ano de referência (*)</label>
+                    <input id="docAnoRef" type="text" inputmode="numeric" />
+                </div>
+                    
+                <!-- ARQUIVO -->
                 <div>
-                    <label for="balancoArquivo">Arquivo (*)</label>
-                    <input id="balancoArquivo" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" required />
+                    <label for="docArquivo">Arquivo (*)</label>
+                    <input id="docArquivo" type="file"
+                           accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
                 </div>
             </div>
-
+                    
             <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
-                <button type="button" class="btn btn-ghost" id="closeBalancoModal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="addBalancoBtn">Adicionar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL DAS DREs -->
-    <div id="modalDreBackdrop" class="modal-backdrop">
-        <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar DRE">
-            <h3>Adicionar DRE</h3>
-
-            <div style="margin-top:8px" class="grid">
-                <div>
-                    <label for="dreAno">Ano de referência (*)</label>
-                    <input id="dreAno" type="text" inputmode="numeric" placeholder="Ex: 2024" required />
-                </div>
-                <div>
-                    <label for="dreArquivo">Arquivo (*)</label>
-                    <input id="dreArquivo" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" required />
-                </div>
-            </div>
-
-            <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
-                <button type="button" class="btn btn-ghost" id="closeDreModal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="addDreBtn">Adicionar</button>
+                <button class="btn btn-ghost" id="closeDocOscModal" type="button">Cancelar</button>
+                <button class="btn btn-primary" id="addDocOscBtn" type="button">Adicionar</button>
             </div>
         </div>
     </div>
@@ -886,203 +859,11 @@ require 'autenticacao.php';
             });
         }
 
-        // Inputs de documentos "fixos"
-        const docEstatuto = qs('#docEstatuto');
-        const docAta = qs('#docAta');
-        const docCndFederal = qs('#docCndFederal');
-        const docCndEstadual = qs('#docCndEstadual');
-        const docCndMunicipal = qs('#docCndMunicipal');
-        const docFgts = qs('#docFgts');
-        const docTrabalhista = qs('#docTrabalhista');
-        const docCartCnpj = qs('#docCartCnpj');
-        const balancos = []; // { ano, file }
-        const dres = []; // { ano, file }
+        // Documentos da OSC (nova lógica, igual à dos projetos)
+        const docsOsc = []; // cada item: {categoria, tipo, subtipo, ...}
 
         const envolvidos = [];
         const atividades = [];
-
-        // modal balanços patrimoniais
-        const modalBalancoBackdrop = qs('#modalBalancoBackdrop');
-        const openBalancoModal = qs('#openBalancoModal');
-        const closeBalancoModal = qs('#closeBalancoModal');
-        const addBalancoBtn = qs('#addBalancoBtn');
-
-        if (openBalancoModal) {
-            openBalancoModal.addEventListener('click', () => {
-                modalBalancoBackdrop.style.display = 'flex';
-            });
-        }
-
-        if (closeBalancoModal) {
-            closeBalancoModal.addEventListener('click', () => {
-                modalBalancoBackdrop.style.display = 'none';
-            });
-        }
-
-        if (modalBalancoBackdrop) {
-            modalBalancoBackdrop.addEventListener('click', (e) => {
-                if (e.target === modalBalancoBackdrop) {
-                    modalBalancoBackdrop.style.display = 'none';
-                }
-            });
-        }
-
-        function limparCamposBalanco() {
-            const anoInput = qs('#balancoAno');
-            const arqInput = qs('#balancoArquivo');
-            if (anoInput) anoInput.value = '';
-            if (arqInput) arqInput.value = '';
-        }
-
-        function renderBalancos() {
-            const list = qs('#balancosList');
-            if (!list) return;
-
-            list.innerHTML = '';
-
-            balancos.forEach((b, i) => {
-                const c = document.createElement('div');
-                c.className = 'envolvido-card';
-
-                const info = document.createElement('div');
-                info.innerHTML = `
-                    <div style="font-weight:600">Ano: ${escapeHtml(b.ano)}</div>
-                    <div class="small">Arquivo: ${escapeHtml(b.file?.name || '')}</div>
-                `;
-
-                const remove = document.createElement('button');
-                remove.className = 'btn';
-                remove.textContent = '✕';
-                remove.style.padding = '6px 8px';
-                remove.style.marginLeft = '8px';
-                remove.addEventListener('click', () => {
-                    balancos.splice(i, 1);
-                    renderBalancos();
-                });
-
-                c.appendChild(info);
-                c.appendChild(remove);
-                list.appendChild(c);
-            });
-        }
-
-        function addBalanco() {
-            const anoInput = qs('#balancoAno');
-            const arqInput = qs('#balancoArquivo');
-
-            const ano = anoInput ? anoInput.value.trim() : '';
-            const file = arqInput && arqInput.files ? arqInput.files[0] : null;
-
-            if (!ano || !file) {
-                alert('Informe o ano e selecione o arquivo do Balanço Patrimonial.');
-                return;
-            }
-
-            balancos.push({
-                ano,
-                file
-            });
-
-            renderBalancos();
-            limparCamposBalanco();
-            modalBalancoBackdrop.style.display = 'none';
-        }
-
-        if (addBalancoBtn) {
-            addBalancoBtn.addEventListener('click', addBalanco);
-        }
-
-        // ===== MODAL DRE =====
-        const modalDreBackdrop = qs('#modalDreBackdrop');
-        const openDreModal = qs('#openDreModal');
-        const closeDreModal = qs('#closeDreModal');
-        const addDreBtn = qs('#addDreBtn');
-
-        if (openDreModal) {
-            openDreModal.addEventListener('click', () => {
-                modalDreBackdrop.style.display = 'flex';
-            });
-        }
-
-        if (closeDreModal) {
-            closeDreModal.addEventListener('click', () => {
-                modalDreBackdrop.style.display = 'none';
-            });
-        }
-
-        if (modalDreBackdrop) {
-            modalDreBackdrop.addEventListener('click', (e) => {
-                if (e.target === modalDreBackdrop) {
-                    modalDreBackdrop.style.display = 'none';
-                }
-            });
-        }
-
-        function limparCamposDre() {
-            const anoInput = qs('#dreAno');
-            const arqInput = qs('#dreArquivo');
-            if (anoInput) anoInput.value = '';
-            if (arqInput) arqInput.value = '';
-        }
-
-        function renderDres() {
-            const list = qs('#dresList');
-            if (!list) return;
-
-            list.innerHTML = '';
-
-            dres.forEach((d, i) => {
-                const c = document.createElement('div');
-                c.className = 'envolvido-card';
-
-                const info = document.createElement('div');
-                info.innerHTML = `
-                    <div style="font-weight:600">Ano: ${escapeHtml(d.ano)}</div>
-                    <div class="small">Arquivo: ${escapeHtml(d.file?.name || '')}</div>
-                `;
-
-                const remove = document.createElement('button');
-                remove.className = 'btn';
-                remove.textContent = '✕';
-                remove.style.padding = '6px 8px';
-                remove.style.marginLeft = '8px';
-                remove.addEventListener('click', () => {
-                    dres.splice(i, 1);
-                    renderDres();
-                });
-
-                c.appendChild(info);
-                c.appendChild(remove);
-                list.appendChild(c);
-            });
-        }
-
-        function addDre() {
-            const anoInput = qs('#dreAno');
-            const arqInput = qs('#dreArquivo');
-
-            const ano = anoInput ? anoInput.value.trim() : '';
-            const file = arqInput && arqInput.files ? arqInput.files[0] : null;
-
-            if (!ano || !file) {
-                alert('Informe o ano e selecione o arquivo da DRE.');
-                return;
-            }
-
-            dres.push({
-                ano,
-                file
-            });
-
-            renderDres();
-            limparCamposDre();
-            modalDreBackdrop.style.display = 'none';
-        }
-
-        if (addDreBtn) {
-            addDreBtn.addEventListener('click', addDre);
-        }
-
 
         function validarSenhaLive() {
             const s1 = usuarioSenha.value;
@@ -1433,182 +1214,322 @@ require 'autenticacao.php';
             })
         }
 
-        // ====== UPLOAD DE DOCUMENTOS (após criar a OSC) ======
-
-        async function enviarDocumentoSimples(oscId, fileInput, categoria, subtipo) {
-            if (!fileInput || !fileInput.files || !fileInput.files[0]) {
-                return null;
+        // ====== DOCUMENTOS DA OSC (mesma lógica do cadastro de projeto) ======
+        const docsOscList            = qs('#docsOscList');
+        const modalDocOscBackdrop    = qs('#modalDocOscBackdrop');
+        const openDocOscModal        = qs('#openDocOscModal');
+        const closeDocOscModal       = qs('#closeDocOscModal');
+        const addDocOscBtn           = qs('#addDocOscBtn');
+                        
+        const docCategoria      = qs('#docCategoria');
+        const docTipoGroup      = qs('#docTipoGroup');
+        const docTipo           = qs('#docTipo');
+        const docSubtipoGroup   = qs('#docSubtipoGroup');
+        const docSubtipo        = qs('#docSubtipo');
+        const docDescricaoGroup = qs('#docDescricaoGroup');
+        const docDescricao      = qs('#docDescricao');
+        const docAnoRefGroup    = qs('#docAnoRefGroup');
+        const docAnoRef         = qs('#docAnoRef');
+        const docArquivo        = qs('#docArquivo');
+        const docLinkGroup      = qs('#docLinkGroup');
+        const docLink           = qs('#docLink');
+                        
+        // Mapeamento Categoria -> Tipos específicos para OSC
+        const TIPOS_POR_CATEGORIA_OSC = {
+            INSTITUCIONAL: [
+                { value: 'ESTATUTO',            label: 'Estatuto' },
+                { value: 'ATA',                 label: 'Ata' },
+                { value: 'OUTRO_INSTITUCIONAL', label: 'Outro documento institucional' },
+            ],
+            CERTIDAO: [
+                { value: 'CND',         label: 'Certidão Negativa de Débito (CND)' },
+                { value: 'FGTS',        label: 'FGTS' },
+                { value: 'TRABALHISTA', label: 'Trabalhista' },
+                { value: 'CARTAO_CNPJ', label: 'Cartão CNPJ' },
+            ],
+            CONTABIL: [
+                { value: 'BALANCO_PATRIMONIAL', label: 'Balanço Patrimonial' },
+                { value: 'DRE',                 label: 'Demonstração de Resultados (DRE)' },
+                { value: 'OUTRO',               label: 'Outro documento contábil' },
+            ],
+        };
+                        
+        const LABEL_CATEGORIA_OSC = {
+            INSTITUCIONAL: 'Institucionais',
+            CERTIDAO:      'Certidões',
+            CONTABIL:      'Contábeis',
+        };
+                        
+        function resetDocOscCampos() {
+            docCategoria.value = '';
+                        
+            docTipo.innerHTML = '<option value="">Selecione...</option>';
+            docTipoGroup.style.display = 'none';
+                        
+            docSubtipo.value = '';
+            docSubtipoGroup.style.display = 'none';
+                        
+            docDescricao.value = '';
+            docDescricaoGroup.style.display = 'none';
+                        
+            docLink.value = '';
+            docLinkGroup.style.display = 'none';
+                        
+            docAnoRef.value = '';
+            docAnoRefGroup.style.display = 'none';
+                        
+            docArquivo.value = '';
+        }
+                        
+        // Categoria -> carrega Tipos
+        docCategoria.addEventListener('change', () => {
+            const cat = docCategoria.value;
+                        
+            docTipo.innerHTML = '<option value="">Selecione...</option>';
+            docTipoGroup.style.display = 'none';
+                        
+            docSubtipo.value = '';
+            docSubtipoGroup.style.display = 'none';
+                        
+            docDescricao.value = '';
+            docDescricaoGroup.style.display = 'none';
+                        
+            docLink.value = '';
+            docLinkGroup.style.display = 'none';
+                        
+            docAnoRef.value = '';
+            docAnoRefGroup.style.display = 'none';
+                        
+            if (!cat || !TIPOS_POR_CATEGORIA_OSC[cat]) {
+                return;
             }
-
-            const fdDoc = new FormData();
-            fdDoc.append('id_osc', oscId);
-            fdDoc.append('categoria', categoria);
-            fdDoc.append('subtipo', subtipo);
-            fdDoc.append('arquivo', fileInput.files[0]);
-
-            try {
-                const resp = await fetch('ajax_upload_documento.php', {
-                    method: 'POST',
-                    body: fdDoc
+                        
+            TIPOS_POR_CATEGORIA_OSC[cat].forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.value;
+                opt.textContent = t.label;
+                docTipo.appendChild(opt);
+            });
+                        
+            docTipoGroup.style.display = 'block';
+        });
+                        
+        // Tipo -> mostra Subtipo / Ano / Descrição / Link
+        docTipo.addEventListener('change', () => {
+            const tipo = docTipo.value;
+                        
+            docSubtipo.value = '';
+            docSubtipoGroup.style.display = 'none';
+                        
+            docDescricao.value = '';
+            docDescricaoGroup.style.display = 'none';
+                        
+            docLink.value = '';
+            docLinkGroup.style.display = 'none';
+                        
+            docAnoRef.value = '';
+            docAnoRefGroup.style.display = 'none';
+                        
+            if (!tipo) return;
+                        
+            if (tipo === 'CND') {
+                // CND: exige subtipo (Federal/Estadual/Municipal)
+                docSubtipoGroup.style.display = 'block';
+            } else if (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE') {
+                // Balanço/DRE: exige ano
+                docAnoRefGroup.style.display = 'block';
+            } else if (tipo === 'OUTRO' || tipo === 'OUTRO_INSTITUCIONAL') {
+                // Outros: exigem descrição
+                docDescricaoGroup.style.display = 'block';
+            }
+            // se um dia usar DECRETO aqui, é só ligar docLinkGroup,
+            // igual fizemos no cadastro de projeto.
+        });
+                        
+        function renderDocsOsc() {
+            if (!docsOscList) return;
+            docsOscList.innerHTML = '';
+                        
+            docsOsc.forEach((d, i) => {
+                const c = document.createElement('div');
+                c.className = 'envolvido-card';
+                        
+                const catLabel = LABEL_CATEGORIA_OSC[d.categoria] || d.categoria;
+                        
+                let linha = d.tipo_label || d.tipo || '';
+                if (d.tipo === 'CND' && d.subtipo_label) {
+                    linha += ' — ' + d.subtipo_label;
+                } else if ((d.tipo === 'OUTRO' || d.tipo === 'OUTRO_INSTITUCIONAL') && d.descricao) {
+                    linha += ' — ' + d.descricao;
+                }
+                        
+                const info = document.createElement('div');
+                info.innerHTML = `
+                    <div style="font-weight:600">
+                        ${escapeHtml(catLabel)} • ${escapeHtml(linha)}
+                    </div>
+                    ${d.ano_referencia ? `<div class="small">Ano: ${escapeHtml(d.ano_referencia)}</div>` : ''}
+                    ${d.link ? `<div class="small">Link: ${escapeHtml(d.link)}</div>` : ''}
+                    <div class="small">Arquivo: ${escapeHtml(d.file?.name || '—')}</div>
+                `;
+                        
+                const remove = document.createElement('button');
+                remove.className = 'btn';
+                remove.textContent = '✕';
+                remove.style.padding = '6px 8px';
+                remove.style.marginLeft = '8px';
+                remove.addEventListener('click', () => {
+                    docsOsc.splice(i, 1);
+                    renderDocsOsc();
                 });
-
-                const text = await resp.text();
-                let data;
-                try {
-                    data = JSON.parse(text);
-                } catch (e) {
-                    console.error('Erro ao parsear JSON no upload de documento:', subtipo, text);
-                    return `(${categoria}/${subtipo}) resposta inválida do servidor.`;
+                        
+                c.appendChild(info);
+                c.appendChild(remove);
+                docsOscList.appendChild(c);
+            });
+        }
+                        
+        // abrir/fechar modal
+        if (openDocOscModal) {
+            openDocOscModal.addEventListener('click', () => {
+                resetDocOscCampos();
+                modalDocOscBackdrop.style.display = 'flex';
+            });
+        }
+                        
+        if (closeDocOscModal) {
+            closeDocOscModal.addEventListener('click', () => {
+                modalDocOscBackdrop.style.display = 'none';
+            });
+        }
+                        
+        if (modalDocOscBackdrop) {
+            modalDocOscBackdrop.addEventListener('click', (e) => {
+                if (e.target === modalDocOscBackdrop) {
+                    modalDocOscBackdrop.style.display = 'none';
                 }
-
-                if (data.status !== 'ok') {
-                    return `(${categoria}/${subtipo}) ${data.mensagem || 'erro ao enviar documento.'}`;
+            });
+        }
+                        
+        // Adicionar documento à lista (validação similar ao projeto)
+        if (addDocOscBtn) {
+            addDocOscBtn.addEventListener('click', () => {
+                const cat = docCategoria.value;
+                const tipo = docTipo.value;
+                const tipoLabel = docTipo.options[docTipo.selectedIndex]?.text || '';
+                        
+                if (!cat) {
+                    alert('Selecione a categoria.');
+                    return;
                 }
-
-                return null;
-
-            } catch (e) {
-                console.error('Erro na requisição de upload de documento:', subtipo, e);
-                return `(${categoria}/${subtipo}) erro de comunicação com o servidor.`;
-            }
+                if (!tipo) {
+                    alert('Selecione o tipo.');
+                    return;
+                }
+                        
+                let subtipoDb    = '';
+                let subtipoLabel = '';
+                let descricao    = docDescricao.value.trim();
+                let ano          = docAnoRef.value.trim();
+                let link         = docLink.value.trim();
+                        
+                if (tipo === 'CND') {
+                    const sub = docSubtipo.value;
+                    if (!sub) {
+                        alert('Selecione o subtipo (Federal, Estadual ou Municipal).');
+                        return;
+                    }
+                    subtipoDb    = 'CND_' + sub; // CND_FEDERAL, CND_ESTADUAL, CND_MUNICIPAL
+                    subtipoLabel = docSubtipo.options[docSubtipo.selectedIndex]?.text || '';
+                } else if (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE') {
+                    if (!ano || !/^\d{4}$/.test(ano)) {
+                        alert('Informe um ano de referência válido (4 dígitos, ex: 2024).');
+                        return;
+                    }
+                    subtipoDb = tipo;
+                } else if (tipo === 'OUTRO' || tipo === 'OUTRO_INSTITUCIONAL') {
+                    if (!descricao) {
+                        alert('Descreva o documento no campo Descrição.');
+                        return;
+                    }
+                    subtipoDb = tipo;
+                } else {
+                    // Tipos “simples”: FGTS, TRABALHISTA, CARTAO_CNPJ, ESTATUTO, ATA etc.
+                    subtipoDb = tipo;
+                }
+                        
+                const file = docArquivo.files?.[0] || null;
+                if (!file) {
+                    alert('Selecione o arquivo do documento.');
+                    return;
+                }
+                        
+                docsOsc.push({
+                    categoria:      cat,
+                    tipo,
+                    tipo_label:     tipoLabel,
+                    subtipo:        subtipoDb,
+                    subtipo_label:  subtipoLabel,
+                    descricao,
+                    ano_referencia: ano || '',
+                    link,
+                    file
+                });
+                        
+                renderDocsOsc();
+                modalDocOscBackdrop.style.display = 'none';
+            });
         }
 
-        async function enviarDocumentosFixos(oscId) {
-            const erros = [];
+    // Upload de documento individual da OSC (sem projeto_id)
+    async function enviarDocumentoOsc(oscId, docCfg) {
+        const fd = new FormData();
+        fd.append('id_osc', String(oscId));
+        fd.append('categoria', docCfg.categoria);
+        fd.append('subtipo',   docCfg.subtipo);
+        fd.append('tipo',      docCfg.tipo);
 
-            const docs = [{
-                    el: docEstatuto,
-                    cat: 'INSTITUCIONAL',
-                    subtipo: 'ESTATUTO'
-                },
-                {
-                    el: docAta,
-                    cat: 'INSTITUCIONAL',
-                    subtipo: 'ATA'
-                },
-                {
-                    el: docCndFederal,
-                    cat: 'CERTIDAO',
-                    subtipo: 'CND_FEDERAL'
-                },
-                {
-                    el: docCndEstadual,
-                    cat: 'CERTIDAO',
-                    subtipo: 'CND_ESTADUAL'
-                },
-                {
-                    el: docCndMunicipal,
-                    cat: 'CERTIDAO',
-                    subtipo: 'CND_MUNICIPAL'
-                },
-                {
-                    el: docFgts,
-                    cat: 'CERTIDAO',
-                    subtipo: 'FGTS'
-                },
-                {
-                    el: docTrabalhista,
-                    cat: 'CERTIDAO',
-                    subtipo: 'TRABALHISTA'
-                },
-                {
-                    el: docCartCnpj,
-                    cat: 'CERTIDAO',
-                    subtipo: 'CARTAO_CNPJ'
-                },
-            ];
-
-            for (const cfg of docs) {
-                const erro = await enviarDocumentoSimples(oscId, cfg.el, cfg.cat, cfg.subtipo);
-                if (erro) erros.push(erro);
-            }
-
-            return erros;
+        if (docCfg.ano_referencia) {
+            fd.append('ano_referencia', docCfg.ano_referencia);
         }
 
-        async function enviarBalancos(oscId) {
-            const erros = [];
-
-            for (const b of balancos) {
-                if (!b.file) continue;
-
-                const fdDoc = new FormData();
-                fdDoc.append('id_osc', oscId);
-                fdDoc.append('categoria', 'CONTABIL');
-                fdDoc.append('subtipo', 'BALANCO_PATRIMONIAL');
-                fdDoc.append('ano_referencia', b.ano);
-                fdDoc.append('arquivo', b.file);
-
-                try {
-                    const resp = await fetch('ajax_upload_documento.php', {
-                        method: 'POST',
-                        body: fdDoc
-                    });
-
-                    const text = await resp.text();
-                    let data;
-                    try {
-                        data = JSON.parse(text);
-                    } catch (e) {
-                        console.error('Erro ao parsear JSON no upload Balanço:', text);
-                        erros.push(`(Balanço ${b.ano}) resposta inválida do servidor.`);
-                        continue;
-                    }
-
-                    if (data.status !== 'ok') {
-                        erros.push(`(Balanço ${b.ano}) ${data.mensagem || 'erro ao enviar documento.'}`);
-                    }
-
-                } catch (e) {
-                    console.error('Erro de requisição no upload Balanço:', e);
-                    erros.push(`(Balanço ${b.ano}) erro de comunicação com o servidor.`);
-                }
-            }
-
-            return erros;
+        if ((docCfg.tipo === 'OUTRO' || docCfg.tipo === 'OUTRO_INSTITUCIONAL') && docCfg.descricao) {
+            fd.append('descricao', docCfg.descricao);
         }
 
-        async function enviarDres(oscId) {
-            const erros = [];
+        if (docCfg.tipo === 'DECRETO' && docCfg.link) {
+            fd.append('link', docCfg.link);
+        }
 
-            for (const d of dres) {
-                if (!d.file) continue;
+        if (docCfg.file) {
+            fd.append('arquivo', docCfg.file);
+        }
 
-                const fdDoc = new FormData();
-                fdDoc.append('id_osc', oscId);
-                fdDoc.append('categoria', 'CONTABIL');
-                fdDoc.append('subtipo', 'DRE');
-                fdDoc.append('ano_referencia', d.ano);
-                fdDoc.append('arquivo', d.file);
+        try {
+            const resp = await fetch('ajax_upload_documento.php', {
+                method: 'POST',
+                body: fd
+            });
 
-                try {
-                    const resp = await fetch('ajax_upload_documento.php', {
-                        method: 'POST',
-                        body: fdDoc
-                    });
-
-                    const text = await resp.text();
-                    let data;
-                    try {
-                        data = JSON.parse(text);
-                    } catch (e) {
-                        console.error('Erro ao parsear JSON no upload DRE:', text);
-                        erros.push(`(DRE ${d.ano}) resposta inválida do servidor.`);
-                        continue;
-                    }
-
-                    if (data.status !== 'ok') {
-                        erros.push(`(DRE ${d.ano}) ${data.mensagem || 'erro ao enviar documento.'}`);
-                    }
-
-                } catch (e) {
-                    console.error('Erro de requisição no upload DRE:', e);
-                    erros.push(`(DRE ${d.ano}) erro de comunicação com o servidor.`);
-                }
+            const text = await resp.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch {
+                console.error('Resposta inválida ao enviar documento da OSC:', text);
+                return `(${docCfg.categoria}/${docCfg.subtipo}) resposta inválida do servidor.`;
             }
 
-            return erros;
+            if (data.status !== 'ok') {
+                return `(${docCfg.categoria}/${docCfg.subtipo}) ${data.mensagem || 'erro ao enviar documento.'}`;
+            }
+
+            return null;
+        } catch (e) {
+            console.error('Erro ao enviar documento da OSC:', e);
+            return `(${docCfg.categoria}/${docCfg.subtipo}) erro de comunicação com o servidor.`;
         }
+    }
 
         // REALIZA O CADASTRO
         async function saveData() {
@@ -1740,40 +1661,35 @@ require 'autenticacao.php';
                     return;
                 }
 
-                if (result.success) {
-                    const oscId = result.osc_id;
+            if (result.success) {
+                const oscId = result.osc_id;
 
-                    let errosDocs = [];
+                let errosDocs = [];
 
-                    try {
-                        const errosFixos = await enviarDocumentosFixos(oscId);
-                        const errosBalancos = await enviarBalancos(oscId);
-                        const errosDres = await enviarDres(oscId);
-
-                        errosDocs = [
-                            ...errosFixos,
-                            ...errosBalancos,
-                            ...errosDres
-                        ];
-                    } catch (e) {
-                        console.error('Falha geral ao enviar documentos da OSC:', e);
-                        errosDocs.push('Falha inesperada ao enviar alguns documentos.');
+                try {
+                    for (const d of docsOsc) {
+                        const err = await enviarDocumentoOsc(oscId, d);
+                        if (err) errosDocs.push(err);
                     }
-
-                    if (errosDocs.length === 0) {
-                        alert("OSC criada com sucesso! Todos os documentos foram enviados.");
-                    } else {
-                        alert(
-                            "OSC criada com sucesso, mas alguns documentos não foram enviados:\n\n" +
-                            errosDocs.map(e => "- " + e).join("\n")
-                        );
-                    }
-
-                    resetForm();
-
-                } else {
-                    alert("Erro ao criar OSC: " + (result.error || "desconhecido"));
+                } catch (e) {
+                    console.error('Falha geral ao enviar documentos da OSC:', e);
+                    errosDocs.push('Falha inesperada ao enviar alguns documentos.');
                 }
+
+                if (errosDocs.length === 0) {
+                    alert("OSC criada com sucesso! Todos os documentos foram enviados.");
+                } else {
+                    alert(
+                        "OSC criada com sucesso, mas alguns documentos não foram enviados:\n\n" +
+                        errosDocs.map(e => "- " + e).join("\n")
+                    );
+                }
+
+                resetForm();
+
+            } else {
+                alert("Erro ao criar OSC: " + (result.error || "desconhecido"));
+            }
 
             } catch (error) {
                 console.error("❌ Erro ao enviar dados:", error);
@@ -1791,13 +1707,11 @@ require 'autenticacao.php';
 
             envolvidos.length = 0;
             atividades.length = 0;
-            balancos.length = 0;
-            dres.length = 0;
-
+            docsOsc.length = 0;
+                            
             renderEnvolvidos();
             renderAtividades();
-            renderBalancos();
-            renderDres();
+            renderDocsOsc();
 
             updatePreviews();
 

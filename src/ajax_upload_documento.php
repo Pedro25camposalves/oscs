@@ -1,6 +1,9 @@
 <?php
-session_start();
-require_once 'conexao.php';
+$TIPOS_PERMITIDOS = ['OSC_TECH_ADMIN', 'OSC_MASTER'];
+$RESPOSTA_JSON    = true;
+
+require 'autenticacao.php';
+require 'conexao.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -21,24 +24,28 @@ $subtipo       = $_POST['subtipo']   ?? null;
 // ano de referência (opcional)
 $anoRef = $_POST['ano_referencia'] ?? null;
 
-$descricao = isset($_POST['descricao']) ? trim((string)$_POST['descricao']) : '';
-if ($descricao === '') $descricao = null;
-
-$link = isset($_POST['link']) ? trim((string)$_POST['link']) : '';
-if ($link === '') $link = null;
-
-// tipo técnico (PLANO_TRABALHO, CND, DECRETO, OUTRO etc.)
+// tipo técnico (PLANO_TRABALHO, CND, DECRETO, OUTRO, OUTRO_INSTITUCIONAL etc.)
 $tipo = isset($_POST['tipo']) ? strtoupper(trim((string)$_POST['tipo'])) : '';
 
-// descrição – só vale se for OUTRO
+// campos textuais
 $descricao = isset($_POST['descricao']) ? trim((string)$_POST['descricao']) : '';
-if ($tipo !== 'OUTRO' || $descricao === '') {
+$link      = isset($_POST['link'])      ? trim((string)$_POST['link'])      : '';
+
+// normalização do subtipo para regras de CONTÁBIL e, se quiser, OUTRO/DECRETO também
+$subtipoUpper = strtoupper((string)$subtipo);
+
+// flags de regra:
+$isOutro   = (strpos($tipo, 'OUTRO') === 0 || strpos($subtipoUpper, 'OUTRO') === 0);
+$isDecreto = (strpos($tipo, 'DECRETO') === 0 || strpos($subtipoUpper, 'DECRETO') === 0);
+
+// aplica regras só UMA vez:
+// descrição só vale para OUTRO / OUTRO_INSTITUCIONAL (e afins)
+if (!$isOutro || $descricao === '') {
     $descricao = null;
 }
 
-// link – só vale se for DECRETO
-$link = isset($_POST['link']) ? trim((string)$_POST['link']) : '';
-if ($tipo !== 'DECRETO' || $link === '') {
+// link só vale para DECRETO (ou derivados)
+if (!$isDecreto || $link === '') {
     $link = null;
 }
 
@@ -94,7 +101,7 @@ if ($anoRef !== null && $anoRef !== '') {
 }
 
 // regra específica para CONTÁBIL (Balanço / DRE)
-if ($categoria === 'CONTABIL' && in_array($subtipo, ['BALANCO_PATRIMONIAL', 'DRE'], true)) {
+if ($categoria === 'CONTABIL' && in_array($subtipoUpper, ['BALANCO_PATRIMONIAL', 'DRE'], true)) {
     if ($anoRefNormalizado === null) {
         echo json_encode([
             "status"   => "erro",
@@ -106,6 +113,7 @@ if ($categoria === 'CONTABIL' && in_array($subtipo, ['BALANCO_PATRIMONIAL', 'DRE
 
 // --------------------------------------------------------
 // DEFINIÇÃO DAS PASTAS
+// (mantendo sua lógica original: se não existir, erro)
 // --------------------------------------------------------
 $basePath = __DIR__ . "/assets/oscs/osc-$id_osc/";
 
@@ -173,7 +181,7 @@ if ($temArquivo) {
 
     if ($base === '') $base = 'arquivo';
 
-    $idUnico = uniqid();
+    $idUnico     = uniqid();
     $nomeArquivo = $ext ? "{$base}-{$idUnico}.{$ext}" : "{$base}-{$idUnico}";
 
     $caminhoCompletoFs = $pastaDestino . $nomeArquivo;
@@ -188,9 +196,7 @@ if ($temArquivo) {
     }
 } else {
     // NÃO TEM ARQUIVO -> só aceitamos em casos específicos (ex: DECRETO com link)
-    $subtipoUpper = strtoupper((string)$subtipo);
-
-    if ($subtipoUpper !== 'DECRETO') {
+    if (!$isDecreto) {
         echo json_encode([
             "status"   => "erro",
             "mensagem" => "Arquivo é obrigatório para este tipo de documento."
