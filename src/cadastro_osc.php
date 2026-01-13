@@ -866,20 +866,29 @@ require 'autenticacao.php';
         const atividades = [];
 
         function validarSenhaLive() {
-            const s1 = usuarioSenha.value;
-            const s2 = usuarioSenhaConf.value;
-
+            const s1 = usuarioSenha.value || '';
+            const s2 = usuarioSenhaConf.value || '';
+                        
             senhaMsg.textContent = '';
             senhaMsg.classList.remove('senha-ok', 'senha-erro');
-
-            if (!s2) return;
-
-            if (s1 === s2) {
-                senhaMsg.textContent = '✔ As senhas coincidem.';
-                senhaMsg.classList.add('senha-ok');
-            } else {
+                        
+            if (!s1 && !s2) return;
+                        
+            if (s1 && s1.length < 6) {
+                senhaMsg.textContent = '✖ A senha deve ter no mínimo 6 caracteres.';
+                senhaMsg.classList.add('senha-erro');
+                return;
+            }
+                        
+            if (s2 && s1 !== s2) {
                 senhaMsg.textContent = '✖ As senhas não coincidem.';
                 senhaMsg.classList.add('senha-erro');
+                return;
+            }
+                        
+            if (s1.length >= 6 && s2 && s1 === s2) {
+                senhaMsg.textContent = '✔ Tudo certo!';
+                senhaMsg.classList.add('senha-ok');
             }
         }
 
@@ -1547,6 +1556,12 @@ require 'autenticacao.php';
                 return;
             }
 
+            if (s1.length < 6) {
+                alert('A senha deve ter no mínimo 6 caracteres.');
+                usuarioSenha.focus();
+                return;
+            }
+
             if (s1 !== s2) {
                 alert('As senhas não coincidem. Corrija antes de continuar.');
                 usuarioSenhaConf.focus();
@@ -1708,7 +1723,7 @@ require 'autenticacao.php';
             envolvidos.length = 0;
             atividades.length = 0;
             docsOsc.length = 0;
-                            
+
             renderEnvolvidos();
             renderAtividades();
             renderDocsOsc();
