@@ -664,13 +664,18 @@ require 'autenticacao.php';
     <div id="modalBackdrop" class="modal-backdrop">
         <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Envolvido">
             <h3>Adicionar Envolvido</h3>
+            <div class="divider"></div>
 
             <!-- Novo Envolvido (sempre) -->
             <div id="envNovoContainer" style="margin-top:8px">
                 <div class="grid">
                     <div>
-                        <label for="envFoto">Foto</label>
-                        <input id="envFoto" type="file" accept="image/*" />
+                      <div class="small">Preview</div>
+                      <div class="images-preview" id="previewNovoEnvolvido"></div>
+                    </div>
+                    <div>
+                        <label for="novoEnvFoto">Foto</label>
+                        <input id="novoEnvFoto" type="file" accept="image/*" />
                     </div>
                     <div>
                         <label for="envNome">Nome (*)</label>
@@ -1240,20 +1245,42 @@ require 'autenticacao.php';
         const openEnvolvidoModal = qs('#openEnvolvidoModal');
         const closeEnvolvidoModal = qs('#closeEnvolvidoModal');
         const addEnvolvidoBtn = qs('#addEnvolvidoBtn');
+        const novoEnvFoto = qs('#novoEnvFoto');
+        const previewNovoEnvolvido = qs('#previewNovoEnvolvido');
+
+        async function updatePreviewNovoEnvolvido(){
+            previewNovoEnvolvido.innerHTML = '';
+            const f = novoEnvFoto.files?.[0] || null;
+            if (!f) return;
+
+            const src = await readFileAsDataURL(f);
+            const img = document.createElement('img');
+            img.src = src;
+            previewNovoEnvolvido.appendChild(img);
+        }
+
+        if (novoEnvFoto) {
+            novoEnvFoto.addEventListener('change', updatePreviewNovoEnvolvido);
+        }
 
         openEnvolvidoModal.addEventListener('click', () => {
             modalBackdrop.style.display = 'flex';
 
-            qs('#envFoto').value = '';
+            const fotoInput = qs('#novoEnvFoto');
+            if (fotoInput) fotoInput.value = '';
+
             qs('#envNome').value = '';
             qs('#envTelefone').value = '';
             qs('#envEmail').value = '';
             const funcaoNovoInput = qs('#envFuncaoNovo');
             if (funcaoNovoInput) funcaoNovoInput.value = '';
+
+            if (previewNovoEnvolvido) previewNovoEnvolvido.innerHTML = '';
         });
 
         closeEnvolvidoModal.addEventListener('click', () => {
             modalBackdrop.style.display = 'none';
+            if (previewNovoEnvolvido) previewNovoEnvolvido.innerHTML = '';
         });
 
         modalBackdrop.addEventListener('click', (e) => {
@@ -1262,7 +1289,7 @@ require 'autenticacao.php';
 
         // ADICIONAR ENVOLVIDO 
         async function addEnvolvido() {
-            const fotoFile = qs('#envFoto').files[0] || null;
+            const fotoFile = qs('#novoEnvFoto').files[0] || null;
             const nome = qs('#envNome').value.trim();
             const telefone = qs('#envTelefone').value.trim();
             const email = qs('#envEmail').value.trim();
@@ -1289,12 +1316,15 @@ require 'autenticacao.php';
             envolvidos.push(envolvido);
             renderEnvolvidos();
 
-            qs('#envFoto').value = '';
+            const fotoInput = qs('#novoEnvFoto');
+            if (fotoInput) fotoInput.value = '';
             qs('#envNome').value = '';
             qs('#envTelefone').value = '';
             qs('#envEmail').value = '';
             const funcaoNovoInput = qs('#envFuncaoNovo');
             if (funcaoNovoInput) funcaoNovoInput.value = '';
+
+            if (previewNovoEnvolvido) previewNovoEnvolvido.innerHTML = '';
 
             modalBackdrop.style.display = 'none';
         }

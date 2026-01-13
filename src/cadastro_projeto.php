@@ -544,7 +544,7 @@ try {
         <div id="modoNovoEnvolvido" style="display:none;">
           <div class="grid" style="margin-top:10px;">
             <div>
-              <div class="small">Foto</div>
+              <div class="small">Preview</div>
               <div class="images-preview" id="previewNovoEnvolvido"></div>
             </div>
             <div>
