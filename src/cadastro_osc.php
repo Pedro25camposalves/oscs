@@ -353,7 +353,8 @@ require 'autenticacao.php';
             
             <!-- SEÇÃO 6: USUÁRIO RESPONSÁVEL PELA OSC -->
             <div style="margin-top:1px" class="card">
-                <h2>Usuário responsável pela OSC</h2>
+                <h2>Usuário responsável</h2>
+                <div class="divider"></div>
                 <div>
                     <div>
                         <label for="usuarioNome">Nome (*)</label>
@@ -390,7 +391,8 @@ require 'autenticacao.php';
                 <div class="grid cols-2">
                     <!-- LADO ESQUERDO -->
                     <div>
-                        <h2>Exibição do site</h2>
+                        <h2>Exibição no site</h2>
+                        <div class="divider"></div>
                         <div class="grid">
                             <div class="row">
                                 <div style="flex:1">
@@ -448,6 +450,7 @@ require 'autenticacao.php';
                     <!-- LADO DIREITO -->
                     <div>
                         <h2 class="section-title">Visualização</h2>
+                        <div class="divider"></div>
                         <div class="card">
                             <div class="small">Previews automáticos das imagens e cores selecionadas</div>
                             <div class="divider"></div>
@@ -498,6 +501,7 @@ require 'autenticacao.php';
                     <!-- LADO ESQUERDO -->
                     <div>
                         <h2>Informações da OSC</h2>
+                        <div class="divider"></div>
                         <div class="grid">
                             <div>
                                 <label for="nomeOsc">Nome (*)</label>
@@ -551,6 +555,7 @@ require 'autenticacao.php';
             <!-- SEÇÃO 3: INFORMAÇÕES JURÍDICAS DA OSC -->
             <div style="margin-top:16px" class="card">
                 <h2>Transparência</h2>
+                <div class="divider"></div>
                 <div class="grid cols-3">
                     <div>
                         <label for="CNPJ">CNPJ (*)</label>
@@ -593,7 +598,8 @@ require 'autenticacao.php';
 
             <!-- SEÇÃO 4: INFORMAÇÕES DO IMÓVEL (ENDEREÇO DA OSC) -->
             <div style="margin-top:16px" class="card">
-                <h2>Imóvel</h2>
+                <h2>Imóveis</h2>
+                <div class="divider"></div>
                 <div class="grid cols-3">
                     <div>
                         <label for="situacaoImovel">Situação do imóvel</label>
@@ -624,34 +630,26 @@ require 'autenticacao.php';
 
             <!-- SEÇÃO 5: ÁREAS DE ATUAÇÃO DA OSC -->
             <div style="margin-top:16px" class="card">
-                <h2>Área e Subárea de Atuação</h2>
-                <div class="small">
-                    Clique em "Adicionar" para incluir as atividades econômicas, áreas e subáreas de atuação.
-                </div>
+                <h2>Área e Subárea de Atuação (CNAE)</h2>
+                <div class="divider"></div>
                 <!-- Lista de atividades -->
                 <div class="envolvidos-list" id="atividadesList"></div>
                 <div style="margin-top:10px">
-                    <button type="button" class="btn btn-ghost" id="openAtividadeModal">
-                        Adicionar
-                    </button>
+                    <button type="button" class="btn btn-ghost" id="openAtividadeModal">+ Adicionar</button>
                 </div>
             </div>
 
             <!-- SEÇÃO 7: DOCUMENTOS DA OSC (nova lógica, igual à dos projetos) -->
             <div style="margin-top:16px" class="card">
-                <h2>Documentos da OSC</h2>
-                <div class="small">
-                    Formatos permitidos: .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf
-                </div>
+                <h2>Documentos</h2>
+                <div class="small">Formatos permitidos: .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf</div>
                 <div class="divider"></div>
 
                 <!-- Lista de documentos adicionados -->
                 <div class="envolvidos-list" id="docsOscList"></div>
 
                 <div style="margin-top:10px">
-                    <button type="button" class="btn btn-ghost" id="openDocOscModal">
-                        Adicionar documento
-                    </button>
+                    <button type="button" class="btn btn-ghost" id="openDocOscModal">+ Adicionar</button>
                 </div>
             </div>
 
@@ -719,6 +717,7 @@ require 'autenticacao.php';
     <div id="modalAtividadeBackdrop" class="modal-backdrop">
         <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Atividade">
             <h3>Adicionar Atividade</h3>
+            <div class="divider"></div>
             <div style="margin-top:8px" class="grid">
                 <div>
                     <label for="atvCnae">Atividade econômica (CNAE)</label>
@@ -744,10 +743,6 @@ require 'autenticacao.php';
     <div id="modalDocOscBackdrop" class="modal-backdrop">
         <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Documento da OSC">
             <h3>Adicionar Documento</h3>
-            <div class="small">
-                Formatos permitidos: .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf
-            </div>
-                    
             <div class="divider"></div>
                     
             <div class="grid" style="margin-top:10px;">
@@ -1248,7 +1243,7 @@ require 'autenticacao.php';
             INSTITUCIONAL: [
                 { value: 'ESTATUTO',            label: 'Estatuto' },
                 { value: 'ATA',                 label: 'Ata' },
-                { value: 'OUTRO_INSTITUCIONAL', label: 'Outro documento institucional' },
+                { value: 'OUTRO_INSTITUCIONAL', label: 'Outro' },
             ],
             CERTIDAO: [
                 { value: 'CND',         label: 'Certidão Negativa de Débito (CND)' },
@@ -1259,7 +1254,7 @@ require 'autenticacao.php';
             CONTABIL: [
                 { value: 'BALANCO_PATRIMONIAL', label: 'Balanço Patrimonial' },
                 { value: 'DRE',                 label: 'Demonstração de Resultados (DRE)' },
-                { value: 'OUTRO',               label: 'Outro documento contábil' },
+                { value: 'OUTRO',               label: 'Outro' },
             ],
         };
                         
@@ -1268,6 +1263,12 @@ require 'autenticacao.php';
             CERTIDAO:      'Certidões',
             CONTABIL:      'Contábeis',
         };
+
+        const ORDEM_CATEGORIAS_OSC = [
+            { key: 'INSTITUCIONAL', numero: 1 },
+            { key: 'CERTIDAO',      numero: 2 },
+            { key: 'CONTABIL',      numero: 3 },
+        ];
                         
         function resetDocOscCampos() {
             docCategoria.value = '';
@@ -1290,7 +1291,6 @@ require 'autenticacao.php';
             docArquivo.value = '';
         }
                         
-        // Categoria -> carrega Tipos
         docCategoria.addEventListener('change', () => {
             const cat = docCategoria.value;
                         
@@ -1323,7 +1323,6 @@ require 'autenticacao.php';
             docTipoGroup.style.display = 'block';
         });
                         
-        // Tipo -> mostra Subtipo / Ano / Descrição / Link
         docTipo.addEventListener('change', () => {
             const tipo = docTipo.value;
                         
@@ -1342,63 +1341,81 @@ require 'autenticacao.php';
             if (!tipo) return;
                         
             if (tipo === 'CND') {
-                // CND: exige subtipo (Federal/Estadual/Municipal)
                 docSubtipoGroup.style.display = 'block';
             } else if (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE') {
-                // Balanço/DRE: exige ano
                 docAnoRefGroup.style.display = 'block';
             } else if (tipo === 'OUTRO' || tipo === 'OUTRO_INSTITUCIONAL') {
-                // Outros: exigem descrição
                 docDescricaoGroup.style.display = 'block';
             }
-            // se um dia usar DECRETO aqui, é só ligar docLinkGroup,
-            // igual fizemos no cadastro de projeto.
         });
                         
         function renderDocsOsc() {
             if (!docsOscList) return;
             docsOscList.innerHTML = '';
-                        
-            docsOsc.forEach((d, i) => {
-                const c = document.createElement('div');
-                c.className = 'envolvido-card';
-                        
-                const catLabel = LABEL_CATEGORIA_OSC[d.categoria] || d.categoria;
-                        
-                let linha = d.tipo_label || d.tipo || '';
-                if (d.tipo === 'CND' && d.subtipo_label) {
-                    linha += ' — ' + d.subtipo_label;
-                } else if ((d.tipo === 'OUTRO' || d.tipo === 'OUTRO_INSTITUCIONAL') && d.descricao) {
-                    linha += ' — ' + d.descricao;
+
+            ORDEM_CATEGORIAS_OSC.forEach(({ key, numero }) => {
+                const docsCat = docsOsc.filter(d => d.categoria === key);
+
+                const sec = document.createElement('div');
+                sec.style.width = '100%';
+
+                const titulo = document.createElement('div');
+                titulo.className = 'section-title';
+                titulo.style.marginTop = '8px';
+                titulo.textContent = `${numero}. ${LABEL_CATEGORIA_OSC[key] || key}`;
+                sec.appendChild(titulo);
+
+                if (!docsCat.length) {
+                    const vazio = document.createElement('div');
+                    vazio.className = 'small';
+                    vazio.textContent = 'Nenhum documento cadastrado!';
+                    vazio.style.marginBottom = '4px';
+                    sec.appendChild(vazio);
+                } else {
+                    docsCat.forEach(d => {
+                        const c = document.createElement('div');
+                        c.className = 'envolvido-card';
+
+                        let linha = d.tipo_label || d.tipo || '';
+                        if (d.tipo === 'CND' && d.subtipo_label) {
+                            linha += ' — ' + d.subtipo_label;
+                        } else if ((d.tipo === 'OUTRO' || d.tipo === 'OUTRO_INSTITUCIONAL') && d.descricao) {
+                            linha += ' — ' + d.descricao;
+                        }
+
+                        const info = document.createElement('div');
+                        info.innerHTML = `
+                            <div style="font-weight:600">
+                                ${escapeHtml(linha)}
+                            </div>
+                            ${d.ano_referencia ? `<div class="small">Ano: ${escapeHtml(d.ano_referencia)}</div>` : ''}
+                            ${d.link ? `<div class="small">Link: ${escapeHtml(d.link)}</div>` : ''}
+                            <div class="small">Arquivo: ${escapeHtml(d.file?.name || '—')}</div>
+                        `;
+
+                        const remove = document.createElement('button');
+                        remove.className = 'btn';
+                        remove.textContent = '✕';
+                        remove.style.padding = '6px 8px';
+                        remove.style.marginLeft = 'auto';
+                        remove.addEventListener('click', () => {
+                            const idxGlobal = docsOsc.indexOf(d);
+                            if (idxGlobal !== -1) {
+                                docsOsc.splice(idxGlobal, 1);
+                                renderDocsOsc();
+                            }
+                        });
+
+                        c.appendChild(info);
+                        c.appendChild(remove);
+                        sec.appendChild(c);
+                    });
                 }
-                        
-                const info = document.createElement('div');
-                info.innerHTML = `
-                    <div style="font-weight:600">
-                        ${escapeHtml(catLabel)} • ${escapeHtml(linha)}
-                    </div>
-                    ${d.ano_referencia ? `<div class="small">Ano: ${escapeHtml(d.ano_referencia)}</div>` : ''}
-                    ${d.link ? `<div class="small">Link: ${escapeHtml(d.link)}</div>` : ''}
-                    <div class="small">Arquivo: ${escapeHtml(d.file?.name || '—')}</div>
-                `;
-                        
-                const remove = document.createElement('button');
-                remove.className = 'btn';
-                remove.textContent = '✕';
-                remove.style.padding = '6px 8px';
-                remove.style.marginLeft = '8px';
-                remove.addEventListener('click', () => {
-                    docsOsc.splice(i, 1);
-                    renderDocsOsc();
-                });
-                        
-                c.appendChild(info);
-                c.appendChild(remove);
-                docsOscList.appendChild(c);
+
+                docsOscList.appendChild(sec);
             });
         }
                         
-        // abrir/fechar modal
         if (openDocOscModal) {
             openDocOscModal.addEventListener('click', () => {
                 resetDocOscCampos();
@@ -1465,6 +1482,33 @@ require 'autenticacao.php';
                 } else {
                     // Tipos “simples”: FGTS, TRABALHISTA, CARTAO_CNPJ, ESTATUTO, ATA etc.
                     subtipoDb = tipo;
+                }
+
+                // Regra: só pode ter mais de 1 para:
+                // - BALANCO_PATRIMONIAL
+                // - DRE
+                // - OUTRO / OUTRO_INSTITUCIONAL
+                const permiteMultiplos = (
+                    tipo === 'BALANCO_PATRIMONIAL' ||
+                    tipo === 'DRE' ||
+                    tipo === 'OUTRO' ||
+                    tipo === 'OUTRO_INSTITUCIONAL'
+                );
+                        
+                if (!permiteMultiplos) {
+                    const jaExiste = docsOsc.some(d =>
+                        d.categoria === cat &&
+                        d.tipo === tipo &&
+                        d.subtipo === subtipoDb
+                    );
+                        
+                    if (jaExiste) {
+                        alert(
+                            'Já existe um documento cadastrado para esta [Categoria > Tipo/Subtipo].\n' +
+                            'Remova o documento existente para adicionar outro.'
+                        );
+                        return;
+                    }
                 }
                         
                 const file = docArquivo.files?.[0] || null;
@@ -1761,6 +1805,7 @@ require 'autenticacao.php';
         }
 
         updatePreviews();
+        renderDocsOsc();
     </script>
 </body>
 
