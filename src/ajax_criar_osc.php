@@ -263,43 +263,107 @@ foreach ($envolvidos as $idx => $envolvido) {
     }
 }
 
-// --- Salva os dados do imóvel da OSC / endereço ---
-$situacaoImovel = mysqli_real_escape_string($conn, $_POST['situacaoImovel'] ?? '');
-$cep            = mysqli_real_escape_string($conn, $_POST['cep']            ?? '');
-$cidade         = mysqli_real_escape_string($conn, $_POST['cidade']         ?? '');
-$bairro         = mysqli_real_escape_string($conn, $_POST['bairro']         ?? '');
-$logradouro     = mysqli_real_escape_string($conn, $_POST['logradouro']     ?? '');
-$numero         = mysqli_real_escape_string($conn, $_POST['numero']         ?? '');
-
-// Cria o endereço
-$sql_endereco = "
-    INSERT INTO endereco (
-        descricao, cep, cidade, logradouro, bairro, numero
-    ) VALUES (
-        'Endereço da OSC', '$cep', '$cidade', '$logradouro', '$bairro', '$numero'
-    )";
-
-if (!mysqli_query($conn, $sql_endereco)) {
-    echo json_encode(['success' => false, 'error' => 'Erro ao salvar Endereco: ' . mysqli_error($conn)]);
-    exit;
+// --- Salva os imóveis da OSC / endereços (múltiplos) ---
+$imoveisJson = $_POST['imoveis'] ?? '[]';
+$imoveis = json_decode($imoveisJson, true);
+if (!is_array($imoveis)) {
+    $imoveis = [];
 }
 
-$endereco_id = (int) mysqli_insert_id($conn);
+$imoveis_ids = [];
 
-// Vincula o imóvel à OSC e ao endereço
-$sql_imovel = "
-    INSERT INTO imovel (
-        osc_id, endereco_id, situacao
-    ) VALUES (
-        '$osc_id', '$endereco_id', '$situacaoImovel'
-    )";
+$jaTemPrincipal = false;
 
-if (!mysqli_query($conn, $sql_imovel)) {
-    echo json_encode(['success' => false, 'error' => 'Erro ao salvar Imovel: ' . mysqli_error($conn)]);
-    exit;
+foreach ($imoveis as $imo) {
+    $situacaoImovel = mysqli_real_escape_string($conn, $imo['situacao']    ?? '');
+    $descricao      = mysqli_real_escape_string($conn, $imo['descricao']   ?? 'Imóvel da OSC');
+    $cep            = mysqli_real_escape_string($conn, $imo['cep']         ?? '');
+    $cidade         = mysqli_real_escape_string($conn, $imo['cidade']      ?? '');
+    $bairro         = mysqli_real_escape_string($conn, $imo['bairro']      ?? '');
+    $logradouro     = mysqli_real_escape_string($conn, $imo['logradouro']  ?? '');
+    $numero         = mysqli_real_escape_string($conn, $imo['numero']      ?? '');
+    $complemento    = mysqli_real_escape_string($conn, $imo['complemento'] ?? '');
+
+    // Novo: flag principal vinda do front
+    $principal = !empty($imo['principal']) ? 1 : 0;
+
+    // Garante no backend que só exista um principal por OSC
+    if ($principal === 1) {
+        if ($jaTemPrincipal) {
+            // Se já tinha, este vira não-principal
+            $principal = 0;
+        } else {
+            $jaTemPrincipal = true;
+        }
+    }
+
+    // Se tudo estiver vazio, ignora
+    if (
+        $descricao === '' &&
+        $situacaoImovel === '' &&
+        $cep === '' &&
+        $cidade === '' &&
+        $bairro === '' &&
+        $logradouro === '' &&
+        $numero === '' &&
+        $complemento === ''
+    ) {
+        continue;
+    }
+
+    // Cria o endereço
+    $sql_endereco = "
+        INSERT INTO endereco (
+            descricao, cep, cidade, logradouro, bairro, numero, complemento
+        ) VALUES (
+            '$descricao', '$cep', '$cidade', '$logradouro', '$bairro', '$numero', '$complemento'
+        )";
+
+    if (!mysqli_query($conn, $sql_endereco)) {
+        echo json_encode([
+            'success' => false,
+            'error'   => 'Erro ao salvar Endereco: ' . mysqli_error($conn)
+        ]);
+        exit;
+    }
+
+    $endereco_id = (int) mysqli_insert_id($conn);
+
+    // Vincula o imóvel à OSC e ao endereço (tabela IMOVEL que você já usava)
+    $sql_imovel = "
+        INSERT INTO imovel (
+            osc_id, endereco_id, situacao
+        ) VALUES (
+            '$osc_id', '$endereco_id', '$situacaoImovel'
+        )";
+
+    if (!mysqli_query($conn, $sql_imovel)) {
+        echo json_encode([
+            'success' => false,
+            'error'   => 'Erro ao salvar Imovel: ' . mysqli_error($conn)
+        ]);
+        exit;
+    }
+
+    $imovel_id = (int) mysqli_insert_id($conn);
+    $imoveis_ids[] = $imovel_id;
+
+    // NOVO: vincula também na tabela endereco_osc
+    $sql_enderecoOsc = "
+        INSERT INTO endereco_osc (
+            osc_id, endereco_id, situacao, principal
+        ) VALUES (
+            '$osc_id', '$endereco_id', '$situacaoImovel', '$principal'
+        )";
+
+    if (!mysqli_query($conn, $sql_enderecoOsc)) {
+        echo json_encode([
+            'success' => false,
+            'error'   => 'Erro ao salvar Endereco_OSC: ' . mysqli_error($conn)
+        ]);
+        exit;
+    }
 }
-
-$imovel_id = mysqli_insert_id($conn);
 
 // --- Salva as cores da OSC ---
 $cores = $_POST['cores'] ?? [];
@@ -348,14 +412,15 @@ $template_id = mysqli_insert_id($conn);
 
 // --- Retorno completo dos cadastros ---
 echo json_encode([
-    'success'          => true,
-    'osc_id'           => $osc_id,
-    'usuario_id'       => $usuarioId,
-    'cores_id'         => $cores_id,
-    'template_id'      => $template_id,
-    'imovel_id'        => $imovel_id,
-    'envolvidos_ids'   => $envolvidos_ids,
-    'atividades_ids'   => $atividades_ids,
+    'success'        => true,
+    'osc_id'         => $osc_id,
+    'usuario_id'     => $usuarioId,
+    'cores_id'       => $cores_id,
+    'template_id'    => $template_id,
+    'imovel_id'      => isset($imoveis_ids[0]) ? $imoveis_ids[0] : null,
+    'imoveis_ids'    => $imoveis_ids,
+    'envolvidos_ids' => $envolvidos_ids,
+    'atividades_ids' => $atividades_ids,
 ]);
 
 mysqli_close($conn);

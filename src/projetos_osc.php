@@ -125,10 +125,8 @@ try {
 
     /* container branco (painel) */
     .card {
-        background: var(--card-bg);
         border-radius: 10px;
         padding: 16px;
-        box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
     }
 
     /* Tabs abaixo do header */

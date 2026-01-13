@@ -810,27 +810,34 @@ $oscNome = $row['nome'] ?? 'OSC';
     let currentUserId = null;
     let currentModalType = null; // "edit" | "delete"
 
-    // ===== validação live: "as senhas coincidem" (igual cadastro_osc.php) =====
-    function validarSenhaLive(pass1El, pass2El, msgEl) {
-      if (!pass1El || !pass2El || !msgEl) return;
+function validarSenhaLive(pass1El, pass2El, msgEl) {
+  if (!pass1El || !pass2El || !msgEl) return;
 
-      const s1 = pass1El.value;
-      const s2 = pass2El.value;
+  const s1 = pass1El.value || '';
+  const s2 = pass2El.value || '';
 
-      msgEl.textContent = '';
-      msgEl.classList.remove('senha-ok', 'senha-erro');
+  msgEl.textContent = '';
+  msgEl.classList.remove('senha-ok', 'senha-erro');
 
-      // MESMA REGRA do cadastro_osc.php: só mostra mensagem quando a confirmação existe
-      if (!s2) return;
+  if (!s1 && !s2) return;
 
-      if (s1 === s2) {
-        msgEl.textContent = '✔ As senhas coincidem.';
-        msgEl.classList.add('senha-ok');
-      } else {
-        msgEl.textContent = '✖ As senhas não coincidem.';
-        msgEl.classList.add('senha-erro');
-      }
-    }
+  if (s1 && s1.length < 6) {
+    msgEl.textContent = '✖ A senha deve ter no mínimo 6 caracteres.';
+    msgEl.classList.add('senha-erro');
+    return;
+  }
+
+  if (s2 && s1 !== s2) {
+    msgEl.textContent = '✖ As senhas não coincidem.';
+    msgEl.classList.add('senha-erro');
+    return;
+  }
+
+  if (s1.length >= 6 && s2 && s1 === s2) {
+    msgEl.textContent = '✔ Tudo certo!';
+    msgEl.classList.add('senha-ok');
+  }
+}
 
     function bindSenhaMatch(pass1Id, pass2Id, msgId) {
       const p1 = document.getElementById(pass1Id);
@@ -1080,6 +1087,7 @@ $oscNome = $row['nome'] ?? 'OSC';
 
     // ===== cadastrar =====
     const btnCadastrarNovoUsuario = document.getElementById('btnCadastrarNovoUsuario');
+
     btnCadastrarNovoUsuario?.addEventListener('click', async () => {
       const nome = document.getElementById('usuarioNome').value.trim();
       const email = document.getElementById('usuarioEmail').value.trim();
@@ -1093,6 +1101,12 @@ $oscNome = $row['nome'] ?? 'OSC';
         emailMsgEl.textContent = 'Preencha nome, e-mail e senha.';
         return;
       }
+      
+      if (senha.length < 6) {
+        emailMsgEl.textContent = 'A senha deve ter no mínimo 6 caracteres.';
+        return;
+      }
+
       if (senha !== senha2) {
         emailMsgEl.textContent = 'As senhas não coincidem.';
         return;
@@ -1173,10 +1187,13 @@ $oscNome = $row['nome'] ?? 'OSC';
           return;
         }
 
-        // se digitou senha, tem que confirmar
         if (senha || senha2) {
+          if (senha.length < 6) {
+            editUserMsg.textContent = '✖ A senha deve ter no mínimo 6 caracteres.';
+            return;
+          }
           if (senha !== senha2) {
-            editUserMsg.textContent = 'As senhas não coincidem.';
+            editUserMsg.textContent = '✖ As senhas não coincidem.';
             return;
           }
         }
