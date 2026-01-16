@@ -424,7 +424,7 @@ require 'autenticacao.php';
     <div class="tabs-top" id="tabsTop">
         <a class="tab-btn is-active" href="oscs_cadastradas.php"><span class="dot"></span>OSCs</a>
         <a class="tab-btn" href="cadastro_osc.php"><span class="dot"></span>Nova OSC</a>
-        <span class="tab-btn" style="opacity:.55; cursor:not-allowed;"><span class="dot"></span>Configurações OSC</span>
+        <span class="tab-btn" style="opacity:.55; cursor:not-allowed;"><span class="dot"></span>Configurações da OSC</span>
     </div>
 
     <div class="top-row">

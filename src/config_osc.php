@@ -459,9 +459,7 @@ $oscNome = $row['nome'] ?? 'OSC';
   <div class="tabs-top" id="tabsTop">
     <a class="tab-btn" href="oscs_cadastradas.php"><span class="dot"></span>OSCs</a>
     <a class="tab-btn" href="cadastro_osc.php"><span class="dot"></span>Nova OSC</a>
-    <a class="tab-btn is-active" href="config_osc.php?osc_id=<?= (int)$oscId ?>">
-        <span class="dot"></span>Configurações OSC — <?= htmlspecialchars($oscNome) ?>
-    </a>
+    <a class="tab-btn is-active" href="config_osc.php?osc_id=<?= (int)$oscId ?>"><span class="dot"></span>Configurações da OSC — <?= htmlspecialchars($oscNome) ?></a>
   </div>
 
   <form id="oscForm" onsubmit="event.preventDefault();saveData()">

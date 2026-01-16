@@ -361,7 +361,7 @@ require 'autenticacao.php';
         <div class="tabs-top" id="tabsTop">
             <a class="tab-btn <?= ($activePage === 'oscs_cadastradas.php') ? 'is-active' : '' ?>" href="oscs_cadastradas.php"><span class="dot"></span>OSCs</a>
             <a class="tab-btn <?= ($activePage === 'cadastro_osc.php') ? 'is-active' : '' ?>" href="cadastro_osc.php"><span class="dot"></span>Nova OSC</a>
-            <a class="tab-btn" href="config_osc.php"><span class="dot"></span>Configurações OSC</a>
+            <a class="tab-btn" href="config_osc.php"><span class="dot"></span>Configurações da OSC</a>
         </div>
         
         <form id="oscForm" onsubmit="event.preventDefault();saveData()">
@@ -718,13 +718,6 @@ require 'autenticacao.php';
             <div class="divider"></div>
 
             <div class="grid cols-2" style="margin-top:10px;">
-                <div style="grid-column:1 / -1; margin-top:4px;">
-                    <label class="label-inline">
-                        <input type="checkbox" id="imovelPrincipal" />
-                        <span class="small">Endereço principal</span>
-                    </label>
-                </div>
-
                 <div style="grid-column:1 / -1;">
                     <label for="imovelDescricao">Descrição</label>
                     <input id="imovelDescricao" type="text" placeholder="Ex: Sede, Ponto de apoio..." />
@@ -763,6 +756,13 @@ require 'autenticacao.php';
                 <div>
                     <label for="imovelComplemento">Complemento</label>
                     <input id="imovelComplemento" type="text" />
+                </div>
+
+                <div style="grid-column:1 / -1; margin-top:4px;">
+                    <label class="label-inline">
+                        <input type="checkbox" id="imovelPrincipal" />
+                        <span class="small">Endereço principal</span>
+                    </label>
                 </div>
 
             </div>
@@ -990,7 +990,7 @@ require 'autenticacao.php';
                 const info = document.createElement('div');
 
                 const principalTag = imo.principal
-                    ? `<span class="small" style="display:inline-block; padding:2px 8px; border-radius:999px; margin-left:6px; background:#e8f5e9; border:1px solid #b2dfdb;">principal</span>`
+                    ? `<span class="small" style="display:inline-block; padding:2px 8px; border-radius:999px; margin-left:6px; background:#e8f5e9; border:1px solid #b2dfdb;">Principal</span>`
                     : '';
 
                 info.innerHTML = `

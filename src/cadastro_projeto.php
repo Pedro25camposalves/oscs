@@ -272,7 +272,8 @@ try {
 <main>
     <div class="tabs-top" id="tabsTop">
         <a class="tab-btn" href="editar_osc.php"><span class="dot"></span>OSC</a>
-        <a class="tab-btn is-active" href="projetos_osc.php"><span class="dot"></span>Projetos</a>
+        <a class="tab-btn" href="projetos_osc.php"><span class="dot"></span>Projetos</a>
+        <a class="tab-btn is-active" href="projetos_osc.php"><span class="dot"></span>Novo Projeto</a>
     </div>
 
     <form id="projForm" onsubmit="event.preventDefault(); saveProjeto();">
@@ -289,7 +290,6 @@ try {
                 <div>
                     <label for="projStatus">Status (*)</label>
                     <select id="projStatus" required>
-                        <option value="">Selecione...</option>
                         <option value="PENDENTE">Pendente</option>
                         <option value="PLANEJAMENTO">Planejamento</option>
                         <option value="EXECUCAO">Execução</option>
@@ -429,12 +429,6 @@ try {
         <div class="divider"></div>
 
         <div class="grid cols-2" style="margin-top:10px;">
-          <div style="grid-column:1 / -1; margin-top:4px;">
-            <label class="label-inline">
-              <input type="checkbox" id="endPrincipal" />
-              <span class="small">Endereço principal</span>
-            </label>
-          </div>
           <div style="grid-column:1/-1;">
             <label for="endDescricao">Descrição</label>
             <input id="endDescricao" type="text" placeholder="Ex: Sede, Ponto de apoio..." />
@@ -464,6 +458,12 @@ try {
           <div>
             <label for="endComplemento">Complemento</label>
             <input id="endComplemento" type="text" />
+          </div>
+          <div style="grid-column:1 / -1; margin-top:4px;">
+            <label class="label-inline">
+              <input type="checkbox" id="endPrincipal" />
+              <span class="small">Endereço principal</span>
+            </label>
           </div>
         </div>
 
@@ -517,6 +517,7 @@ try {
               </select>
             </div>
 
+            <div class="divider"></div>
             <h4 style="margin: 0;" >Contrato</h4>
             <div class="grid cols-3" style="margin-top: 0px;">
               <div>
@@ -544,13 +545,12 @@ try {
         <div id="modoNovoEnvolvido" style="display:none;">
           <div class="grid" style="margin-top:10px;">
             <div>
-              <div class="small">Preview</div>
+              <div class="small">Visualização</div>
               <div class="images-preview" id="previewNovoEnvolvido"></div>
             </div>
             <div>
               <label for="novoEnvFoto">Foto</label>
               <input id="novoEnvFoto" type="file" accept="image/*" />
-              <div class="small">Opcional</div>
             </div>
 
             <div>
@@ -581,6 +581,7 @@ try {
               </select>
             </div>
 
+            <div class="divider"></div>
             <h4 style="margin: 0;" >Contrato</h4>
             <div class="grid cols-3" style="margin-top: 0px;">
               <div>
@@ -846,7 +847,7 @@ try {
           : '';
                 
         const principalTag = e.principal
-          ? `<span class="small" style="display:inline-block; padding:2px 8px; border-radius:999px; margin-left:6px; background:#e8f5e9; border:1px solid #b2dfdb;">principal</span>`
+          ? `<span class="small" style="display:inline-block; padding:2px 8px; border-radius:999px; margin-left:6px; background:#e8f5e9; border:1px solid #b2dfdb;">Principal</span>`
           : '';
                 
         const label = e.tipo === 'existente'
