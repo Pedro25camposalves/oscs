@@ -415,7 +415,7 @@ if (!$oscIdVinculada) {
               <h2>Envolvidos</h2>
               <div class="envolvidos-list" id="listaEnvolvidos"></div>
               <div style="margin-top:10px">
-                <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">Adicionar</button>
+                <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">+ Adicionar</button>
               </div>
             </div>
           </div>
@@ -536,9 +536,7 @@ if (!$oscIdVinculada) {
         <div class="envolvidos-list" id="atividadesList"></div>
 
         <div style="margin-top:10px">
-          <button type="button" class="btn btn-ghost" id="openAtividadeModal">
-            Adicionar
-          </button>
+          <button type="button" class="btn btn-ghost" id="openAtividadeModal">+ Adicionar</button>
         </div>
       </div>
     </div>
@@ -650,10 +648,8 @@ if (!$oscIdVinculada) {
           <!-- LADO DIREITO -->
           <div>
             <h2 style="margin-top: 10px;" class="section-title">Visualização</h2>
+            <div class="divider"></div>
             <div class="card">
-              <div class="small">Previews automáticos das imagens e cores selecionadas</div>
-              <div class="divider"></div>
-                
               <div id="previewArea">
                 <div class="row" style="align-items:center">
                   <div>
@@ -764,9 +760,10 @@ if (!$oscIdVinculada) {
 <div id="modalAtividadeBackdrop" class="modal-backdrop">
     <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Atividade">
         <h3>Adicionar Atividade</h3>
+        <div class="divider"></div>
         <div style="margin-top:8px" class="grid">
             <div>
-                <label for="atvCnae">Atividade econômica (CNAE)</label>
+                <label style="margin-top:8px" for="atvCnae">Atividade econômica (CNAE)</label>
                 <input id="atvCnae" type="text" required />
             </div>
             <div>
@@ -785,7 +782,7 @@ if (!$oscIdVinculada) {
     </div>
 </div>
 
-<!-- MODAL DOCUMENTO DA OSC (mesma lógica do cadastro_osc.php) -->
+<!-- MODAL DOCUMENTO DA OSC-->
 <div id="modalDocOscBackdrop" class="modal-backdrop">
     <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar documento">
         <div class="modal-header">
@@ -831,6 +828,42 @@ if (!$oscIdVinculada) {
       </div>
     </div>
 </div>
+
+<!-- MODAL EDITAR DOCUMENTO DA OSC -->
+<div id="modalEditDocOscBackdrop" class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Editar documento">
+        <div class="modal-header">
+            <h3>Editar documento</h3>
+            <button type="button" class="btn" id="closeEditDocOscModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="small muted" id="editDocTitulo" style="margin-bottom:10px"></div>
+
+            <div id="editDocDescricaoWrapper" style="display:none; margin-top:10px">
+                <label class="label">Descrição</label>
+                <input id="editDocDescricao" class="input" placeholder="Descreva o documento" />
+            </div>
+
+            <div id="editDocAnoWrapper" style="display:none; margin-top:10px">
+                <label class="label">Ano de referência</label>
+                <input id="editDocAno" class="input" placeholder="Ex.: 2024" />
+            </div>
+
+            <div style="margin-top:10px">
+                <label class="label">Arquivo (substituição)</label>
+                <input id="editDocArquivo" type="file" class="input" />
+                <div class="small muted" id="editDocArquivoAtual" style="margin-top:6px"></div>
+            </div>
+        </div>
+
+        <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px">
+            <button type="button" class="btn btn-ghost" id="cancelEditDocOscBtn">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="saveEditDocOscBtn">Salvar</button>
+        </div>
+    </div>
+</div>
+
+
 <script>
     const qs = s => document.querySelector(s);
     const qsa = s => document.querySelectorAll(s);
@@ -899,7 +932,6 @@ if (!$oscIdVinculada) {
     let envFotoRemover = false; // <-- ADD: pediu pra remover a foto atual?
 
     // ===== DOCUMENTOS (mesma lógica do cadastro_osc.php) =====
-
         const docsOsc = []; // {categoria,tipo,subtipo,descricao,ano_referencia,link,file,id_documento?,url?,nome?}
         const docsOscDeletes = new Set(); // ids de documentos existentes marcados para exclusão
 
@@ -920,6 +952,22 @@ if (!$oscIdVinculada) {
         const docAno = qs('#docAno');
         const docArquivo = qs('#docArquivo');
 
+        // modal edição
+        const modalEditDocOscBackdrop = qs('#modalEditDocOscBackdrop');
+        const closeEditDocOscModal = qs('#closeEditDocOscModal');
+        const cancelEditDocOscBtn = qs('#cancelEditDocOscBtn');
+        const saveEditDocOscBtn = qs('#saveEditDocOscBtn');
+
+        const editDocTitulo = qs('#editDocTitulo');
+        const editDocDescricaoWrapper = qs('#editDocDescricaoWrapper');
+        const editDocDescricao = qs('#editDocDescricao');
+        const editDocAnoWrapper = qs('#editDocAnoWrapper');
+        const editDocAno = qs('#editDocAno');
+        const editDocArquivo = qs('#editDocArquivo');
+        const editDocArquivoAtual = qs('#editDocArquivoAtual');
+
+        let docEditTarget = null; // referência ao objeto dentro de docsOsc
+
         const ORDEM_CATEGORIAS_OSC = [
             { key: 'INSTITUCIONAL', numero: 1 },
             { key: 'CERTIDAO',      numero: 2 },
@@ -936,7 +984,7 @@ if (!$oscIdVinculada) {
             INSTITUCIONAL: [
                 { key: 'ESTATUTO', label: 'Estatuto' },
                 { key: 'ATA', label: 'Ata' },
-                { key: 'OUTRO_INSTITUCIONAL', label: 'Outro Institucional' },
+                { key: 'OUTRO_INSTITUCIONAL', label: 'Outro' },
             ],
             CERTIDAO: [
                 { key: 'CND', label: 'Certidão Negativa (CND)' },
@@ -946,8 +994,8 @@ if (!$oscIdVinculada) {
             ],
             CONTABIL: [
                 { key: 'BALANCO_PATRIMONIAL', label: 'Balanço Patrimonial' },
-                { key: 'DRE', label: 'Demonstração do Resultado (DRE)' },
-                { key: 'OUTRO_CONTABIL', label: 'Outro Contábil' },
+                { key: 'DRE', label: 'Demonstração de Resultado (DRE)' },
+                { key: 'OUTRO_CONTABIL', label: 'Outro' },
             ],
         };
 
@@ -1044,6 +1092,119 @@ if (!$oscIdVinculada) {
             });
         }
 
+        function isTipoOutroDoc(tipo) {
+            return (tipo === 'OUTRO' || tipo === 'OUTRO_INSTITUCIONAL' || tipo === 'OUTRO_CONTABIL');
+        }
+
+        function isTipoAnoDoc(categoria, tipo) {
+            return (categoria === 'CONTABIL' && (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE'));
+        }
+
+        function linhaDocumentoLabel(d) {
+            let linha = d?.tipo_label || d?.tipo || '';
+            if (d?.tipo === 'CND' && d?.subtipo_label) {
+                linha += ' — ' + d.subtipo_label;
+            } else if (isTipoOutroDoc(d?.tipo) && d?.descricao) {
+                linha += ' — ' + d.descricao;
+            }
+            return linha;
+        }
+
+        function abrirModalEditarDocumento(d) {
+            docEditTarget = d;
+            if (!modalEditDocOscBackdrop) return;
+
+            if (editDocArquivo) editDocArquivo.value = '';
+
+            const linha = linhaDocumentoLabel(d);
+            if (editDocTitulo) editDocTitulo.textContent = linha;
+
+            const showDesc = isTipoOutroDoc(d?.tipo);
+            const showAno = isTipoAnoDoc(d?.categoria, d?.tipo);
+
+            if (editDocDescricaoWrapper) editDocDescricaoWrapper.style.display = showDesc ? 'block' : 'none';
+            if (editDocAnoWrapper) editDocAnoWrapper.style.display = showAno ? 'block' : 'none';
+
+            if (editDocDescricao) editDocDescricao.value = showDesc ? (d?.descricao || '') : '';
+            if (editDocAno) editDocAno.value = showAno ? (d?.ano_referencia || '') : '';
+
+            const nomeAtual = (d?.file && d.file.name) || d?.nome || (d?.url ? fileNameFromUrl(d.url) : '—');
+            if (editDocArquivoAtual) editDocArquivoAtual.textContent = `Arquivo atual: ${nomeAtual || '—'}`;
+
+            modalEditDocOscBackdrop.style.display = 'flex';
+        }
+
+        function fecharModalEditarDocumento() {
+            if (modalEditDocOscBackdrop) modalEditDocOscBackdrop.style.display = 'none';
+            docEditTarget = null;
+        }
+
+        if (closeEditDocOscModal) {
+            closeEditDocOscModal.addEventListener('click', fecharModalEditarDocumento);
+        }
+        if (cancelEditDocOscBtn) {
+            cancelEditDocOscBtn.addEventListener('click', fecharModalEditarDocumento);
+        }
+        if (modalEditDocOscBackdrop) {
+            modalEditDocOscBackdrop.addEventListener('click', (e) => {
+                if (e.target === modalEditDocOscBackdrop) fecharModalEditarDocumento();
+            });
+        }
+
+        if (saveEditDocOscBtn) {
+            saveEditDocOscBtn.addEventListener('click', () => {
+                if (!docEditTarget) return;
+
+                const novoArquivo = editDocArquivo?.files?.[0] || null;
+                if (!novoArquivo) {
+                    alert('Selecione um arquivo para substituir.');
+                    return;
+                }
+
+                const showDesc = isTipoOutroDoc(docEditTarget.tipo);
+                const showAno = isTipoAnoDoc(docEditTarget.categoria, docEditTarget.tipo);
+
+                const novaDescricao = showDesc ? (editDocDescricao?.value || '').trim() : (docEditTarget.descricao || '');
+                const novoAno = showAno ? (editDocAno?.value || '').trim() : (docEditTarget.ano_referencia || '');
+
+                if (showDesc && !novaDescricao) {
+                    alert('Informe uma descrição.');
+                    return;
+                }
+                if (showAno && !novoAno) {
+                    alert('Informe o ano de referência.');
+                    return;
+                }
+
+                // Se já existe no BD: marca para exclusão e adiciona um novo com o arquivo substituto
+                if (docEditTarget.id_documento) {
+                    docsOscDeletes.add(String(docEditTarget.id_documento));
+                    const idxGlobal = docsOsc.indexOf(docEditTarget);
+                    if (idxGlobal !== -1) docsOsc.splice(idxGlobal, 1);
+
+                    docsOsc.push({
+                        categoria: docEditTarget.categoria,
+                        tipo: docEditTarget.tipo,
+                        tipo_label: docEditTarget.tipo_label || getTipoLabel(docEditTarget.categoria, docEditTarget.tipo),
+                        subtipo: docEditTarget.subtipo || docEditTarget.tipo,
+                        subtipo_label: docEditTarget.subtipo_label || '',
+                        descricao: showDesc ? novaDescricao : (docEditTarget.descricao || ''),
+                        ano_referencia: showAno ? novoAno : (docEditTarget.ano_referencia || ''),
+                        link: docEditTarget.link || '',
+                        file: novoArquivo,
+                    });
+                } else {
+                    // Ainda não foi pro servidor: só atualiza o item atual
+                    if (showDesc) docEditTarget.descricao = novaDescricao;
+                    if (showAno) docEditTarget.ano_referencia = novoAno;
+                    docEditTarget.file = novoArquivo;
+                }
+
+                renderDocsOsc();
+                fecharModalEditarDocumento();
+            });
+        }
+
         function renderDocsOsc() {
             if (!docsOscList) return;
             docsOscList.innerHTML = '';
@@ -1093,17 +1254,24 @@ if (!$oscIdVinculada) {
                             a.target = '_blank';
                             a.rel = 'noopener';
                             a.className = 'small';
-                            a.textContent = 'Abrir arquivo';
+                            a.textContent = 'Visualizar';
                             a.style.display = 'inline-block';
                             a.style.marginTop = '4px';
                             info.appendChild(a);
                         }
 
+                        const edit = document.createElement('button');
+                        edit.className = 'btn';
+                        edit.textContent = '✎';
+                        edit.style.padding = '6px 8px';
+                        edit.addEventListener('click', () => {
+                            abrirModalEditarDocumento(d);
+                        });
+                                    
                         const remove = document.createElement('button');
                         remove.className = 'btn';
                         remove.textContent = '✕';
                         remove.style.padding = '6px 8px';
-                        remove.style.marginLeft = 'auto';
                         remove.addEventListener('click', () => {
                             if (d.id_documento) docsOscDeletes.add(String(d.id_documento));
                             const idxGlobal = docsOsc.indexOf(d);
@@ -1112,9 +1280,16 @@ if (!$oscIdVinculada) {
                                 renderDocsOsc();
                             }
                         });
-
+                                    
+                        const actions = document.createElement('div');
+                        actions.style.marginLeft = 'auto';
+                        actions.style.display = 'flex';
+                        actions.style.gap = '8px';
+                        actions.appendChild(edit);
+                        actions.appendChild(remove);
+                                    
                         c.appendChild(info);
-                        c.appendChild(remove);
+                        c.appendChild(actions);
                         sec.appendChild(c);
                     });
                 }
@@ -2066,10 +2241,6 @@ if (!$oscIdVinculada) {
         list.appendChild(c);
       });
     }
-
-        // ===== DOCUMENTOS DA OSC (lista unificada; veja docsOscList) =====
-
-
 
     // ===== CARREGAR OSC (auto) =====
     async function loadOscData() {
