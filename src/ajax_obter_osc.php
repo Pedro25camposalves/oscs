@@ -127,6 +127,8 @@ try {
             id_documento,
             categoria,
             subtipo,
+            descricao,
+            link,
             ano_referencia,
             documento,
             data_upload
@@ -151,6 +153,8 @@ try {
             'id_documento'   => (int)($d['id_documento'] ?? 0),
             'categoria'      => $cat,
             'subtipo'        => $sub,
+            'descricao'      => $d['descricao'] ?? null,
+            'link'           => $d['link'] ?? null,
             'ano_referencia' => $d['ano_referencia'] ?? null,
             'nome'           => $nome,
             'url'            => $path,      // o front usa isso pra abrir/baixar

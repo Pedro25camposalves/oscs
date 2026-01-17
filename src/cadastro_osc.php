@@ -632,6 +632,10 @@ require 'autenticacao.php';
                 </div>
             </div>
 
+            <!-- ====================================================================== -->
+            <!-- DOCUMENTOS — INÍCIO DA SEÇÃO (HTML) -->
+            <!-- Tudo que pertence à sessão de Documentos da OSC está agrupado aqui -->
+            <!-- ====================================================================== -->
             <!-- SEÇÃO 7: DOCUMENTOS DA OSC (nova lógica, igual à dos projetos) -->
             <div style="margin-top:16px" class="card">
                 <h2>Documentos</h2>
@@ -646,6 +650,10 @@ require 'autenticacao.php';
                 </div>
             </div>
 
+
+            <!-- ====================================================================== -->
+            <!-- DOCUMENTOS — FIM DA SEÇÃO (HTML) -->
+            <!-- ====================================================================== -->
             <!-- BOTÕES -->
             <div style="margin-top:16px" class="card">
                 <footer>
@@ -801,6 +809,10 @@ require 'autenticacao.php';
         </div>
     </div>
 
+
+    <!-- ====================================================================== -->
+    <!-- DOCUMENTOS — INÍCIO DOS MODAIS (HTML) -->
+    <!-- ====================================================================== -->
     <!-- MODAL DOCUMENTOS OSC (mesma lógica do projeto) -->
     <div id="modalDocOscBackdrop" class="modal-backdrop">
         <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Documento da OSC">
@@ -870,7 +882,9 @@ require 'autenticacao.php';
             </div>
         </div>
     </div>
-
+    <!-- ====================================================================== -->
+    <!-- DOCUMENTOS — FIM DOS MODAIS (HTML) -->
+    <!-- ====================================================================== -->
 
     <script>
         const qs = s => document.querySelector(s);
@@ -920,6 +934,11 @@ require 'autenticacao.php';
             });
         }
 
+
+        // ============================================================================
+        // DOCUMENTOS — ESTADO PRINCIPAL
+        // (lista em memória usada para montar a seção e enviar para o backend)
+        // ============================================================================
         // Documentos da OSC
         const docsOsc = []; // cada item: {categoria, tipo, subtipo, ...}
 
@@ -1467,6 +1486,10 @@ require 'autenticacao.php';
             })
         }
 
+
+        // ============================================================================
+        // DOCUMENTOS — ELEMENTOS (DOM), MAPAS, RENDER E AÇÕES
+        // ============================================================================
         // ====== DOCUMENTOS DA OSC (mesma lógica do cadastro de projeto) ======
         const docsOscList            = qs('#docsOscList');
         const modalDocOscBackdrop    = qs('#modalDocOscBackdrop');
@@ -1783,6 +1806,10 @@ require 'autenticacao.php';
             });
         }
 
+
+        // ============================================================================
+        // DOCUMENTOS — UPLOAD (envio ao backend)
+        // ============================================================================
     // Upload de documento individual da OSC (sem projeto_id)
     async function enviarDocumentoOsc(oscId, docCfg) {
         const fd = new FormData();
@@ -1832,6 +1859,11 @@ require 'autenticacao.php';
             return `(${docCfg.categoria}/${docCfg.subtipo}) erro de comunicação com o servidor.`;
         }
     }
+
+
+        // ============================================================================
+        // DOCUMENTOS — FIM DO BLOCO DE UPLOAD
+        // ============================================================================
 
         // REALIZA O CADASTRO
         async function saveData() {
@@ -1920,6 +1952,12 @@ require 'autenticacao.php';
             fd.append('usuario_email', usuarioEmail.value);
             fd.append('usuario_senha', usuarioSenha.value);
 
+
+            // ========================================================================
+            // DOCUMENTOS — LEGADO (inputs antigos por subtipo fixo)
+            // OBS: estes inputs podem não existir mais no HTML atual.
+            // Mantidos aqui apenas por compatibilidade/histórico.
+            // ========================================================================
             const docEstatutoInput = qs('#docEstatuto');
             const docAtaInput = qs('#docAta');
             const docCndFederalInput = qs('#docCndFederal');
@@ -1979,6 +2017,10 @@ require 'autenticacao.php';
             if (result.success) {
                 const oscId = result.osc_id;
 
+
+                // ====================================================================
+                // DOCUMENTOS — ENVIO (após criar a OSC)
+                // ====================================================================
                 let errosDocs = [];
 
                 try {
@@ -1991,6 +2033,10 @@ require 'autenticacao.php';
                     errosDocs.push('Falha inesperada ao enviar alguns documentos.');
                 }
 
+
+                // ====================================================================
+                // DOCUMENTOS — FIM DO ENVIO
+                // ====================================================================
                 if (errosDocs.length === 0) {
                     alert("OSC criada com sucesso! Todos os documentos foram enviados.");
                 } else {
@@ -2022,12 +2068,20 @@ require 'autenticacao.php';
 
             envolvidos.length = 0;
             atividades.length = 0;
+
+            // ========================================================================
+            // DOCUMENTOS — RESET (limpar lista em memória + re-render)
+            // ========================================================================
             docsOsc.length = 0;
             imoveisOsc.length = 0;
 
             renderEnvolvidos();
             renderAtividades();
             renderDocsOsc();
+            // ========================================================================
+            // DOCUMENTOS — FIM DO RESET
+            // ========================================================================
+
             renderImoveisOsc();
 
             updatePreviews();
@@ -2063,6 +2117,10 @@ require 'autenticacao.php';
         }
 
         updatePreviews();
+
+        // ========================================================================
+        // DOCUMENTOS — RENDER INICIAL
+        // ========================================================================
         renderDocsOsc();
     </script>
 </body>

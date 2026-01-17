@@ -167,6 +167,44 @@ if (!$oscIdVinculada) {
             padding: 16px
         }
 
+        /* modal header/footer (padrao) */
+        .modal-header{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:12px;
+          padding-bottom:12px;
+          border-bottom:1px solid #eee;
+        }
+        .modal-header h3{ margin:0 }
+        .modal-body{ padding-top:12px }
+
+        .modal-footer{
+          display:flex;
+          justify-content:flex-end;
+          gap:10px;
+          padding-top:14px;
+          border-top:1px solid #eee;
+          margin-top:14px;
+        }
+
+        /* botao X do topo (icone) */
+        .btn-icon{
+          width:36px;
+          height:36px;
+          padding:0;
+          border-radius:10px;
+          border:1px solid #ddd;
+          background:#fff;
+          cursor:pointer;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          font-weight:700;
+          line-height:1;
+        }
+        .btn-icon:hover{ background:#f3f3f5; }
+
         @media (max-width:880px) {
             .cols-2 { grid-template-columns: 1fr }
             .cols-3 { grid-template-columns: 1fr }
@@ -375,7 +413,6 @@ if (!$oscIdVinculada) {
           <div>
             <div style="margin-top: 10px;" class="card">
               <h2>Envolvidos</h2>
-              <div class="small">Clique em "Adicionar", "Edite" ou "Delete" as pessoas envolvidas com a OSC.</div>
               <div class="envolvidos-list" id="listaEnvolvidos"></div>
               <div style="margin-top:10px">
                 <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">Adicionar</button>
@@ -493,7 +530,7 @@ if (!$oscIdVinculada) {
       </div>
 
       <div class="card-body" data-collapse-body>
-        <div style="margin-top: 10px;" class="small">Clique em "Adicionar" para incluir as atividades econômicas, áreas e subáreas de atuação.
+        <div style="margin-top: 10px;" class="small">
         </div>
 
         <div class="envolvidos-list" id="atividadesList"></div>
@@ -507,89 +544,28 @@ if (!$oscIdVinculada) {
     </div>
 
     <!-- SEÇÃO 5: DOCUMENTOS (opcional na edição) -->
-    <div style="margin-top:16px" class="card card-collapse" data-collapse-id="docs">
-      <div class="card-head" data-collapse-head>
-        <h2>Documentos da OSC</h2>
+<div style="margin-top:16px" class="card card-collapse" data-collapse-id="docs">
+    <div class="card-head" data-collapse-head>
+        <h2>Documentos</h2>
 
         <button type="button" class="card-toggle" data-collapse-btn>
-          <span class="label">Abrir</span>
-          <span class="chev">▾</span>
+            <span class="label">Abrir</span>
+            <span class="chev">▾</span>
         </button>
-      </div>
-
-      <div class="card-body" data-collapse-body>
-        <div style="margin-top: 10px;" class="small">Envie documentos novos para complementar ou substituir.</div>
-        <div class="small"><b>Formatos permitidos:</b> .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf</div>
-        <div class="divider"></div>
-
-        <h3 class="section-title">1. Institucionais</h3>
-        <div class="grid cols-2">
-          <div>
-            <label for="docEstatuto">Estatuto</label>
-            <div class="envolvidos-list" id="docCard_ESTATUTO"></div>
-            <input id="docEstatuto" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-          </div>
-          <div>
-            <label for="docAta">Ata</label>
-            <div class="envolvidos-list" id="docCard_ATA"></div>
-            <input id="docAta" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-          </div>
-        </div>
-
-        <h3 class="section-title" style="margin-top:16px">2. Certidões</h3>
-        <div class="grid cols-3">
-          <div>
-            <label for="docCndFederal">CND Federal</label>
-            <div class="envolvidos-list" id="docCard_CND_FEDERAL"></div>
-            <input id="docCndFederal" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-          </div>
-          <div>
-            <label for="docCndEstadual">CND Estadual</label>
-            <div class="envolvidos-list" id="docCard_CND_ESTADUAL"></div>
-            <input id="docCndEstadual" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-          </div>
-          <div>
-            <label for="docCndMunicipal">CND Municipal</label>
-            <div class="envolvidos-list" id="docCard_CND_MUNICIPAL"></div>
-            <input id="docCndMunicipal" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-          </div>
-          <div>
-            <label for="docFgts">FGTS</label>
-            <div class="envolvidos-list" id="docCard_FGTS"></div>
-            <input id="docFgts" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-          </div>
-          <div>
-            <label for="docTrabalhista">Trabalhista</label>
-            <div class="envolvidos-list" id="docCard_TRABALHISTA"></div>
-            <input id="docTrabalhista" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-          </div>
-          <div>
-            <label for="docCartCnpj">Cartão CNPJ</label>
-            <div class="envolvidos-list" id="docCard_CARTAO_CNPJ"></div>
-            <input id="docCartCnpj" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-          </div>
-        </div>
-
-        <h3 class="section-title" style="margin-top:16px">3. Contábeis</h3>
-        <div class="small">Adicione um ou mais Balanços Patrimoniais, informando o ano de referência.</div>
-        <div class="envolvidos-list" id="balancosList"></div>
-        <div style="margin-top:10px; margin-bottom:16px;">
-          <button type="button" class="btn btn-ghost" id="openBalancoModal">
-            Adicionar Balanço Patrimonial
-          </button>
-        </div>
-
-        <div class="small">Adicione um ou mais DRE, informando o ano de referência.</div>
-        <div class="envolvidos-list" id="dresList"></div>
-        <div style="margin-top:10px;">
-          <button type="button" class="btn btn-ghost" id="openDreModal">
-            Adicionar DRE
-          </button>
-        </div>
-      </div>
     </div>
 
-    <!-- SEÇÃO 6: TEMPLATE DA OSC -->
+    <div class="card-body" data-collapse-body>
+        <div style="margin-top:10px" class="small"><b>Formatos permitidos:</b> .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf</div>
+        <div class="divider"></div>
+
+        <div class="envolvidos-list" id="docsOscList"></div>
+
+        <div style="margin-top:10px">
+            <button type="button" class="btn btn-ghost" id="openDocOscModal">+ Adicionar</button>
+        </div>
+    </div>
+</div>
+<!-- SEÇÃO 6: TEMPLATE DA OSC -->
     <div style="margin-top:16px" class="card card-collapse" data-collapse-id="template">
       <div class="card-head" data-collapse-head>
         <h2>Exibição do site</h2>
@@ -809,110 +785,52 @@ if (!$oscIdVinculada) {
     </div>
 </div>
 
-<!-- MODAL DOS BALANÇOS PATRIMONIAIS -->
-<div id="modalBalancoBackdrop" class="modal-backdrop">
-    <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Balanço Patrimonial">
-        <h3>Adicionar Balanço Patrimonial</h3>
-
-        <div style="margin-top:8px" class="grid">
-            <div>
-                <label for="balancoAno">Ano de referência (*)</label>
-                <input id="balancoAno" type="text" inputmode="numeric" placeholder="Ex: 2024" required />
+<!-- MODAL DOCUMENTO DA OSC (mesma lógica do cadastro_osc.php) -->
+<div id="modalDocOscBackdrop" class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar documento">
+        <div class="modal-header">
+            <h3>Adicionar documento</h3>
+        </div>
+        <div class="modal-body">
+            <div class="grid-2">
+                <div>
+                    <label class="label">Categoria</label>
+                    <select id="docCategoria" class="input"></select>
+                </div>
+                <div id="docTipoGroup" style="display:none">
+                  <label class="label">Tipo</label>
+                  <select id="docTipo" class="input"></select>
+                </div>
             </div>
-            <div>
-                <label for="balancoArquivo">Arquivo (*)</label>
-                <input id="balancoArquivo" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" required />
+
+            <div class="grid-2" style="margin-top:10px">
+                <div id="docSubtipoWrapper" style="display:none">
+                    <label class="label">Subtipo</label>
+                    <select id="docSubtipo" class="input"></select>
+                </div>
+
+                <div id="docAnoWrapper" style="display:none">
+                    <label class="label">Ano de referência</label>
+                    <input id="docAno" class="input" placeholder="Ex.: 2024" />
+                </div>
+            </div>
+
+            <div id="docDescricaoWrapper" style="display:none; margin-top:10px">
+                <label class="label">Descrição</label>
+                <input id="docDescricao" class="input" placeholder="Descreva o documento" />
+            </div>
+
+            <div style="margin-top:10px">
+                <label class="label">Arquivo</label>
+                <input id="docArquivo" type="file" class="input" />
             </div>
         </div>
-
-        <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
-            <button type="button" class="btn btn-ghost" id="closeBalancoModal">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="addBalancoBtn">Adicionar</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL DAS DREs -->
-<div id="modalDreBackdrop" class="modal-backdrop">
-    <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar DRE">
-        <h3>Adicionar DRE</h3>
-
-        <div style="margin-top:8px" class="grid">
-            <div>
-                <label for="dreAno">Ano de referência (*)</label>
-                <input id="dreAno" type="text" inputmode="numeric" placeholder="Ex: 2024" required />
-            </div>
-            <div>
-                <label for="dreArquivo">Arquivo (*)</label>
-                <input id="dreArquivo" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" required />
-            </div>
-        </div>
-
-        <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
-            <button type="button" class="btn btn-ghost" id="closeDreModal">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="addDreBtn">Adicionar</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL EDITAR DOCUMENTO FIXO -->
-<div id="modalDocFixoBackdrop" class="modal-backdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-label="Editar Documento">
-    <h3 id="docFixoTitle">Editar Documento</h3>
-    <div style="margin-top:8px" class="grid">
-      <div>
-        <div class="small muted" id="docFixoAtualInfo">Documento atual: —</div>
-      </div>
-      <div>
-        <label for="docFixoArquivo">Selecionar novo arquivo (*)</label>
-        <input id="docFixoArquivo" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-        <div class="small muted">Se escolher um arquivo, ele substitui o atual quando você salvar a OSC.</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="cancelDocOscBtn">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="addDocOscBtn">Adicionar</button>
       </div>
     </div>
-    <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
-      <button type="button" class="btn btn-ghost" id="closeDocFixoModal">Cancelar</button>
-      <button type="button" class="btn btn-primary" id="saveDocFixoBtn">Salvar</button>
-    </div>
-  </div>
 </div>
-
-<!-- MODAL EDITAR DOCUMENTO CONTÁBIL EXISTENTE -->
-<div id="modalDocContabilBackdrop" class="modal-backdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-label="Editar Documento Contábil">
-    <h3 id="docContabilTitle">Editar Documento</h3>
-    <div style="margin-top:8px" class="grid">
-      <div>
-        <label for="docContabilAno">Ano de referência (*)</label>
-        <input id="docContabilAno" type="text" inputmode="numeric" placeholder="Ex: 2024" />
-      </div>
-      <div>
-        <label for="docContabilArquivo">Selecionar novo arquivo</label>
-        <div class="envolvidos-list" id="docContabilPreviewSlot"></div>
-        <input id="docContabilArquivo" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
-      </div>
-    </div>
-    <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
-      <button type="button" class="btn btn-ghost" id="closeDocContabilModal">Cancelar</button>
-      <button type="button" class="btn btn-primary" id="saveDocContabilBtn">Salvar</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL CONFIRMAR SUBSTITUIÇÃO DE DOCUMENTO -->
-<div id="modalConfirmBackdrop" class="modal-backdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-label="Confirmar ação">
-    <h3 id="confirmTitle">Confirmar</h3>
-
-    <div id="confirmBody" class="muted" style="margin-top:10px; line-height:1.4">
-    </div>
-
-    <div style="margin-top:14px; display:flex; justify-content:flex-end; gap:8px">
-      <button type="button" class="btn btn-ghost" id="confirmCancelBtn">Cancelar</button>
-      <button type="button" class="btn btn-primary" id="confirmOkBtn">Confirmar</button>
-    </div>
-  </div>
-</div>
-
 <script>
     const qs = s => document.querySelector(s);
     const qsa = s => document.querySelectorAll(s);
@@ -972,393 +890,603 @@ if (!$oscIdVinculada) {
     // imagens já existentes vindas do servidor
     let existingLogos = { logoSimples: null, logoCompleta: null };
     let existingBanners = { banner1: null, banner2: null, banner3: null };
+
+		// pendencias de remocao de imagens do template (logos/banners)
+		let templateRemover = { logo_simples:false, logo_completa:false, banner1:false, banner2:false, banner3:false };
+		let templateBackupUrl = { logo_simples:null, logo_completa:null, banner1:null, banner2:null, banner3:null };
+
     let envFotoExistingUrl = null; // quando editar: foto do BD
     let envFotoRemover = false; // <-- ADD: pediu pra remover a foto atual?
 
-    // ===== DOCUMENTOS EXISTENTES (vindos do servidor) =====
-    let documentosExistentes = {
-        INSTITUCIONAL: {}, // { ESTATUTO: {...}, ATA: {...} }
-        CERTIDAO: {},      // { FGTS: {...}, ... }
-        CONTABIL: {        // listas
-            BALANCO_PATRIMONIAL: [],
-            DRE: []
+    // ===== DOCUMENTOS (mesma lógica do cadastro_osc.php) =====
+
+        const docsOsc = []; // {categoria,tipo,subtipo,descricao,ano_referencia,link,file,id_documento?,url?,nome?}
+        const docsOscDeletes = new Set(); // ids de documentos existentes marcados para exclusão
+
+        const docsOscList = qs('#docsOscList');
+        const openDocOscModal = qs('#openDocOscModal');
+        const modalDocOscBackdrop = qs('#modalDocOscBackdrop');
+        const addDocOscBtn = qs('#addDocOscBtn');
+        const cancelDocOscBtn = qs('#cancelDocOscBtn');
+
+        const docCategoria = qs('#docCategoria');
+        const docTipo = qs('#docTipo');
+        const docTipoGroup = qs('#docTipoGroup');
+        const docSubtipoWrapper = qs('#docSubtipoWrapper');
+        const docSubtipo = qs('#docSubtipo');
+        const docDescricaoWrapper = qs('#docDescricaoWrapper');
+        const docDescricao = qs('#docDescricao');
+        const docAnoWrapper = qs('#docAnoWrapper');
+        const docAno = qs('#docAno');
+        const docArquivo = qs('#docArquivo');
+
+        const ORDEM_CATEGORIAS_OSC = [
+            { key: 'INSTITUCIONAL', numero: 1 },
+            { key: 'CERTIDAO',      numero: 2 },
+            { key: 'CONTABIL',      numero: 3 },
+        ];
+
+        const LABEL_CATEGORIA_OSC = {
+            INSTITUCIONAL: 'Institucionais',
+            CERTIDAO:      'Certidões',
+            CONTABIL:      'Contábeis',
+        };
+
+        const TIPOS_POR_CATEGORIA_OSC = {
+            INSTITUCIONAL: [
+                { key: 'ESTATUTO', label: 'Estatuto' },
+                { key: 'ATA', label: 'Ata' },
+                { key: 'OUTRO_INSTITUCIONAL', label: 'Outro Institucional' },
+            ],
+            CERTIDAO: [
+                { key: 'CND', label: 'Certidão Negativa (CND)' },
+                { key: 'FGTS', label: 'Certificado de Regularidade do FGTS' },
+                { key: 'TRABALHISTA', label: 'Trabalhista' },
+                { key: 'CARTAO_CNPJ', label: 'Cartão CNPJ' },
+            ],
+            CONTABIL: [
+                { key: 'BALANCO_PATRIMONIAL', label: 'Balanço Patrimonial' },
+                { key: 'DRE', label: 'Demonstração do Resultado (DRE)' },
+                { key: 'OUTRO_CONTABIL', label: 'Outro Contábil' },
+            ],
+        };
+
+        const SUBTIPOS_POR_TIPO_CND = [
+            { key: 'CND_FEDERAL', label: 'Federal' },
+            { key: 'CND_ESTADUAL', label: 'Estadual' },
+            { key: 'CND_MUNICIPAL', label: 'Municipal' },
+        ];
+
+        function tipoPermiteMultiplos(categoria, tipo) {
+            if (categoria === 'CONTABIL' && (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE')) return true;
+            if (tipo === 'OUTRO' || tipo === 'OUTRO_INSTITUCIONAL' || tipo === 'OUTRO_CONTABIL') return true;
+            return false;
         }
-    };
 
-    // ===== EDIÇÃO/REMOÇÃO PENDENTE DE DOCUMENTOS =====
-    const docPendentes = {
-      fixos: { },
-      contabeis: {
-        BALANCO_PATRIMONIAL: {},
-        DRE: {}
-      }
-    };
+        function getTipoLabel(categoria, tipo) {
+            const arr = TIPOS_POR_CATEGORIA_OSC[categoria] || [];
+            return (arr.find(x => x.key === tipo)?.label) || tipo;
+        }
 
-    let editDocFixo = null;
-    let editDocContabil = null;
+        function fillCategoriaOptions() {
+            if (!docCategoria) return;
+            docCategoria.innerHTML = '';
+            ORDEM_CATEGORIAS_OSC.forEach(({ key }) => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = LABEL_CATEGORIA_OSC[key] || key;
+                docCategoria.appendChild(opt);
+            });
+        }
 
-    const templateRemover = {
-        logo_simples: false,
-        logo_completa: false,
-        banner1: false,
-        banner2: false,
-        banner3: false
-    };
+        function fillTipoOptions() {
+            if (!docTipo || !docCategoria) return;
+            const cat = docCategoria.value;
+            const tipos = TIPOS_POR_CATEGORIA_OSC[cat] || [];
+            docTipo.innerHTML = '';
+            tipos.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.key;
+                opt.textContent = t.label;
+                docTipo.appendChild(opt);
+            });
+        }
 
-    const templateBackupUrl = {
-        logo_simples: null,
-        logo_completa: null,
-        banner1: null,
-        banner2: null,
-        banner3: null
-    };
+        function fillSubtipoCnd() {
+            if (!docSubtipo) return;
+            docSubtipo.innerHTML = '';
+            SUBTIPOS_POR_TIPO_CND.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.key;
+                opt.textContent = s.label;
+                docSubtipo.appendChild(opt);
+            });
+        }
 
-    function getNomeDocAtual(cat, subtipo) {
-      const doc = (documentosExistentes?.[cat] || {})[subtipo];
-      if (!doc) return '';
-      return doc.nome || fileNameFromUrl(doc.url || '') || subtipo;
-    }
+        function updateWrappersForTipo() {
+            if (!docCategoria || !docTipo) return;
+            const cat = docCategoria.value;
+            const tipo = docTipo.value;
 
-    function instalarConfirmacaoSubstituicaoDocFixo(inputEl, cat, subtipo, tituloHumano) {
-      if (!inputEl) return;
+            // Subtipo
+            const showSubtipo = (cat === 'CERTIDAO' && tipo === 'CND');
+            if (docSubtipoWrapper) docSubtipoWrapper.style.display = showSubtipo ? 'block' : 'none';
+            if (showSubtipo) fillSubtipoCnd();
 
-      inputEl.addEventListener('change', async () => {
-        const file = inputEl.files?.[0] || null;
-        if (!file) return;
+            // Descrição (OUTROS)
+            const showDescricao = (tipo === 'OUTRO' || tipo === 'OUTRO_INSTITUCIONAL' || tipo === 'OUTRO_CONTABIL');
+            if (docDescricaoWrapper) docDescricaoWrapper.style.display = showDescricao ? 'block' : 'none';
 
-        const docAtual = (documentosExistentes?.[cat] || {})[subtipo];
-        const existe = !!(docAtual && docAtual.id_documento);
+            // Ano (contábeis)
+            const showAno = (cat === 'CONTABIL' && (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE'));
+            if (docAnoWrapper) docAnoWrapper.style.display = showAno ? 'block' : 'none';
+        }
 
-        if (existe) {
-          const nomeAtual = getNomeDocAtual(cat, subtipo) || tituloHumano || subtipo;
+        function resetDocOscCampos() {
+            fillCategoriaOptions();
+            fillTipoOptions();
+            updateWrappersForTipo();
+            if (docDescricao) docDescricao.value = '';
+            if (docAno) docAno.value = '';
+            if (docArquivo) docArquivo.value = '';
+        }
 
-          const ok = await confirmModal({
-            title: 'Substituir documento?',
-            html: `
-              <div>Você está prestes a substituir:</div>
-              <div style="margin-top:8px; padding:10px; background:#fafafa; border:1px solid #f0f0f0; border-radius:8px">
-                <div><b>Atual:</b> ${escapeHtml(nomeAtual)}</div>
-                <div style="margin-top:4px"><b>Novo:</b> ${escapeHtml(file.name)}</div>
-              </div>
-              <div class="small muted" style="margin-top:10px">
-                A troca será aplicada quando você clicar em <b>SALVAR ALTERAÇÕES</b>.
-              </div>
-            `
+        if (docCategoria) {
+            docCategoria.addEventListener('change', () => {
+                fillTipoOptions();
+                updateWrappersForTipo();
+            });
+        }
+
+        if (docTipo) {
+            docTipo.addEventListener('change', () => {
+                updateWrappersForTipo();
+            });
+        }
+
+        function renderDocsOsc() {
+            if (!docsOscList) return;
+            docsOscList.innerHTML = '';
+
+            ORDEM_CATEGORIAS_OSC.forEach(({ key, numero }) => {
+                const docsCat = docsOsc.filter(d => d.categoria === key);
+
+                const sec = document.createElement('div');
+                sec.style.width = '100%';
+
+                const titulo = document.createElement('div');
+                titulo.className = 'section-title';
+                titulo.style.marginTop = '8px';
+                titulo.textContent = `${numero}. ${LABEL_CATEGORIA_OSC[key] || key}`;
+                sec.appendChild(titulo);
+
+                if (!docsCat.length) {
+                    const vazio = document.createElement('div');
+                    vazio.className = 'small';
+                    vazio.textContent = 'Nenhum documento cadastrado!';
+                    vazio.style.marginBottom = '4px';
+                    sec.appendChild(vazio);
+                } else {
+                    docsCat.forEach(d => {
+                        const c = document.createElement('div');
+                        c.className = 'envolvido-card';
+
+                        let linha = d.tipo_label || d.tipo || '';
+                        if (d.tipo === 'CND' && d.subtipo_label) {
+                            linha += ' — ' + d.subtipo_label;
+                        } else if ((d.tipo === 'OUTRO' || d.tipo === 'OUTRO_INSTITUCIONAL' || d.tipo === 'OUTRO_CONTABIL') && d.descricao) {
+                            linha += ' — ' + d.descricao;
+                        }
+
+                        const nomeArquivo = (d.file && d.file.name) || d.nome || (d.url ? fileNameFromUrl(d.url) : '—');
+
+                        const info = document.createElement('div');
+                        info.innerHTML = `
+                            <div style="font-weight:600">${escapeHtml(linha)}</div>
+                            ${d.ano_referencia ? `<strong><div class="small">Ano: ${escapeHtml(d.ano_referencia)}</div></strong>` : ''}
+                            <div class="small">Arquivo: ${escapeHtml(nomeArquivo || '—')}</div>
+                        `;
+
+                        if (d.url) {
+                            const a = document.createElement('a');
+                            a.href = d.url;
+                            a.target = '_blank';
+                            a.rel = 'noopener';
+                            a.className = 'small';
+                            a.textContent = 'Abrir arquivo';
+                            a.style.display = 'inline-block';
+                            a.style.marginTop = '4px';
+                            info.appendChild(a);
+                        }
+
+                        const remove = document.createElement('button');
+                        remove.className = 'btn';
+                        remove.textContent = '✕';
+                        remove.style.padding = '6px 8px';
+                        remove.style.marginLeft = 'auto';
+                        remove.addEventListener('click', () => {
+                            if (d.id_documento) docsOscDeletes.add(String(d.id_documento));
+                            const idxGlobal = docsOsc.indexOf(d);
+                            if (idxGlobal !== -1) {
+                                docsOsc.splice(idxGlobal, 1);
+                                renderDocsOsc();
+                            }
+                        });
+
+                        c.appendChild(info);
+                        c.appendChild(remove);
+                        sec.appendChild(c);
+                    });
+                }
+
+                docsOscList.appendChild(sec);
+            });
+        }
+
+        if (openDocOscModal) {
+            openDocOscModal.addEventListener('click', () => {
+                resetDocOscCampos();
+                if (modalDocOscBackdrop) modalDocOscBackdrop.style.display = 'flex';
+            });
+        }
+
+        if (cancelDocOscBtn) {
+          cancelDocOscBtn.addEventListener('click', () => {
+            if (modalDocOscBackdrop) modalDocOscBackdrop.style.display = 'none';
           });
-
-          if (!ok) {
-            inputEl.value = ''; // desfaz seleção
-            return;
-          }
         }
 
-        // grava pendência
-        docPendentes.fixos[subtipo] = { action: 'replace', file };
-        inputEl.value = ''; // libera pra selecionar o mesmo arquivo depois, se quiser
-        renderDocumentosFixos();
-      });
-    }
-
-    // ATIVA para os fixos (institucionais + certidões)
-    instalarConfirmacaoSubstituicaoDocFixo(docEstatuto,     'INSTITUCIONAL', 'ESTATUTO',     'Estatuto');
-    instalarConfirmacaoSubstituicaoDocFixo(docAta,          'INSTITUCIONAL', 'ATA',          'Ata');
-    instalarConfirmacaoSubstituicaoDocFixo(docCndFederal,   'CERTIDAO',      'CND_FEDERAL',  'CND Federal');
-    instalarConfirmacaoSubstituicaoDocFixo(docCndEstadual,  'CERTIDAO',      'CND_ESTADUAL', 'CND Estadual');
-    instalarConfirmacaoSubstituicaoDocFixo(docCndMunicipal, 'CERTIDAO',      'CND_MUNICIPAL','CND Municipal');
-    instalarConfirmacaoSubstituicaoDocFixo(docFgts,         'CERTIDAO',      'FGTS',         'FGTS');
-    instalarConfirmacaoSubstituicaoDocFixo(docTrabalhista,  'CERTIDAO',      'TRABALHISTA',  'Trabalhista');
-    instalarConfirmacaoSubstituicaoDocFixo(docCartCnpj,     'CERTIDAO',      'CARTAO_CNPJ',  'Cartão CNPJ');
-    
-    function normalizarUrlDoc(url) {
-        if (!url) return '';
-        return url; // se você salva "assets/..." ou "/assets/...", ambos abrem no browser
-    }
-    
-    function criarCardDocumento(doc, onRemove) {
-      const c = document.createElement('div');
-      c.className = 'envolvido-card';
-
-      const info = document.createElement('div');
-      info.style.minWidth = '220px';
-
-      const nome = doc.nome || (doc.url ? doc.url.split('/').pop() : 'arquivo');
-      const anoTxt = doc.ano_referencia ? ` • ${doc.ano_referencia}` : '';
-      const url = normalizarUrlDoc(doc.url);
-
-      info.innerHTML = `
-        <div style="font-weight:600">📄 ${escapeHtml(nome)}${anoTxt}</div>
-        ${url ? `<div class="small"><a href="${escapeHtml(url)}" target="_blank" rel="noopener">Abrir</a></div>` : `<div class="small">Sem URL</div>`}
-      `;
-
-      const remove = document.createElement('button');
-      remove.type = 'button';
-      remove.className = 'btn';
-      remove.textContent = '✕';
-      remove.style.padding = '6px 8px';
-      remove.style.marginLeft = '8px';
-      remove.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        onRemove?.(ev);
-      });
-
-      c.appendChild(info);
-      c.appendChild(remove);
-      return c;
-    }
-    
-    async function excluirDocumentoServidor(idDocumento) {
-        const fd = new FormData();
-        fd.append('id_documento', String(idDocumento));
-    
-        const resp = await fetch('ajax_deletar_documento.php', { method: 'POST', body: fd });
-        const text = await resp.text();
-    
-        let data;
-        try { data = JSON.parse(text); }
-        catch {
-            console.error('Delete doc resposta inválida:', text);
-            throw new Error('Resposta inválida do servidor ao excluir documento.');
+        if (modalDocOscBackdrop) {
+            modalDocOscBackdrop.addEventListener('click', (e) => {
+                if (e.target === modalDocOscBackdrop) {
+                    modalDocOscBackdrop.style.display = 'none';
+                }
+            });
         }
-    
-        if (!data.success) throw new Error(data.error || 'Erro ao excluir documento.');
-        return data;
-    }
 
-    function criarCardDocumentoEditavel(doc, { onEdit, onRemove, badge = '', pendFileName = '', anoOverride = '' } = {}) {
-      const c = document.createElement('div');
-      c.className = 'envolvido-card';
+        if (addDocOscBtn) {
+            addDocOscBtn.addEventListener('click', () => {
+                const categoria = docCategoria?.value;
+                const tipo = docTipo?.value;
+                const tipo_label = getTipoLabel(categoria, tipo);
 
-      const info = document.createElement('div');
-      info.style.minWidth = '240px';
+                let subtipo = tipo;
+                let subtipo_label = '';
 
-      const nome = doc.nome || (doc.url ? doc.url.split('/').pop() : 'arquivo');
+                if (categoria === 'CERTIDAO' && tipo === 'CND') {
+                    subtipo = docSubtipo?.value || 'CND_FEDERAL';
+                    subtipo_label = (SUBTIPOS_POR_TIPO_CND.find(s => s.key === subtipo)?.label) || '';
+                }
 
-      // se tiver anoOverride (pendência), mostra ele; senão o do doc
-      const anoUsar = (anoOverride || doc.ano_referencia || '');
-      const anoTxt = anoUsar ? ` • ${anoUsar}` : '';
+                const descricao = (tipo === 'OUTRO' || tipo === 'OUTRO_INSTITUCIONAL' || tipo === 'OUTRO_CONTABIL') ? (docDescricao?.value || '').trim() : '';
+                const ano_referencia = (categoria === 'CONTABIL' && (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE')) ? (docAno?.value || '').trim() : '';
+                const file = docArquivo?.files?.[0] || null;
 
-      const url = normalizarUrlDoc(doc.url);
+                if (!categoria || !tipo) {
+                    alert('Selecione categoria e tipo.');
+                    return;
+                }
 
-      info.innerHTML = `
-        ${badge ? `<div class="small muted">${escapeHtml(badge)}</div>` : ``}
-        <div style="font-weight:600">📄 ${escapeHtml(nome)}${anoTxt}</div>
-        ${url ? `<div class="small"><a href="${escapeHtml(url)}" target="_blank" rel="noopener">Abrir</a></div>` : `<div class="small">Sem URL</div>`}
-        ${pendFileName ? `<div class="small muted">✔️ SELECIONADO: ${escapeHtml(pendFileName)}</div>` : ``}
-      `;
+                if ((tipo === 'OUTRO' || tipo === 'OUTRO_INSTITUCIONAL' || tipo === 'OUTRO_CONTABIL') && !descricao) {
+                    alert('Informe uma descrição.');
+                    return;
+                }
+                
+                if (!file) {
+                  alert('Selecione um arquivo.');
+                  return;
+                }
 
-      const edit = document.createElement('button');
-      edit.type = 'button';
-      edit.className = 'btn';
-      edit.textContent = '✎';
-      edit.style.padding = '6px 8px';
-      edit.style.marginLeft = '8px';
-      edit.addEventListener('click', (ev) => {
-        ev.preventDefault(); ev.stopPropagation();
-        onEdit?.();
-      });
+                if (!tipoPermiteMultiplos(categoria, tipo)) {
+                    const jaTem = docsOsc.some(d => d.categoria === categoria && d.tipo === tipo && d.subtipo === subtipo);
+                    if (jaTem) {
+                        alert('Já existe um documento desse tipo. Remova o existente para adicionar outro.');
+                        return;
+                    }
+                }
 
-      const remove = document.createElement('button');
-      remove.type = 'button';
-      remove.className = 'btn';
-      remove.textContent = '✕';
-      remove.style.padding = '6px 8px';
-      remove.style.marginLeft = '8px';
-      remove.addEventListener('click', (ev) => {
-        ev.preventDefault(); ev.stopPropagation();
-        onRemove?.();
-      });
+                docsOsc.push({
+                    categoria,
+                    tipo,
+                    tipo_label,
+                    subtipo,
+                    subtipo_label,
+                    descricao,
+                    ano_referencia,
+                    file,
+                });
 
-      c.appendChild(info);
-      c.appendChild(edit);
-      c.appendChild(remove);
-      return c;
-    }
-    
-    function criarCardDocumentoFixoSemEdicao(doc, { badge = '', pendFileName = '', onUndo, onRemove } = {}) {
-      const c = document.createElement('div');
-      c.className = 'envolvido-card';
+                renderDocsOsc();
+                if (modalDocOscBackdrop) modalDocOscBackdrop.style.display = 'none';
+            });
+        }
 
-      const info = document.createElement('div');
-      info.style.minWidth = '240px';
+        
+        function asArray(v) {
+            if (!v) return [];
+            return Array.isArray(v) ? v : [v];
+        }
 
-      const nome = doc?.nome || (doc?.url ? doc.url.split('/').pop() : 'arquivo');
-      const anoTxt = doc?.ano_referencia ? ` • ${doc.ano_referencia}` : '';
-      const url = normalizarUrlDoc(doc?.url || '');
+        function carregarDocsOscExistentes(documentos) {
+            if (!documentos) return;
 
-      info.innerHTML = `
-        ${badge ? `<div class="small muted">${escapeHtml(badge)}</div>` : ``}
-        <div style="font-weight:600">📄 ${escapeHtml(nome)}${anoTxt}</div>
-        ${url ? `<div class="small"><a href="${escapeHtml(url)}" target="_blank" rel="noopener">Abrir</a></div>` : `<div class="small">Sem URL</div>`}
-        ${pendFileName ? `<div class="small muted">✔️ SELECIONADO: ${escapeHtml(pendFileName)}</div>` : ``}
-      `;
-
-      c.appendChild(info);
-
-      // ↩ desfaz substituição pendente
-      if (typeof onUndo === 'function') {
-        const undo = document.createElement('button');
-        undo.type = 'button';
-        undo.className = 'btn';
-        undo.textContent = '↩';
-        undo.style.padding = '6px 8px';
-        undo.style.marginLeft = '8px';
-        undo.title = 'Desfazer substituição pendente';
-        undo.addEventListener('click', (ev) => {
-          ev.preventDefault();
-          ev.stopPropagation();
-          onUndo();
-        });
-        c.appendChild(undo);
-      }
-
-      // ✕ remove (marca remoção pendente)
-      if (typeof onRemove === 'function') {
-        const remove = document.createElement('button');
-        remove.type = 'button';
-        remove.className = 'btn';
-        remove.textContent = '✕';
-        remove.style.padding = '6px 8px';
-        remove.style.marginLeft = '8px';
-        remove.title = 'Remover documento';
-        remove.addEventListener('click', (ev) => {
-          ev.preventDefault();
-          ev.stopPropagation();
-          onRemove();
-        });
-        c.appendChild(remove);
-      }
-
-      return c;
-    }
-
-    function renderDocumentosFixos() {
-      const fixos = [
-        { cat: 'INSTITUCIONAL', subtipo: 'ESTATUTO', titulo: 'Estatuto' },
-        { cat: 'INSTITUCIONAL', subtipo: 'ATA', titulo: 'Ata' },
-        { cat: 'CERTIDAO', subtipo: 'CND_FEDERAL', titulo: 'CND Federal' },
-        { cat: 'CERTIDAO', subtipo: 'CND_ESTADUAL', titulo: 'CND Estadual' },
-        { cat: 'CERTIDAO', subtipo: 'CND_MUNICIPAL', titulo: 'CND Municipal' },
-        { cat: 'CERTIDAO', subtipo: 'FGTS', titulo: 'FGTS' },
-        { cat: 'CERTIDAO', subtipo: 'TRABALHISTA', titulo: 'Trabalhista' },
-        { cat: 'CERTIDAO', subtipo: 'CARTAO_CNPJ', titulo: 'Cartão CNPJ' }
-      ];
-
-      fixos.forEach(cfg => {
-        const slot = qs(`#docCard_${cfg.subtipo}`);
-        if (!slot) return;
-
-        slot.innerHTML = '';
-
-        const doc  = (documentosExistentes?.[cfg.cat] || {})[cfg.subtipo] || null;
-        const pend = docPendentes.fixos?.[cfg.subtipo] || null;
-
-        // se não existe doc e nem pendência, não mostra nada
-        if ((!doc || !doc.id_documento) && !pend) return;
-
-        const badge =
-          pend?.action === 'replace' ? '🆕 SUBSTITUIÇÃO PENDENTE' :
-          pend?.action === 'remove'  ? '🗑️ DELEÇÃO PENDENTE' : '';
-
-        const pendName = (pend?.action === 'replace' && pend?.file) ? pend.file.name : '';
-
-        const docParaExibir = (doc && doc.id_documento)
-          ? doc
-          : { nome: cfg.titulo, url: '', ano_referencia: '' };
-
-        const card = criarCardDocumentoFixoSemEdicao(docParaExibir, {
-          badge,
-          pendFileName: pendName,
-
-          onUndo: (pend?.action === 'replace' || pend?.action === 'remove')
-            ? () => {
-                delete docPendentes.fixos[cfg.subtipo];
-                renderDocumentosFixos();
-              }
-            : null,
-
-          onRemove: async () => {
-            // se já está marcado pra remover, o ✕ vira um "desfazer"
-            if (pend?.action === 'remove') {
-              delete docPendentes.fixos[cfg.subtipo];
-              renderDocumentosFixos();
-              return;
+            // Suporte a formatos diferentes de retorno (objeto agrupado OU lista plana)
+            if (typeof documentos === 'string') {
+                try { documentos = JSON.parse(documentos); } catch (e) { /* ignora */ }
             }
 
-            const nomeAtual = getNomeDocAtual(cfg.cat, cfg.subtipo) || cfg.titulo || cfg.subtipo;
+            // Alguns backends embrulham em { documentos: [...] } / { items: [...] }
+            if (documentos && !Array.isArray(documentos) && typeof documentos === 'object') {
+                if (Array.isArray(documentos.documentos)) documentos = documentos.documentos;
+                else if (Array.isArray(documentos.items)) documentos = documentos.items;
+                else if (Array.isArray(documentos.lista)) documentos = documentos.lista;
+            }
 
-            const ok = await confirmModal({
-              title: 'Remover documento?',
-              html: `
-                <div>A deleção deste documento é permanente!</div>
-                <div style="margin-top:8px; padding:10px; background:#fafafa; border:1px solid #f0f0f0; border-radius:8px">
-                  <b>${escapeHtml(nomeAtual)}</b>
-                </div>
-                <div class="small muted" style="margin-top:10px">
-                  A deleção será aplicada quando você clicar em <b>SALVAR ALTERAÇÕES</b>.
-                </div>
-              `
+            const normUpper = (v) => (v ?? '').toString().trim().toUpperCase();
+            const normCategoria = (v) => {
+                const c = normUpper(v);
+                if (c === 'INSTITUCIONAIS') return 'INSTITUCIONAL';
+                if (c === 'CERTIDOES' || c === 'CERTIDÕES' || c === 'CERTIDÃO') return 'CERTIDAO';
+                if (c === 'CONTABEIS' || c === 'CONTÁBEIS') return 'CONTABIL';
+                if (c === 'INSTITUCIONAL') return 'INSTITUCIONAL';
+                if (c === 'CERTIDAO') return 'CERTIDAO';
+                if (c === 'CONTABIL') return 'CONTABIL';
+                return c;
+            };
+            const pick = (obj, keys) => {
+                for (const k of keys) {
+                    const val = obj?.[k];
+                    if (val !== undefined && val !== null && String(val).trim() !== '') return val;
+                }
+                return '';
+            };
+
+            // Caso 1: lista plana de documentos
+            if (Array.isArray(documentos)) {
+                documentos.forEach((doc) => {
+                    if (!doc) return;
+
+                    let categoria = normCategoria(pick(doc, ['categoria','cat','grupo','tipo_categoria','categoria_doc']));
+                    let tipo = normUpper(pick(doc, ['tipo','tipo_doc']));
+                    let subtipo = normUpper(pick(doc, ['subtipo','sub_tipo','subtipo_doc'])) || tipo;
+
+                    // inferência de categoria quando não vem
+                    if (!categoria) {
+                        if (subtipo.startsWith('CND_') || tipo === 'CND') categoria = 'CERTIDAO';
+                        else if (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE') categoria = 'CONTABIL';
+                        else categoria = 'INSTITUCIONAL';
+                    }
+
+                    let tipo_label = getTipoLabel(categoria, tipo);
+                    let subtipo_label = '';
+
+                    if (categoria === 'CERTIDAO' && tipo === 'CND') {
+                        if (subtipo && !subtipo.startsWith('CND_')) subtipo = 'CND_' + subtipo;
+                        const suf = (subtipo || '').replace('CND_', '');
+                        if (suf === 'FEDERAL') subtipo_label = 'Federal';
+                        else if (suf === 'ESTADUAL') subtipo_label = 'Estadual';
+                        else if (suf === 'MUNICIPAL') subtipo_label = 'Municipal';
+                    }
+
+                    const descricao = String(pick(doc, ['descricao','desc','descricao_doc'])).trim();
+                    const ano_referencia = String(pick(doc, ['ano_referencia','ano','anoReferencia','ano_ref'])).trim();
+
+                    const url = String(pick(doc, ['url','link_arquivo','caminho','arquivo','arquivo_url','url_arquivo','urlArquivo','path'])).trim();
+                    const nome = String(pick(doc, ['nome','nome_original','nomeOriginal','arquivo_nome','nome_arquivo','original_name'])).trim();
+
+                    const id_documento = pick(doc, ['id_documento','id','documento_id','idDocumento']) || null;
+
+                    docsOsc.push({
+                        categoria,
+                        tipo,
+                        tipo_label,
+                        subtipo: subtipo || tipo,
+                        subtipo_label,
+                        descricao,
+                        ano_referencia,
+                        file: null,
+                        id_documento,
+                        url,
+                        nome,
+                    });
+                });
+                return;
+            }
+
+            // INSTITUCIONAL / CERTIDÃO / CONTÁBIL (aceita variações de chave vindas do backend)
+            const getGroup = (target) => {
+                if (!documentos || typeof documentos !== 'object') return {};
+                for (const k of Object.keys(documentos)) {
+                    if (normCategoria(k) === target) return documentos[k] || {};
+                }
+                return {};
+            };
+
+            // INSTITUCIONAL
+            const inst = getGroup('INSTITUCIONAL');
+            Object.entries(inst).forEach(([subtipo, val]) => {
+                asArray(val).forEach(doc => {
+                    if (!doc) return;
+                    const tipo = (subtipo === 'ESTATUTO' || subtipo === 'ATA' || subtipo === 'OUTRO_INSTITUCIONAL') ? subtipo : subtipo;
+                    docsOsc.push({
+                        categoria: 'INSTITUCIONAL',
+                        tipo,
+                        tipo_label: getTipoLabel('INSTITUCIONAL', tipo),
+                        subtipo,
+                        subtipo_label: '',
+                        descricao: (doc.descricao || '').trim(),
+                        ano_referencia: (doc.ano_referencia || '').toString().trim(),
+                        file: null,
+                        id_documento: doc.id_documento || doc.id || null,
+              // aceita variações de backend (url/link/documento/...)
+              url: doc.url || doc.documento || doc.link_arquivo || doc.caminho || '',
+                        nome: doc.nome || doc.nome_original || '',
+                    });
+                });
+            });
+            // CERTIDÃO
+            const cert = getGroup('CERTIDAO');
+            Object.entries(cert).forEach(([subtipo, val]) => {
+                asArray(val).forEach(doc => {
+                    if (!doc) return;
+                    let tipo = subtipo;
+                    let subtipo_label = '';
+                    if (subtipo.startsWith('CND_')) {
+                        tipo = 'CND';
+                        const suf = subtipo.replace('CND_', '');
+                        if (suf === 'FEDERAL') subtipo_label = 'Federal';
+                        else if (suf === 'ESTADUAL') subtipo_label = 'Estadual';
+                        else if (suf === 'MUNICIPAL') subtipo_label = 'Municipal';
+                    }
+
+                    docsOsc.push({
+                        categoria: 'CERTIDAO',
+                        tipo,
+                        tipo_label: getTipoLabel('CERTIDAO', tipo),
+                        subtipo,
+                        subtipo_label,
+                        descricao: (doc.descricao || '').trim(),
+                        ano_referencia: (doc.ano_referencia || '').toString().trim(),
+                        file: null,
+                        id_documento: doc.id_documento || doc.id || null,
+              url: doc.url || doc.documento || doc.link || doc.link_arquivo || doc.caminho || '',
+                        nome: doc.nome || doc.nome_original || '',
+                    });
+                });
+            });
+            // CONTÁBIL
+            const cont = getGroup('CONTABIL');
+            const bals = asArray(cont.BALANCO_PATRIMONIAL || cont.balanco_patrimonial || cont.balancoPatrimonial);
+            bals.forEach(doc => {
+                if (!doc) return;
+                docsOsc.push({
+                    categoria: 'CONTABIL',
+                    tipo: 'BALANCO_PATRIMONIAL',
+                    tipo_label: getTipoLabel('CONTABIL', 'BALANCO_PATRIMONIAL'),
+                    subtipo: 'BALANCO_PATRIMONIAL',
+                    subtipo_label: '',
+                    descricao: (doc.descricao || '').trim(),
+                    ano_referencia: (doc.ano_referencia || '').toString().trim(),
+                    file: null,
+                    id_documento: doc.id_documento || doc.id || null,
+            url: doc.url || doc.documento || doc.link || doc.link_arquivo || doc.caminho || '',
+                    nome: doc.nome || doc.nome_original || '',
+                });
             });
 
-            if (!ok) return;
+            const dres = asArray(cont.DRE || cont.dre);
+            dres.forEach(doc => {
+                if (!doc) return;
+                docsOsc.push({
+                    categoria: 'CONTABIL',
+                    tipo: 'DRE',
+                    tipo_label: getTipoLabel('CONTABIL', 'DRE'),
+                    subtipo: 'DRE',
+                    subtipo_label: '',
+                    descricao: (doc.descricao || '').trim(),
+                    ano_referencia: (doc.ano_referencia || '').toString().trim(),
+                    file: null,
+                    id_documento: doc.id_documento || doc.id || null,
+                    url: doc.url || doc.documento || doc.link || doc.link_arquivo || doc.caminho || '',
+                    nome: doc.nome || doc.nome_original || '',
+                });
+            });
 
-            docPendentes.fixos[cfg.subtipo] = { action: 'remove' };
-            renderDocumentosFixos();
-          }
-        });
+            // OUTROS CONTÁBEIS (ex.: OUTRO) — captura chaves extras além de Balanço/DRE
+            Object.keys(cont || {}).forEach((k) => {
+                const kk = normUpper(k);
+                if (!kk || kk === 'BALANCO_PATRIMONIAL' || kk === 'DRE') return;
 
-        slot.appendChild(card);
-      });
-    }
+                asArray(cont[k]).forEach((doc) => {
+                    if (!doc) return;
+                    docsOsc.push({
+                        categoria: 'CONTABIL',
+                        tipo: 'OUTRO_CONTABIL',
+                        tipo_label: getTipoLabel('CONTABIL', 'OUTRO_CONTABIL'),
+                        subtipo: kk,
+                        subtipo_label: '',
+                        descricao: (doc.descricao || '').trim(),
+                        ano_referencia: (doc.ano_referencia || '').toString().trim(),
+                        file: null,
+                        id_documento: doc.id_documento || doc.id || null,
+                        url: doc.url || doc.documento || doc.link || doc.link_arquivo || doc.caminho || '',
+                        nome: doc.nome || doc.nome_original || '',
+                    });
+                });
+            });
+        }
 
-    const modalDocFixoBackdrop = qs('#modalDocFixoBackdrop');
-    const closeDocFixoModal = qs('#closeDocFixoModal');
-    const saveDocFixoBtn = qs('#saveDocFixoBtn');
-    const docFixoArquivo = qs('#docFixoArquivo');
-    const docFixoTitle = qs('#docFixoTitle');
-    const docFixoAtualInfo = qs('#docFixoAtualInfo');
+        async function excluirDocumentoServidor(idDocumento) {
+            const fd = new FormData();
+            fd.append('id_documento', idDocumento);
 
-    function abrirModalDocFixo() {
-      if (!editDocFixo) return;
+            const resp = await fetch('ajax_deletar_documento.php', {
+                method: 'POST',
+                body: fd
+            });
 
-      docFixoArquivo.value = '';
-      const subtipo = editDocFixo.subtipo;
-      docFixoTitle.textContent = `Editar ${subtipo}`;
-      const nomeAtual = editDocFixo.doc?.nome || subtipo;
-      docFixoAtualInfo.textContent = `Documento atual: ${nomeAtual}`;
+            const txt = await resp.text();
+            let data;
+            try { data = JSON.parse(txt); }
+            catch { throw new Error('Resposta inválida ao excluir documento.'); }
 
-      modalDocFixoBackdrop.style.display = 'flex';
-    }
+            if (!data.success) {
+                throw new Error(data.error || 'Falha ao excluir documento.');
+            }
+        }
 
-    closeDocFixoModal?.addEventListener('click', () => {
-      modalDocFixoBackdrop.style.display = 'none';
-      editDocFixo = null;
-    });
+        async function enviarDocumentoOsc(oscId, doc) {
+            try {
+                const fd = new FormData();
+                fd.append('id_osc', oscId);
+                fd.append('categoria', doc.categoria);
+                fd.append('tipo', doc.tipo);
+                fd.append('subtipo', doc.subtipo);
 
-    modalDocFixoBackdrop?.addEventListener('click', (e) => {
-      if (e.target === modalDocFixoBackdrop) {
-        modalDocFixoBackdrop.style.display = 'none';
-        editDocFixo = null;
-      }
-    });
+                if (doc.descricao) fd.append('descricao', doc.descricao);
+                if (doc.ano_referencia) fd.append('ano_referencia', doc.ano_referencia);
+                if (doc.file) fd.append('arquivo', doc.file);
 
-    saveDocFixoBtn?.addEventListener('click', () => {
-      if (!editDocFixo) return;
+                const resp = await fetch('ajax_upload_documento.php', { method: 'POST', body: fd });
+                const txt = await resp.text();
+                let data;
+                try { data = JSON.parse(txt); }
+                catch { throw new Error('Resposta inválida ao enviar documento.'); }
 
-      const file = docFixoArquivo.files?.[0] || null;
-      if (!file) {
-        alert('Selecione um arquivo para substituir.');
-        return;
-      }
+                if (data.status !== 'ok') {
+                    throw new Error(data.mensagem || 'Erro ao enviar documento.');
+                }
 
-      // marca substituição pendente
-      docPendentes.fixos[editDocFixo.subtipo] = { action: 'replace', file };
+                return null;
+            } catch (e) {
+                const label = (doc.tipo_label || doc.tipo || '') + (doc.tipo === 'CND' && doc.subtipo_label ? ` — ${doc.subtipo_label}` : '');
+                return `(${label}) ${e.message || 'falha ao enviar.'}`;
+            }
+        }
 
-      modalDocFixoBackdrop.style.display = 'none';
-      editDocFixo = null;
+        async function aplicarAlteracoesDocsOsc(oscId) {
+            const erros = [];
 
-      renderDocumentosFixos();
-    });
+            // 1) Excluir documentos existentes marcados
+            for (const id of Array.from(docsOscDeletes)) {
+                try {
+                    await excluirDocumentoServidor(id);
+                } catch (e) {
+                    erros.push(`(Excluir #${id}) ${e.message || 'falha ao excluir.'}`);
+                }
+            }
+
+            // 2) Enviar somente os novos (com arquivo)
+            for (const doc of docsOsc) {
+                if (!doc.file) continue;
+                const err = await enviarDocumentoOsc(oscId, doc);
+                if (err) erros.push(err);
+            }
+
+            return erros;
+        }
+
+
 
     const FUNCAO_LABELS = {
         DIRETOR: 'Diretor(a)',
@@ -1939,587 +2067,9 @@ if (!$oscIdVinculada) {
       });
     }
 
-    // ===== BALANÇOS =====
-    const modalBalancoBackdrop = qs('#modalBalancoBackdrop');
-    const openBalancoModal     = qs('#openBalancoModal');
-    const closeBalancoModal    = qs('#closeBalancoModal');
-    const addBalancoBtn        = qs('#addBalancoBtn');
+        // ===== DOCUMENTOS DA OSC (lista unificada; veja docsOscList) =====
 
-    openBalancoModal.addEventListener('click', () => modalBalancoBackdrop.style.display = 'flex');
-    closeBalancoModal.addEventListener('click', () => modalBalancoBackdrop.style.display = 'none');
-    modalBalancoBackdrop.addEventListener('click', (e) => {
-        if (e.target === modalBalancoBackdrop) modalBalancoBackdrop.style.display = 'none';
-    });
 
-    function renderBalancos() {
-      const list = qs('#balancosList');
-      if (!list) return;
-
-      list.innerHTML = '';
-
-      const existentes = documentosExistentes?.CONTABIL?.BALANCO_PATRIMONIAL || [];
-      existentes.forEach((doc) => {
-        const pend = docPendentes.contabeis.BALANCO_PATRIMONIAL[String(doc.id_documento)];
-
-        let badge = '';
-        if (pend?.action === 'remove') badge = '🗑️ DELEÇÃO PENDENTE';
-        if (pend?.action === 'replace') badge = '🆕 SUBSTITUIÇÃO PENDENTE';
-
-        const card = criarCardDocumentoEditavel(doc, {
-          badge,
-          pendFileName: (pend?.action === 'replace' && pend?.file) ? pend.file.name : '',
-          anoOverride: (pend?.action === 'replace' && pend?.ano) ? pend.ano : '',
-          onEdit: () => {
-            editDocContabil = { tipo:'BALANCO_PATRIMONIAL', doc };
-            abrirModalDocContabil();
-          },
-            onRemove: async () => {
-              const id = String(doc.id_documento);
-                    
-              if (pend?.action === 'remove') {
-                delete docPendentes.contabeis.BALANCO_PATRIMONIAL[id];
-                renderBalancos();
-                return;
-              }
-          
-              const nomeAtual =
-                doc?.nome ||
-                fileNameFromUrl(doc?.url || '') ||
-                'Balanço Patrimonial';
-          
-              const ok = await confirmModal({
-                title: 'Remover documento?',
-                html: `
-                  <div>A deleção deste documento é permanente!</div>
-                  <div style="margin-top:8px; padding:10px; background:#fafafa; border:1px solid #f0f0f0; border-radius:8px">
-                    <div><b>Balanço:</b> ${escapeHtml(nomeAtual)}</div>
-                    ${doc?.ano_referencia ? `<div class="small muted" style="margin-top:4px"><b>Ano:</b> ${escapeHtml(doc.ano_referencia)}</div>` : ``}
-                  </div>
-                  <div class="small muted" style="margin-top:10px">
-                    A deleção será aplicada quando você clicar em <b>SALVAR ALTERAÇÕES</b>.
-                  </div>
-                `
-              });
-          
-              if (!ok) return;
-          
-              docPendentes.contabeis.BALANCO_PATRIMONIAL[id] = { action: 'remove' };
-              renderBalancos();
-            }
-        });
-
-        list.appendChild(card);
-      });
-
-      // novos selecionados (já funciona)
-      balancos.forEach((b, i) => {
-        const c = document.createElement('div');
-        c.className = 'envolvido-card';
-
-        const info = document.createElement('div');
-        info.innerHTML = `
-          <div class="small muted">🆕 NOVO</div>
-          <div style="font-weight:600">Ano: ${escapeHtml(b.ano)}</div>
-          <div class="small">Arquivo: ${escapeHtml(b.file?.name || '')}</div>
-        `;
-
-        const remove = document.createElement('button');
-        remove.className = 'btn';
-        remove.textContent = '✕';
-        remove.style.padding = '6px 8px';
-        remove.style.marginLeft = '8px';
-        remove.addEventListener('click', () => {
-          balancos.splice(i, 1);
-          renderBalancos();
-        });
-
-        c.appendChild(info);
-        c.appendChild(remove);
-        list.appendChild(c);
-      });
-    }
-
-    // ===== PREVIEW NO MODAL CONTÁBIL (reusando o mesmo card dos docs fixos) =====
-    let docContabilModalBlobUrl = null;
-
-    function limparPreviewDocContabilModal() {
-      if (docContabilModalBlobUrl) {
-        URL.revokeObjectURL(docContabilModalBlobUrl);
-        docContabilModalBlobUrl = null;
-      }
-    }
-
-    function renderPreviewDocContabilModal() {
-      const slot = qs('#docContabilPreviewSlot');
-      if (!slot) return;
-
-      slot.innerHTML = '';
-      if (!editDocContabil?.doc?.id_documento) return;
-
-      const docAtual = editDocContabil.doc;
-      const tipo = editDocContabil.tipo; // 'BALANCO_PATRIMONIAL' | 'DRE'
-      const id = String(docAtual.id_documento);
-
-      // 👉 primeiro: pendência já registrada (persiste mesmo ao reabrir modal)
-      const pend = docPendentes?.contabeis?.[tipo]?.[id] || null;
-
-      // 👉 segundo: arquivo recém-selecionado no input (sessão atual do modal)
-      const fileAgora = docContabilArquivo?.files?.[0] || null;
-
-      const nomeSelecionado =
-        (pend?.action === 'replace' && pend?.file) ? pend.file.name :
-        (fileAgora ? fileAgora.name : '');
-
-      const badge = nomeSelecionado ? '🆕 SUBSTITUIÇÃO PENDENTE' : '';
-
-      const card = criarCardDocumentoFixoSemEdicao(docAtual, {
-        badge,
-        pendFileName: nomeSelecionado,
-
-        // ↩ desfaz (tira pendência e limpa input)
-        onUndo: nomeSelecionado ? () => {
-          if (pend?.action === 'replace') {
-            delete docPendentes.contabeis[tipo][id];
-          }
-          docContabilArquivo.value = '';
-          renderPreviewDocContabilModal();
-        } : null
-      });
-
-      slot.appendChild(card);
-    }
-
-    let docContabilModalInit = false;
-
-    function getPendenciaContabilAtual() {
-      if (!editDocContabil?.doc?.id_documento) return null;
-      const id = String(editDocContabil.doc.id_documento);
-      const tipo = editDocContabil.tipo; // 'BALANCO_PATRIMONIAL' | 'DRE'
-      const pend = docPendentes?.contabeis?.[tipo]?.[id] || null;
-      return (pend && pend.action === 'replace') ? { id, tipo, ...pend } : null;
-    }
-
-    function initModalContabilUmaVez() {
-      if (docContabilModalInit) return;
-      docContabilModalInit = true;
-
-      // instala UMA vez só (senão vai acumulando listeners)
-      instalarConfirmacaoSubstituicaoDocContabil(docContabilArquivo);
-
-      // sempre que mudar ano, atualiza o card
-      docContabilAno?.addEventListener('input', renderPreviewDocContabilModal);
-
-      // se selecionar arquivo (e confirmar), o preview também atualiza
-      docContabilArquivo?.addEventListener('change', () => {
-        // (o confirm já roda no listener instalado, aqui só reforça render)
-        renderPreviewDocContabilModal();
-      });
-    }
-
-    function instalarConfirmacaoSubstituicaoDocContabil(inputEl) {
-      if (!inputEl) return;
-
-      inputEl.addEventListener('change', async () => {
-        const file = inputEl.files?.[0] || null;
-        if (!file) return;
-
-        if (!editDocContabil?.doc?.id_documento) return;
-
-        const nomeAtual =
-          editDocContabil.doc?.nome ||
-          fileNameFromUrl(editDocContabil.doc?.url || '') ||
-          'Documento';
-
-        const ok = await confirmModal({
-          title: 'Substituir documento?',
-          html: `
-            <div>Você está prestes a substituir:</div>
-            <div style="margin-top:8px; padding:10px; background:#fafafa; border:1px solid #f0f0f0; border-radius:8px">
-              <div><b>Atual:</b> ${escapeHtml(nomeAtual)}</div>
-              <div style="margin-top:4px"><b>Novo:</b> ${escapeHtml(file.name)}</div>
-            </div>
-            <div class="small muted" style="margin-top:10px">
-              A troca será aplicada quando você clicar em <b>SALVAR</b> e depois em <b>SALVAR ALTERAÇÕES</b>.
-            </div>
-          `
-        });
-
-        if (!ok) {
-          inputEl.value = '';           // desfaz seleção
-          renderPreviewDocContabilModal();
-          return;
-        }
-
-        // confirmou: só atualiza o card (com “✔️ SELECIONADO”)
-        renderPreviewDocContabilModal();
-      });
-    }
-
-    function addBalanco() {
-        const ano = qs('#balancoAno').value.trim();
-        const file = qs('#balancoArquivo').files?.[0] || null;
-
-        if (!ano || !file) {
-            alert('Informe o ano e selecione o arquivo do Balanço Patrimonial.');
-            return;
-        }
-
-        balancos.push({ ano, file });
-        renderBalancos();
-        modalBalancoBackdrop.style.display = 'none';
-    }
-
-    addBalancoBtn.addEventListener('click', addBalanco);
-
-    // ===== DRE =====
-    const modalDreBackdrop = qs('#modalDreBackdrop');
-    const openDreModal     = qs('#openDreModal');
-    const closeDreModal    = qs('#closeDreModal');
-    const addDreBtn        = qs('#addDreBtn');
-
-    openDreModal.addEventListener('click', () => modalDreBackdrop.style.display = 'flex');
-    closeDreModal.addEventListener('click', () => modalDreBackdrop.style.display = 'none');
-    modalDreBackdrop.addEventListener('click', (e) => {
-        if (e.target === modalDreBackdrop) modalDreBackdrop.style.display = 'none';
-    });
-
-    function renderDres() {
-      const list = qs('#dresList');
-      if (!list) return;
-
-      list.innerHTML = '';
-
-      const existentes = documentosExistentes?.CONTABIL?.DRE || [];
-      existentes.forEach((doc) => {
-        const pend = docPendentes.contabeis.DRE[String(doc.id_documento)];
-
-        let badge = '';
-        if (pend?.action === 'remove') badge = '🗑️ DELEÇÃO PENDENTE';
-        if (pend?.action === 'replace') badge = '🆕 SUBSTITUIÇÃO PENDENTE';
-
-        const card = criarCardDocumentoEditavel(doc, {
-          badge,
-          pendFileName: (pend?.action === 'replace' && pend?.file) ? pend.file.name : '',
-          anoOverride: (pend?.action === 'replace' && pend?.ano) ? pend.ano : '',
-          onEdit: () => {
-            editDocContabil = { tipo:'DRE', doc };
-            abrirModalDocContabil();
-          },
-            onRemove: async () => {
-              const id = String(doc.id_documento);
-            
-              if (pend?.action === 'remove') {
-                delete docPendentes.contabeis.DRE[id];
-                renderDres();
-                return;
-              }
-          
-              const nomeAtual =
-                doc?.nome ||
-                fileNameFromUrl(doc?.url || '') ||
-                'DRE';
-          
-              const ok = await confirmModal({
-                title: 'Remover documento?',
-                html: `
-                  <div>A deleção deste documento é permanente!</div>
-                  <div style="margin-top:8px; padding:10px; background:#fafafa; border:1px solid #f0f0f0; border-radius:8px">
-                    <div><b>DRE:</b> ${escapeHtml(nomeAtual)}</div>
-                    ${doc?.ano_referencia ? `<div class="small muted" style="margin-top:4px">Ano: ${escapeHtml(doc.ano_referencia)}</div>` : ``}
-                  </div>
-                  <div class="small muted" style="margin-top:10px">
-                    A deleção será aplicada quando você clicar em <b>SALVAR ALTERAÇÕES</b>.
-                  </div>
-                `
-              });
-          
-              if (!ok) return;
-          
-              docPendentes.contabeis.DRE[id] = { action: 'remove' };
-              renderDres();
-            }
-        });
-
-        list.appendChild(card);
-      });
-
-      dres.forEach((d, i) => {
-        const c = document.createElement('div');
-        c.className = 'envolvido-card';
-
-        const info = document.createElement('div');
-        info.innerHTML = `
-          <div class="small muted">🆕 NOVO</div>
-          <div style="font-weight:600">Ano: ${escapeHtml(d.ano)}</div>
-          <div class="small">Arquivo: ${escapeHtml(d.file?.name || '')}</div>
-        `;
-
-        const remove = document.createElement('button');
-        remove.className = 'btn';
-        remove.textContent = '✕';
-        remove.style.padding = '6px 8px';
-        remove.style.marginLeft = '8px';
-        remove.addEventListener('click', () => {
-          dres.splice(i, 1);
-          renderDres();
-        });
-
-        c.appendChild(info);
-        c.appendChild(remove);
-        list.appendChild(c);
-      });
-    }
-
-    function addDre() {
-        const ano = qs('#dreAno').value.trim();
-        const file = qs('#dreArquivo').files?.[0] || null;
-
-        if (!ano || !file) {
-            alert('Informe o ano e selecione o arquivo da DRE.');
-            return;
-        }
-
-        dres.push({ ano, file });
-        renderDres();
-        modalDreBackdrop.style.display = 'none';
-    }
-
-    const modalDocContabilBackdrop = qs('#modalDocContabilBackdrop');
-    const closeDocContabilModal = qs('#closeDocContabilModal');
-    const saveDocContabilBtn = qs('#saveDocContabilBtn');
-    const docContabilTitle = qs('#docContabilTitle');
-    const docContabilAno = qs('#docContabilAno');
-    const docContabilArquivo = qs('#docContabilArquivo');
-
-    function abrirModalDocContabil() {
-      if (!editDocContabil) return;
-
-      docContabilArquivo.value = '';
-      docContabilAno.value = editDocContabil.doc?.ano_referencia || '';
-
-      docContabilTitle.textContent = editDocContabil.tipo === 'DRE'
-        ? 'Editar DRE'
-        : 'Editar Balanço Patrimonial';
-
-      initModalContabilUmaVez();
-
-      modalDocContabilBackdrop.style.display = 'flex';
-      renderPreviewDocContabilModal();
-    }
-
-    closeDocContabilModal?.addEventListener('click', () => {
-      modalDocContabilBackdrop.style.display = 'none';
-      editDocContabil = null;
-    });
-
-    modalDocContabilBackdrop?.addEventListener('click', (e) => {
-      if (e.target === modalDocContabilBackdrop) {
-        modalDocContabilBackdrop.style.display = 'none';
-        limparPreviewDocContabilModal();
-        editDocContabil = null;
-      }
-    });
-
-    saveDocContabilBtn?.addEventListener('click', () => {
-        if (!editDocContabil) return;
-        
-        const pend = getPendenciaContabilAtual();
-        
-        const ano = docContabilAno.value.trim();
-        const fileDoInput = docContabilArquivo.files?.[0] || null;
-        
-        // Se não selecionou no input agora, reaproveita o arquivo pendente (se existir)
-        const fileFinal = fileDoInput || pend?.file || null;
-        
-        if (!fileFinal) {
-          alert('Selecione um arquivo para substituir.');
-          return;
-        }
-        if (!ano) {
-          alert('Informe o ano de referência.');
-          return;
-        }
-
-        const id = String(editDocContabil.doc.id_documento);
-        const tipo = editDocContabil.tipo; // 'BALANCO_PATRIMONIAL' | 'DRE'
-
-        docPendentes.contabeis[tipo][id] = {
-          action: 'replace',
-          ano: ano || editDocContabil.doc.ano_referencia || '',
-          file: fileFinal
-        };
-
-        modalDocContabilBackdrop.style.display = 'none';
-        editDocContabil = null;
-
-        if (tipo === 'DRE') renderDres();
-        else renderBalancos();
-    });
-
-    // ===== MODAL CONFIRM (bonito, sem popup do navegador) =====
-    const modalConfirmBackdrop = qs('#modalConfirmBackdrop');
-    const confirmTitle = qs('#confirmTitle');
-    const confirmBody  = qs('#confirmBody');
-    const confirmOkBtn = qs('#confirmOkBtn');
-    const confirmCancelBtn = qs('#confirmCancelBtn');
-
-    function confirmModal({ title = 'Confirmar', html = '' } = {}) {
-      return new Promise((resolve) => {
-        confirmTitle.textContent = title;
-        confirmBody.innerHTML = html;
-
-        const close = (val) => {
-          modalConfirmBackdrop.style.display = 'none';
-          cleanup();
-          resolve(val);
-        };
-
-        const onOk = (e) => { e.preventDefault(); close(true); };
-        const onCancel = (e) => { e.preventDefault(); close(false); };
-        const onBackdrop = (e) => { if (e.target === modalConfirmBackdrop) close(false); };
-        const onEsc = (e) => { if (e.key === 'Escape') close(false); };
-
-        function cleanup() {
-          confirmOkBtn.removeEventListener('click', onOk);
-          confirmCancelBtn.removeEventListener('click', onCancel);
-          modalConfirmBackdrop.removeEventListener('click', onBackdrop);
-          document.removeEventListener('keydown', onEsc);
-        }
-
-        confirmOkBtn.addEventListener('click', onOk);
-        confirmCancelBtn.addEventListener('click', onCancel);
-        modalConfirmBackdrop.addEventListener('click', onBackdrop);
-        document.addEventListener('keydown', onEsc);
-
-        modalConfirmBackdrop.style.display = 'flex';
-        // foco no botão confirmar (padrão “ação”)
-        setTimeout(() => confirmOkBtn.focus(), 0);
-      });
-    }
-
-    addDreBtn.addEventListener('click', addDre);
-
-    // ===== UPLOAD DOCUMENTOS (reuso do cadastro) =====
-    async function enviarDocumentoSimples(oscId, fileInput, categoria, subtipo) {
-        if (!fileInput || !fileInput.files || !fileInput.files[0]) return null;
-
-        const fdDoc = new FormData();
-        fdDoc.append('id_osc', oscId);
-        fdDoc.append('categoria', categoria);
-        fdDoc.append('subtipo', subtipo);
-        fdDoc.append('arquivo', fileInput.files[0]);
-
-        try {
-            const resp = await fetch('ajax_upload_documento.php', { method: 'POST', body: fdDoc });
-            const text = await resp.text();
-
-            let data;
-            try { data = JSON.parse(text); }
-            catch {
-                console.error('Upload doc JSON inválido:', categoria, subtipo, text);
-                return `(${categoria}/${subtipo}) resposta inválida do servidor.`;
-            }
-
-            if (data.status !== 'ok') {
-                return `(${categoria}/${subtipo}) ${data.mensagem || 'erro ao enviar documento.'}`;
-            }
-
-            return null;
-        } catch (e) {
-            console.error('Erro upload doc:', categoria, subtipo, e);
-            return `(${categoria}/${subtipo}) erro de comunicação com o servidor.`;
-        }
-    }
-
-    async function enviarDocumentosFixos(oscId) {
-        const erros = [];
-        const docs = [
-            { el: docEstatuto,     cat: 'INSTITUCIONAL', subtipo: 'ESTATUTO' },
-            { el: docAta,          cat: 'INSTITUCIONAL', subtipo: 'ATA' },
-            { el: docCndFederal,   cat: 'CERTIDAO',      subtipo: 'CND_FEDERAL' },
-            { el: docCndEstadual,  cat: 'CERTIDAO',      subtipo: 'CND_ESTADUAL' },
-            { el: docCndMunicipal, cat: 'CERTIDAO',      subtipo: 'CND_MUNICIPAL' },
-            { el: docFgts,         cat: 'CERTIDAO',      subtipo: 'FGTS' },
-            { el: docTrabalhista,  cat: 'CERTIDAO',      subtipo: 'TRABALHISTA' },
-            { el: docCartCnpj,     cat: 'CERTIDAO',      subtipo: 'CARTAO_CNPJ' },
-        ];
-
-        for (const cfg of docs) {
-            const erro = await enviarDocumentoSimples(oscId, cfg.el, cfg.cat, cfg.subtipo);
-            if (erro) erros.push(erro);
-        }
-        return erros;
-    }
-
-    async function enviarBalancos(oscId) {
-        const erros = [];
-        for (const b of balancos) {
-            if (!b.file) continue;
-
-            const fdDoc = new FormData();
-            fdDoc.append('id_osc', oscId);
-            fdDoc.append('categoria', 'CONTABIL');
-            fdDoc.append('subtipo', 'BALANCO_PATRIMONIAL');
-            fdDoc.append('ano_referencia', b.ano);
-            fdDoc.append('arquivo', b.file);
-
-            try {
-                const resp = await fetch('ajax_upload_documento.php', { method: 'POST', body: fdDoc });
-                const text = await resp.text();
-
-                let data;
-                try { data = JSON.parse(text); }
-                catch {
-                    console.error('Upload balanço JSON inválido:', text);
-                    erros.push(`(Balanço ${b.ano}) resposta inválida do servidor.`);
-                    continue;
-                }
-
-                if (data.status !== 'ok') {
-                    erros.push(`(Balanço ${b.ano}) ${data.mensagem || 'erro ao enviar documento.'}`);
-                }
-            } catch (e) {
-                console.error('Erro upload balanço:', e);
-                erros.push(`(Balanço ${b.ano}) erro de comunicação com o servidor.`);
-            }
-        }
-        return erros;
-    }
-
-    async function enviarDres(oscId) {
-        const erros = [];
-        for (const d of dres) {
-            if (!d.file) continue;
-
-            const fdDoc = new FormData();
-            fdDoc.append('id_osc', oscId);
-            fdDoc.append('categoria', 'CONTABIL');
-            fdDoc.append('subtipo', 'DRE');
-            fdDoc.append('ano_referencia', d.ano);
-            fdDoc.append('arquivo', d.file);
-
-            try {
-                const resp = await fetch('ajax_upload_documento.php', { method: 'POST', body: fdDoc });
-                const text = await resp.text();
-
-                let data;
-                try { data = JSON.parse(text); }
-                catch {
-                    console.error('Upload DRE JSON inválido:', text);
-                    erros.push(`(DRE ${d.ano}) resposta inválida do servidor.`);
-                    continue;
-                }
-
-                if (data.status !== 'ok') {
-                    erros.push(`(DRE ${d.ano}) ${data.mensagem || 'erro ao enviar documento.'}`);
-                }
-            } catch (e) {
-                console.error('Erro upload DRE:', e);
-                erros.push(`(DRE ${d.ano}) erro de comunicação com o servidor.`);
-            }
-        }
-        return erros;
-    }
 
     // ===== CARREGAR OSC (auto) =====
     async function loadOscData() {
@@ -2528,17 +2078,12 @@ if (!$oscIdVinculada) {
       try {
         envolvidos.length = 0;
         atividades.length = 0;
-        balancos.length = 0;
-        dres.length = 0;
+        docsOsc.length = 0;
+        docsOscDeletes.clear();
         renderEnvolvidos();
         renderAtividades();
-        renderBalancos();
-        renderDres();
+        renderDocsOsc();
 
-        for (const k of Object.keys(docPendentes.fixos)) delete docPendentes.fixos[k];
-        docPendentes.contabeis.BALANCO_PATRIMONIAL = {};
-        docPendentes.contabeis.DRE = {};
-    
         existingLogos = { logoSimples: null, logoCompleta: null };
         existingBanners = { banner1: null, banner2: null, banner3: null };
 
@@ -2648,20 +2193,24 @@ if (!$oscIdVinculada) {
           existingBanners.banner2    = osc.template.banner2 || null;
           existingBanners.banner3    = osc.template.banner3 || null;
         }
-        renderTemplateImageCards();
+        // Robustez: se algum detalhe do template quebrar, não deixa a carga de documentos morrer junto.
+        try {
+          renderTemplateImageCards();
+        } catch (e) {
+          console.error('renderTemplateImageCards falhou:', e);
+        }
+        // ===== documentos existentes (mesma lógica do cadastro_osc.php) =====
+        docsOsc.length = 0;
+        docsOscDeletes.clear();
+        const docsSrc = (osc.documentos ?? osc.documentos_osc ?? osc.documentosOsc ?? osc.docs ?? osc.documentosExistentes ?? osc.docs_osc ?? null);
+        carregarDocsOscExistentes(docsSrc);
+        renderDocsOsc();
 
-        // ===== documentos existentes =====
-        documentosExistentes = osc.documentos || {
-          INSTITUCIONAL: {},
-          CERTIDAO: {},
-          CONTABIL: { BALANCO_PATRIMONIAL: [], DRE: [] }
-        };
-
-        renderDocumentosFixos();
-        renderBalancos();
-        renderDres();
-
-        await updatePreviews();
+        try {
+          await updatePreviews();
+        } catch (e) {
+          console.error('updatePreviews falhou:', e);
+        }
 
       } catch (err) {
         console.error('Erro ao buscar dados da OSC:', err);
@@ -2768,26 +2317,22 @@ if (!$oscIdVinculada) {
                 alert("Erro ao atualizar OSC: " + (result.error || "desconhecido"));
                 return;
             }
-
-            // após atualizar dados, envia docs (se houver)
+            // após atualizar dados, aplica alterações de documentos (mesma lógica do cadastro)
             let errosDocs = [];
             try {
-                const errosBalancos = await enviarBalancos(oscId);
-                const errosDres     = await enviarDres(oscId);
-                errosDocs = [...errosBalancos, ...errosDres];
+                errosDocs = await aplicarAlteracoesDocsOsc(oscId);
             } catch (e) {
-                console.error('Falha geral ao enviar documentos:', e);
-                errosDocs.push('Falha inesperada ao enviar alguns documentos.');
+                console.error('Falha geral ao aplicar alterações de documentos:', e);
+                errosDocs.push('Falha inesperada ao aplicar alterações de documentos.');
             }
 
             if (errosDocs.length === 0) {
-                alert("OSC atualizada com sucesso! (e documentos enviados, se você selecionou)");
+                alert('OSC atualizada com sucesso!');
             } else {
-                alert(
-                    "OSC atualizada, mas alguns documentos não foram enviados:\n\n" +
-                    errosDocs.map(e => "- " + e).join("\n")
-                );
+                alert('OSC atualizada, mas alguns documentos falharam:\n\n' + errosDocs.map(e => '- ' + e).join('\n'));
             }
+
+
 
             // ===== APLICA REMOÇÕES PENDENTES DE IMAGENS DO TEMPLATE =====
             const camposPendentes = Object.entries(templateRemover)
@@ -2818,99 +2363,7 @@ if (!$oscIdVinculada) {
             Object.keys(templateRemover).forEach(k => templateRemover[k] = false);
             Object.keys(templateBackupUrl).forEach(k => templateBackupUrl[k] = null);
 
-            // ===== APLICA REMOÇÕES/SUBSTITUIÇÕES PENDENTES DE DOCUMENTOS =====
-            async function aplicarPendenciasDocumentos() {
-              const erros = [];
-            
-              // 1) FIXOS: remove ou substitui
-              for (const [subtipo, pend] of Object.entries(docPendentes.fixos)) {
-                try {
-                  // encontra doc atual (pra saber id)
-                  const mapaCat = ['INSTITUCIONAL','CERTIDAO'];
-                  let docAtual = null;
-                  for (const cat of mapaCat) {
-                    const d = documentosExistentes?.[cat]?.[subtipo];
-                    if (d?.id_documento) { docAtual = d; break; }
-                  }
-              
-                  if (pend.action === 'remove') {
-                    if (docAtual?.id_documento) await excluirDocumentoServidor(docAtual.id_documento);
-                  }
-              
-                  if (pend.action === 'replace') {
-                    // Se tinha um antigo, deleta ele e manda o novo
-                    if (docAtual?.id_documento) await excluirDocumentoServidor(docAtual.id_documento);
-                
-                    // Decide categoria pelo subtipo (igual seu render)
-                    const isInstitucional = (subtipo === 'ESTATUTO' || subtipo === 'ATA');
-                    const categoria = isInstitucional ? 'INSTITUCIONAL' : 'CERTIDAO';
-                
-                    // envia arquivo novo
-                    const fdDoc = new FormData();
-                    fdDoc.append('id_osc', oscId);
-                    fdDoc.append('categoria', categoria);
-                    fdDoc.append('subtipo', subtipo);
-                    fdDoc.append('arquivo', pend.file);
-                
-                    const resp = await fetch('ajax_upload_documento.php', { method:'POST', body: fdDoc });
-                    const text = await resp.text();
-                    let data;
-                    try { data = JSON.parse(text); } catch { throw new Error('Resposta inválida ao substituir documento fixo.'); }
-                    if (data.status !== 'ok') throw new Error(data.mensagem || 'Erro ao substituir documento.');
-                  }
-                } catch (e) {
-                  erros.push(`(Fixo ${subtipo}) ${e.message || 'falha ao aplicar pendência.'}`);
-                }
-              }
-          
-              // 2) CONTÁBEIS EXISTENTES: remove ou replace
-              for (const tipo of ['BALANCO_PATRIMONIAL','DRE']) {
-                for (const [id, pend] of Object.entries(docPendentes.contabeis[tipo])) {
-                  try {
-                    if (pend.action === 'remove') {
-                      await excluirDocumentoServidor(Number(id));
-                    }
-                
-                    if (pend.action === 'replace') {
-                      // remove o antigo e cria um novo com novo ano/arquivo
-                      await excluirDocumentoServidor(Number(id));
-                    
-                      const fdDoc = new FormData();
-                      fdDoc.append('id_osc', oscId);
-                      fdDoc.append('categoria', 'CONTABIL');
-                      fdDoc.append('subtipo', tipo);
-                      if (pend.ano) fdDoc.append('ano_referencia', pend.ano);
-                      if (pend.file) fdDoc.append('arquivo', pend.file);
-                    
-                      // se o usuário só mudou o ano e não anexou arquivo, você precisa permitir isso no PHP.
-                      // se seu PHP exige arquivo sempre, então aqui força arquivo obrigatório.
-                      if (!pend.file) throw new Error('Selecione um arquivo para substituir (seu servidor exige arquivo).');
-                    
-                      const resp = await fetch('ajax_upload_documento.php', { method:'POST', body: fdDoc });
-                      const text = await resp.text();
-                      let data;
-                      try { data = JSON.parse(text); } catch { throw new Error('Resposta inválida ao substituir contábil.'); }
-                      if (data.status !== 'ok') throw new Error(data.mensagem || 'Erro ao substituir documento contábil.');
-                    }
-                  } catch (e) {
-                    erros.push(`(Contábil ${tipo} #${id}) ${e.message || 'falha ao aplicar pendência.'}`);
-                  }
-                }
-              }
-          
-              return erros;
-            }
 
-            // chama
-            const errosPendencias = await aplicarPendenciasDocumentos();
-            if (errosPendencias.length) {
-              alert("OSC salva, mas algumas pendências de documentos falharam:\n\n" + errosPendencias.map(x => "- " + x).join("\n"));
-            }
-            
-            // limpa pendências
-            for (const k of Object.keys(docPendentes.fixos)) delete docPendentes.fixos[k];
-            docPendentes.contabeis.BALANCO_PATRIMONIAL = {};
-            docPendentes.contabeis.DRE = {};
 
             window.location.reload();
         } catch (error) {
@@ -3006,8 +2459,9 @@ if (!$oscIdVinculada) {
     // chama uma vez no carregamento
     initCardCollapse();
 
-    updatePreviews();
-    renderTemplateImageCards();
+    // Boot seguro: se algo falhar aqui, não derruba o carregamento da página.
+    try { updatePreviews(); } catch (e) { console.error('updatePreviews (boot) falhou:', e); }
+    try { renderTemplateImageCards(); } catch (e) { console.error('renderTemplateImageCards (boot) falhou:', e); }
     if (oscId) loadOscData();
 </script>
 </body>
