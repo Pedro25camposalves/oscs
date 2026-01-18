@@ -177,15 +177,12 @@ if (!$oscIdVinculada) {
           border-bottom:1px solid #eee;
         }
         .modal-header h3{ margin:0 }
-        .modal-body{ padding-top:12px }
 
         .modal-footer{
           display:flex;
           justify-content:flex-end;
           gap:10px;
           padding-top:14px;
-          border-top:1px solid #eee;
-          margin-top:14px;
         }
 
         /* botao X do topo (icone) */
@@ -782,81 +779,89 @@ if (!$oscIdVinculada) {
     </div>
 </div>
 
-<!-- MODAL DOCUMENTO DA OSC-->
+<!-- MODAL DOCUMENTOS OSC (mesma lógica do cadastro_osc.php) -->
 <div id="modalDocOscBackdrop" class="modal-backdrop">
-    <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar documento">
-        <div class="modal-header">
-            <h3>Adicionar documento</h3>
-        </div>
-        <div class="modal-body">
-            <div class="grid-2">
-                <div>
-                    <label class="label">Categoria</label>
-                    <select id="docCategoria" class="input"></select>
-                </div>
-                <div id="docTipoGroup" style="display:none">
-                  <label class="label">Tipo</label>
-                  <select id="docTipo" class="input"></select>
-                </div>
-            </div>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Documento da OSC">
+    <h3>Adicionar Documento</h3>
+    <div class="divider"></div>
 
-            <div class="grid-2" style="margin-top:10px">
-                <div id="docSubtipoWrapper" style="display:none">
-                    <label class="label">Subtipo</label>
-                    <select id="docSubtipo" class="input"></select>
-                </div>
+    <div class="grid" style="margin-top:10px;">
+      <div>
+        <label for="docCategoria">Categoria (*)</label>
+        <select id="docCategoria">
+          <option value="">Selecione...</option>
+          <option value="INSTITUCIONAL">Institucionais</option>
+          <option value="CERTIDAO">Certidões</option>
+          <option value="CONTABIL">Contábeis</option>
+        </select>
+      </div>
 
-                <div id="docAnoWrapper" style="display:none">
-                    <label class="label">Ano de referência</label>
-                    <input id="docAno" class="input" placeholder="Ex.: 2024" />
-                </div>
-            </div>
+      <div id="docTipoGroup" style="display:none;">
+        <label for="docTipo">Tipo (*)</label>
+        <select id="docTipo">
+          <option value="">Selecione...</option>
+        </select>
+      </div>
 
-            <div id="docDescricaoWrapper" style="display:none; margin-top:10px">
-                <label class="label">Descrição</label>
-                <input id="docDescricao" class="input" placeholder="Descreva o documento" />
-            </div>
+      <div id="docSubtipoGroup" style="display:none;">
+        <label for="docSubtipo">Subtipo (*)</label>
+        <select id="docSubtipo">
+          <option value="">Selecione...</option>
+          <option value="FEDERAL">Federal</option>
+          <option value="ESTADUAL">Estadual</option>
+          <option value="MUNICIPAL">Municipal</option>
+        </select>
+      </div>
 
-            <div style="margin-top:10px">
-                <label class="label">Arquivo</label>
-                <input id="docArquivo" type="file" class="input" />
-            </div>
-        </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-ghost" id="cancelDocOscBtn">Cancelar</button>
-        <button type="button" class="btn btn-primary" id="addDocOscBtn">Adicionar</button>
+      <div id="docDescricaoGroup" style="display:none;">
+        <label for="docDescricao">Descrição (*)</label>
+        <input type="text" id="docDescricao" placeholder="Ex.: Relatório anual, Declaração X..." />
+      </div>
+
+      <div id="docAnoRefGroup" style="display:none;">
+        <label for="docAnoRef">Ano de Referência (*)</label>
+        <input type="text" id="docAnoRef" placeholder="Ex.: 2024" />
+      </div>
+
+      <div>
+        <label for="docArquivo">Arquivo (*)</label>
+        <input type="file" id="docArquivo"
+               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt" />
       </div>
     </div>
+
+    <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+      <button class="btn btn-ghost" id="closeDocOscModal" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="addDocOscBtn" type="button">Adicionar</button>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL EDITAR DOCUMENTO DA OSC -->
 <div id="modalEditDocOscBackdrop" class="modal-backdrop">
     <div class="modal" role="dialog" aria-modal="true" aria-label="Editar documento">
         <div class="modal-header">
-            <h3>Editar documento</h3>
-            <button type="button" class="btn" id="closeEditDocOscModal">✕</button>
+            <h3>Editar documento <div class="small muted" id="editDocTitulo"></div></h3>
         </div>
         <div class="modal-body">
-            <div class="small muted" id="editDocTitulo" style="margin-bottom:10px"></div>
-
             <div id="editDocDescricaoWrapper" style="display:none; margin-top:10px">
                 <label class="label">Descrição</label>
-                <input id="editDocDescricao" class="input" placeholder="Descreva o documento" />
+                <input id="editDocDescricao" class="input" type="text" placeholder="Descreva o documento" />
             </div>
 
             <div id="editDocAnoWrapper" style="display:none; margin-top:10px">
                 <label class="label">Ano de referência</label>
-                <input id="editDocAno" class="input" placeholder="Ex.: 2024" />
+                <input id="editDocAno" class="input" type="text" placeholder="Ex.: 2024" />
             </div>
 
             <div style="margin-top:10px">
-                <label class="label">Arquivo (substituição)</label>
+                <label class="label">Substituir</label>
                 <input id="editDocArquivo" type="file" class="input" />
-                <div class="small muted" id="editDocArquivoAtual" style="margin-top:6px"></div>
             </div>
         </div>
 
-        <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px">
+        <div class="small muted" id="editDocArquivoAtual" style="margin-top:10px"></div>
+        <div class="modal-footer">
             <button type="button" class="btn btn-ghost" id="cancelEditDocOscBtn">Cancelar</button>
             <button type="button" class="btn btn-primary" id="saveEditDocOscBtn">Salvar</button>
         </div>
@@ -939,22 +944,21 @@ if (!$oscIdVinculada) {
         const openDocOscModal = qs('#openDocOscModal');
         const modalDocOscBackdrop = qs('#modalDocOscBackdrop');
         const addDocOscBtn = qs('#addDocOscBtn');
-        const cancelDocOscBtn = qs('#cancelDocOscBtn');
+        const cancelDocOscBtn = qs('#closeDocOscModal');
 
         const docCategoria = qs('#docCategoria');
-        const docTipo = qs('#docTipo');
-        const docTipoGroup = qs('#docTipoGroup');
-        const docSubtipoWrapper = qs('#docSubtipoWrapper');
-        const docSubtipo = qs('#docSubtipo');
-        const docDescricaoWrapper = qs('#docDescricaoWrapper');
-        const docDescricao = qs('#docDescricao');
-        const docAnoWrapper = qs('#docAnoWrapper');
-        const docAno = qs('#docAno');
-        const docArquivo = qs('#docArquivo');
+        const docTipoGroup      = qs('#docTipoGroup');
+        const docTipo           = qs('#docTipo');
+        const docSubtipoGroup   = qs('#docSubtipoGroup');
+        const docSubtipo        = qs('#docSubtipo');
+        const docDescricaoGroup = qs('#docDescricaoGroup');
+        const docDescricao      = qs('#docDescricao');
+        const docAnoRefGroup    = qs('#docAnoRefGroup');
+        const docAnoRef         = qs('#docAnoRef');
+        const docArquivo        = qs('#docArquivo');
 
         // modal edição
         const modalEditDocOscBackdrop = qs('#modalEditDocOscBackdrop');
-        const closeEditDocOscModal = qs('#closeEditDocOscModal');
         const cancelEditDocOscBtn = qs('#cancelEditDocOscBtn');
         const saveEditDocOscBtn = qs('#saveEditDocOscBtn');
 
@@ -981,22 +985,22 @@ if (!$oscIdVinculada) {
         };
 
         const TIPOS_POR_CATEGORIA_OSC = {
-            INSTITUCIONAL: [
-                { key: 'ESTATUTO', label: 'Estatuto' },
-                { key: 'ATA', label: 'Ata' },
-                { key: 'OUTRO_INSTITUCIONAL', label: 'Outro' },
-            ],
-            CERTIDAO: [
-                { key: 'CND', label: 'Certidão Negativa (CND)' },
-                { key: 'FGTS', label: 'Certificado de Regularidade do FGTS' },
-                { key: 'TRABALHISTA', label: 'Trabalhista' },
-                { key: 'CARTAO_CNPJ', label: 'Cartão CNPJ' },
-            ],
-            CONTABIL: [
-                { key: 'BALANCO_PATRIMONIAL', label: 'Balanço Patrimonial' },
-                { key: 'DRE', label: 'Demonstração de Resultado (DRE)' },
-                { key: 'OUTRO_CONTABIL', label: 'Outro' },
-            ],
+          INSTITUCIONAL: [
+            { value: 'ESTATUTO',            label: 'Estatuto' },
+            { value: 'ATA',                 label: 'Ata' },
+            { value: 'OUTRO_INSTITUCIONAL', label: 'Outro' },
+          ],
+          CERTIDAO: [
+            { value: 'CND',         label: 'Certidão Negativa de Débito (CND)' },
+            { value: 'FGTS',        label: 'FGTS' },
+            { value: 'TRABALHISTA', label: 'Trabalhista' },
+            { value: 'CARTAO_CNPJ', label: 'Cartão CNPJ' },
+          ],
+          CONTABIL: [
+            { value: 'BALANCO_PATRIMONIAL', label: 'Balanço Patrimonial' },
+            { value: 'DRE',                 label: 'Demonstração de Resultados (DRE)' },
+            { value: 'OUTRO_CONTABIL',      label: 'Outro' },
+          ],
         };
 
         const SUBTIPOS_POR_TIPO_CND = [
@@ -1012,85 +1016,76 @@ if (!$oscIdVinculada) {
         }
 
         function getTipoLabel(categoria, tipo) {
-            const arr = TIPOS_POR_CATEGORIA_OSC[categoria] || [];
-            return (arr.find(x => x.key === tipo)?.label) || tipo;
+          const arr = TIPOS_POR_CATEGORIA_OSC[categoria] || [];
+          return (arr.find(x => x.value === tipo)?.label) || tipo;
         }
-
-        function fillCategoriaOptions() {
-            if (!docCategoria) return;
-            docCategoria.innerHTML = '';
-            ORDEM_CATEGORIAS_OSC.forEach(({ key }) => {
-                const opt = document.createElement('option');
-                opt.value = key;
-                opt.textContent = LABEL_CATEGORIA_OSC[key] || key;
-                docCategoria.appendChild(opt);
-            });
-        }
-
-        function fillTipoOptions() {
-            if (!docTipo || !docCategoria) return;
-            const cat = docCategoria.value;
-            const tipos = TIPOS_POR_CATEGORIA_OSC[cat] || [];
-            docTipo.innerHTML = '';
-            tipos.forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t.key;
-                opt.textContent = t.label;
-                docTipo.appendChild(opt);
-            });
-        }
-
-        function fillSubtipoCnd() {
-            if (!docSubtipo) return;
-            docSubtipo.innerHTML = '';
-            SUBTIPOS_POR_TIPO_CND.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.key;
-                opt.textContent = s.label;
-                docSubtipo.appendChild(opt);
-            });
-        }
-
-        function updateWrappersForTipo() {
-            if (!docCategoria || !docTipo) return;
-            const cat = docCategoria.value;
-            const tipo = docTipo.value;
-
-            // Subtipo
-            const showSubtipo = (cat === 'CERTIDAO' && tipo === 'CND');
-            if (docSubtipoWrapper) docSubtipoWrapper.style.display = showSubtipo ? 'block' : 'none';
-            if (showSubtipo) fillSubtipoCnd();
-
-            // Descrição (OUTROS)
-            const showDescricao = (tipo === 'OUTRO' || tipo === 'OUTRO_INSTITUCIONAL' || tipo === 'OUTRO_CONTABIL');
-            if (docDescricaoWrapper) docDescricaoWrapper.style.display = showDescricao ? 'block' : 'none';
-
-            // Ano (contábeis)
-            const showAno = (cat === 'CONTABIL' && (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE'));
-            if (docAnoWrapper) docAnoWrapper.style.display = showAno ? 'block' : 'none';
-        }
-
         function resetDocOscCampos() {
-            fillCategoriaOptions();
-            fillTipoOptions();
-            updateWrappersForTipo();
-            if (docDescricao) docDescricao.value = '';
-            if (docAno) docAno.value = '';
-            if (docArquivo) docArquivo.value = '';
+          docCategoria.value = '';
+                    
+          docTipo.innerHTML = '<option value="">Selecione...</option>';
+          if (docTipoGroup) docTipoGroup.style.display = 'none';
+                    
+          docSubtipo.value = '';
+          if (docSubtipoGroup) docSubtipoGroup.style.display = 'none';
+                    
+          docDescricao.value = '';
+          if (docDescricaoGroup) docDescricaoGroup.style.display = 'none';
+                    
+          docAnoRef.value = '';
+          if (docAnoRefGroup) docAnoRefGroup.style.display = 'none';
+                    
+          docArquivo.value = '';
         }
-
-        if (docCategoria) {
-            docCategoria.addEventListener('change', () => {
-                fillTipoOptions();
-                updateWrappersForTipo();
-            });
-        }
-
-        if (docTipo) {
-            docTipo.addEventListener('change', () => {
-                updateWrappersForTipo();
-            });
-        }
+                    
+        docCategoria.addEventListener('change', () => {
+          const cat = docCategoria.value;
+                    
+          docTipo.innerHTML = '<option value="">Selecione...</option>';
+          if (docTipoGroup) docTipoGroup.style.display = 'none';
+                    
+          docSubtipo.value = '';
+          if (docSubtipoGroup) docSubtipoGroup.style.display = 'none';
+                    
+          docDescricao.value = '';
+          if (docDescricaoGroup) docDescricaoGroup.style.display = 'none';
+                    
+          docAnoRef.value = '';
+          if (docAnoRefGroup) docAnoRefGroup.style.display = 'none';
+                    
+          if (!cat || !TIPOS_POR_CATEGORIA_OSC[cat]) return;
+                    
+          TIPOS_POR_CATEGORIA_OSC[cat].forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.value;
+            opt.textContent = t.label;
+            docTipo.appendChild(opt);
+          });
+                    
+          if (docTipoGroup) docTipoGroup.style.display = 'block';
+        });
+                    
+        docTipo.addEventListener('change', () => {
+          const tipo = docTipo.value;
+                    
+          docSubtipo.value = '';
+          if (docSubtipoGroup) docSubtipoGroup.style.display = 'none';
+                    
+          docDescricao.value = '';
+          if (docDescricaoGroup) docDescricaoGroup.style.display = 'none';
+                    
+          docAnoRef.value = '';
+          if (docAnoRefGroup) docAnoRefGroup.style.display = 'none';
+                    
+          if (!tipo) return;
+                    
+          if (tipo === 'CND') {
+            if (docSubtipoGroup) docSubtipoGroup.style.display = 'block';
+          } else if (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE') {
+            if (docAnoRefGroup) docAnoRefGroup.style.display = 'block';
+          } else if (tipo === 'OUTRO' || tipo === 'OUTRO_INSTITUCIONAL' || tipo === 'OUTRO_CONTABIL') {
+            if (docDescricaoGroup) docDescricaoGroup.style.display = 'block';
+          }
+        });
 
         function isTipoOutroDoc(tipo) {
             return (tipo === 'OUTRO' || tipo === 'OUTRO_INSTITUCIONAL' || tipo === 'OUTRO_CONTABIL');
@@ -1129,7 +1124,7 @@ if (!$oscIdVinculada) {
             if (editDocAno) editDocAno.value = showAno ? (d?.ano_referencia || '') : '';
 
             const nomeAtual = (d?.file && d.file.name) || d?.nome || (d?.url ? fileNameFromUrl(d.url) : '—');
-            if (editDocArquivoAtual) editDocArquivoAtual.textContent = `Arquivo atual: ${nomeAtual || '—'}`;
+            if (editDocArquivoAtual) editDocArquivoAtual.textContent = `Atual: ${nomeAtual || '—'}`;
 
             modalEditDocOscBackdrop.style.display = 'flex';
         }
@@ -1139,9 +1134,10 @@ if (!$oscIdVinculada) {
             docEditTarget = null;
         }
 
-        if (closeEditDocOscModal) {
-            closeEditDocOscModal.addEventListener('click', fecharModalEditarDocumento);
+        function fecharModalDocOsc() {
+          if (modalDocOscBackdrop) modalDocOscBackdrop.style.display = 'none';
         }
+
         if (cancelEditDocOscBtn) {
             cancelEditDocOscBtn.addEventListener('click', fecharModalEditarDocumento);
         }
@@ -1261,24 +1257,30 @@ if (!$oscIdVinculada) {
                         }
 
                         const edit = document.createElement('button');
+                        edit.type = 'button';                // <- CRÍTICO
                         edit.className = 'btn';
                         edit.textContent = '✎';
                         edit.style.padding = '6px 8px';
-                        edit.addEventListener('click', () => {
-                            abrirModalEditarDocumento(d);
+                        edit.addEventListener('click', (e) => {
+                          e.preventDefault();                // <- CRÍTICO
+                          e.stopPropagation();               // <- recomendado
+                          abrirModalEditarDocumento(d);
                         });
                                     
                         const remove = document.createElement('button');
+                        remove.type = 'button';              // <- CRÍTICO
                         remove.className = 'btn';
                         remove.textContent = '✕';
                         remove.style.padding = '6px 8px';
-                        remove.addEventListener('click', () => {
-                            if (d.id_documento) docsOscDeletes.add(String(d.id_documento));
-                            const idxGlobal = docsOsc.indexOf(d);
-                            if (idxGlobal !== -1) {
-                                docsOsc.splice(idxGlobal, 1);
-                                renderDocsOsc();
-                            }
+                        remove.addEventListener('click', (e) => {
+                          e.preventDefault();                // <- CRÍTICO
+                          e.stopPropagation();               // <- recomendado
+                          if (d.id_documento) docsOscDeletes.add(String(d.id_documento));
+                          const idxGlobal = docsOsc.indexOf(d);
+                          if (idxGlobal !== -1) {
+                            docsOsc.splice(idxGlobal, 1);
+                            renderDocsOsc();
+                          }
                         });
                                     
                         const actions = document.createElement('div');
@@ -1306,9 +1308,7 @@ if (!$oscIdVinculada) {
         }
 
         if (cancelDocOscBtn) {
-          cancelDocOscBtn.addEventListener('click', () => {
-            if (modalDocOscBackdrop) modalDocOscBackdrop.style.display = 'none';
-          });
+          cancelDocOscBtn.addEventListener('click', fecharModalDocOsc);
         }
 
         if (modalDocOscBackdrop) {
@@ -1328,13 +1328,22 @@ if (!$oscIdVinculada) {
                 let subtipo = tipo;
                 let subtipo_label = '';
 
-                if (categoria === 'CERTIDAO' && tipo === 'CND') {
-                    subtipo = docSubtipo?.value || 'CND_FEDERAL';
-                    subtipo_label = (SUBTIPOS_POR_TIPO_CND.find(s => s.key === subtipo)?.label) || '';
+                if (tipo === 'CND') {
+                  const sub = docSubtipo.value;
+                  if (!sub) {
+                    alert('Selecione o subtipo (Federal, Estadual ou Municipal).');
+                    return;
+                  }
+                  subtipo = 'CND_' + sub; // CND_FEDERAL / CND_ESTADUAL / CND_MUNICIPAL
+                  subtipo_label = docSubtipo.options[docSubtipo.selectedIndex]?.text || '';
                 }
 
+                const ano_referencia =
+                  (categoria === 'CONTABIL' && (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE'))
+                    ? (docAnoRef.value || '').trim()
+                    : '';
+
                 const descricao = (tipo === 'OUTRO' || tipo === 'OUTRO_INSTITUCIONAL' || tipo === 'OUTRO_CONTABIL') ? (docDescricao?.value || '').trim() : '';
-                const ano_referencia = (categoria === 'CONTABIL' && (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE')) ? (docAno?.value || '').trim() : '';
                 const file = docArquivo?.files?.[0] || null;
 
                 if (!categoria || !tipo) {
@@ -1344,6 +1353,11 @@ if (!$oscIdVinculada) {
 
                 if ((tipo === 'OUTRO' || tipo === 'OUTRO_INSTITUCIONAL' || tipo === 'OUTRO_CONTABIL') && !descricao) {
                     alert('Informe uma descrição.');
+                    return;
+                }
+
+                if ((tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE') && !ano_referencia) {
+                    alert('Informe o ano de referência.');
                     return;
                 }
                 
