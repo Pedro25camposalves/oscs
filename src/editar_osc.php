@@ -150,6 +150,28 @@ if (!$oscIdVinculada) {
         .btn-primary { background: var(--qua); color: white }
         .btn-ghost { background: transparent; border: 1px solid #ddd }
 
+        /* ===== STATUS PILL (igual config_osc.php) ===== */
+        .status-pill{
+          display:inline-flex;
+          align-items:center;
+          padding:6px 10px;
+          border-radius:999px;
+          border:1px solid rgba(0,0,0,.10);
+          font-size:12px;
+          font-weight:700;
+          background:#fff;
+        }
+        .status-pill.on{
+          border-color: rgba(10,170,102,.28);
+          background: rgba(10,170,102,.08);
+          color: #066;
+        }
+        .status-pill.off{
+          border-color: rgba(120,120,120,.25);
+          background: rgba(120,120,120,.08);
+          color: #444;
+        }
+
         /* modal */
         .modal-backdrop {
             position: fixed;
@@ -1188,12 +1210,16 @@ if (!$oscIdVinculada) {
                         ano_referencia: showAno ? novoAno : (docEditTarget.ano_referencia || ''),
                         link: docEditTarget.link || '',
                         file: novoArquivo,
+                        ui_status: 'Editado',
                     });
                 } else {
                     // Ainda não foi pro servidor: só atualiza o item atual
                     if (showDesc) docEditTarget.descricao = novaDescricao;
                     if (showAno) docEditTarget.ano_referencia = novoAno;
                     docEditTarget.file = novoArquivo;
+                    if (docEditTarget.ui_status !== 'Novo') {
+                      docEditTarget.ui_status = 'Editado';
+                    }
                 }
 
                 renderDocsOsc();
@@ -1238,10 +1264,25 @@ if (!$oscIdVinculada) {
                         const nomeArquivo = (d.file && d.file.name) || d.nome || (d.url ? fileNameFromUrl(d.url) : '—');
 
                         const info = document.createElement('div');
+
+                        const statusLinha = d.ui_status
+                          ? `<div class="small muted">${escapeHtml(d.ui_status)}</div>`
+                          : '';
+                                    
+                        const statusTxt = d.ui_status || ''; // (use o mesmo campo que você já está usando)
+                        const statusCls = statusTxt === 'Adicionado' ? 'on' : 'off';
+                        const statusPill = statusTxt
+                          ? `<span class="status-pill ${statusCls}">${escapeHtml(statusTxt)}</span>`
+                          : '';
+                                    
                         info.innerHTML = `
+                          <div style="display:flex; align-items:center; gap:10px;">
                             <div style="font-weight:600">${escapeHtml(linha)}</div>
-                            ${d.ano_referencia ? `<strong><div class="small">Ano: ${escapeHtml(d.ano_referencia)}</div></strong>` : ''}
-                            <div class="small">Arquivo: ${escapeHtml(nomeArquivo || '—')}</div>
+                          </div>
+                                    
+                          ${d.ano_referencia ? `<div class="small">Ano: ${escapeHtml(d.ano_referencia)}</div>` : ''}
+                          ${d.link ? `<div class="small">Link: ${escapeHtml(d.link)}</div>` : ''}
+                          <div class="small">Arquivo: ${escapeHtml(nomeArquivo || '—')}</div>
                         `;
 
                         if (d.url) {
@@ -1266,6 +1307,14 @@ if (!$oscIdVinculada) {
                           e.stopPropagation();               // <- recomendado
                           abrirModalEditarDocumento(d);
                         });
+
+                        // status pill (fica ao lado esquerdo do lápis)
+                        let statusPillEl = null;
+                        if (d.ui_status) {
+                          statusPillEl = document.createElement('span');
+                          statusPillEl.className = 'status-pill ' + (d.ui_status === 'Adicionado' ? 'on' : 'off');
+                          statusPillEl.textContent = d.ui_status;
+                        }
                                     
                         const remove = document.createElement('button');
                         remove.type = 'button';              // <- CRÍTICO
@@ -1286,10 +1335,15 @@ if (!$oscIdVinculada) {
                         const actions = document.createElement('div');
                         actions.style.marginLeft = 'auto';
                         actions.style.display = 'flex';
+                        actions.style.alignItems = 'center';
                         actions.style.gap = '8px';
+
+                        // aqui entra o status ANTES do lápis
+                        if (statusPillEl) actions.appendChild(statusPillEl);
+
                         actions.appendChild(edit);
                         actions.appendChild(remove);
-                                    
+
                         c.appendChild(info);
                         c.appendChild(actions);
                         sec.appendChild(c);
@@ -1383,6 +1437,7 @@ if (!$oscIdVinculada) {
                     descricao,
                     ano_referencia,
                     file,
+                    ui_status: 'Novo',
                 });
 
                 renderDocsOsc();
@@ -1804,7 +1859,7 @@ if (!$oscIdVinculada) {
 
       info.innerHTML = `
         <div style="font-weight:600">${escapeHtml(titulo)}</div>
-        <div class="small">${escapeHtml(nome)} ${link ? ' • ' + link : ''}</div>
+        <div class="small">${escapeHtml(nome)} ${link ? '' + link : ''}</div>
       `;
 
       const remove = document.createElement('button');
