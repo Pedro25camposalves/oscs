@@ -178,6 +178,18 @@ try {
         }
         .btn-primary{ background:var(--qua); color:white; }
         .btn-ghost{ background:transparent; border:1px solid #ddd; }
+
+        .pill-principal{
+          display:inline-block;
+          padding:2px 8px;
+          border-radius:999px;
+          background:#e8f5e9;
+          border:1px solid #b2dfdb;
+          font-size:12px;
+          font-weight:700;
+          color:#055;
+        }
+
         footer{ display:flex; justify-content:space-between; gap:12px; align-items:center; }
 
         .tabs-top{
@@ -782,6 +794,15 @@ try {
       return p.join(' — ') || `Endereço #${e.id}`;
     }
 
+    function enderecoLinha(e){
+      const rua  = [e.logradouro, e.numero].filter(Boolean).join(', ');
+      const comp = e.complemento ? ` ${e.complemento}` : '';
+      const bairro = e.bairro ? ` - ${e.bairro}` : '';
+      const cidade = e.cidade ? ` • ${e.cidade}` : '';
+      const cep = e.cep ? ` • CEP ${e.cep}` : '';
+      return (rua ? (rua + comp + bairro) : '').trim() + cidade + cep;
+    }
+
     function preencherSelectEnderecos(){
       selectEnderecoOsc.innerHTML = `<option value="">Selecione...</option>`;
       ENDERECOS_OSC.forEach(e => {
@@ -842,21 +863,20 @@ try {
         c.className = 'chip';
                 
         const info = document.createElement('div');
-        const badge = e.tipo === 'novo'
-          ? `<span class="small" style="display:inline-block; padding:2px 8px; border:1px solid #ddd; border-radius:999px; margin-left:6px;">novo</span>`
-          : '';
-                
-        const principalTag = e.principal
-          ? `<span class="small" style="display:inline-block; padding:2px 8px; border-radius:999px; margin-left:6px; background:#e8f5e9; border:1px solid #b2dfdb;">Principal</span>`
-          : '';
-                
-        const label = e.tipo === 'existente'
-          ? e.label
-          : labelEndereco(e);
-                
-        info.innerHTML = `<div style="font-weight:600">${escapeHtml(label)} ${badge} ${principalTag}</div>`;
-                
+        c.style.alignItems = 'flex-start';
+
+        const end = enderecoLinha(e) || '—';
+
+        info.style.display = 'grid';
+        info.style.gap = '2px';
+
+        info.innerHTML = `
+          <div class="small"><strong>Descrição:</strong> ${escapeHtml(e.descricao || '—')}</div>
+          <div class="small"><strong>Endereço:</strong> ${escapeHtml(end)}</div>
+        `;
+
         const remove = document.createElement('button');
+        remove.type = 'button';
         remove.className = 'btn';
         remove.textContent = '✕';
         remove.style.padding = '6px 8px';
@@ -866,8 +886,24 @@ try {
           renderEnderecosProjeto();
         });
 
+        // ações à direita (pill principal + X)
+        const actions = document.createElement('div');
+        actions.style.marginLeft = 'auto';
+        actions.style.display = 'flex';
+        actions.style.alignItems = 'center';
+        actions.style.gap = '8px';
+
+        if (e.principal) {
+          const pill = document.createElement('span');
+          pill.className = 'pill-principal';
+          pill.textContent = 'Principal';
+          actions.appendChild(pill);
+        }
+
+        actions.appendChild(remove);
+
         c.appendChild(info);
-        c.appendChild(remove);
+        c.appendChild(actions);
         listaEnderecosProjeto.appendChild(c);
       });
     }
@@ -927,8 +963,15 @@ try {
         enderecosProjeto.push({
           tipo: 'existente',
           endereco_id: e.id,
-          label: labelEndereco(e),
-          principal: principalMarcado
+          principal: principalMarcado,
+
+          descricao: e.descricao || '',
+          cep: e.cep || '',
+          cidade: e.cidade || '',
+          logradouro: e.logradouro || '',
+          bairro: e.bairro || '',
+          numero: e.numero || '',
+          complemento: e.complemento || ''
         });
                 
         renderEnderecosProjeto();
@@ -1086,7 +1129,7 @@ try {
 
         const info = document.createElement('div');
         const badge = e.tipo === 'novo'
-          ? `<span class="small" style="display:inline-block; padding:2px 8px; border:1px solid #ddd; border-radius:999px; margin-left:6px;">novo</span>`
+          ? `<span class="small" style="display:inline-block; padding:2px 8px; border:1px solid #ddd; border-radius:999px; margin-left:6px;">Novo</span>`
           : '';
         info.innerHTML = `
           <div style="font-weight:600">${escapeHtml(e.nome)} ${badge}</div>

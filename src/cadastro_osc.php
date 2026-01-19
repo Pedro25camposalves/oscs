@@ -335,6 +335,16 @@ require 'autenticacao.php';
             align-items:center;
             border:1px solid #f0f0f0;
         }
+        .pill-principal{
+          display:inline-block;
+          padding:2px 8px;
+          border-radius:999px;
+          background:#e8f5e9;
+          border:1px solid #b2dfdb;
+          font-size:12px;
+          font-weight:700;
+          color:#055;
+        }
     </style>
 </head>
 
@@ -998,6 +1008,15 @@ require 'autenticacao.php';
             return partes.join(' — ') || 'Imóvel sem descrição';
         }
 
+        function enderecoImovel(e) {
+          const rua  = [e.logradouro, e.numero].filter(Boolean).join(', ');
+          const comp = e.complemento ? ` ${e.complemento}` : '';
+          const bairro = e.bairro ? ` - ${e.bairro}` : '';
+          const cidade = e.cidade ? ` • ${e.cidade}` : '';
+          const cep = e.cep ? ` • CEP ${e.cep}` : '';
+          return (rua ? (rua + comp + bairro) : '').trim() + cep + cidade;
+        }
+
         function renderImoveisOsc() {
             if (!listaImoveisOsc) return;
             listaImoveisOsc.innerHTML = '';
@@ -1008,14 +1027,17 @@ require 'autenticacao.php';
 
                 const info = document.createElement('div');
 
-                const principalTag = imo.principal
-                    ? `<span class="small" style="display:inline-block; padding:2px 8px; border-radius:999px; margin-left:6px; background:#e8f5e9; border:1px solid #b2dfdb;">Principal</span>`
-                    : '';
-
+                c.style.alignItems = 'flex-start';
+                                
+                const end = enderecoImovel(imo) || '—';
+                                
+                info.style.display = 'grid';
+                info.style.gap = '2px';
+                                
                 info.innerHTML = `
-                    <div style="font-weight:600">
-                        ${escapeHtml(labelImovel(imo))} ${principalTag}
-                    </div>
+                  <div class="small"><strong>Descrição:</strong> ${escapeHtml(imo.descricao || '—')}</div>
+                  <div class="small"><strong>Situação:</strong> ${escapeHtml(imo.situacao || '—')}</div>
+                  <div class="small"><strong>Endereço:</strong> ${escapeHtml(end)}</div>
                 `;
 
                 const remove = document.createElement('button');
@@ -1028,8 +1050,23 @@ require 'autenticacao.php';
                     renderImoveisOsc();
                 });
 
+                const actions = document.createElement('div');
+                actions.style.marginLeft = 'auto';
+                actions.style.display = 'flex';
+                actions.style.alignItems = 'center';
+                actions.style.gap = '8px';
+                                
+                if (imo.principal) {
+                  const pill = document.createElement('span');
+                  pill.className = 'pill-principal';
+                  pill.textContent = 'Principal';
+                  actions.appendChild(pill);
+                }
+                                
+                actions.appendChild(remove);
+                                
                 c.appendChild(info);
-                c.appendChild(remove);
+                c.appendChild(actions);
                 listaImoveisOsc.appendChild(c);
             });
         }
