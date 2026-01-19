@@ -979,6 +979,13 @@ if (!$oscIdVinculada) {
         const docAnoRef         = qs('#docAnoRef');
         const docArquivo        = qs('#docArquivo');
 
+        // valida assim que o usuário escolhe o arquivo (Adicionar)
+        if (docArquivo) {
+          docArquivo.addEventListener('change', () => {
+            validarInputArquivoDocumento(docArquivo);
+          });
+        }
+
         // modal edição
         const modalEditDocOscBackdrop = qs('#modalEditDocOscBackdrop');
         const cancelEditDocOscBtn = qs('#cancelEditDocOscBtn');
@@ -991,6 +998,13 @@ if (!$oscIdVinculada) {
         const editDocAno = qs('#editDocAno');
         const editDocArquivo = qs('#editDocArquivo');
         const editDocArquivoAtual = qs('#editDocArquivoAtual');
+
+        // valida assim que o usuário escolhe o arquivo (Editar/Substituir)
+        if (editDocArquivo) {
+          editDocArquivo.addEventListener('change', () => {
+            validarInputArquivoDocumento(editDocArquivo);
+          });
+        }
 
         let docEditTarget = null; // referência ao objeto dentro de docsOsc
 
@@ -1173,6 +1187,10 @@ if (!$oscIdVinculada) {
             saveEditDocOscBtn.addEventListener('click', () => {
                 if (!docEditTarget) return;
 
+                if (file && !validarArquivoDocumento(file)) {
+                  editDocArquivo.value = '';
+                  return;
+                }
                 const novoArquivo = editDocArquivo?.files?.[0] || null;
                 if (!novoArquivo) {
                     alert('Selecione um arquivo para substituir.');
@@ -1196,21 +1214,26 @@ if (!$oscIdVinculada) {
 
                 // Se já existe no BD: marca para exclusão e adiciona um novo com o arquivo substituto
                 if (docEditTarget.id_documento) {
-                    docsOscDeletes.add(String(docEditTarget.id_documento));
+                    const originalRef = docEditTarget;
+                    const originalId  = String(docEditTarget.id_documento);
+
+                    docsOscDeletes.add(originalId);
+
                     const idxGlobal = docsOsc.indexOf(docEditTarget);
                     if (idxGlobal !== -1) docsOsc.splice(idxGlobal, 1);
 
                     docsOsc.push({
-                        categoria: docEditTarget.categoria,
-                        tipo: docEditTarget.tipo,
-                        tipo_label: docEditTarget.tipo_label || getTipoLabel(docEditTarget.categoria, docEditTarget.tipo),
-                        subtipo: docEditTarget.subtipo || docEditTarget.tipo,
-                        subtipo_label: docEditTarget.subtipo_label || '',
-                        descricao: showDesc ? novaDescricao : (docEditTarget.descricao || ''),
-                        ano_referencia: showAno ? novoAno : (docEditTarget.ano_referencia || ''),
-                        link: docEditTarget.link || '',
-                        file: novoArquivo,
-                        ui_status: 'Editado',
+                      categoria: docEditTarget.categoria,
+                      tipo: docEditTarget.tipo,
+                      tipo_label: docEditTarget.tipo_label || getTipoLabel(docEditTarget.categoria, docEditTarget.tipo),
+                      subtipo: docEditTarget.subtipo || docEditTarget.tipo,
+                      subtipo_label: docEditTarget.subtipo_label || '',
+                      descricao: showDesc ? novaDescricao : (docEditTarget.descricao || ''),
+                      ano_referencia: showAno ? novoAno : (docEditTarget.ano_referencia || ''),
+                      file: novoArquivo,
+                      ui_status: 'Editado',
+                      ui_edit_original: originalRef,
+                      ui_edit_original_id: originalId,
                     });
                 } else {
                     // Ainda não foi pro servidor: só atualiza o item atual
@@ -1280,7 +1303,7 @@ if (!$oscIdVinculada) {
                             <div style="font-weight:600">${escapeHtml(linha)}</div>
                           </div>
                                     
-                          ${d.ano_referencia ? `<div class="small">Ano: ${escapeHtml(d.ano_referencia)}</div>` : ''}
+                          ${d.ano_referencia ? `<div class="small" style="font-weight:bold">Ano: ${escapeHtml(d.ano_referencia)}</div>` : ''}
                           ${d.link ? `<div class="small">Link: ${escapeHtml(d.link)}</div>` : ''}
                           <div class="small">Arquivo: ${escapeHtml(nomeArquivo || '—')}</div>
                         `;
@@ -1302,6 +1325,13 @@ if (!$oscIdVinculada) {
                         edit.className = 'btn';
                         edit.textContent = '✎';
                         edit.style.padding = '6px 8px';
+                        const bloqueiaEdicaoDoc = (d.ui_status === 'Novo' || d.ui_status === 'Deletado');
+                        if (bloqueiaEdicaoDoc) {
+                          edit.disabled = true; 
+                          edit.title = 'Documento está como Novo';
+                          edit.style.opacity = '0.45';
+                          edit.style.cursor = 'not-allowed';
+                        }
                         edit.addEventListener('click', (e) => {
                           e.preventDefault();                // <- CRÍTICO
                           e.stopPropagation();               // <- recomendado
@@ -1317,19 +1347,96 @@ if (!$oscIdVinculada) {
                         }
                                     
                         const remove = document.createElement('button');
-                        remove.type = 'button';              // <- CRÍTICO
+                        remove.type = 'button';
                         remove.className = 'btn';
-                        remove.textContent = '✕';
                         remove.style.padding = '6px 8px';
+
+                        const isEditado  = (d.ui_status === 'Editado');
+                        const isDeletado = (d.ui_deleted || d.ui_status === 'Deletado');
+
+                        // ícone: volta para Editado/Deletado
+                        remove.textContent = (isEditado || isDeletado) ? '↩' : '✕';
+
+                        // tooltip
+                        remove.title = isEditado
+                          ? 'Desfazer edição'
+                          : (isDeletado ? 'Restaurar' : ((d.ui_status === 'Novo' || !d.id_documento) ? 'Remover' : 'Deletar'));
+
                         remove.addEventListener('click', (e) => {
-                          e.preventDefault();                // <- CRÍTICO
-                          e.stopPropagation();               // <- recomendado
-                          if (d.id_documento) docsOscDeletes.add(String(d.id_documento));
-                          const idxGlobal = docsOsc.indexOf(d);
-                          if (idxGlobal !== -1) {
-                            docsOsc.splice(idxGlobal, 1);
+                          e.preventDefault();
+                          e.stopPropagation();
+
+                          // 1) se está EDITADO -> desfazer edição
+                          if (d.ui_status === 'Editado') {
+                            const orig = d.ui_edit_original || null;
+                            const origId = d.ui_edit_original_id || (orig?.id_documento ? String(orig.id_documento) : null);
+
+                            // remove o "substituto editado"
+                            const idx = docsOsc.indexOf(d);
+                            if (idx !== -1) docsOsc.splice(idx, 1);
+
+                            // tira o original da lista de exclusão
+                            if (origId) docsOscDeletes.delete(origId);
+
+                            // devolve o original pra lista
+                            if (orig && !docsOsc.includes(orig)) {
+                              orig.ui_deleted = false;
+                              if (orig.ui_status) delete orig.ui_status;
+                              if (orig.ui_status_prev) delete orig.ui_status_prev;
+                              docsOsc.push(orig);
+                            }
+
                             renderDocsOsc();
+                            return;
                           }
+
+                          // 2) se é NOVO (rascunho) -> some de vez
+                          if (d.ui_status === 'Novo' || !d.id_documento) {
+                            const idx = docsOsc.indexOf(d);
+                            if (idx !== -1) docsOsc.splice(idx, 1);
+                            renderDocsOsc();
+                            return;
+                          }
+
+                          // 3) já está DELETADO -> restaurar
+                          const idStr = String(d.id_documento);
+
+                          if (d.ui_deleted || d.ui_status === 'Deletado') {
+                            // BLOQUEIA RESTAURAR se já existe outro doc ativo do mesmo tipo (quando não permite duplicidade)
+                            if (!tipoPermiteMultiplos(d.categoria, d.tipo)) {
+                              const alvoSub = d.subtipo || d.tipo;
+                                        
+                              const existeAtivoMesmoTipo = docsOsc.some(x =>
+                                x !== d &&
+                                !x.ui_deleted &&                         // ativo (não deletado)
+                                x.categoria === d.categoria &&
+                                x.tipo === d.tipo &&
+                                ((x.subtipo || x.tipo) === alvoSub)
+                              );
+                                        
+                              if (existeAtivoMesmoTipo) {
+                                alert('Não é possível restaurar este documento porque já existe um documento ativo desse mesmo tipo.\n\nRemova o novo para restaurar o antigo.');
+                                return;
+                              }
+                            }
+                            d.ui_deleted = false;
+                            docsOscDeletes.delete(idStr);
+
+                            d.ui_status = d.ui_status_prev || '';
+                            delete d.ui_status_prev;
+                            if (!d.ui_status) delete d.ui_status;
+
+                            renderDocsOsc();
+                            return;
+                          }
+
+                          // 4) caso normal -> marcar como deletado
+                          d.ui_deleted = true;
+                          d.ui_status_prev = d.ui_status || '';
+                          d.ui_status = 'Deletado';
+                          docsOscDeletes.add(idStr);
+
+                          renderDocsOsc();
                         });
                                     
                         const actions = document.createElement('div');
@@ -1399,6 +1506,10 @@ if (!$oscIdVinculada) {
 
                 const descricao = (tipo === 'OUTRO' || tipo === 'OUTRO_INSTITUCIONAL' || tipo === 'OUTRO_CONTABIL') ? (docDescricao?.value || '').trim() : '';
                 const file = docArquivo?.files?.[0] || null;
+                if (file && !validarArquivoDocumento(file)) {
+                  docArquivo.value = '';
+                  return;
+                }
 
                 if (!categoria || !tipo) {
                     alert('Selecione categoria e tipo.');
@@ -1421,7 +1532,7 @@ if (!$oscIdVinculada) {
                 }
 
                 if (!tipoPermiteMultiplos(categoria, tipo)) {
-                    const jaTem = docsOsc.some(d => d.categoria === categoria && d.tipo === tipo && d.subtipo === subtipo);
+                    const jaTem = docsOsc.some(d => !d.ui_deleted && d.categoria === categoria && d.tipo === tipo && d.subtipo === subtipo);
                     if (jaTem) {
                         alert('Já existe um documento desse tipo. Remova o existente para adicionar outro.');
                         return;
@@ -1445,7 +1556,35 @@ if (!$oscIdVinculada) {
             });
         }
 
-        
+        // ===== Validação imediata de arquivo (documentos) =====
+        const DOC_EXT_PERMITIDAS = new Set([
+          'pdf','doc','docx','xls','xlsx','odt','ods','csv','txt','rtf'
+        ]);
+
+        function getExt(nome) {
+          const i = String(nome || '').lastIndexOf('.');
+          return i >= 0 ? String(nome).slice(i + 1).toLowerCase() : '';
+        }
+
+        function validarArquivoDocumento(file) {
+          if (!file) return true;
+          const ext = getExt(file.name);
+          if (!DOC_EXT_PERMITIDAS.has(ext)) {
+            alert(`Formato inválido: .${ext || '(sem extensão)'}\n\nPermitidos: ${Array.from(DOC_EXT_PERMITIDAS).map(e=>'.'+e).join(' ')}`);
+            return false;
+          }
+          return true;
+        }
+
+        function validarInputArquivoDocumento(inputEl) {
+          if (!inputEl) return true;
+          const f = inputEl.files && inputEl.files[0] ? inputEl.files[0] : null;
+          if (!f) return true;
+          const ok = validarArquivoDocumento(f);
+          if (!ok) inputEl.value = ''; // limpa na hora pra evitar retrabalho
+          return ok;
+        }
+
         function asArray(v) {
             if (!v) return [];
             return Array.isArray(v) ? v : [v];
@@ -1722,6 +1861,7 @@ if (!$oscIdVinculada) {
 
             // 2) Enviar somente os novos (com arquivo)
             for (const doc of docsOsc) {
+                if (doc.ui_deleted) continue;   // <- NÃO envia se está "Deletado"
                 if (!doc.file) continue;
                 const err = await enviarDocumentoOsc(oscId, doc);
                 if (err) erros.push(err);
