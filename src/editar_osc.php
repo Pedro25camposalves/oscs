@@ -150,7 +150,6 @@ if (!$oscIdVinculada) {
         .btn-primary { background: var(--qua); color: white }
         .btn-ghost { background: transparent; border: 1px solid #ddd }
 
-        /* ===== STATUS PILL (igual config_osc.php) ===== */
         .status-pill{
           display:inline-flex;
           align-items:center;
@@ -848,7 +847,7 @@ if (!$oscIdVinculada) {
       <div>
         <label for="docArquivo">Arquivo (*)</label>
         <input type="file" id="docArquivo"
-               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt" />
+               accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
       </div>
     </div>
 
@@ -878,7 +877,7 @@ if (!$oscIdVinculada) {
 
             <div style="margin-top:10px">
                 <label class="label">Substituir</label>
-                <input id="editDocArquivo" type="file" class="input" />
+                <input id="editDocArquivo" type="file" class="input" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf"/>
             </div>
         </div>
 
@@ -1293,7 +1292,7 @@ if (!$oscIdVinculada) {
                           : '';
                                     
                         const statusTxt = d.ui_status || ''; // (use o mesmo campo que você já está usando)
-                        const statusCls = statusTxt === 'Adicionado' ? 'on' : 'off';
+                        const statusCls = statusTxt === 'Novo' ? 'on' : 'off';
                         const statusPill = statusTxt
                           ? `<span class="status-pill ${statusCls}">${escapeHtml(statusTxt)}</span>`
                           : '';
@@ -1329,7 +1328,7 @@ if (!$oscIdVinculada) {
                         if (bloqueiaEdicaoDoc) {
                           edit.disabled = true; 
                           edit.title = 'Documento está como Novo';
-                          edit.style.opacity = '0.45';
+                          edit.style.opacity = '0.60';
                           edit.style.cursor = 'not-allowed';
                         }
                         edit.addEventListener('click', (e) => {
@@ -1342,7 +1341,7 @@ if (!$oscIdVinculada) {
                         let statusPillEl = null;
                         if (d.ui_status) {
                           statusPillEl = document.createElement('span');
-                          statusPillEl.className = 'status-pill ' + (d.ui_status === 'Adicionado' ? 'on' : 'off');
+                          statusPillEl.className = 'status-pill ' + (d.ui_status === 'Novo' ? 'on' : 'off');
                           statusPillEl.textContent = d.ui_status;
                         }
                                     
@@ -2366,22 +2365,42 @@ if (!$oscIdVinculada) {
       if (editAtvIndex !== null) {
         const alvo = atividades[editAtvIndex];
         if (!alvo) return;
-    
+
+        // não deixa editar item deletado (restaura primeiro)
+        if (alvo.ui_deleted || alvo.ui_status === 'Deletado') {
+          alert('Restaure a atividade antes de editar.');
+          return;
+        }
+                    
+        // guarda snapshot para desfazer (somente se já existia no banco)
+        if (alvo.atividadeId && !alvo.ui_edit_original) {
+          alvo.ui_edit_original = { cnae: alvo.cnae, area: alvo.area, subarea: alvo.subarea };
+        }
+                    
         alvo.cnae = cnae;
         alvo.area = area;
         alvo.subarea = subarea;
-    
+                    
+        // status
+        if (!alvo.atividadeId) {
+          // ainda não existe no banco => continua "Novo"
+          alvo.ui_status = 'Novo';
+        } else {
+          // já existia => virou "Editado"
+          alvo.ui_status = 'Editado';
+        }
+                    
         editAtvIndex = null;
         addAtividadeBtn.textContent = 'Adicionar';
         qs('#modalAtividadeBackdrop .modal h3').textContent = 'Adicionar Atividade';
-    
+                    
         renderAtividades();
         modalAtividadeBackdrop.style.display = 'none';
         return;
       }
   
       // NOVA
-      atividades.push({ atividadeId: null, cnae, area, subarea });
+      atividades.push({ atividadeId: null, cnae, area, subarea, ui_status: 'Novo', ui_deleted: false });
       renderAtividades();
       modalAtividadeBackdrop.style.display = 'none';
     }
@@ -2413,10 +2432,9 @@ if (!$oscIdVinculada) {
         const info = document.createElement('div');
         
         info.innerHTML = `
-            ${a.atividadeId ? `` : `<div class="small muted">NOVO</div>`}
-            <div style="font-weight:600">CNAE: ${escapeHtml(a.cnae)}</div>
-            <div class="small">Área: ${escapeHtml(a.area)}</div>
-            ${a.subarea ? `<div class="small">Subárea: ${escapeHtml(a.subarea)}</div>` : ''}
+          <div style="font-weight:600">CNAE: ${escapeHtml(a.cnae)}</div>
+          <div class="small">Área: ${escapeHtml(a.area)}</div>
+          ${a.subarea ? `<div class="small">Subárea: ${escapeHtml(a.subarea)}</div>` : ''}
         `;
 
         const edit = document.createElement('button');
@@ -2431,22 +2449,92 @@ if (!$oscIdVinculada) {
           abrirEdicaoAtividade(i);
         });
 
+        if (a.ui_deleted || a.ui_status === 'Deletado') {
+          edit.disabled = true;
+          edit.title = 'Restaure para editar';
+          edit.style.opacity = '0.60';
+          edit.style.cursor = 'not-allowed';
+        }
+
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'btn';
-        remove.textContent = '✕';
         remove.style.padding = '6px 8px';
         remove.style.marginLeft = '8px';
+
+        let statusTxt = a.ui_status || '';
+        if (!statusTxt && !a.atividadeId) statusTxt = 'Novo';
+        if (a.ui_deleted || statusTxt === 'Deletado') statusTxt = 'Deletado';
+
+        let statusPillEl = null;
+        if (statusTxt) {
+          statusPillEl = document.createElement('span');
+          const cls = (statusTxt === 'Novo') ? 'on' : 'off';
+          statusPillEl.className = 'status-pill ' + cls;
+          statusPillEl.textContent = statusTxt;
+        }
+                    
+        const isEditado  = (a.ui_status === 'Editado');
+        const isDeletado = (a.ui_deleted || a.ui_status === 'Deletado');
+                    
+        remove.textContent = (isEditado || isDeletado) ? '↩' : '✕';
+        remove.title = isEditado
+          ? 'Desfazer edição'
+          : (isDeletado ? 'Restaurar' : ((a.ui_status === 'Novo' || !a.atividadeId) ? 'Remover' : 'Deletar'));
+                    
         remove.addEventListener('click', (ev) => {
           ev.preventDefault();
           ev.stopPropagation();
-          atividades.splice(i, 1);
+                    
+          // 1) EDITADO -> desfazer (volta snapshot)
+          if (a.ui_status === 'Editado') {
+            if (a.ui_edit_original) {
+              a.cnae = a.ui_edit_original.cnae;
+              a.area = a.ui_edit_original.area;
+              a.subarea = a.ui_edit_original.subarea;
+            }
+            delete a.ui_edit_original;
+            delete a.ui_status;
+            renderAtividades();
+            return;
+          }
+                    
+          // 2) NOVO -> remove de vez
+          if (a.ui_status === 'Novo' || !a.atividadeId) {
+            atividades.splice(i, 1);
+            renderAtividades();
+            return;
+          }
+                    
+          // 3) DELETADO -> restaurar
+          if (a.ui_deleted || a.ui_status === 'Deletado') {
+            a.ui_deleted = false;
+            a.ui_status = a.ui_status_prev || '';
+            delete a.ui_status_prev;
+            if (!a.ui_status) delete a.ui_status;
+            renderAtividades();
+            return;
+          }
+                    
+          // 4) NORMAL -> marcar deletado
+          a.ui_deleted = true;
+          a.ui_status_prev = a.ui_status || '';
+          a.ui_status = 'Deletado';
           renderAtividades();
         });
 
+        const actions = document.createElement('div');
+        actions.style.marginLeft = 'auto';
+        actions.style.display = 'flex';
+        actions.style.alignItems = 'center';
+        actions.style.gap = '8px';
+
+        if (statusPillEl) actions.appendChild(statusPillEl);
+        actions.appendChild(edit);
+        actions.appendChild(remove);
+
         c.appendChild(info);
-        c.appendChild(edit);
-        c.appendChild(remove);
+        c.appendChild(actions);
         list.appendChild(c);
       });
     }
@@ -2518,7 +2606,9 @@ if (!$oscIdVinculada) {
               atividadeId: a.id ?? a.atividade_id ?? null,
               cnae: a.cnae || '',
               area: a.area || '',
-              subarea: a.subarea || ''
+              subarea: a.subarea || '',
+              ui_deleted: false
+              // ui_status começa vazio (só aparece quando o usuário mexe)
             });
           });
           renderAtividades();
@@ -2661,12 +2751,14 @@ if (!$oscIdVinculada) {
         }));
 
         fd.append('envolvidos', JSON.stringify(envolvidosParaEnvio));
-        const atividadesParaEnvio = atividades.map(a => ({
-          atividade_id: a.atividadeId || 0,
-          cnae: a.cnae,
-          area: a.area,
-          subarea: a.subarea
-        }));
+        const atividadesParaEnvio = atividades
+          .filter(a => !a.ui_deleted)  // <- não envia deletadas
+          .map(a => ({
+            atividade_id: a.atividadeId || 0,
+            cnae: a.cnae,
+            area: a.area,
+            subarea: a.subarea
+          }));
         fd.append('atividades', JSON.stringify(atividadesParaEnvio));
 
         // fotos envolvidos (se houver)
