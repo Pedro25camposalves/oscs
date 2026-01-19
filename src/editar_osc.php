@@ -171,6 +171,17 @@ if (!$oscIdVinculada) {
           color: #444;
         }
 
+        .pill-principal{
+          display:inline-block;
+          padding:2px 8px;
+          border-radius:999px;
+          background:#e8f5e9;
+          border:1px solid #b2dfdb;
+          font-size:12px;
+          font-weight:700;
+          color:#055;
+        }
+
         /* modal */
         .modal-backdrop {
             position: fixed;
@@ -498,7 +509,7 @@ if (!$oscIdVinculada) {
     <!-- SEÇÃO 3: IMÓVEL -->
     <div style="margin-top:16px" class="card card-collapse" data-collapse-id="imovel">
       <div class="card-head" data-collapse-head>
-        <h2>Imóvel</h2>
+        <h2>Imóveis</h2>
 
         <button type="button" class="card-toggle" data-collapse-btn>
           <span class="label">Abrir</span>
@@ -507,31 +518,9 @@ if (!$oscIdVinculada) {
       </div>
 
       <div class="card-body" data-collapse-body>
-        <div class="grid cols-3">
-          <div>
-            <label style="margin-top: 10px;" for="situacaoImovel">Situação do imóvel</label>
-            <input id="situacaoImovel" type="text" />
-          </div>
-          <div>
-            <label style="margin-top: 10px;" for="cep">CEP (*)</label>
-            <input id="cep" inputmode="numeric" type="text" required />
-          </div>
-          <div>
-            <label style="margin-top: 10px;" for="cidade">Cidade</label>
-            <input id="cidade" type="text" />
-          </div>
-          <div>
-            <label for="bairro">Bairro</label>
-            <input id="bairro" type="text" />
-          </div>
-          <div>
-            <label for="logradouro">Logradouro</label>
-            <input id="logradouro" type="text" />
-          </div>
-          <div>
-            <label for="numero">Número</label>
-            <input id="numero" inputmode="numeric" type="text" />
-          </div>
+        <div class="envolvidos-list" id="imoveisList"></div>
+        <div style="margin-top:10px">
+          <button type="button" class="btn btn-ghost" id="openImovelOscModal">+ Adicionar</button>
         </div>
       </div>
     </div>
@@ -774,6 +763,59 @@ if (!$oscIdVinculada) {
     </div>
 </div>
 
+<!-- MODAL DOS IMÓVEIS (igual ao cadastro_osc.php) -->
+<div id="modalImovelOscBackdrop" class="modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Imóvel">
+    <h3>Adicionar Imóvel</h3>
+
+    <div style="margin-top:8px" class="grid">
+      <div>
+        <label for="imovelDescricao">Descrição</label>
+        <input id="imovelDescricao" type="text" placeholder="Ex.: Sede, Escritório, Galpão" />
+      </div>
+      <div>
+        <label for="imovelSituacao">Situação</label>
+        <input id="imovelSituacao" type="text" placeholder="Ex.: Próprio, Alugado" />
+      </div>
+      <div>
+        <label for="imovelCep">CEP (*)</label>
+        <input id="imovelCep" inputmode="numeric" type="text" required />
+      </div>
+      <div>
+        <label for="imovelCidade">Cidade</label>
+        <input id="imovelCidade" type="text" />
+      </div>
+      <div>
+        <label for="imovelBairro">Bairro</label>
+        <input id="imovelBairro" type="text" />
+      </div>
+      <div>
+        <label for="imovelLogradouro">Logradouro</label>
+        <input id="imovelLogradouro" type="text" />
+      </div>
+      <div>
+        <label for="imovelNumero">Número</label>
+        <input id="imovelNumero" inputmode="numeric" type="text" />
+      </div>
+      <div>
+        <label for="imovelComplemento">Complemento</label>
+        <input id="imovelComplemento" type="text" />
+      </div>
+      <div style="display:flex; align-items:flex-end; gap:8px">
+        <label style="display:flex; gap:8px; align-items:center; margin:0; cursor:pointer">
+          <input id="imovelPrincipal" type="checkbox" />
+          <span class="small">Endereço principal</span>
+        </label>
+      </div>
+    </div>
+
+    <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+      <button type="button" class="btn btn-ghost" id="closeImovelOscModal">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="addImovelOscBtn">Adicionar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL DAS ATIVIDADES -->
 <div id="modalAtividadeBackdrop" class="modal-backdrop">
     <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Atividade">
@@ -945,6 +987,8 @@ if (!$oscIdVinculada) {
     let editAtvIndex = null; // null = criando / !=null = editando
     const balancos   = []; // { ano, file }
     const dres       = []; // { ano, file }    
+    const imoveisOsc = []; // { enderecoId|null, descricao, situacao, cep, cidade, bairro, logradouro, numero, complemento, principal }
+    let editImovelIndex = null;
 
     // imagens já existentes vindas do servidor
     let existingLogos = { logoSimples: null, logoCompleta: null };
@@ -2331,6 +2375,147 @@ if (!$oscIdVinculada) {
         });
     }
 
+    // ===== IMÓVEIS (múltiplos) =====
+    const imoveisList            = qs('#imoveisList');
+    const modalImovelOscBackdrop = qs('#modalImovelOscBackdrop');
+    const openImovelOscModal     = qs('#openImovelOscModal');
+    const closeImovelOscModal    = qs('#closeImovelOscModal');
+    const addImovelOscBtn        = qs('#addImovelOscBtn');
+
+    function enderecoLinha(i) {
+      const parts = [];
+      const log = (i.logradouro || '').trim();
+      const num = (i.numero || '').trim();
+      const bai = (i.bairro || '').trim();
+      const cid = (i.cidade || '').trim();
+      const cep = (i.cep || '').trim();
+      const comp = (i.complemento || '').trim();
+
+      if (log) parts.push(log);
+      if (num) parts.push('nº ' + num);
+      if (bai) parts.push(bai);
+      if (cid) parts.push(cid);
+      if (comp) parts.push('(' + comp + ')');
+      if (cep) parts.push('CEP ' + cep);
+
+      return parts.join(' — ');
+    }
+
+    function abrirModalImovelAdicionar() {
+      editImovelIndex = null;
+      qs('#imovelDescricao').value    = '';
+      qs('#imovelSituacao').value     = '';
+      qs('#imovelCep').value          = '';
+      qs('#imovelCidade').value       = '';
+      qs('#imovelBairro').value       = '';
+      qs('#imovelLogradouro').value   = '';
+      qs('#imovelNumero').value       = '';
+      qs('#imovelComplemento').value  = '';
+      qs('#imovelPrincipal').checked  = false;
+
+      addImovelOscBtn.textContent = 'Adicionar';
+      qs('#modalImovelOscBackdrop .modal h3').textContent = 'Adicionar Imóvel';
+      modalImovelOscBackdrop.style.display = 'flex';
+    }
+
+    function fecharModalImovel() {
+      modalImovelOscBackdrop.style.display = 'none';
+    }
+
+    if (openImovelOscModal) openImovelOscModal.addEventListener('click', abrirModalImovelAdicionar);
+    if (closeImovelOscModal) closeImovelOscModal.addEventListener('click', fecharModalImovel);
+    if (modalImovelOscBackdrop) modalImovelOscBackdrop.addEventListener('click', (e) => {
+      if (e.target === modalImovelOscBackdrop) fecharModalImovel();
+    });
+
+    function salvarImovelDoModal() {
+      const descricao   = qs('#imovelDescricao').value.trim();
+      const situacao    = qs('#imovelSituacao').value.trim();
+      const cep         = qs('#imovelCep').value.trim();
+      const cidade      = qs('#imovelCidade').value.trim();
+      const bairro      = qs('#imovelBairro').value.trim();
+      const logradouro  = qs('#imovelLogradouro').value.trim();
+      const numero      = qs('#imovelNumero').value.trim();
+      const complemento = qs('#imovelComplemento').value.trim();
+      const principal   = !!qs('#imovelPrincipal').checked;
+
+      if (!cep) {
+        alert('Informe o CEP do imóvel.');
+        qs('#imovelCep').focus();
+        return;
+      }
+
+      const obj = {
+        enderecoId: null,
+        descricao, situacao, cep, cidade, bairro, logradouro, numero, complemento,
+        principal
+      };
+
+      if (principal) {
+        imoveisOsc.forEach(x => x.principal = false);
+      }
+
+      imoveisOsc.push(obj);
+
+      if (!imoveisOsc.some(x => x.principal)) {
+        imoveisOsc[0].principal = true;
+      }
+
+      renderImoveisOsc();
+      fecharModalImovel();
+    }
+
+    if (addImovelOscBtn) addImovelOscBtn.addEventListener('click', salvarImovelDoModal);
+
+    function renderImoveisOsc() {
+      if (!imoveisList) return;
+      imoveisList.innerHTML = '';
+
+      imoveisOsc.forEach((i, idx) => {
+        const c = document.createElement('div');
+        c.className = 'envolvido-card';
+
+        const info = document.createElement('div');
+        info.innerHTML = `
+          <div style="font-weight:600">Descrição: ${escapeHtml(i.descricao || '-')}</div>
+          <div class="small">Situação: ${escapeHtml(i.situacao || '-')}</div>
+          <div class="small">Endereço: ${escapeHtml(enderecoLinha(i) || '-')}</div>
+        `;
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'btn';
+        remove.textContent = '✕';
+        remove.style.padding = '6px 8px';
+        remove.style.marginLeft = '8px';
+        remove.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          imoveisOsc.splice(idx, 1);
+          renderImoveisOsc();
+        });
+
+        const actions = document.createElement('div');
+        actions.style.marginLeft = 'auto';
+        actions.style.display = 'flex';
+        actions.style.alignItems = 'center';
+        actions.style.gap = '8px';
+                    
+        if (Number(i.principal) === 1) {
+          const pill = document.createElement('span');
+          pill.className = 'pill-principal';
+          pill.textContent = 'Principal';
+          actions.appendChild(pill);
+        }
+                    
+        actions.appendChild(remove);
+                    
+        c.appendChild(info);
+        c.appendChild(actions);
+        imoveisList.appendChild(c);
+      });
+    }
+
     // ===== MODAL ATIVIDADES =====
     const modalAtividadeBackdrop = qs('#modalAtividadeBackdrop');
     const openAtividadeModal     = qs('#openAtividadeModal');
@@ -2645,15 +2830,45 @@ if (!$oscIdVinculada) {
 
         setVal('#labelBanner', label);
 
-        // ===== IMÓVEL (usa osc.imovel como fallback) =====
-        const imv = osc.imovel || {};
+        // ===== IMÓVEIS (múltiplos) =====
+        imoveisOsc.length = 0;
 
-        setVal('#situacaoImovel', (osc.situacaoImovel ?? imv.situacao ?? ''));
-        setVal('#cep',            (osc.cep ?? imv.cep ?? ''));
-        setVal('#cidade',         (osc.cidade ?? imv.cidade ?? ''));
-        setVal('#bairro',         (osc.bairro ?? imv.bairro ?? ''));
-        setVal('#logradouro',     (osc.logradouro ?? imv.logradouro ?? ''));
-        setVal('#numero',         (osc.numero ?? imv.numero ?? ''));
+        if (Array.isArray(osc.imoveis) && osc.imoveis.length) {
+          osc.imoveis.forEach(x => {
+            imoveisOsc.push({
+              enderecoId: x.endereco_id ?? null,
+              descricao: x.descricao ?? '',
+              situacao: x.situacao ?? '',
+              cep: x.cep ?? '',
+              cidade: x.cidade ?? '',
+              bairro: x.bairro ?? '',
+              logradouro: x.logradouro ?? '',
+              numero: x.numero ?? '',
+              complemento: x.complemento ?? '',
+              principal: !!x.principal
+            });
+          });
+        } else if (osc.imovel) {
+          const x = osc.imovel;
+          imoveisOsc.push({
+            enderecoId: x.endereco_id ?? null,
+            descricao: x.descricao ?? '',
+            situacao: x.situacao ?? '',
+            cep: x.cep ?? '',
+            cidade: x.cidade ?? '',
+            bairro: x.bairro ?? '',
+            logradouro: x.logradouro ?? '',
+            numero: x.numero ?? '',
+            complemento: x.complemento ?? '',
+            principal: true
+          });
+        }
+
+        if (imoveisOsc.length && !imoveisOsc.some(i => i.principal)) {
+          imoveisOsc[0].principal = true;
+        }
+
+        renderImoveisOsc();
 
         // ===== template/imagens =====
         if (osc.template) {
