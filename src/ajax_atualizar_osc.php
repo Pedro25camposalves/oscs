@@ -312,130 +312,188 @@ try {
     $stmt->close();
 
     // ============================================
-    // 2) UPDATE IMÓVEL
+    // 2) IMÓVEIS/ENDEREÇOS (endereco/endereco_osc) - sync
     // ============================================
-    $cep        = (string)pick($data, ['imovel.cep', 'cep'], '');
-    $cidade     = (string)pick($data, ['imovel.cidade', 'cidade'], '');
-    $bairro     = (string)pick($data, ['imovel.bairro', 'bairro'], '');
-    $logradouro = (string)pick($data, ['imovel.logradouro', 'logradouro'], '');
-    $numero     = (string)pick($data, ['imovel.numero', 'numero'], '');
-    $situacao   = (string)pick($data, ['imovel.situacao', 'situacaoImovel'], '');
+    $imoveis_novos_ids = [];
 
-    // Verifica se já existe imóvel para essa OSC
-    $stmt = $conn->prepare("SELECT id, endereco_id FROM imovel WHERE osc_id = ? LIMIT 1");
-    $stmt->bind_param("i", $osc_id);
-    $stmt->execute();
-    $imv = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
+    if (array_key_exists('imoveis', $data)) {
+        $imoveis = normalizarLista($data['imoveis']);
 
-    $temEndereco =
-        ($cep !== '' ||
-         $cidade !== '' ||
-         $bairro !== '' ||
-         $logradouro !== '' ||
-         $numero !== '');
+        // 2.1) Carrega existentes no BD
+        $stmt = $conn->prepare("SELECT endereco_id FROM endereco_osc WHERE osc_id = ?");
+        $stmt->bind_param("i", $osc_id);
+        if (!$stmt->execute()) throw new Exception("Erro ao carregar endereços da OSC: " . $stmt->error);
+        $rs = $stmt->get_result();
 
-    if ($imv) {
-        $imovelId   = (int)$imv['id'];
-        $enderecoId = (int)($imv['endereco_id'] ?? 0);
+        $existentes = []; // [endereco_id => true]
+        while ($row = $rs->fetch_assoc()) {
+            $existentes[(int)$row['endereco_id']] = true;
+        }
+        $stmt->close();
 
-        // Já existe imóvel
-        if ($enderecoId > 0) {
-            // Atualiza o endereço existente
-            if ($temEndereco) {
-                $stmt = $conn->prepare("
-                    UPDATE endereco
-                       SET cep = ?, cidade = ?, bairro = ?, logradouro = ?, numero = ?
-                     WHERE id = ?
-                ");
-                $stmt->bind_param("sssssi", $cep, $cidade, $bairro, $logradouro, $numero, $enderecoId);
-                if (!$stmt->execute()) {
-                    throw new Exception("Erro ao atualizar endereço: " . $stmt->error);
-                }
-                $stmt->close();
-            }
-            // Se não tem dados de endereço, mantemos o que já está no BD
+        // 2.2) Separa recebidos (update/insert/delete)
+        $idsManter  = []; // [endereco_id => ['idx'=>..., 'data'=>...]]
+        $idsDeletar = []; // [endereco_id => true]
+        $novos      = []; // [['idx'=>..., 'data'=>...], ...]
 
-        } else {
-            // Imóvel existe, mas ainda não tem endereco_id
-            if ($temEndereco) {
-                // Cria um novo endereço
-                $stmt = $conn->prepare("
-                    INSERT INTO endereco (cep, cidade, bairro, logradouro, numero)
-                    VALUES (?, ?, ?, ?, ?)
-                ");
-                $stmt->bind_param("sssss", $cep, $cidade, $bairro, $logradouro, $numero);
-                if (!$stmt->execute()) {
-                    throw new Exception("Erro ao inserir endereço: " . $stmt->error);
-                }
-                $enderecoId = (int)$stmt->insert_id;
-                $stmt->close();
+        foreach ($imoveis as $idx => $m) {
+            if (!is_array($m)) continue;
 
-                // Vincula no imóvel
-                $stmt = $conn->prepare("
-                    UPDATE imovel
-                       SET endereco_id = ?
-                     WHERE id = ?
-                ");
-                $stmt->bind_param("ii", $enderecoId, $imovelId);
-                if (!$stmt->execute()) {
-                    throw new Exception("Erro ao vincular endereço ao imóvel: " . $stmt->error);
-                }
-                $stmt->close();
+            $enderecoId = (int)($m['endereco_id'] ?? $m['enderecoId'] ?? 0);
+            $uiStatus   = (string)($m['ui_status'] ?? '');
+            $uiDeleted  = !empty($m['ui_deleted']) || ($uiStatus === 'Deletado');
+
+            if ($enderecoId > 0) {
+                if ($uiDeleted) $idsDeletar[$enderecoId] = true;
+                else            $idsManter[$enderecoId]  = ['idx' => (string)$idx, 'data' => $m];
+            } else {
+                if (!$uiDeleted) $novos[] = ['idx' => (string)$idx, 'data' => $m];
             }
         }
 
-        // Atualiza sempre a situação do imóvel
-        $stmt = $conn->prepare("
-            UPDATE imovel
-               SET situacao = ?
+        // 2.3) Remove vínculos que foram excluídos ou não vieram mais
+        $del = $conn->prepare("DELETE FROM endereco_osc WHERE osc_id = ? AND endereco_id = ?");
+        foreach ($existentes as $eid => $_) {
+            if (isset($idsDeletar[$eid]) || !isset($idsManter[$eid])) {
+                $del->bind_param("ii", $osc_id, $eid);
+                if (!$del->execute()) throw new Exception("Erro ao deletar vínculo de endereço {$eid}: " . $del->error);
+            }
+        }
+        $del->close();
+
+        // 2.4) Prepara statements de UPDATE/INSERT
+        $updEnd = $conn->prepare("
+            UPDATE endereco
+               SET descricao = ?,
+                   cep = ?,
+                   cidade = ?,
+                   logradouro = ?,
+                   bairro = ?,
+                   numero = ?,
+                   complemento = ?
              WHERE id = ?
         ");
-        $stmt->bind_param("si", $situacao, $imovelId);
-        if (!$stmt->execute()) {
-            throw new Exception("Erro ao atualizar situação do imóvel: " . $stmt->error);
-        }
-        $stmt->close();
 
-    } else {
-        // Ainda não existe imóvel para essa OSC
-        $enderecoId = null;
+        $updJoin = $conn->prepare("
+            UPDATE endereco_osc
+               SET situacao = ?
+             WHERE osc_id = ? AND endereco_id = ?
+        ");
 
-        if ($temEndereco) {
-            // Cria endereço
-            $stmt = $conn->prepare("
-                INSERT INTO endereco (cep, cidade, bairro, logradouro, numero)
-                VALUES (?, ?, ?, ?, ?)
-            ");
-            $stmt->bind_param("sssss", $cep, $cidade, $bairro, $logradouro, $numero);
-            if (!$stmt->execute()) {
-                throw new Exception("Erro ao inserir endereço: " . $stmt->error);
+        $insEnd = $conn->prepare("
+            INSERT INTO endereco (descricao, cep, cidade, logradouro, bairro, numero, complemento)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ");
+
+        $insJoin = $conn->prepare("
+            INSERT INTO endereco_osc (osc_id, endereco_id, situacao, principal)
+            VALUES (?, ?, ?, 0)
+        ");
+
+        // 2.5) Aplica updates/inserts e escolhe candidato a principal
+        $candidatosPrincipal = []; // ordem recebida: [['id'=>X,'p'=>0/1], ...]
+
+        $coerceSituacao = function($v) {
+            $s = trim((string)$v);
+            if ($s === '') $s = 'NÃO INFORMADO';
+            // situacao é NOT NULL e tem limite 30
+            if (function_exists('mb_substr')) return mb_substr($s, 0, 30, 'UTF-8');
+            return substr($s, 0, 30);
+        };
+
+        $coercePrincipal = function($v) {
+            // aceita: true/false, 1/0, '1'/'0', 'true'/'false', 'on'/'off', 'sim'/'nao'
+            if ($v === true) return 1;
+            if ($v === false || $v === null) return 0;
+        
+            if (is_int($v)) return ($v === 1) ? 1 : 0;
+            if (is_float($v)) return ((int)$v === 1) ? 1 : 0;
+        
+            if (is_string($v)) {
+                $t = strtolower(trim($v));
+                if ($t === '1' || $t === 'true' || $t === 'on' || $t === 'yes' || $t === 'sim') return 1;
+                if ($t === '0' || $t === 'false' || $t === 'off' || $t === 'no'  || $t === 'nao') return 0;
+                if (is_numeric($t)) return ((int)$t === 1) ? 1 : 0;
             }
-            $enderecoId = (int)$stmt->insert_id;
+        
+            return ((int)$v === 1) ? 1 : 0;
+        };
+
+        foreach ($idsManter as $eid => $pack) {
+            $m = $pack['data'];
+
+            $descricao   = (string)($m['descricao'] ?? '');
+            $cep         = (string)($m['cep'] ?? '');
+            $cidade      = (string)($m['cidade'] ?? '');
+            $logradouro  = (string)($m['logradouro'] ?? '');
+            $bairro      = (string)($m['bairro'] ?? '');
+            $numero      = (string)($m['numero'] ?? '');
+            $complemento = (string)($m['complemento'] ?? '');
+
+            $situacao = $coerceSituacao($m['situacao'] ?? '');
+            $principalRaw  = $m['principal'] ?? $m['isPrincipal'] ?? $m['principalEndereco'] ?? $m['principal_endereco'] ?? $m['principal_osc'] ?? 0;
+            $principalFlag = $coercePrincipal($principalRaw);
+
+            $updEnd->bind_param("sssssssi", $descricao, $cep, $cidade, $logradouro, $bairro, $numero, $complemento, $eid);
+            if (!$updEnd->execute()) throw new Exception("Erro ao atualizar endereço {$eid}: " . $updEnd->error);
+
+            $updJoin->bind_param("sii", $situacao, $osc_id, $eid);
+            if (!$updJoin->execute()) throw new Exception("Erro ao atualizar vínculo do endereço {$eid}: " . $updJoin->error);
+
+            $candidatosPrincipal[] = ['id' => (int)$eid, 'p' => (int)$principalFlag];
+        }
+
+        foreach ($novos as $pack) {
+            $idx = $pack['idx'];
+            $m   = $pack['data'];
+
+            $descricao   = (string)($m['descricao'] ?? '');
+            $cep         = (string)($m['cep'] ?? '');
+            $cidade      = (string)($m['cidade'] ?? '');
+            $logradouro  = (string)($m['logradouro'] ?? '');
+            $bairro      = (string)($m['bairro'] ?? '');
+            $numero      = (string)($m['numero'] ?? '');
+            $complemento = (string)($m['complemento'] ?? '');
+
+            $situacao = $coerceSituacao($m['situacao'] ?? '');
+            $principalRaw  = $m['principal'] ?? $m['isPrincipal'] ?? $m['principalEndereco'] ?? $m['principal_endereco'] ?? $m['principal_osc'] ?? 0;
+            $principalFlag = $coercePrincipal($principalRaw);
+
+            $insEnd->bind_param("sssssss", $descricao, $cep, $cidade, $logradouro, $bairro, $numero, $complemento);
+            if (!$insEnd->execute()) throw new Exception("Erro ao inserir endereço: " . $insEnd->error);
+            $newId = (int)$conn->insert_id;
+
+            $insJoin->bind_param("iis", $osc_id, $newId, $situacao);
+            if (!$insJoin->execute()) throw new Exception("Erro ao vincular endereço {$newId} à OSC: " . $insJoin->error);
+
+            $imoveis_novos_ids[$idx] = $newId;
+            $candidatosPrincipal[] = ['id' => $newId, 'p' => (int)$principalFlag];
+        }
+
+        $updEnd->close();
+        $updJoin->close();
+        $insEnd->close();
+        $insJoin->close();
+
+        // 2.6) Garante apenas 1 principal
+        if (!empty($candidatosPrincipal)) {
+            $principalId = null;
+            foreach ($candidatosPrincipal as $c) {
+                if ((int)$c['p'] === 1) { $principalId = (int)$c['id']; break; }
+            }
+            if ($principalId === null) $principalId = (int)$candidatosPrincipal[0]['id'];
+
+            $stmt = $conn->prepare("UPDATE endereco_osc SET principal = 0 WHERE osc_id = ?");
+            $stmt->bind_param("i", $osc_id);
+            if (!$stmt->execute()) throw new Exception("Erro ao zerar principal dos imóveis: " . $stmt->error);
+            $stmt->close();
+
+            $stmt = $conn->prepare("UPDATE endereco_osc SET principal = 1 WHERE osc_id = ? AND endereco_id = ?");
+            $stmt->bind_param("ii", $osc_id, $principalId);
+            if (!$stmt->execute()) throw new Exception("Erro ao definir imóvel principal: " . $stmt->error);
             $stmt->close();
         }
-
-        if ($enderecoId !== null) {
-            $stmt = $conn->prepare("
-                INSERT INTO imovel (osc_id, endereco_id, situacao)
-                VALUES (?, ?, ?)
-            ");
-            $stmt->bind_param("iis", $osc_id, $enderecoId, $situacao);
-        } else {
-            // Nenhum dado de endereço informado: cria imóvel só com situação
-            $stmt = $conn->prepare("
-                INSERT INTO imovel (osc_id, situacao)
-                VALUES (?, ?)
-            ");
-            $stmt->bind_param("is", $osc_id, $situacao);
-        }
-
-        if (!$stmt->execute()) {
-            throw new Exception("Erro ao inserir imóvel: " . $stmt->error);
-        }
-        $stmt->close();
     }
-
 // ============================================
 // 3) ATIVIDADES (sync: update/insert/delete)
 // ============================================
@@ -754,6 +812,7 @@ if (isset($data['atividades'])) {
       'osc_id' => $osc_id,
       'cores_id' => $cores_id,
       'template_id' => $template_id,
+      'imoveis_novos_ids' => $imoveis_novos_ids ?? new stdClass(),
       'atividades_novos_ids' => $atividades_novos_ids ?? new stdClass()
     ]);
 

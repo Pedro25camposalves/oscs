@@ -420,7 +420,7 @@ require 'autenticacao.php';
 
 <main>
 
-    <!-- TABS DE NAVEGAÇÃO (abaixo do header) -->
+    <!-- TABS DE NAVEGAÇÃO -->
     <div class="tabs-top" id="tabsTop">
         <a class="tab-btn is-active" href="oscs_cadastradas.php"><span class="dot"></span>OSCs</a>
         <a class="tab-btn" href="cadastro_osc.php"><span class="dot"></span>Nova OSC</a>

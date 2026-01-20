@@ -73,7 +73,7 @@ try {
     $stmt->execute();
     $imoveisBD = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
-    
+
     $imoveis = [];
     foreach ($imoveisBD as $r) {
         $imoveis[] = [
@@ -89,7 +89,7 @@ try {
             'descricao'    => $r['descricao'] ?? '',
         ];
     }
-    
+
     if (count($imoveis) === 0) {
         $stmt = $conn->prepare("
             SELECT
@@ -112,13 +112,13 @@ try {
         $stmt->execute();
         $imoveisBD2 = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-    
+
         foreach ($imoveisBD2 as $k => $r) {
             $imoveis[] = [
                 'imovel_id'    => (int)($r['imovel_id'] ?? 0),
                 'endereco_id'  => (int)($r['endereco_id'] ?? 0),
                 'situacao'     => $r['situacao'] ?? '',
-                'principal'    => ($k === 0 ? 1 : 0), // no legado, assume o primeiro como principal
+                'principal'    => ($k === 0 ? 1 : 0),
                 'cep'          => $r['cep'] ?? '',
                 'cidade'       => $r['cidade'] ?? '',
                 'bairro'       => $r['bairro'] ?? '',
@@ -129,8 +129,8 @@ try {
             ];
         }
     }
-    
-    
+
+
     // ============================================
     // 5) ENVOLVIDOS
     // ============================================

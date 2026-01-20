@@ -139,6 +139,21 @@ if (!$oscIdVinculada) {
             object-fit: cover
         }
 
+        #imoveisList{
+          display:flex;
+          flex-direction:column;
+          gap:12px;
+        }
+
+        #imoveisList .imovel-card{
+          width:100%;
+          max-width:100%;
+        }
+
+        #imoveisList .imovel-card{
+          grid-column: 1 / -1;
+        }
+
         footer { display: flex; justify-content: space-between; gap: 12px }
         .btn {
             padding: 10px 14px;
@@ -767,47 +782,47 @@ if (!$oscIdVinculada) {
 <div id="modalImovelOscBackdrop" class="modal-backdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Imóvel">
     <h3>Adicionar Imóvel</h3>
-
-    <div style="margin-top:8px" class="grid">
-      <div>
-        <label for="imovelDescricao">Descrição</label>
-        <input id="imovelDescricao" type="text" placeholder="Ex.: Sede, Escritório, Galpão" />
+    <div class="divider"></div>
+      <div class="grid cols-2" style="margin-top:10px;">
+        <div style="grid-column:1 / -1;">
+            <label for="imovelDescricao">Descrição</label>
+            <input id="imovelDescricao" type="text" placeholder="Ex: Sede, Ponto de apoio..." />
+        </div>
+        <div style="grid-column:1 / -1;">
+          <label for="imovelSituacao">Situação</label>
+          <input id="imovelSituacao" type="text" placeholder="Ex.: Próprio, Alugado" />
+        </div>
+        <div>
+          <label for="imovelCep">CEP (*)</label>
+          <input id="imovelCep" inputmode="numeric" type="text" required />
+        </div>
+        <div>
+          <label for="imovelCidade">Cidade</label>
+          <input id="imovelCidade" type="text" />
+        </div>
+        <div>
+          <label for="imovelBairro">Bairro</label>
+          <input id="imovelBairro" type="text" />
+        </div>
+        <div>
+          <label for="imovelLogradouro">Logradouro</label>
+          <input id="imovelLogradouro" type="text" />
+        </div>
+        <div>
+          <label for="imovelNumero">Número</label>
+          <input id="imovelNumero" inputmode="numeric" type="text" />
+        </div>
+        <div>
+          <label for="imovelComplemento">Complemento</label>
+          <input id="imovelComplemento" type="text" />
+        </div>
+        <div style="display:flex; align-items:flex-end; gap:8px">
+          <label style="display:flex; gap:8px; align-items:center; margin:0; cursor:pointer">
+            <input id="imovelPrincipal" type="checkbox" />
+            <span class="small">Endereço principal</span>
+          </label>
+        </div>
       </div>
-      <div>
-        <label for="imovelSituacao">Situação</label>
-        <input id="imovelSituacao" type="text" placeholder="Ex.: Próprio, Alugado" />
-      </div>
-      <div>
-        <label for="imovelCep">CEP (*)</label>
-        <input id="imovelCep" inputmode="numeric" type="text" required />
-      </div>
-      <div>
-        <label for="imovelCidade">Cidade</label>
-        <input id="imovelCidade" type="text" />
-      </div>
-      <div>
-        <label for="imovelBairro">Bairro</label>
-        <input id="imovelBairro" type="text" />
-      </div>
-      <div>
-        <label for="imovelLogradouro">Logradouro</label>
-        <input id="imovelLogradouro" type="text" />
-      </div>
-      <div>
-        <label for="imovelNumero">Número</label>
-        <input id="imovelNumero" inputmode="numeric" type="text" />
-      </div>
-      <div>
-        <label for="imovelComplemento">Complemento</label>
-        <input id="imovelComplemento" type="text" />
-      </div>
-      <div style="display:flex; align-items:flex-end; gap:8px">
-        <label style="display:flex; gap:8px; align-items:center; margin:0; cursor:pointer">
-          <input id="imovelPrincipal" type="checkbox" />
-          <span class="small">Endereço principal</span>
-        </label>
-      </div>
-    </div>
 
     <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
       <button type="button" class="btn btn-ghost" id="closeImovelOscModal">Cancelar</button>
@@ -2179,11 +2194,8 @@ if (!$oscIdVinculada) {
               titulo: 'NOVA FOTO',
               file,
             onRemove: () => {
-                  // pediu remoção: some do modal e vira regra no salvar
                   envFotoExistingUrl = null;
                   envFotoRemover = true;
-            
-                  // garante que não tem arquivo novo selecionado
                   input.value = '';
             
                   renderEnvFotoCard();
@@ -2201,7 +2213,7 @@ if (!$oscIdVinculada) {
                 url: envFotoExistingUrl,
                 onRemove: () => {
                   envFotoExistingUrl = null;
-                  envFotoRemover = true;   // <-- AQUI
+                  envFotoRemover = true;
                   renderEnvFotoCard();
                 },
                 thumbWide: false
@@ -2252,7 +2264,7 @@ if (!$oscIdVinculada) {
         addEnvolvidoBtn.textContent = 'Salvar';   
         modalBackdrop.style.display = 'flex'; 
 
-        qs('#envFoto').value = ''; // não dá pra setar arquivo via JS
+        qs('#envFoto').value = '';
         qs('#envNome').value = e.nome || '';
         qs('#envTelefone').value = e.telefone || '';
         qs('#envEmail').value = e.email || '';
@@ -2418,6 +2430,34 @@ if (!$oscIdVinculada) {
       modalImovelOscBackdrop.style.display = 'flex';
     }
 
+    function abrirEdicaoImovel(idx) {
+      const m = imoveisOsc[idx];
+      if (!m) return;
+
+      // não edita deletado
+      if (m.ui_deleted || m.ui_status === 'Deletado') {
+        alert('Restaure o imóvel antes de editar.');
+        return;
+      }
+
+      editImovelIndex = idx;
+
+      qs('#imovelDescricao').value   = m.descricao || '';
+      qs('#imovelSituacao').value    = m.situacao || '';
+      qs('#imovelCep').value         = m.cep || '';
+      qs('#imovelCidade').value      = m.cidade || '';
+      qs('#imovelBairro').value      = m.bairro || '';
+      qs('#imovelLogradouro').value  = m.logradouro || '';
+      qs('#imovelNumero').value      = m.numero || '';
+      qs('#imovelComplemento').value = m.complemento || '';
+
+      qs('#imovelPrincipal').checked = (Number(m.principal) === 1 || m.principal === true);
+
+      addImovelOscBtn.textContent = 'Salvar';
+      qs('#modalImovelOscBackdrop .modal h3').textContent = 'Editar Imóvel';
+      modalImovelOscBackdrop.style.display = 'flex';
+    }
+
     function fecharModalImovel() {
       modalImovelOscBackdrop.style.display = 'none';
     }
@@ -2429,6 +2469,7 @@ if (!$oscIdVinculada) {
     });
 
     function salvarImovelDoModal() {
+      // 1) Pega valores do modal
       const descricao   = qs('#imovelDescricao').value.trim();
       const situacao    = qs('#imovelSituacao').value.trim();
       const cep         = qs('#imovelCep').value.trim();
@@ -2444,20 +2485,59 @@ if (!$oscIdVinculada) {
         qs('#imovelCep').focus();
         return;
       }
-
-      const obj = {
-        enderecoId: null,
-        descricao, situacao, cep, cidade, bairro, logradouro, numero, complemento,
-        principal
-      };
-
+                
       if (principal) {
         imoveisOsc.forEach(x => x.principal = false);
       }
 
-      imoveisOsc.push(obj);
+      if (editImovelIndex !== null) {
+        const alvo = imoveisOsc[editImovelIndex];
+        if (!alvo) return;
 
-      if (!imoveisOsc.some(x => x.principal)) {
+        const temId = !!(alvo.endereco_id || alvo.enderecoId || alvo.imovel_id || alvo.imovelId);
+
+        if (temId && !alvo.ui_edit_original) {
+          alvo.ui_edit_original = {
+            descricao: alvo.descricao,
+            situacao: alvo.situacao,
+            cep: alvo.cep,
+            cidade: alvo.cidade,
+            bairro: alvo.bairro,
+            logradouro: alvo.logradouro,
+            numero: alvo.numero,
+            complemento: alvo.complemento,
+            principal: alvo.principal
+          };
+        }
+
+        alvo.descricao   = descricao;
+        alvo.situacao    = situacao;
+        alvo.cep         = cep;
+        alvo.cidade      = cidade;
+        alvo.bairro      = bairro;
+        alvo.logradouro  = logradouro;
+        alvo.numero      = numero;
+        alvo.complemento = complemento;
+        alvo.principal   = principal;
+
+        alvo.ui_status = temId ? 'Editado' : 'Novo';
+
+        editImovelIndex = null;
+
+        renderImoveisOsc();
+        fecharModalImovel();
+        return;
+      }
+
+      imoveisOsc.push({
+        enderecoId: null,
+        descricao, situacao, cep, cidade, bairro, logradouro, numero, complemento,
+        principal,
+        ui_status: 'Novo',
+        ui_deleted: false
+      });
+
+      if (imoveisOsc.length && !imoveisOsc.some(x => Number(x.principal) === 1 || x.principal === true)) {
         imoveisOsc[0].principal = true;
       }
 
@@ -2467,52 +2547,140 @@ if (!$oscIdVinculada) {
 
     if (addImovelOscBtn) addImovelOscBtn.addEventListener('click', salvarImovelDoModal);
 
-    function renderImoveisOsc() {
-      if (!imoveisList) return;
-      imoveisList.innerHTML = '';
+    function renderImoveisOsc(){
+      const list = qs('#imoveisList');
+      if (!list) return;
+      list.innerHTML = '';
 
-      imoveisOsc.forEach((i, idx) => {
+      imoveisOsc.forEach((m, i) => {
         const c = document.createElement('div');
-        c.className = 'envolvido-card';
+        c.className = 'envolvido-card imovel-card';
 
         const info = document.createElement('div');
+        const desc = (m.descricao || '').trim();
+        const sit  = (m.situacao || '').trim();
+
+        const endereco = [
+          m.cep, m.cidade, m.logradouro, m.numero, m.bairro
+        ].filter(Boolean).join(', ');
+
         info.innerHTML = `
-          <div style="font-weight:600">Descrição: ${escapeHtml(i.descricao || '-')}</div>
-          <div class="small">Situação: ${escapeHtml(i.situacao || '-')}</div>
-          <div class="small">Endereço: ${escapeHtml(enderecoLinha(i) || '-')}</div>
+          <div class="small"><b>${escapeHtml(desc || '-')}</b></div>
+          <div class="small"><b>Situação:</b> ${escapeHtml(sit || '-')}</div>
+          <div class="small"><b>Endereço:</b> ${escapeHtml(endereco || '-')}</div>
         `;
 
+        // ===== STATUS =====
+        let statusTxt = m.ui_status || '';
+        const temId = !!(m.endereco_id || m.enderecoId || m.imovel_id || m.imovelId);
+        if (!statusTxt && !temId) statusTxt = 'Novo';
+        if (m.ui_deleted || statusTxt === 'Deletado') statusTxt = 'Deletado';
+
+        let statusPillEl = null;
+        if (statusTxt) {
+          statusPillEl = document.createElement('span');
+          const cls = (statusTxt === 'Novo') ? 'on' : 'off';
+          statusPillEl.className = 'status-pill ' + cls;
+          statusPillEl.textContent = statusTxt;
+        }
+
+        // ===== EDIT =====
+        const edit = document.createElement('button');
+        edit.type = 'button';
+        edit.className = 'btn';
+        edit.textContent = '✎';
+        edit.style.padding = '6px 8px';
+
+        edit.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          abrirEdicaoImovel(i); 
+        });
+
+        if (m.ui_deleted || m.ui_status === 'Deletado') {
+          edit.disabled = true;
+          edit.title = 'Restaure para editar';
+          edit.style.opacity = '0.60';
+          edit.style.cursor = 'not-allowed';
+        }
+
+        // ===== PILL PRINCIPAL =====
+        let principalPillEl = null;
+        if (Number(m.principal) === 1) {
+          principalPillEl = document.createElement('span');
+          principalPillEl.className = 'pill-principal';
+          principalPillEl.textContent = 'Principal';
+        }
+
+        // ===== REMOVE / UNDO =====
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'btn';
-        remove.textContent = '✕';
         remove.style.padding = '6px 8px';
-        remove.style.marginLeft = '8px';
+
+        const isEditado  = (m.ui_status === 'Editado');
+        const isDeletado = (m.ui_deleted || m.ui_status === 'Deletado');
+        const isNovo     = (!temId || m.ui_status === 'Novo');
+
+        remove.textContent = (isEditado || isDeletado) ? '↩' : '✕';
+        remove.title = isEditado
+          ? 'Desfazer edição'
+          : (isDeletado ? 'Restaurar' : (isNovo ? 'Remover' : 'Deletar'));
+
         remove.addEventListener('click', (ev) => {
           ev.preventDefault();
           ev.stopPropagation();
-          imoveisOsc.splice(idx, 1);
+
+          // 1) EDITADO
+          if (m.ui_status === 'Editado') {
+            if (m.ui_edit_original) {
+              Object.assign(m, m.ui_edit_original);
+            }
+            delete m.ui_edit_original;
+            delete m.ui_status;
+            renderImoveisOsc();
+            return;
+          }
+
+          // 2) NOVO
+          if (isNovo) {
+            imoveisOsc.splice(i, 1);
+            renderImoveisOsc();
+            return;
+          }
+
+          // 3) DELETADO
+          if (isDeletado) {
+            m.ui_deleted = false;
+            m.ui_status = m.ui_status_prev || '';
+            delete m.ui_status_prev;
+            if (!m.ui_status) delete m.ui_status;
+            renderImoveisOsc();
+            return;
+          }
+
+          // 4) NORMAL 
+          m.ui_deleted = true;
+          m.ui_status_prev = m.ui_status || '';
+          m.ui_status = 'Deletado';
           renderImoveisOsc();
         });
 
+        // ===== ACTIONS =====
         const actions = document.createElement('div');
         actions.style.marginLeft = 'auto';
         actions.style.display = 'flex';
         actions.style.alignItems = 'center';
         actions.style.gap = '8px';
-                    
-        if (Number(i.principal) === 1) {
-          const pill = document.createElement('span');
-          pill.className = 'pill-principal';
-          pill.textContent = 'Principal';
-          actions.appendChild(pill);
-        }
-                    
+
+        if (principalPillEl) actions.appendChild(principalPillEl);
+        if (statusPillEl) actions.appendChild(statusPillEl);
+        actions.appendChild(edit);
         actions.appendChild(remove);
-                    
+      
         c.appendChild(info);
         c.appendChild(actions);
-        imoveisList.appendChild(c);
+        list.appendChild(c);
       });
     }
 
@@ -2942,13 +3110,22 @@ if (!$oscIdVinculada) {
         fd.append('cnpj',              qs("#CNPJ").value);
         fd.append('telefone',          qs("#telefone").value);
 
-        // imóvel
-        fd.append('situacaoImovel', qs("#situacaoImovel").value);
-        fd.append('cep',            qs("#cep").value);
-        fd.append('cidade',         qs("#cidade").value);
-        fd.append('bairro',         qs("#bairro").value);
-        fd.append('logradouro',     qs("#logradouro").value);
-        fd.append('numero',         qs("#numero").value);
+        // imóveis (nova lógica: vem do array imoveisOsc, não do DOM)
+        const imoveisParaEnvio = imoveisOsc.map(m => ({
+          endereco_id: (m.endereco_id || m.enderecoId || 0),
+          descricao: (m.descricao || ''),
+          situacao: (m.situacao || ''),
+          principal: (Number(m.principal) === 1 || m.principal === true) ? 1 : 0,
+          cep: (m.cep || ''),
+          cidade: (m.cidade || ''),
+          bairro: (m.bairro || ''),
+          logradouro: (m.logradouro || ''),
+          numero: (m.numero || ''),
+          complemento: (m.complemento || ''),
+          ui_status: (m.ui_status || ''),
+          ui_deleted: !!m.ui_deleted
+        }));
+        fd.append('imoveis', JSON.stringify(imoveisParaEnvio));
 
         // template
         fd.append('labelBanner', qs("#labelBanner").value);
