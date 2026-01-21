@@ -50,26 +50,86 @@ try {
     }
 
     // ============================================
-    // 4) IMÓVEL + ENDEREÇO (nova estrutura)
+    // 4) IMÓVEIS/ENDEREÇOS DA OSC (endereco_osc) - lista
     // ============================================
     $stmt = $conn->prepare("
-        SELECT 
-            i.id        AS imovel_id,
-            i.situacao  AS imovel_situacao,
-            e.cep       AS imovel_cep,
-            e.cidade    AS imovel_cidade,
-            e.bairro    AS imovel_bairro,
-            e.logradouro AS imovel_logradouro,
-            e.numero    AS imovel_numero
-        FROM imovel i
-        LEFT JOIN endereco e ON e.id = i.endereco_id
-        WHERE i.osc_id = ?
-        LIMIT 1
+        SELECT
+            eo.endereco_id,
+            eo.situacao,
+            eo.principal,
+            e.cep,
+            e.cidade,
+            e.bairro,
+            e.logradouro,
+            e.numero,
+            e.complemento,
+            e.descricao
+        FROM endereco_osc eo
+        INNER JOIN endereco e ON e.id = eo.endereco_id
+        WHERE eo.osc_id = ?
+        ORDER BY eo.principal DESC, eo.endereco_id DESC
     ");
     $stmt->bind_param("i", $id);
     $stmt->execute();
-    $imovel = $stmt->get_result()->fetch_assoc();
+    $imoveisBD = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
+
+    $imoveis = [];
+    foreach ($imoveisBD as $r) {
+        $imoveis[] = [
+            'endereco_id'  => (int)($r['endereco_id'] ?? 0),
+            'situacao'     => $r['situacao'] ?? '',
+            'principal'    => (int)($r['principal'] ?? 0),
+            'cep'          => $r['cep'] ?? '',
+            'cidade'       => $r['cidade'] ?? '',
+            'bairro'       => $r['bairro'] ?? '',
+            'logradouro'   => $r['logradouro'] ?? '',
+            'numero'       => $r['numero'] ?? '',
+            'complemento'  => $r['complemento'] ?? '',
+            'descricao'    => $r['descricao'] ?? '',
+        ];
+    }
+
+    if (count($imoveis) === 0) {
+        $stmt = $conn->prepare("
+            SELECT
+                i.id AS imovel_id,
+                i.situacao AS situacao,
+                e.id AS endereco_id,
+                e.cep,
+                e.cidade,
+                e.bairro,
+                e.logradouro,
+                e.numero,
+                e.complemento,
+                e.descricao
+            FROM imovel i
+            LEFT JOIN endereco e ON e.id = i.endereco_id
+            WHERE i.osc_id = ?
+            ORDER BY i.id DESC
+        ");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $imoveisBD2 = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        foreach ($imoveisBD2 as $k => $r) {
+            $imoveis[] = [
+                'imovel_id'    => (int)($r['imovel_id'] ?? 0),
+                'endereco_id'  => (int)($r['endereco_id'] ?? 0),
+                'situacao'     => $r['situacao'] ?? '',
+                'principal'    => ($k === 0 ? 1 : 0),
+                'cep'          => $r['cep'] ?? '',
+                'cidade'       => $r['cidade'] ?? '',
+                'bairro'       => $r['bairro'] ?? '',
+                'logradouro'   => $r['logradouro'] ?? '',
+                'numero'       => $r['numero'] ?? '',
+                'complemento'  => $r['complemento'] ?? '',
+                'descricao'    => $r['descricao'] ?? '',
+            ];
+        }
+    }
+
 
     // ============================================
     // 5) ENVOLVIDOS
@@ -111,7 +171,7 @@ try {
     }
 
     // ============================================
-    // 6.5) DOCUMENTOS (tabela documento)
+    // 7) DOCUMENTOS
     // ============================================
     $documentos = [
         'INSTITUCIONAL' => [],
@@ -127,6 +187,8 @@ try {
             id_documento,
             categoria,
             subtipo,
+            descricao,
+            link,
             ano_referencia,
             documento,
             data_upload
@@ -143,31 +205,39 @@ try {
         $cat = $d['categoria'] ?? '';
         $sub = $d['subtipo'] ?? '';
         $path = $d['documento'] ?? '';
-
-        // nome exibido: se você salva o caminho, mostramos o basename
         $nome = $path ? basename($path) : '';
 
         $item = [
             'id_documento'   => (int)($d['id_documento'] ?? 0),
             'categoria'      => $cat,
             'subtipo'        => $sub,
+            'descricao'      => $d['descricao'] ?? null,
+            'link'           => $d['link'] ?? null,
             'ano_referencia' => $d['ano_referencia'] ?? null,
             'nome'           => $nome,
-            'url'            => $path,      // o front usa isso pra abrir/baixar
+            'url'            => $path,
             'data_upload'    => $d['data_upload'] ?? null,
         ];
 
         if ($cat === 'CONTABIL') {
             if (!isset($documentos['CONTABIL'][$sub])) $documentos['CONTABIL'][$sub] = [];
             $documentos['CONTABIL'][$sub][] = $item;
+        
+        } elseif (strpos($sub, 'OUTRO') === 0) {
+            if (!isset($documentos[$cat][$sub])) $documentos[$cat][$sub] = [];
+            if (isset($documentos[$cat][$sub]['id_documento'])) {
+                $documentos[$cat][$sub] = [ $documentos[$cat][$sub] ];
+            }
+        
+            $documentos[$cat][$sub][] = $item;
+        
         } else {
-            // INSTITUCIONAL/CERTIDAO: normalmente 1 por subtipo
             $documentos[$cat][$sub] = $item;
         }
     }
 
     // ============================================
-    // 7) Resposta no formato do editar_osc.php
+    // 8) Resposta
     // ============================================
     $resultado = [
         'id' => (int)$osc['id'],
@@ -212,23 +282,10 @@ try {
             'labelBanner' => $template['label_banner'] ?? '',
         ],
 
-        'imovel' => [
-                'id'         => isset($imovel['imovel_id']) ? (int)$imovel['imovel_id'] : null,
-                'cep'        => $imovel['imovel_cep'] ?? '',
-                'cidade'     => $imovel['imovel_cidade'] ?? '',
-                'bairro'     => $imovel['imovel_bairro'] ?? '',
-                'logradouro' => $imovel['imovel_logradouro'] ?? '',
-                'numero'     => $imovel['imovel_numero'] ?? '',
-                'situacao'   => $imovel['imovel_situacao'] ?? '',
-        ],
-
+        'imoveis' => $imoveis,
         'atividades' => $atividades,
         'envolvidos' => $envolvidos,
-
-        // NOVO:
         'documentos' => $documentos,
-
-        // compat (se você ainda usa)
         'template' => $template,
     ];
 

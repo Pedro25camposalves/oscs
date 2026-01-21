@@ -335,6 +335,16 @@ require 'autenticacao.php';
             align-items:center;
             border:1px solid #f0f0f0;
         }
+        .pill-principal{
+          display:inline-block;
+          padding:2px 8px;
+          border-radius:999px;
+          background:#e8f5e9;
+          border:1px solid #b2dfdb;
+          font-size:12px;
+          font-weight:700;
+          color:#055;
+        }
     </style>
 </head>
 
@@ -361,7 +371,7 @@ require 'autenticacao.php';
         <div class="tabs-top" id="tabsTop">
             <a class="tab-btn <?= ($activePage === 'oscs_cadastradas.php') ? 'is-active' : '' ?>" href="oscs_cadastradas.php"><span class="dot"></span>OSCs</a>
             <a class="tab-btn <?= ($activePage === 'cadastro_osc.php') ? 'is-active' : '' ?>" href="cadastro_osc.php"><span class="dot"></span>Nova OSC</a>
-            <a class="tab-btn" href="config_osc.php"><span class="dot"></span>Configurações OSC</a>
+            <a class="tab-btn" href="config_osc.php"><span class="dot"></span>Configurações da OSC</a>
         </div>
         
         <form id="oscForm" onsubmit="event.preventDefault();saveData()">
@@ -632,10 +642,14 @@ require 'autenticacao.php';
                 </div>
             </div>
 
+            <!-- ====================================================================== -->
+            <!-- DOCUMENTOS — INÍCIO DA SEÇÃO (HTML) -->
+            <!-- Tudo que pertence à sessão de Documentos da OSC está agrupado aqui -->
+            <!-- ====================================================================== -->
             <!-- SEÇÃO 7: DOCUMENTOS DA OSC (nova lógica, igual à dos projetos) -->
             <div style="margin-top:16px" class="card">
                 <h2>Documentos</h2>
-                <div class="small">Formatos permitidos: .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf</div>
+                <div class="small"><b>Formatos permitidos:</b> .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf</div>
                 <div class="divider"></div>
 
                 <!-- Lista de documentos adicionados -->
@@ -646,6 +660,10 @@ require 'autenticacao.php';
                 </div>
             </div>
 
+
+            <!-- ====================================================================== -->
+            <!-- DOCUMENTOS — FIM DA SEÇÃO (HTML) -->
+            <!-- ====================================================================== -->
             <!-- BOTÕES -->
             <div style="margin-top:16px" class="card">
                 <footer>
@@ -670,7 +688,7 @@ require 'autenticacao.php';
             <div id="envNovoContainer" style="margin-top:8px">
                 <div class="grid">
                     <div>
-                      <div class="small">Preview</div>
+                      <div class="small">Visualização</div>
                       <div class="images-preview" id="previewNovoEnvolvido"></div>
                     </div>
                     <div>
@@ -716,55 +734,45 @@ require 'autenticacao.php';
         <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Imóvel da OSC">
             <h3>Adicionar Imóvel</h3>
             <div class="divider"></div>
-
             <div class="grid cols-2" style="margin-top:10px;">
+                <div style="grid-column:1 / -1;">
+                    <label for="imovelDescricao">Descrição</label>
+                    <input id="imovelDescricao" type="text" placeholder="Ex: Sede, Ponto de apoio..." />
+                </div>
+                <div style="grid-column:1 / -1;">
+                    <label for="imovelSituacao">Situação do imóvel (*)</label>
+                    <input id="imovelSituacao" type="text" placeholder="Ex: Próprio, Alugado, Cedido..." />
+                </div>
+                <div>
+                    <label for="imovelCep">CEP (*)</label>
+                    <input id="imovelCep" type="text" inputmode="numeric" />
+                </div>
+                <div>
+                    <label for="imovelCidade">Cidade (*)</label>
+                    <input id="imovelCidade" type="text" />
+                </div>
+                <div>
+                    <label for="imovelLogradouro">Logradouro (*)</label>
+                    <input id="imovelLogradouro" type="text" />
+                </div>
+                <div>
+                    <label for="imovelBairro">Bairro (*)</label>
+                    <input id="imovelBairro" type="text" />
+                </div>
+                <div>
+                    <label for="imovelNumero">Número (*)</label>
+                    <input id="imovelNumero" type="text" inputmode="numeric" />
+                </div>
+                <div>
+                    <label for="imovelComplemento">Complemento</label>
+                    <input id="imovelComplemento" type="text" />
+                </div>
                 <div style="grid-column:1 / -1; margin-top:4px;">
                     <label class="label-inline">
                         <input type="checkbox" id="imovelPrincipal" />
                         <span class="small">Endereço principal</span>
                     </label>
                 </div>
-
-                <div style="grid-column:1 / -1;">
-                    <label for="imovelDescricao">Descrição</label>
-                    <input id="imovelDescricao" type="text" placeholder="Ex: Sede, Ponto de apoio..." />
-                </div>
-
-                <div style="grid-column:1 / -1;">
-                    <label for="imovelSituacao">Situação do imóvel (*)</label>
-                    <input id="imovelSituacao" type="text" placeholder="Ex: Próprio, Alugado, Cedido..." />
-                </div>
-
-                <div>
-                    <label for="imovelCep">CEP (*)</label>
-                    <input id="imovelCep" type="text" inputmode="numeric" />
-                </div>
-
-                <div>
-                    <label for="imovelCidade">Cidade (*)</label>
-                    <input id="imovelCidade" type="text" />
-                </div>
-
-                <div>
-                    <label for="imovelLogradouro">Logradouro (*)</label>
-                    <input id="imovelLogradouro" type="text" />
-                </div>
-
-                <div>
-                    <label for="imovelBairro">Bairro (*)</label>
-                    <input id="imovelBairro" type="text" />
-                </div>
-
-                <div>
-                    <label for="imovelNumero">Número (*)</label>
-                    <input id="imovelNumero" type="text" inputmode="numeric" />
-                </div>
-
-                <div>
-                    <label for="imovelComplemento">Complemento</label>
-                    <input id="imovelComplemento" type="text" />
-                </div>
-
             </div>
 
             <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
@@ -801,6 +809,10 @@ require 'autenticacao.php';
         </div>
     </div>
 
+
+    <!-- ====================================================================== -->
+    <!-- DOCUMENTOS — INÍCIO DOS MODAIS (HTML) -->
+    <!-- ====================================================================== -->
     <!-- MODAL DOCUMENTOS OSC (mesma lógica do projeto) -->
     <div id="modalDocOscBackdrop" class="modal-backdrop">
         <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Documento da OSC">
@@ -870,7 +882,9 @@ require 'autenticacao.php';
             </div>
         </div>
     </div>
-
+    <!-- ====================================================================== -->
+    <!-- DOCUMENTOS — FIM DOS MODAIS (HTML) -->
+    <!-- ====================================================================== -->
 
     <script>
         const qs = s => document.querySelector(s);
@@ -920,6 +934,11 @@ require 'autenticacao.php';
             });
         }
 
+
+        // ============================================================================
+        // DOCUMENTOS — ESTADO PRINCIPAL
+        // (lista em memória usada para montar a seção e enviar para o backend)
+        // ============================================================================
         // Documentos da OSC
         const docsOsc = []; // cada item: {categoria, tipo, subtipo, ...}
 
@@ -962,23 +981,6 @@ require 'autenticacao.php';
             }
         }
 
-        function labelImovel(e) {
-            const partes = [];
-
-            if (e.descricao) partes.push(e.descricao);
-            if (e.situacao) partes.push(`(${e.situacao})`);
-
-            const rua    = [e.logradouro, e.numero].filter(Boolean).join(', ');
-            const bairro = e.bairro ? ` - ${e.bairro}` : '';
-            const cidade = e.cidade ? ` • ${e.cidade}` : '';
-            const cep    = e.cep    ? ` • CEP ${e.cep}` : '';
-
-            const core = [rua + bairro, cidade, cep].filter(Boolean).join('');
-            if (core.trim()) partes.push(core.trim());
-
-            return partes.join(' — ') || 'Imóvel sem descrição';
-        }
-
         function renderImoveisOsc() {
             if (!listaImoveisOsc) return;
             listaImoveisOsc.innerHTML = '';
@@ -989,14 +991,25 @@ require 'autenticacao.php';
 
                 const info = document.createElement('div');
 
-                const principalTag = imo.principal
-                    ? `<span class="small" style="display:inline-block; padding:2px 8px; border-radius:999px; margin-left:6px; background:#e8f5e9; border:1px solid #b2dfdb;">principal</span>`
-                    : '';
+                c.style.alignItems = 'flex-start';
+                                
+                const desc = (imo.descricao || '').trim();
+                const sit  = (imo.situacao || '').trim();
+
+                const numeroComp = [imo.numero, imo.complemento]
+                  .map(v => (v ?? '').toString().trim())
+                  .filter(Boolean)
+                  .join(' ');
+
+                const endereco = [imo.cep, imo.cidade, imo.logradouro, numeroComp, imo.bairro]
+                  .map(v => (v ?? '').toString().trim())
+                  .filter(Boolean)
+                  .join(', ');
 
                 info.innerHTML = `
-                    <div style="font-weight:600">
-                        ${escapeHtml(labelImovel(imo))} ${principalTag}
-                    </div>
+                  <div class="small"><b>${escapeHtml(desc || '-')}</b></div>
+                  <div class="small"><b>Situação:</b> ${escapeHtml(sit || '-')}</div>
+                  <div class="small"><b>Endereço:</b> ${escapeHtml(endereco || '-')}</div>
                 `;
 
                 const remove = document.createElement('button');
@@ -1009,8 +1022,23 @@ require 'autenticacao.php';
                     renderImoveisOsc();
                 });
 
+                const actions = document.createElement('div');
+                actions.style.marginLeft = 'auto';
+                actions.style.display = 'flex';
+                actions.style.alignItems = 'center';
+                actions.style.gap = '8px';
+                                
+                if (imo.principal) {
+                  const pill = document.createElement('span');
+                  pill.className = 'pill-principal';
+                  pill.textContent = 'Principal';
+                  actions.appendChild(pill);
+                }
+                                
+                actions.appendChild(remove);
+                                
                 c.appendChild(info);
-                c.appendChild(remove);
+                c.appendChild(actions);
                 listaImoveisOsc.appendChild(c);
             });
         }
@@ -1400,7 +1428,6 @@ require 'autenticacao.php';
             qs('#atvSubarea').value = '';
         }
 
-        // ADICIONAR ATIVIDADE
         function addAtividade() {
             const cnae = qs('#atvCnae').value.trim();
             const area = qs('#atvArea').value.trim();
@@ -1424,7 +1451,6 @@ require 'autenticacao.php';
 
         addAtividadeBtn.addEventListener('click', addAtividade);
 
-        // RENDERIZA A LISTA DE ATIVIDADES
         function renderAtividades() {
             const list = qs('#atividadesList');
             list.innerHTML = '';
@@ -1467,7 +1493,10 @@ require 'autenticacao.php';
             })
         }
 
-        // ====== DOCUMENTOS DA OSC (mesma lógica do cadastro de projeto) ======
+
+        // ============================================================================
+        // DOCUMENTOS — ELEMENTOS, MAPAS, RENDER E AÇÕES
+        // ============================================================================
         const docsOscList            = qs('#docsOscList');
         const modalDocOscBackdrop    = qs('#modalDocOscBackdrop');
         const openDocOscModal        = qs('#openDocOscModal');
@@ -1487,7 +1516,7 @@ require 'autenticacao.php';
         const docLinkGroup      = qs('#docLinkGroup');
         const docLink           = qs('#docLink');
                         
-        // Mapeamento Categoria -> Tipos específicos para OSC
+        // Mapeamento Categoria
         const TIPOS_POR_CATEGORIA_OSC = {
             INSTITUCIONAL: [
                 { value: 'ESTATUTO',            label: 'Estatuto' },
@@ -1637,7 +1666,7 @@ require 'autenticacao.php';
                             <div style="font-weight:600">
                                 ${escapeHtml(linha)}
                             </div>
-                            ${d.ano_referencia ? `<div class="small">Ano: ${escapeHtml(d.ano_referencia)}</div>` : ''}
+                            ${d.ano_referencia ? `<div class="small" style="font-weight:bold">Ano: ${escapeHtml(d.ano_referencia)}</div>` : ''}
                             ${d.link ? `<div class="small">Link: ${escapeHtml(d.link)}</div>` : ''}
                             <div class="small">Arquivo: ${escapeHtml(d.file?.name || '—')}</div>
                         `;
@@ -1686,7 +1715,7 @@ require 'autenticacao.php';
             });
         }
                         
-        // Adicionar documento à lista (validação similar ao projeto)
+        // Adicionar documento à lista
         if (addDocOscBtn) {
             addDocOscBtn.addEventListener('click', () => {
                 const cat = docCategoria.value;
@@ -1729,14 +1758,9 @@ require 'autenticacao.php';
                     }
                     subtipoDb = tipo;
                 } else {
-                    // Tipos “simples”: FGTS, TRABALHISTA, CARTAO_CNPJ, ESTATUTO, ATA etc.
                     subtipoDb = tipo;
                 }
 
-                // Regra: só pode ter mais de 1 para:
-                // - BALANCO_PATRIMONIAL
-                // - DRE
-                // - OUTRO / OUTRO_INSTITUCIONAL
                 const permiteMultiplos = (
                     tipo === 'BALANCO_PATRIMONIAL' ||
                     tipo === 'DRE' ||
@@ -1783,7 +1807,10 @@ require 'autenticacao.php';
             });
         }
 
-    // Upload de documento individual da OSC (sem projeto_id)
+
+        // ============================================================================
+        // DOCUMENTOS — UPLOAD
+        // ============================================================================
     async function enviarDocumentoOsc(oscId, docCfg) {
         const fd = new FormData();
         fd.append('id_osc', String(oscId));
@@ -1833,7 +1860,6 @@ require 'autenticacao.php';
         }
     }
 
-        // REALIZA O CADASTRO
         async function saveData() {
             if (!logoSimples.files[0] || !logoCompleta.files[0] || !banner1.files[0]) {
                 alert("Logo simples, logo completa e banner principal são obrigatórios.");
@@ -1920,16 +1946,6 @@ require 'autenticacao.php';
             fd.append('usuario_email', usuarioEmail.value);
             fd.append('usuario_senha', usuarioSenha.value);
 
-            const docEstatutoInput = qs('#docEstatuto');
-            const docAtaInput = qs('#docAta');
-            const docCndFederalInput = qs('#docCndFederal');
-            const docCndEstadualInput = qs('#docCndEstadual');
-            const docCndMunicipalInput = qs('#docCndMunicipal');
-            const docFgtsInput = qs('#docFgts');
-            const docTrabalhistaInput = qs('#docTrabalhista');
-            const docCartCnpjInput = qs('#docCartCnpj');
-            const getFileName = (input) => (input && input.files && input.files[0]) ? input.files[0].name : null;
-
             fd.append('imoveis', JSON.stringify(imoveisOsc));
 
             fd.append('labelBanner', qs("#labelBanner").value);
@@ -1979,6 +1995,10 @@ require 'autenticacao.php';
             if (result.success) {
                 const oscId = result.osc_id;
 
+
+                // ====================================================================
+                // DOCUMENTOS — ENVIO (após criar a OSC)
+                // ====================================================================
                 let errosDocs = [];
 
                 try {
@@ -1991,6 +2011,10 @@ require 'autenticacao.php';
                     errosDocs.push('Falha inesperada ao enviar alguns documentos.');
                 }
 
+
+                // ====================================================================
+                // DOCUMENTOS — FIM DO ENVIO
+                // ====================================================================
                 if (errosDocs.length === 0) {
                     alert("OSC criada com sucesso! Todos os documentos foram enviados.");
                 } else {
@@ -2022,12 +2046,20 @@ require 'autenticacao.php';
 
             envolvidos.length = 0;
             atividades.length = 0;
+
+            // ========================================================================
+            // DOCUMENTOS — RESET (limpar lista em memória + re-render)
+            // ========================================================================
             docsOsc.length = 0;
             imoveisOsc.length = 0;
 
             renderEnvolvidos();
             renderAtividades();
             renderDocsOsc();
+            // ========================================================================
+            // DOCUMENTOS — FIM DO RESET
+            // ========================================================================
+
             renderImoveisOsc();
 
             updatePreviews();
@@ -2063,6 +2095,10 @@ require 'autenticacao.php';
         }
 
         updatePreviews();
+
+        // ========================================================================
+        // DOCUMENTOS — RENDER INICIAL
+        // ========================================================================
         renderDocsOsc();
     </script>
 </body>

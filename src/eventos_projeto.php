@@ -510,7 +510,7 @@ try {
 <body>
 <header>
     <h1>
-        Painel de Controle — Projetos
+        Painel de Controle — Eventos do Projeto
     </h1>
 
     <div class="header-right">
@@ -527,13 +527,13 @@ try {
     <!-- TABS DE NAVEGAÇÃO (OSC / PROJETOS) -->
     <div class="tabs-top" id="tabsTop">
         <a class="tab-btn" href="editar_osc.php"><span class="dot"></span>OSC</a>
-        <a class="tab-btn is-active" href="projetos_osc.php"><span class="dot"></span>Projetos</a>
-        <a class="tab-btn" href="projetos_osc.php" style="opacity:.55; cursor:not-allowed;"><span class="dot"></span>Eventos</a>
+        <a class="tab-btn" href="projetos_osc.php"><span class="dot"></span>Projetos</a>
+        <a class="tab-btn is-active" href="projetos_osc.php"><span class="dot"></span>Eventos</a>
     </div>
 
     <div class="card">
         <div class="projects-head">
-            <h2>Projetos da OSC</h2>
+            <h2>Eventos do Projeto</h2>
 
             <input id="searchProjetos"
                    class="search"
@@ -616,11 +616,11 @@ try {
                 </a>
             <?php endforeach; ?>
                         
-            <!-- CARD + (NOVO PROJETO) -->
+            <!-- CARD + (NOVO EVENTO) -->
             <a class="plus-card" href="cadastro_projeto.php?osc_id=<?= (int)$oscIdVinculada ?>">
                 <div class="plus-inner">
                     <div class="plus-icon" aria-hidden="true"></div>
-                    <div class="plus-text">Novo Projeto</div>
+                    <div class="plus-text">Novo Evento</div>
                 </div>
             </a>
 
