@@ -120,7 +120,6 @@ if (!$oscIdVinculada) {
             gap: 10px;
             flex-wrap: wrap;
             margin-top: 12px;
-            font-size: 14px;
         }
 
         .envolvido-card {
@@ -543,7 +542,7 @@ if (!$oscIdVinculada) {
     <!-- SEÇÃO 4: ÁREA / SUBÁREA -->
     <div style="margin-top:16px" class="card card-collapse" data-collapse-id="areas">
       <div class="card-head" data-collapse-head>
-        <h2>Área e Subárea de Atuação</h2>
+        <h2>Área e Subárea de Atuação (CNAE)</h2>
 
         <button type="button" class="card-toggle" data-collapse-btn>
           <span class="label">Abrir</span>
@@ -736,11 +735,11 @@ if (!$oscIdVinculada) {
 <div id="modalBackdrop" class="modal-backdrop">
     <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Envolvido">
         <h3>Adicionar Envolvido</h3>
-
+        <div class="divider"></div>
         <div id="envNovoContainer" style="margin-top:8px">
             <div class="grid">
                 <div>
-                    <label for="envFoto">Foto</label>
+                    <label style="margin-top: 10px;" for="envFoto">Foto</label>
                     <div class="envolvidos-list" id="imgCard_envFoto"></div>
                     <input id="envFoto" type="file" accept="image/*" />
                 </div>
@@ -789,27 +788,27 @@ if (!$oscIdVinculada) {
             <input id="imovelDescricao" type="text" placeholder="Ex: Sede, Ponto de apoio..." />
         </div>
         <div style="grid-column:1 / -1;">
-          <label for="imovelSituacao">Situação</label>
+          <label for="imovelSituacao">Situação (*)</label>
           <input id="imovelSituacao" type="text" placeholder="Ex.: Próprio, Alugado" />
         </div>
         <div>
           <label for="imovelCep">CEP (*)</label>
-          <input id="imovelCep" inputmode="numeric" type="text" required />
+          <input id="imovelCep" inputmode="numeric" type="text" />
         </div>
         <div>
-          <label for="imovelCidade">Cidade</label>
+          <label for="imovelCidade">Cidade (*)</label>
           <input id="imovelCidade" type="text" />
         </div>
         <div>
-          <label for="imovelBairro">Bairro</label>
-          <input id="imovelBairro" type="text" />
-        </div>
-        <div>
-          <label for="imovelLogradouro">Logradouro</label>
+          <label for="imovelLogradouro">Logradouro (*)</label>
           <input id="imovelLogradouro" type="text" />
         </div>
         <div>
-          <label for="imovelNumero">Número</label>
+          <label for="imovelBairro">Bairro (*)</label>
+          <input id="imovelBairro" type="text" />
+        </div>
+        <div>
+          <label for="imovelNumero">Número (*)</label>
           <input id="imovelNumero" inputmode="numeric" type="text" />
         </div>
         <div>
@@ -941,7 +940,7 @@ if (!$oscIdVinculada) {
         <div class="small muted" id="editDocArquivoAtual" style="margin-top:10px"></div>
         <div class="modal-footer">
             <button type="button" class="btn btn-ghost" id="cancelEditDocOscBtn">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="saveEditDocOscBtn">Salvar</button>
+            <button type="button" class="btn btn-primary" id="saveEditDocOscBtn">Editar</button>
         </div>
     </div>
 </div>
@@ -1015,6 +1014,9 @@ if (!$oscIdVinculada) {
 
     let envFotoExistingUrl = null; // quando editar: foto do BD
     let envFotoRemover = false; // <-- ADD: pediu pra remover a foto atual?
+
+    let envFotoPreviewUrl = null; // dataURL do preview (pendente)
+    let envFotoFileCache  = null; // File pendente (pra envio)
 
     // ===== DOCUMENTOS (mesma lógica do cadastro_osc.php) =====
         const docsOsc = []; // {categoria,tipo,subtipo,descricao,ano_referencia,link,file,id_documento?,url?,nome?}
@@ -1243,69 +1245,105 @@ if (!$oscIdVinculada) {
 
         if (saveEditDocOscBtn) {
             saveEditDocOscBtn.addEventListener('click', () => {
-                if (!docEditTarget) return;
+              if (!docEditTarget) return;
 
-                if (file && !validarArquivoDocumento(file)) {
-                  editDocArquivo.value = '';
+              const novoArquivo = editDocArquivo?.files?.[0] || null;
+
+              if (novoArquivo && !validarArquivoDocumento(novoArquivo)) {
+                editDocArquivo.value = '';
+                return;
+              }
+
+              const showDesc = isTipoOutroDoc(docEditTarget.tipo);
+              const showAno  = isTipoAnoDoc(docEditTarget.categoria, docEditTarget.tipo);
+
+              const novaDescricao = showDesc ? (editDocDescricao?.value || '').trim()
+                                             : (docEditTarget.descricao || '');
+
+              const novoAno = showAno ? (editDocAno?.value || '').trim()
+                                      : (docEditTarget.ano_referencia || '');
+
+              if (showDesc && !novaDescricao) {
+                  alert('Informe uma descrição.');
                   return;
-                }
-                const novoArquivo = editDocArquivo?.files?.[0] || null;
-                if (!novoArquivo) {
-                    alert('Selecione um arquivo para substituir.');
-                    return;
-                }
+              }
+              if (showAno && !novoAno) {
+                  alert('Informe o ano de referência.');
+                  return;
+              }
 
-                const showDesc = isTipoOutroDoc(docEditTarget.tipo);
-                const showAno = isTipoAnoDoc(docEditTarget.categoria, docEditTarget.tipo);
+              // Se não tem campos meta, então editar = substituir arquivo (mantém regra antiga)
+              if (!novoArquivo && !showDesc && !showAno) {
+                  alert('Selecione um arquivo para substituir.');
+                  return;
+              }
 
-                const novaDescricao = showDesc ? (editDocDescricao?.value || '').trim() : (docEditTarget.descricao || '');
-                const novoAno = showAno ? (editDocAno?.value || '').trim() : (docEditTarget.ano_referencia || '');
+              // Detecta se realmente mudou algo
+              const mudouDesc = showDesc && (String(novaDescricao) !== String(docEditTarget.descricao || ''));
+              const mudouAno  = showAno  && (String(novoAno) !== String(docEditTarget.ano_referencia || ''));
+              const mudouArq  = !!novoArquivo;
 
-                if (showDesc && !novaDescricao) {
-                    alert('Informe uma descrição.');
-                    return;
-                }
-                if (showAno && !novoAno) {
-                    alert('Informe o ano de referência.');
-                    return;
-                }
+              if (!mudouDesc && !mudouAno && !mudouArq) {
+                  fecharModalEditarDocumento();
+                  return;
+              }
 
-                // Se já existe no BD: marca para exclusão e adiciona um novo com o arquivo substituto
-                if (docEditTarget.id_documento) {
-                    const originalRef = docEditTarget;
-                    const originalId  = String(docEditTarget.id_documento);
+              // ===== CASO 1: trocou arquivo
+              if (mudouArq) {
+                  if (docEditTarget.id_documento) {
+                      docsOscDeletes.add(String(docEditTarget.id_documento));
+                      const idxGlobal = docsOsc.indexOf(docEditTarget);
+                      if (idxGlobal !== -1) docsOsc.splice(idxGlobal, 1);
 
-                    docsOscDeletes.add(originalId);
+                      docsOsc.push({
+                          categoria: docEditTarget.categoria,
+                          tipo: docEditTarget.tipo,
+                          tipo_label: docEditTarget.tipo_label || getTipoLabel(docEditTarget.categoria, docEditTarget.tipo),
+                          subtipo: docEditTarget.subtipo || docEditTarget.tipo,
+                          subtipo_label: docEditTarget.subtipo_label || '',
+                          descricao: showDesc ? novaDescricao : (docEditTarget.descricao || ''),
+                          ano_referencia: showAno ? novoAno : (docEditTarget.ano_referencia || ''),
+                          link: docEditTarget.link || '',
+                          file: novoArquivo,
+                      });
+                  } else {
+                      if (showDesc) docEditTarget.descricao = novaDescricao;
+                      if (showAno)  docEditTarget.ano_referencia = novoAno;
+                      docEditTarget.file = novoArquivo;
+                  }
 
-                    const idxGlobal = docsOsc.indexOf(docEditTarget);
-                    if (idxGlobal !== -1) docsOsc.splice(idxGlobal, 1);
+                  renderDocsOsc();
+                  fecharModalEditarDocumento();
+                  return;
+              }
 
-                    docsOsc.push({
-                      categoria: docEditTarget.categoria,
-                      tipo: docEditTarget.tipo,
-                      tipo_label: docEditTarget.tipo_label || getTipoLabel(docEditTarget.categoria, docEditTarget.tipo),
-                      subtipo: docEditTarget.subtipo || docEditTarget.tipo,
-                      subtipo_label: docEditTarget.subtipo_label || '',
-                      descricao: showDesc ? novaDescricao : (docEditTarget.descricao || ''),
-                      ano_referencia: showAno ? novoAno : (docEditTarget.ano_referencia || ''),
-                      file: novoArquivo,
-                      ui_status: 'Editado',
-                      ui_edit_original: originalRef,
-                      ui_edit_original_id: originalId,
-                    });
-                } else {
-                    // Ainda não foi pro servidor: só atualiza o item atual
-                    if (showDesc) docEditTarget.descricao = novaDescricao;
-                    if (showAno) docEditTarget.ano_referencia = novoAno;
-                    docEditTarget.file = novoArquivo;
-                    if (docEditTarget.ui_status !== 'Novo') {
+              // ===== CASO 2: NÃO trocou arquivo
+              if (docEditTarget.id_documento) {
+
+                  if (!docEditTarget.ui_meta_original) {
+                      docEditTarget.ui_meta_original = {
+                          descricao: docEditTarget.descricao || '',
+                          ano_referencia: docEditTarget.ano_referencia || ''
+                      };
+                  }
+
+                  if (showDesc) docEditTarget.descricao = novaDescricao;
+                  if (showAno)  docEditTarget.ano_referencia = novoAno;
+
+                  docEditTarget.ui_meta_update = true;
+
+                  if (docEditTarget.ui_status !== 'Novo' && docEditTarget.ui_status !== 'Deletado') {
                       docEditTarget.ui_status = 'Editado';
-                    }
-                }
+                  }
 
-                renderDocsOsc();
-                fecharModalEditarDocumento();
-            });
+              } else {
+                  if (showDesc) docEditTarget.descricao = novaDescricao;
+                  if (showAno)  docEditTarget.ano_referencia = novoAno;
+              }
+              
+              renderDocsOsc();
+              fecharModalEditarDocumento();
+          });
         }
 
         function renderDocsOsc() {
@@ -1424,19 +1462,19 @@ if (!$oscIdVinculada) {
                           e.preventDefault();
                           e.stopPropagation();
 
-                          // 1) se está EDITADO -> desfazer edição
-                          if (d.ui_status === 'Editado') {
+                        // 1) se está EDITADO -> desfazer edição
+                        if (d.ui_status === 'Editado') {
+
+                          // A) edição com substituição de arquivo
+                          if (d.ui_edit_original) {
                             const orig = d.ui_edit_original || null;
                             const origId = d.ui_edit_original_id || (orig?.id_documento ? String(orig.id_documento) : null);
 
-                            // remove o "substituto editado"
                             const idx = docsOsc.indexOf(d);
                             if (idx !== -1) docsOsc.splice(idx, 1);
-
-                            // tira o original da lista de exclusão
+                                    
                             if (origId) docsOscDeletes.delete(origId);
 
-                            // devolve o original pra lista
                             if (orig && !docsOsc.includes(orig)) {
                               orig.ui_deleted = false;
                               if (orig.ui_status) delete orig.ui_status;
@@ -1447,6 +1485,25 @@ if (!$oscIdVinculada) {
                             renderDocsOsc();
                             return;
                           }
+
+                          // B) edição só de metadados
+                          if (d.ui_meta_original) {
+                            d.descricao = d.ui_meta_original.descricao || '';
+                            d.ano_referencia = d.ui_meta_original.ano_referencia || '';
+
+                            delete d.ui_meta_original;
+                            delete d.ui_meta_update;
+                            delete d.ui_status;
+
+                            renderDocsOsc();
+                            return;
+                          }
+
+                          delete d.ui_meta_update;
+                          delete d.ui_status;
+                          renderDocsOsc();
+                          return;
+                        }
 
                           // 2) se é NOVO (rascunho) -> some de vez
                           if (d.ui_status === 'Novo' || !d.id_documento) {
@@ -1905,6 +1962,30 @@ if (!$oscIdVinculada) {
             }
         }
 
+        async function atualizarDocumentoMetaOsc(oscId, doc) {
+            try {
+                const fd = new FormData();
+                fd.append('id_osc', oscId);
+                fd.append('id_documento', doc.id_documento);
+
+                if (doc.descricao != null) fd.append('descricao', doc.descricao);
+                if (doc.ano_referencia != null) fd.append('ano_referencia', doc.ano_referencia);
+
+                const resp = await fetch('ajax_upload_documento.php', { method: 'POST', body: fd });
+
+                const data = await resp.json().catch(() => null);
+
+                if (!resp.ok || !data || data.status !== 'ok') {
+                    const msg = data?.mensagem || data?.msg || 'Falha ao atualizar metadados.';
+                    return msg;
+                }
+
+                return null;
+            } catch (e) {
+                return e.message || 'Falha ao atualizar metadados.';
+            }
+        }
+
         async function aplicarAlteracoesDocsOsc(oscId) {
             const erros = [];
 
@@ -1917,9 +1998,18 @@ if (!$oscIdVinculada) {
                 }
             }
 
-            // 2) Enviar somente os novos (com arquivo)
+            // 2) Atualizar metadados (descrição/ano)
             for (const doc of docsOsc) {
-                if (doc.ui_deleted) continue;   // <- NÃO envia se está "Deletado"
+                if (!doc.id_documento) continue;
+                if (!doc.ui_meta_update) continue; 
+                if (doc.file) continue;            
+
+                const err = await atualizarDocumentoMetaOsc(oscId, doc);
+                if (err) erros.push(`(${doc.tipo_label || doc.tipo || 'Documento'}) ${err}`);
+            }
+
+            // 3) Enviar somente os novos/substitutos
+            for (const doc of docsOsc) {
                 if (!doc.file) continue;
                 const err = await enviarDocumentoOsc(oscId, doc);
                 if (err) erros.push(err);
@@ -1927,8 +2017,6 @@ if (!$oscIdVinculada) {
 
             return erros;
         }
-
-
 
     const FUNCAO_LABELS = {
         DIRETOR: 'Diretor(a)',
@@ -1946,6 +2034,19 @@ if (!$oscIdVinculada) {
             '>': '&gt;',
             '"': '&quot;'
         }[ch]));
+    }
+
+    function norm(v) {
+      return (v ?? '').toString().trim();
+    }
+    function eq(a, b) {
+      return norm(a) === norm(b);
+    }
+    function changedStrFields(before, after, fields) {
+      return fields.some(f => !eq(before[f], after[f]));
+    }
+    function eqBool(a, b) {
+      return (!!a) === (!!b);
     }
 
     function readFileAsDataURL(file) {
@@ -2053,7 +2154,7 @@ if (!$oscIdVinculada) {
 
       const info = document.createElement('div');
       const nome = file ? file.name : fileNameFromUrl(url);
-      const link = file ? '' : (url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener">Abrir</a>` : '');
+      const link = file ? '' : (url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener"></a>` : '');
 
       info.innerHTML = `
         <div style="font-weight:600">${escapeHtml(titulo)}</div>
@@ -2112,13 +2213,12 @@ if (!$oscIdVinculada) {
         if (!slot) return;
         slot.innerHTML = '';
 
-        // 1) Se o usuário já selecionou um arquivo novo, mostre card “🆕” e o X só limpa o input
         const file = it.input?.files?.[0] || null;
         if (file) {
             templateRemover[it.campo] = false;
             templateBackupUrl[it.campo] = null;
             const cardNovo = criarCardImagem({
-                titulo: '🆕 ' + it.titulo,
+                titulo: 'NOVA ' + it.titulo,
                 file,
                 onRemove: () => {
                     it.input.value = '';
@@ -2131,19 +2231,15 @@ if (!$oscIdVinculada) {
           return;
         }
 
-        // 2) Se tem URL existente no servidor, mostre card do servidor e o X só marca remoção
         const url = it.getUrl();
         if (url) {
           const cardExistente = criarCardImagem({
             titulo: it.titulo,
             url,
             onRemove: () => {
-              // Nada de deletar agora. Só “some” e marca pendente.
               templateRemover[it.campo] = true;
               templateBackupUrl[it.campo] = url;
               it.setUrl(null);
-            
-              // se tiver arquivo selecionado por acidente, limpa
               it.input.value = '';
             
               renderTemplateImageCards();
@@ -2155,13 +2251,11 @@ if (!$oscIdVinculada) {
           return;
         }
 
-        // 3) Se foi removida (pendente), mostre um card com “desfazer”
         if (!url && templateRemover[it.campo] && templateBackupUrl[it.campo]) {
           const cardPendente = criarCardImagem({
             titulo: '🗑️ DELEÇÃO PENDENTE — ' + it.titulo,
             url: templateBackupUrl[it.campo],
             onRemove: () => {
-              // “desfaz”: volta a URL e desmarca
               templateRemover[it.campo] = false;
               it.setUrl(templateBackupUrl[it.campo]);
               templateBackupUrl[it.campo] = null;
@@ -2172,8 +2266,6 @@ if (!$oscIdVinculada) {
             thumbWide: it.wide
           });
       
-          // aqui o botão aparece como ✕, mas ele funciona como “desfazer”.
-          // se quiser, eu te passo uma versão com ícone ↩ e cor diferente.
           slot.appendChild(cardPendente);
         }
       });
@@ -2188,37 +2280,56 @@ if (!$oscIdVinculada) {
         
         const file = input.files?.[0] || null;
         
-        // 1) se escolheu arquivo novo no modal
+        // 1) file do input (acabou de escolher)
         if (file) {
-            const cardNovo = criarCardImagem({
-              titulo: 'NOVA FOTO',
-              file,
+          const cardNovo = criarCardImagem({
+            titulo: 'NOVA FOTO',
+            file,
             onRemove: () => {
-                  envFotoExistingUrl = null;
-                  envFotoRemover = true;
-                  input.value = '';
-            
-                  renderEnvFotoCard();
-                },
-              thumbWide: false
-            });
-            slot.appendChild(cardNovo);
-            return;
+              input.value = '';
+              envFotoPreviewUrl = null;
+              envFotoFileCache  = null;
+              envFotoRemover = false;     
+              renderEnvFotoCard();
+            },
+            thumbWide: false
+          });
+          slot.appendChild(cardNovo);
+          return;
         }
 
-        // 2) se está editando e tem foto existente no servidor
+        // 2) preview pendente
+        if (envFotoPreviewUrl) {
+          const cardPendente = criarCardImagem({
+            titulo: 'NOVA FOTO (PENDENTE)',
+            url: envFotoPreviewUrl,
+            onRemove: () => {
+              envFotoPreviewUrl = null;
+              envFotoFileCache  = null;
+              envFotoRemover = false;
+              renderEnvFotoCard();
+            },
+            thumbWide: false
+          });
+          slot.appendChild(cardPendente);
+          return;
+        }
+
+        // 3) foto atual do servidor
         if (envFotoExistingUrl) {
-            const cardExistente = criarCardImagem({
-                titulo: 'FOTO ATUAL',
-                url: envFotoExistingUrl,
-                onRemove: () => {
-                  envFotoExistingUrl = null;
-                  envFotoRemover = true;
-                  renderEnvFotoCard();
-                },
-                thumbWide: false
-            });
-            slot.appendChild(cardExistente);
+          const cardExistente = criarCardImagem({
+            titulo: 'FOTO ATUAL',
+            url: envFotoExistingUrl,
+            onRemove: () => {
+              envFotoExistingUrl = null;
+              envFotoPreviewUrl = null;
+              envFotoFileCache  = null;
+              envFotoRemover = true;
+              renderEnvFotoCard();
+            },
+            thumbWide: false
+          });
+          slot.appendChild(cardExistente);
         }
     }
 
@@ -2243,7 +2354,9 @@ if (!$oscIdVinculada) {
         qs('#envFuncaoNovo').value = '';
         
         envFotoExistingUrl = null;
-        envFotoRemover = false;
+        envFotoPreviewUrl  = null;
+        envFotoFileCache   = null;
+        envFotoRemover     = false;
         renderEnvFotoCard();
     });
 
@@ -2261,7 +2374,7 @@ if (!$oscIdVinculada) {
         editEnvIndex = i; 
 
         qs('.modal h3').textContent = 'Editar Envolvido';
-        addEnvolvidoBtn.textContent = 'Salvar';   
+        addEnvolvidoBtn.textContent = 'Editar';   
         modalBackdrop.style.display = 'flex'; 
 
         qs('#envFoto').value = '';
@@ -2271,12 +2384,19 @@ if (!$oscIdVinculada) {
         qs('#envFuncaoNovo').value = e.funcao || '';
         
         envFotoExistingUrl = e.fotoUrl || null;
-        envFotoRemover = false;
+        envFotoPreviewUrl  = e.fotoPreview || null;
+        envFotoFileCache   = e.fotoFile || null;
+
+        envFotoRemover = !!e.removerFoto;
         renderEnvFotoCard();
     }
 
     async function salvarEnvolvido() {
-        const fotoFile = qs('#envFoto').files[0] || null;
+        const fotoFileInput = qs('#envFoto').files[0] || null;
+        const fotoFile = fotoFileInput || envFotoFileCache || null;
+        const fotoPreview = fotoFileInput
+          ? await readFileAsDataURL(fotoFileInput)
+          : (envFotoPreviewUrl || null);
         const nome     = qs('#envNome').value.trim();
         const telefone = qs('#envTelefone').value.trim();
         const email    = qs('#envEmail').value.trim();
@@ -2287,31 +2407,50 @@ if (!$oscIdVinculada) {
             return;
         }   
         
-        const fotoPreview = fotoFile ? await readFileAsDataURL(fotoFile) : null;    
-        
         // EDITANDO UM EXISTENTE (ou um novo já adicionado)
         if (editEnvIndex !== null) {
             const alvo = envolvidos[editEnvIndex];
-            if (!alvo) return;    
+            if (!alvo) return;
+            const temId = !!(alvo.envolvidoId);
+
+            // para desfazer edição
+            if (temId && !alvo.ui_edit_original) {
+              alvo.ui_edit_original = {
+                nome: alvo.nome,
+                telefone: alvo.telefone,
+                email: alvo.email,
+                funcao: alvo.funcao,
+                fotoUrl: alvo.fotoUrl,
+                fotoPreview: alvo.fotoPreview,
+                fotoFile: alvo.fotoFile,
+                removerFoto: !!alvo.removerFoto
+              };
+            }
+
             alvo.nome = nome;
             alvo.telefone = telefone;
             alvo.email = email;
             alvo.funcao = funcao; 
-            // se escolheu foto nova, troca; senão mantém fotoUrl/fotoPreview atuais
             if (fotoFile) {
               alvo.fotoFile = fotoFile;
               alvo.fotoPreview = fotoPreview;
               alvo.removerFoto = false;
             } else if (envFotoRemover) {
-              // usuário clicou no X da foto atual
-              alvo.fotoUrl = '';        // <-- zera foto existente
+              alvo.fotoUrl = '';        
               alvo.fotoPreview = null;
               alvo.fotoFile = null;
-              alvo.removerFoto = true;  // <-- marca pra enviar pro PHP
+              alvo.removerFoto = true;  
             }
             editEnvIndex = null;
             addEnvolvidoBtn.textContent = 'Adicionar';
             qs('.modal h3').textContent = 'Adicionar Envolvido';  
+
+            if (temId) {
+              alvo.ui_status = 'Editado';
+            } else {
+              alvo.ui_status = alvo.ui_status || 'Novo';
+            }
+
             renderEnvolvidos();
             modalBackdrop.style.display = 'none';
             envFotoRemover = false;
@@ -2328,7 +2467,9 @@ if (!$oscIdVinculada) {
             nome,
             telefone,
             email,
-            funcao
+            funcao,
+            ui_status: 'Novo',
+            ui_deleted: false
         }); 
         renderEnvolvidos();
         modalBackdrop.style.display = 'none';
@@ -2336,55 +2477,129 @@ if (!$oscIdVinculada) {
     addEnvolvidoBtn.addEventListener('click', salvarEnvolvido);
 
     function renderEnvolvidos() {
-        const list = qs('#listaEnvolvidos');
-        list.innerHTML = '';
+      const list = qs('#listaEnvolvidos');
+      if (!list) return;
+      list.innerHTML = '';
 
-        envolvidos.forEach((e, i) => {
-            const c = document.createElement('div');
-            c.className = 'envolvido-card';
+      envolvidos.forEach((e, i) => {
+        const c = document.createElement('div');
+        c.className = 'envolvido-card';
 
-            const img = document.createElement('img');
-            img.src = e.fotoPreview || e.fotoUrl || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
+        const img = document.createElement('img');
+        img.src = e.fotoPreview || e.fotoUrl || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
 
-            const funcaoLabel = FUNCAO_LABELS[e.funcao] || e.funcao;
+        const funcaoLabel = FUNCAO_LABELS[e.funcao] || e.funcao;
 
-            const info = document.createElement('div');
-            info.innerHTML = `
-                <div style="font-weight:600">${escapeHtml(e.nome)}</div>
-                <div class="small">${escapeHtml(funcaoLabel)}</div>
-            `;
+        const info = document.createElement('div');
+        info.innerHTML = `
+          <div style="font-weight:600">${escapeHtml(e.nome)}</div>
+          <div class="small">${escapeHtml(funcaoLabel)}</div>
+        `;
 
-            const edit = document.createElement('button');
-            edit.type = 'button';
-            edit.className = 'btn';
-            edit.textContent = '✎';
-            edit.style.padding = '6px 8px';
-            edit.style.marginLeft = '8px';
-            edit.addEventListener('click', (ev) => {
-              ev.preventDefault();
-              ev.stopPropagation();
-              abrirEdicaoEnvolvido(i);
-            });
+        // ===== STATUS =====
+        let statusTxt = e.ui_status || '';
+        const temId = !!(e.envolvidoId);
+        if (!statusTxt && !temId) statusTxt = 'Novo';
+        if (e.ui_deleted || statusTxt === 'Deletado') statusTxt = 'Deletado';
 
-            const remove = document.createElement('button');
-            remove.type = 'button';
-            remove.className = 'btn';
-            remove.textContent = '✕';
-            remove.style.padding = '6px 8px';
-            remove.style.marginLeft = '8px';
-            remove.addEventListener('click', (ev) => {
-              ev.preventDefault();
-              ev.stopPropagation();
-              envolvidos.splice(i, 1);
-              renderEnvolvidos();
-            });
+        let statusPillEl = null;
+        if (statusTxt) {
+          statusPillEl = document.createElement('span');
+          const cls = (statusTxt === 'Novo') ? 'on' : 'off';
+          statusPillEl.className = 'status-pill ' + cls;
+          statusPillEl.textContent = statusTxt;
+        }
 
-            c.appendChild(img);
-            c.appendChild(info);
-            c.appendChild(edit);
-            c.appendChild(remove);
-            list.appendChild(c);
+        // ===== EDIT =====
+        const edit = document.createElement('button');
+        edit.type = 'button';
+        edit.className = 'btn';
+        edit.textContent = '✎';
+        edit.style.padding = '6px 8px';
+
+        edit.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          abrirEdicaoEnvolvido(i);
         });
+                
+        if (e.ui_deleted || e.ui_status === 'Deletado') {
+          edit.disabled = true;
+          edit.title = 'Restaure para editar';
+          edit.style.opacity = '0.60';
+          edit.style.cursor = 'not-allowed';
+        }
+
+        // ===== REMOVE / UNDO =====
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'btn';
+        remove.style.padding = '6px 8px';
+
+        const isEditado  = (e.ui_status === 'Editado');
+        const isDeletado = (e.ui_deleted || e.ui_status === 'Deletado');
+        const isNovo     = (!temId || e.ui_status === 'Novo' || e.tipo === 'novo');
+
+        remove.textContent = (isEditado || isDeletado) ? '↩' : '✕';
+        remove.title = isEditado
+          ? 'Desfazer edição'
+          : (isDeletado ? 'Restaurar' : (isNovo ? 'Remover' : 'Deletar'));
+
+        remove.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+
+          // 1) EDITADO
+          if (e.ui_status === 'Editado') {
+            if (e.ui_edit_original) {
+              Object.assign(e, e.ui_edit_original);
+            }
+            delete e.ui_edit_original;
+            delete e.ui_status;
+            renderEnvolvidos();
+            return;
+          }
+
+          // 2) NOVO
+          if (isNovo) {
+            envolvidos.splice(i, 1);
+            renderEnvolvidos();
+            return;
+          }
+
+          // 3) DELETADO
+          if (isDeletado) {
+            e.ui_deleted = false;
+            e.ui_status = e.ui_status_prev || '';
+            delete e.ui_status_prev;
+            if (!e.ui_status) delete e.ui_status;
+            renderEnvolvidos();
+            return;
+          }
+
+          // 4) NORMAL
+          e.ui_deleted = true;
+          e.ui_status_prev = e.ui_status || '';
+          e.ui_status = 'Deletado';
+          renderEnvolvidos();
+        });
+
+        // ===== ACTIONS =====
+        const actions = document.createElement('div');
+        actions.style.marginLeft = 'auto';
+        actions.style.display = 'flex';
+        actions.style.alignItems = 'center';
+        actions.style.gap = '8px';
+
+        if (statusPillEl) actions.appendChild(statusPillEl);
+        actions.appendChild(edit);
+        actions.appendChild(remove);
+
+        c.appendChild(img);
+        c.appendChild(info);
+        c.appendChild(actions);
+        list.appendChild(c);
+      });
     }
 
     // ===== IMÓVEIS (múltiplos) =====
@@ -2453,7 +2668,7 @@ if (!$oscIdVinculada) {
 
       qs('#imovelPrincipal').checked = (Number(m.principal) === 1 || m.principal === true);
 
-      addImovelOscBtn.textContent = 'Salvar';
+      addImovelOscBtn.textContent = 'Editar';
       qs('#modalImovelOscBackdrop .modal h3').textContent = 'Editar Imóvel';
       modalImovelOscBackdrop.style.display = 'flex';
     }
@@ -2560,9 +2775,15 @@ if (!$oscIdVinculada) {
         const desc = (m.descricao || '').trim();
         const sit  = (m.situacao || '').trim();
 
-        const endereco = [
-          m.cep, m.cidade, m.logradouro, m.numero, m.bairro
-        ].filter(Boolean).join(', ');
+        const numeroComp = [m.numero, m.complemento]
+          .map(v => (v ?? '').toString().trim())
+          .filter(Boolean)
+          .join(' ');
+
+        const endereco = [m.cep, m.cidade, m.logradouro, numeroComp, m.bairro]
+          .map(v => (v ?? '').toString().trim())
+          .filter(Boolean)
+          .join(', ');
 
         info.innerHTML = `
           <div class="small"><b>${escapeHtml(desc || '-')}</b></div>
@@ -2769,7 +2990,7 @@ if (!$oscIdVinculada) {
       qs('#atvArea').value = a.area || '';
       qs('#atvSubarea').value = a.subarea || '';
 
-      addAtividadeBtn.textContent = 'Salvar';
+      addAtividadeBtn.textContent = 'Editar';
       qs('#modalAtividadeBackdrop .modal h3').textContent = 'Editar Atividade';
       modalAtividadeBackdrop.style.display = 'flex';
     }
@@ -2961,13 +3182,12 @@ if (!$oscIdVinculada) {
               area: a.area || '',
               subarea: a.subarea || '',
               ui_deleted: false
-              // ui_status começa vazio (só aparece quando o usuário mexe)
             });
           });
           renderAtividades();
         }
     
-        // envolvidos (CORRIGIDO)
+        // envolvidos
         if (Array.isArray(osc.envolvidos)) {
           osc.envolvidos.forEach(d => {
             const funcao = String(d.funcao ?? d.funcao_ator ?? d.funcao_envolvido ?? '').trim();
@@ -2982,10 +3202,10 @@ if (!$oscIdVinculada) {
                 nome: d.nome || '',
                 telefone: d.telefone || '',
                 email: d.email || '',
-                funcao
+                funcao,
+                ui_deleted: false
             });
           });
-      
           renderEnvolvidos();
         }
 
@@ -3110,7 +3330,6 @@ if (!$oscIdVinculada) {
         fd.append('cnpj',              qs("#CNPJ").value);
         fd.append('telefone',          qs("#telefone").value);
 
-        // imóveis (nova lógica: vem do array imoveisOsc, não do DOM)
         const imoveisParaEnvio = imoveisOsc.map(m => ({
           endereco_id: (m.endereco_id || m.enderecoId || 0),
           descricao: (m.descricao || ''),
@@ -3131,7 +3350,9 @@ if (!$oscIdVinculada) {
         fd.append('labelBanner', qs("#labelBanner").value);
 
         // envolvidos/atividades
-        const envolvidosParaEnvio = envolvidos.map((e, i) => ({
+        const envolvidosAtivos = envolvidos.filter(e => !e.ui_deleted);
+                    
+        const envolvidosParaEnvio = envolvidosAtivos.map((e, i) => ({
           tipo: e.tipo || 'existente',
           envolvido_id: e.envolvidoId || null,
           nome: e.nome,
@@ -3141,8 +3362,14 @@ if (!$oscIdVinculada) {
           foto: e.fotoUrl || '',
           remover_foto: !!e.removerFoto
         }));
-
+                    
         fd.append('envolvidos', JSON.stringify(envolvidosParaEnvio));
+                    
+        // fotos envolvidos (se houver) — usa o MESMO índice do array enviado
+        envolvidosAtivos.forEach((e, i) => {
+          if (e.fotoFile) fd.append(`fotoEnvolvido_${i}`, e.fotoFile);
+        });
+
         const atividadesParaEnvio = atividades
           .filter(a => !a.ui_deleted)  // <- não envia deletadas
           .map(a => ({

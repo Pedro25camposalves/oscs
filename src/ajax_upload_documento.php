@@ -58,6 +58,157 @@ if (!$id_osc_raw || !ctype_digit((string)$id_osc_raw)) {
 }
 $id_osc = (int)$id_osc_raw;
 
+// ----------------------------------------------------
+// MODO UPDATE
+// ----------------------------------------------------
+$id_documento_raw = $_POST['id_documento'] ?? null;
+if ($id_documento_raw !== null && $id_documento_raw !== '') {
+    if (!ctype_digit((string)$id_documento_raw)) {
+        echo json_encode(["status" => "erro", "msg" => "ID do documento inválido."]);
+        exit;
+    }
+    $id_documento = (int)$id_documento_raw;
+
+    // Carrega o documento existente
+    $stmtDoc = $conn->prepare("SELECT id_documento, osc_id, projeto_id, categoria, subtipo, documento, link, descricao, ano_referencia
+                               FROM documento
+                               WHERE id_documento = ? LIMIT 1");
+    $stmtDoc->bind_param("i", $id_documento);
+    $stmtDoc->execute();
+    $docDb = $stmtDoc->get_result()->fetch_assoc();
+
+    if (!$docDb) {
+        echo json_encode(["status" => "erro", "msg" => "Documento não encontrado."]);
+        exit;
+    }
+    if ((int)$docDb['osc_id'] !== $id_osc) {
+        echo json_encode(["status" => "erro", "msg" => "Documento não pertence a esta OSC."]);
+        exit;
+    }
+
+    $catDb = strtoupper((string)($docDb['categoria'] ?? ''));
+    $subDb = strtoupper((string)($docDb['subtipo'] ?? ''));
+
+    $isOutro = (strpos($subDb, 'OUTRO') === 0);
+    $isAnoRef = ($catDb === 'CONTABIL' && ($subDb === 'BALANCO_PATRIMONIAL' || $subDb === 'DRE'));
+
+    // Atualiza somente os campos recebidos; os demais permanecem
+    $newDescricao = $docDb['descricao'];
+    if (array_key_exists('descricao', $_POST)) {
+        $val = trim((string)($_POST['descricao'] ?? ''));
+        if ($isOutro) {
+            if ($val === '') {
+                echo json_encode(["status" => "erro", "msg" => "Informe a descrição do documento."]);
+                exit;
+            }
+            $newDescricao = $val;
+        } else {
+            $newDescricao = null;
+        }
+    }
+
+    $newAno = $docDb['ano_referencia'];
+    if (array_key_exists('ano_referencia', $_POST)) {
+        $val = trim((string)($_POST['ano_referencia'] ?? ''));
+        if ($val === '') {
+            $newAno = null;
+        } else {
+            if (!preg_match('/^\d{4}$/', $val)) {
+                echo json_encode(["status" => "erro", "msg" => "Ano de referência inválido. Use 4 dígitos (ex.: 2025)."]);
+                exit;
+            }
+            $newAno = $val;
+        }
+        if ($isAnoRef && !$newAno) {
+            echo json_encode(["status" => "erro", "msg" => "Informe o ano de referência."]);
+            exit;
+        }
+    }
+
+    $newLink = $docDb['link'];
+    if (array_key_exists('link', $_POST)) {
+        $val = trim((string)($_POST['link'] ?? ''));
+        $newLink = ($val !== '') ? $val : null;
+    }
+
+    // Arquivo é opcional no UPDATE
+    $temArquivo = (isset($_FILES['arquivo']) && is_array($_FILES['arquivo']) &&
+                  (int)($_FILES['arquivo']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE);
+
+    $novoRel = $docDb['documento'];
+
+    if ($temArquivo) {
+        $arquivo = $_FILES['arquivo'];
+
+        if ($arquivo['error'] !== UPLOAD_ERR_OK) {
+            echo json_encode(["status" => "erro", "msg" => "Falha no upload do arquivo."]);
+            exit;
+        }
+
+        // Diretório (mesma lógica do INSERT, mas usando o projeto do próprio documento)
+        $basePath = __DIR__ . "/assets/oscs/osc-" . $id_osc;
+        $projIdDb = $docDb['projeto_id'] ?? null;
+        if ($projIdDb !== null && $projIdDb !== '') {
+            $basePath .= "/projetos/projeto-" . (int)$projIdDb;
+        }
+
+        $dirDocs = $basePath . "/documentos";
+        if (!is_dir($dirDocs)) {
+            mkdir($dirDocs, 0777, true);
+        }
+
+        $novoNome = preg_replace('/[^a-zA-Z0-9\.\-_]/', '-', $arquivo['name']);
+        $novoNome = strtolower($novoNome);
+        $novoNome = pathinfo($novoNome, PATHINFO_FILENAME) . "-" . uniqid() . "." . $ext;
+
+        $destAbs = $dirDocs . "/" . $novoNome;
+
+        if (!move_uploaded_file($arquivo['tmp_name'], $destAbs)) {
+            echo json_encode(["status" => "erro", "msg" => "Não foi possível salvar o arquivo enviado."]);
+            exit;
+        }
+
+        $novoRel = str_replace(__DIR__ . "/", "", $destAbs);
+
+        // opcional: tenta remover o arquivo antigo (se existir)
+        $oldRel = $docDb['documento'] ?? '';
+        if ($oldRel) {
+            $oldAbs = __DIR__ . "/" . ltrim($oldRel, '/');
+            if (is_file($oldAbs) && strpos(realpath($oldAbs), realpath(__DIR__ . "/assets/oscs/")) === 0) {
+                @unlink($oldAbs);
+            }
+        }
+    }
+
+    if ($temArquivo) {
+        $stmtUp = $conn->prepare("UPDATE documento
+                                  SET ano_referencia = ?, documento = ?, link = ?, descricao = ?
+                                  WHERE id_documento = ? AND osc_id = ? LIMIT 1");
+        $stmtUp->bind_param("ssssii", $newAno, $novoRel, $newLink, $newDescricao, $id_documento, $id_osc);
+    } else {
+        $stmtUp = $conn->prepare("UPDATE documento
+                                  SET ano_referencia = ?, link = ?, descricao = ?
+                                  WHERE id_documento = ? AND osc_id = ? LIMIT 1");
+        $stmtUp->bind_param("sssii", $newAno, $newLink, $newDescricao, $id_documento, $id_osc);
+    }
+
+    if (!$stmtUp->execute()) {
+        echo json_encode(["status" => "erro", "msg" => "Erro ao atualizar documento."]);
+        exit;
+    }
+
+    echo json_encode([
+        "status" => "ok",
+        "msg" => "Documento atualizado com sucesso.",
+        "id_documento" => $id_documento,
+        "documento" => $novoRel,
+        "descricao" => $newDescricao,
+        "ano_referencia" => $newAno
+    ]);
+    exit;
+}
+
+
 // projeto pode ser nulo
 if ($id_projeto_raw === '' || $id_projeto_raw === null) {
     $id_projeto = null;
