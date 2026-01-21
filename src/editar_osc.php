@@ -1245,106 +1245,122 @@ if (!$oscIdVinculada) {
 
         if (saveEditDocOscBtn) {
             saveEditDocOscBtn.addEventListener('click', () => {
-              if (!docEditTarget) return;
+                if (!docEditTarget) return;
 
-              const novoArquivo = editDocArquivo?.files?.[0] || null;
-
-              if (novoArquivo && !validarArquivoDocumento(novoArquivo)) {
-                editDocArquivo.value = '';
-                return;
-              }
-
-              const showDesc = isTipoOutroDoc(docEditTarget.tipo);
-              const showAno  = isTipoAnoDoc(docEditTarget.categoria, docEditTarget.tipo);
-
-              const novaDescricao = showDesc ? (editDocDescricao?.value || '').trim()
-                                             : (docEditTarget.descricao || '');
-
-              const novoAno = showAno ? (editDocAno?.value || '').trim()
-                                      : (docEditTarget.ano_referencia || '');
-
-              if (showDesc && !novaDescricao) {
-                  alert('Informe uma descrição.');
+                const file = editDocArquivo?.files?.[0] || null;
+                if (file && !validarArquivoDocumento(file)) {
+                  editDocArquivo.value = '';
                   return;
-              }
-              if (showAno && !novoAno) {
-                  alert('Informe o ano de referência.');
-                  return;
-              }
+                }
+                const novoArquivo = file; // pode ser null (quando editar só meta)
 
-              // Se não tem campos meta, então editar = substituir arquivo (mantém regra antiga)
-              if (!novoArquivo && !showDesc && !showAno) {
-                  alert('Selecione um arquivo para substituir.');
-                  return;
-              }
+                const showDesc = isTipoOutroDoc(docEditTarget.tipo);
+                const showAno  = isTipoAnoDoc(docEditTarget.categoria, docEditTarget.tipo);
 
-              // Detecta se realmente mudou algo
-              const mudouDesc = showDesc && (String(novaDescricao) !== String(docEditTarget.descricao || ''));
-              const mudouAno  = showAno  && (String(novoAno) !== String(docEditTarget.ano_referencia || ''));
-              const mudouArq  = !!novoArquivo;
+                const novaDescricao = showDesc ? (editDocDescricao?.value || '').trim() : (docEditTarget.descricao || '');
+                const novoAno       = showAno  ? (editDocAno?.value || '').trim()       : (docEditTarget.ano_referencia || '');
 
-              if (!mudouDesc && !mudouAno && !mudouArq) {
-                  fecharModalEditarDocumento();
-                  return;
-              }
+                if (showDesc && !novaDescricao) {
+                    alert('Informe uma descrição.');
+                    return;
+                }
+                if (showAno && !novoAno) {
+                    alert('Informe o ano de referência.');
+                    return;
+                }
 
-              // ===== CASO 1: trocou arquivo
-              if (mudouArq) {
-                  if (docEditTarget.id_documento) {
-                      docsOscDeletes.add(String(docEditTarget.id_documento));
-                      const idxGlobal = docsOsc.indexOf(docEditTarget);
-                      if (idxGlobal !== -1) docsOsc.splice(idxGlobal, 1);
+                const mudouDesc = showDesc && String(novaDescricao) !== String(docEditTarget.descricao || '');
+                const mudouAno  = showAno  && String(novoAno)       !== String(docEditTarget.ano_referencia || '');
+                const mudouArq  = !!novoArquivo;
 
-                      docsOsc.push({
-                          categoria: docEditTarget.categoria,
-                          tipo: docEditTarget.tipo,
-                          tipo_label: docEditTarget.tipo_label || getTipoLabel(docEditTarget.categoria, docEditTarget.tipo),
-                          subtipo: docEditTarget.subtipo || docEditTarget.tipo,
-                          subtipo_label: docEditTarget.subtipo_label || '',
-                          descricao: showDesc ? novaDescricao : (docEditTarget.descricao || ''),
-                          ano_referencia: showAno ? novoAno : (docEditTarget.ano_referencia || ''),
-                          link: docEditTarget.link || '',
-                          file: novoArquivo,
-                      });
-                  } else {
-                      if (showDesc) docEditTarget.descricao = novaDescricao;
-                      if (showAno)  docEditTarget.ano_referencia = novoAno;
-                      docEditTarget.file = novoArquivo;
-                  }
+                // nada mudou -> não marca status
+                if (!mudouDesc && !mudouAno && !mudouArq) {
+                    fecharModalEditarDocumento();
+                    return;
+                }
 
-                  renderDocsOsc();
-                  fecharModalEditarDocumento();
-                  return;
-              }
+                // se não tem meta editável, então editar = substituir arquivo (mantém regra antiga)
+                if (!mudouArq && !showDesc && !showAno) {
+                    alert('Selecione um arquivo para substituir.');
+                    return;
+                }
 
-              // ===== CASO 2: NÃO trocou arquivo
-              if (docEditTarget.id_documento) {
+                // ===== CASO: NÃO trocou arquivo -> atualiza apenas descrição/ano, mantendo o arquivo atual =====
+                if (!mudouArq) {
+                    if (docEditTarget.id_documento) {
+                        // guarda original só na primeira vez (para permitir desfazer)
+                        if (!docEditTarget.ui_meta_original) {
+                            docEditTarget.ui_meta_original = {
+                                descricao: docEditTarget.descricao || '',
+                                ano_referencia: docEditTarget.ano_referencia || ''
+                            };
+                        }
+                        if (showDesc) docEditTarget.descricao = novaDescricao;
+                        if (showAno)  docEditTarget.ano_referencia = novoAno;
 
-                  if (!docEditTarget.ui_meta_original) {
-                      docEditTarget.ui_meta_original = {
-                          descricao: docEditTarget.descricao || '',
-                          ano_referencia: docEditTarget.ano_referencia || ''
-                      };
-                  }
+                        docEditTarget.ui_meta_update = true;
 
-                  if (showDesc) docEditTarget.descricao = novaDescricao;
-                  if (showAno)  docEditTarget.ano_referencia = novoAno;
+                        if (docEditTarget.ui_status !== 'Novo' && docEditTarget.ui_status !== 'Deletado') {
+                            docEditTarget.ui_status = 'Editado';
+                        }
+                    } else {
+                        // rascunho (ainda não foi pro servidor): só atualiza os campos
+                        if (showDesc) docEditTarget.descricao = novaDescricao;
+                        if (showAno)  docEditTarget.ano_referencia = novoAno;
+                        // file permanece como está
+                    }
 
-                  docEditTarget.ui_meta_update = true;
+                    renderDocsOsc();
+                    fecharModalEditarDocumento();
+                    return;
+                }
 
-                  if (docEditTarget.ui_status !== 'Novo' && docEditTarget.ui_status !== 'Deletado') {
+                // ===== CASO: trocou arquivo -> substituição (mantém lógica existente) =====
+                if (docEditTarget.id_documento) {
+                    const originalRef = docEditTarget;
+                    const originalId  = String(docEditTarget.id_documento);
+
+                    docsOscDeletes.add(originalId);
+
+                    const idxGlobal = docsOsc.indexOf(docEditTarget);
+                    if (idxGlobal !== -1) docsOsc.splice(idxGlobal, 1);
+
+                    docsOsc.push({
+                      categoria: docEditTarget.categoria,
+                      tipo: docEditTarget.tipo,
+                      tipo_label: docEditTarget.tipo_label || getTipoLabel(docEditTarget.categoria, docEditTarget.tipo),
+                      subtipo: docEditTarget.subtipo || docEditTarget.tipo,
+                      subtipo_label: docEditTarget.subtipo_label || '',
+                      descricao: showDesc ? novaDescricao : (docEditTarget.descricao || ''),
+                      ano_referencia: showAno ? novoAno : (docEditTarget.ano_referencia || ''),
+                      file: novoArquivo,
+                      ui_status: 'Editado',
+                      ui_edit_original: originalRef,
+                      ui_edit_original_id: originalId,
+                    });
+                } else {
+                    if (showDesc) docEditTarget.descricao = novaDescricao;
+                    if (showAno) docEditTarget.ano_referencia = novoAno;
+                    docEditTarget.file = novoArquivo;
+                    if (docEditTarget.ui_status !== 'Novo') {
                       docEditTarget.ui_status = 'Editado';
-                  }
+                    }
+                }
 
-              } else {
-                  if (showDesc) docEditTarget.descricao = novaDescricao;
-                  if (showAno)  docEditTarget.ano_referencia = novoAno;
-              }
-              
-              renderDocsOsc();
-              fecharModalEditarDocumento();
-          });
-        }
+                renderDocsOsc();
+                fecharModalEditarDocumento();
+            });
+        } else {
+          // Ainda não foi pro servidor: só atualiza o item atual
+          if (showDesc) docEditTarget.descricao = novaDescricao;
+          if (showAno) docEditTarget.ano_referencia = novoAno;
+          docEditTarget.file = novoArquivo;
+          if (docEditTarget.ui_status !== 'Novo') {
+            docEditTarget.ui_status = 'Editado';
+          }
+          renderDocsOsc();
+          fecharModalEditarDocumento();        
+        }        
 
         function renderDocsOsc() {
             if (!docsOscList) return;
@@ -1462,48 +1478,50 @@ if (!$oscIdVinculada) {
                           e.preventDefault();
                           e.stopPropagation();
 
-                        // 1) se está EDITADO -> desfazer edição
-                        if (d.ui_status === 'Editado') {
+                          // 1) se está EDITADO -> desfazer edição
+                          if (d.ui_status === 'Editado') {
 
-                          // A) edição com substituição de arquivo
-                          if (d.ui_edit_original) {
-                            const orig = d.ui_edit_original || null;
-                            const origId = d.ui_edit_original_id || (orig?.id_documento ? String(orig.id_documento) : null);
+                            // A) edição com substituição (tem original salvo)
+                            if (d.ui_edit_original) {
+                              const orig = d.ui_edit_original || null;
+                              const origId = d.ui_edit_original_id || (orig?.id_documento ? String(orig.id_documento) : null);
 
-                            const idx = docsOsc.indexOf(d);
-                            if (idx !== -1) docsOsc.splice(idx, 1);
-                                    
-                            if (origId) docsOscDeletes.delete(origId);
+                              // remove o "substituto editado"
+                              const idx = docsOsc.indexOf(d);
+                              if (idx !== -1) docsOsc.splice(idx, 1);
 
-                            if (orig && !docsOsc.includes(orig)) {
-                              orig.ui_deleted = false;
-                              if (orig.ui_status) delete orig.ui_status;
-                              if (orig.ui_status_prev) delete orig.ui_status_prev;
-                              docsOsc.push(orig);
+                              // tira o original da lista de exclusão
+                              if (origId) docsOscDeletes.delete(origId);
+
+                              // devolve o original pra lista
+                              if (orig && !docsOsc.includes(orig)) {
+                                orig.ui_deleted = false;
+                                if (orig.ui_status) delete orig.ui_status;
+                                if (orig.ui_status_prev) delete orig.ui_status_prev;
+                                docsOsc.push(orig);
+                              }
+
+                              renderDocsOsc();
+                              return;
                             }
 
-                            renderDocsOsc();
-                            return;
-                          }
+                            // B) edição só de metadados (descrição/ano), sem trocar arquivo
+                            if (d.ui_meta_original) {
+                              d.descricao = d.ui_meta_original.descricao || '';
+                              d.ano_referencia = d.ui_meta_original.ano_referencia || '';
+                              delete d.ui_meta_original;
+                              delete d.ui_meta_update;
+                              delete d.ui_status;
+                              renderDocsOsc();
+                              return;
+                            }
 
-                          // B) edição só de metadados
-                          if (d.ui_meta_original) {
-                            d.descricao = d.ui_meta_original.descricao || '';
-                            d.ano_referencia = d.ui_meta_original.ano_referencia || '';
-
-                            delete d.ui_meta_original;
+                            // fallback: só limpa o status
                             delete d.ui_meta_update;
                             delete d.ui_status;
-
                             renderDocsOsc();
                             return;
                           }
-
-                          delete d.ui_meta_update;
-                          delete d.ui_status;
-                          renderDocsOsc();
-                          return;
-                        }
 
                           // 2) se é NOVO (rascunho) -> some de vez
                           if (d.ui_status === 'Novo' || !d.id_documento) {
@@ -1962,30 +1980,6 @@ if (!$oscIdVinculada) {
             }
         }
 
-        async function atualizarDocumentoMetaOsc(oscId, doc) {
-            try {
-                const fd = new FormData();
-                fd.append('id_osc', oscId);
-                fd.append('id_documento', doc.id_documento);
-
-                if (doc.descricao != null) fd.append('descricao', doc.descricao);
-                if (doc.ano_referencia != null) fd.append('ano_referencia', doc.ano_referencia);
-
-                const resp = await fetch('ajax_upload_documento.php', { method: 'POST', body: fd });
-
-                const data = await resp.json().catch(() => null);
-
-                if (!resp.ok || !data || data.status !== 'ok') {
-                    const msg = data?.mensagem || data?.msg || 'Falha ao atualizar metadados.';
-                    return msg;
-                }
-
-                return null;
-            } catch (e) {
-                return e.message || 'Falha ao atualizar metadados.';
-            }
-        }
-
         async function aplicarAlteracoesDocsOsc(oscId) {
             const erros = [];
 
@@ -1998,18 +1992,9 @@ if (!$oscIdVinculada) {
                 }
             }
 
-            // 2) Atualizar metadados (descrição/ano)
+            // 2) Enviar somente os novos (com arquivo)
             for (const doc of docsOsc) {
-                if (!doc.id_documento) continue;
-                if (!doc.ui_meta_update) continue; 
-                if (doc.file) continue;            
-
-                const err = await atualizarDocumentoMetaOsc(oscId, doc);
-                if (err) erros.push(`(${doc.tipo_label || doc.tipo || 'Documento'}) ${err}`);
-            }
-
-            // 3) Enviar somente os novos/substitutos
-            for (const doc of docsOsc) {
+                if (doc.ui_deleted) continue;   // <- NÃO envia se está "Deletado"
                 if (!doc.file) continue;
                 const err = await enviarDocumentoOsc(oscId, doc);
                 if (err) erros.push(err);
@@ -2017,6 +2002,8 @@ if (!$oscIdVinculada) {
 
             return erros;
         }
+
+
 
     const FUNCAO_LABELS = {
         DIRETOR: 'Diretor(a)',
@@ -2413,7 +2400,43 @@ if (!$oscIdVinculada) {
             if (!alvo) return;
             const temId = !!(alvo.envolvidoId);
 
-            // para desfazer edição
+            // Só marca "Editado" se realmente mudou algo
+            const beforeState = {
+              nome: (alvo.nome || '').trim(),
+              telefone: (alvo.telefone || '').trim(),
+              email: (alvo.email || '').trim(),
+              funcao: (alvo.funcao || '').trim(),
+              removerFoto: !!alvo.removerFoto,
+              fotoUrl: (alvo.fotoUrl || '').trim(),
+              fotoPreview: (alvo.fotoPreview || '').trim(),
+              fotoFileSig: alvo.fotoFile ? `${alvo.fotoFile.name || ''}|${alvo.fotoFile.size || ''}` : '',
+            };
+
+            const afterRemover = !!envFotoRemover;
+            const afterFotoFile = afterRemover ? null : (fotoFile || null);
+            const afterFotoPreview = afterRemover ? '' : (fotoPreview || '');
+            const afterFotoUrl = afterRemover ? '' : ((envFotoExistingUrl || alvo.fotoUrl || ''));
+
+            const afterState = {
+              nome: (nome || '').trim(),
+              telefone: (telefone || '').trim(),
+              email: (email || '').trim(),
+              funcao: (funcao || '').trim(),
+              removerFoto: afterRemover,
+              fotoUrl: (afterFotoUrl || '').trim(),
+              fotoPreview: (afterFotoPreview || '').trim(),
+              fotoFileSig: afterFotoFile ? `${afterFotoFile.name || ''}|${afterFotoFile.size || ''}` : '',
+            };
+
+            const mudou = JSON.stringify(beforeState) !== JSON.stringify(afterState);
+            if (!mudou) {
+              // nada mudou -> não marca status nem mexe no estado
+              modalBackdrop.style.display = 'none';
+              envFotoRemover = false;
+              return;
+            }
+
+            // para desfazer edição (snapshot do estado atual, antes de aplicar a mudança)
             if (temId && !alvo.ui_edit_original) {
               alvo.ui_edit_original = {
                 nome: alvo.nome,
@@ -2436,14 +2459,17 @@ if (!$oscIdVinculada) {
               alvo.fotoPreview = fotoPreview;
               alvo.removerFoto = false;
             } else if (envFotoRemover) {
-              alvo.fotoUrl = '';        
-              alvo.fotoPreview = null;
               alvo.fotoFile = null;
-              alvo.removerFoto = true;  
+              alvo.fotoPreview = null;
+              alvo.fotoUrl = null;
+              alvo.removerFoto = true;
+            } else {
+              // manteve a foto atual (URL)
+              alvo.fotoFile = null;
+              alvo.fotoPreview = null;
+              alvo.fotoUrl = envFotoExistingUrl;
+              alvo.removerFoto = false;
             }
-            editEnvIndex = null;
-            addEnvolvidoBtn.textContent = 'Adicionar';
-            qs('.modal h3').textContent = 'Adicionar Envolvido';  
 
             if (temId) {
               alvo.ui_status = 'Editado';
@@ -2684,45 +2710,85 @@ if (!$oscIdVinculada) {
     });
 
     function salvarImovelDoModal() {
-      // 1) Pega valores do modal
       const descricao   = qs('#imovelDescricao').value.trim();
-      const situacao    = qs('#imovelSituacao').value.trim();
+      const situacao    = qs('#imovelSituacao').value;
       const cep         = qs('#imovelCep').value.trim();
       const cidade      = qs('#imovelCidade').value.trim();
       const bairro      = qs('#imovelBairro').value.trim();
       const logradouro  = qs('#imovelLogradouro').value.trim();
       const numero      = qs('#imovelNumero').value.trim();
-      const complemento = qs('#imovelComplemento').value.trim();
-      const principal   = !!qs('#imovelPrincipal').checked;
+      const complemento = (qs('#imovelComplemento')?.value || '').trim();
+      const principal   = qs('#imovelPrincipal').checked;
 
-      if (!cep) {
-        alert('Informe o CEP do imóvel.');
-        qs('#imovelCep').focus();
+      if (!situacao || !cep || !cidade || !logradouro || !bairro || !numero) {
+        alert(
+          'Preencha todos os campos do imóvel antes de salvar:' +
+          '\n- Situação' +
+          '\n- CEP' +
+          '\n- Cidade' +
+          '\n- Logradouro' +
+          '\n- Bairro' +
+          '\n- Número'
+        );
         return;
       }
-                
-      if (principal) {
-        imoveisOsc.forEach(x => x.principal = false);
-      }
+
+      // snapshot simples para detectar mudanças
+      const snapImovel = (x) => ({
+        descricao:   (x?.descricao || '').trim(),
+        situacao:    (x?.situacao || '').trim(),
+        cep:         (x?.cep || '').trim(),
+        cidade:      (x?.cidade || '').trim(),
+        bairro:      (x?.bairro || '').trim(),
+        logradouro:  (x?.logradouro || '').trim(),
+        numero:      (x?.numero || '').trim(),
+        complemento: (x?.complemento || '').trim(),
+        principal:   (Number(x?.principal) === 1 || x?.principal === true)
+      });
 
       if (editImovelIndex !== null) {
         const alvo = imoveisOsc[editImovelIndex];
-        if (!alvo) return;
+        if (!alvo) { fecharModalImovel(); return; }
 
-        const temId = !!(alvo.endereco_id || alvo.enderecoId || alvo.imovel_id || alvo.imovelId);
+        const temId = !!(alvo.enderecoId || alvo.id);
 
+        const before = snapImovel(alvo);
+        const after  = { descricao, situacao, cep, cidade, bairro, logradouro, numero, complemento, principal: !!principal };
+
+        // Se marcou como principal e ele não era, isso também altera o antigo principal
+        const vaiVirarPrincipal = after.principal && !before.principal;
+        const temOutroPrincipal = vaiVirarPrincipal && imoveisOsc.some(x =>
+          x !== alvo &&
+          !x.ui_deleted &&
+          x.ui_status !== 'Deletado' &&
+          (Number(x.principal) === 1 || x.principal === true)
+        );
+
+        const mudou = (JSON.stringify(before) !== JSON.stringify(after)) || temOutroPrincipal;
+
+        if (!mudou) {
+          // não mudou nada -> não marca "Editado"
+          editImovelIndex = null;
+          fecharModalImovel();
+          return;
+        }
+
+        // Se vai virar principal, desmarca o principal anterior (e marca como Editado de verdade)
+        if (vaiVirarPrincipal) {
+          imoveisOsc.forEach((x) => {
+            if (x !== alvo && !x.ui_deleted && x.ui_status !== 'Deletado' && (Number(x.principal) === 1 || x.principal === true)) {
+              if ((x.enderecoId || x.id) && x.ui_status !== 'Novo') {
+                if (!x.ui_edit_original) x.ui_edit_original = { ...x };
+                x.ui_status = 'Editado';
+              }
+              x.principal = false;
+            }
+          });
+        }
+
+        // guarda original só quando há mudança real
         if (temId && !alvo.ui_edit_original) {
-          alvo.ui_edit_original = {
-            descricao: alvo.descricao,
-            situacao: alvo.situacao,
-            cep: alvo.cep,
-            cidade: alvo.cidade,
-            bairro: alvo.bairro,
-            logradouro: alvo.logradouro,
-            numero: alvo.numero,
-            complemento: alvo.complemento,
-            principal: alvo.principal
-          };
+          alvo.ui_edit_original = { ...alvo };
         }
 
         alvo.descricao   = descricao;
@@ -2735,29 +2801,43 @@ if (!$oscIdVinculada) {
         alvo.complemento = complemento;
         alvo.principal   = principal;
 
-        alvo.ui_status = temId ? 'Editado' : 'Novo';
+        if (temId) alvo.ui_status = 'Editado';
+        else alvo.ui_status = alvo.ui_status || 'Novo';
 
         editImovelIndex = null;
 
         renderImoveisOsc();
         fecharModalImovel();
-        return;
+      } else {
+        // Novo imóvel
+        if (principal) {
+          // ao criar como principal, desmarca o principal anterior
+          imoveisOsc.forEach((x) => {
+            if (!x.ui_deleted && x.ui_status !== 'Deletado' && (Number(x.principal) === 1 || x.principal === true)) {
+              if ((x.enderecoId || x.id) && x.ui_status !== 'Novo') {
+                if (!x.ui_edit_original) x.ui_edit_original = { ...x };
+                x.ui_status = 'Editado';
+              }
+              x.principal = false;
+            }
+          });
+        }
+
+        imoveisOsc.push({
+          enderecoId: null,
+          descricao, situacao, cep, cidade, bairro, logradouro, numero, complemento,
+          principal,
+          ui_status: 'Novo',
+          ui_deleted: false
+        });
+
+        if (imoveisOsc.length && !imoveisOsc.some(x => Number(x.principal) === 1 || x.principal === true)) {
+          imoveisOsc[0].principal = true;
+        }
+
+        renderImoveisOsc();
+        fecharModalImovel();
       }
-
-      imoveisOsc.push({
-        enderecoId: null,
-        descricao, situacao, cep, cidade, bairro, logradouro, numero, complemento,
-        principal,
-        ui_status: 'Novo',
-        ui_deleted: false
-      });
-
-      if (imoveisOsc.length && !imoveisOsc.some(x => Number(x.principal) === 1 || x.principal === true)) {
-        imoveisOsc[0].principal = true;
-      }
-
-      renderImoveisOsc();
-      fecharModalImovel();
     }
 
     if (addImovelOscBtn) addImovelOscBtn.addEventListener('click', salvarImovelDoModal);
@@ -2929,50 +3009,68 @@ if (!$oscIdVinculada) {
       const cnae = qs('#atvCnae').value.trim();
       const area = qs('#atvArea').value.trim();
       const subarea = qs('#atvSubarea').value.trim();
-    
-      if (!cnae || !area) {
-        alert('Preencha pelo menos CNAE e Área de atuação');
+
+      if (!area || !subarea) {
+        alert('Informe Área e Subárea.');
         return;
       }
-  
-      // EDITANDO
-      if (editAtvIndex !== null) {
-        const alvo = atividades[editAtvIndex];
-        if (!alvo) return;
 
+      const snapAtv = (x) => ({
+        cnae: (x?.cnae || '').trim(),
+        area: (x?.area || '').trim(),
+        subarea: (x?.subarea || '').trim()
+      });
+
+      // EDIÇÃO
+      if (editAtvIndex != null) {
+        const alvo = atividades[editAtvIndex];
         // não deixa editar item deletado (restaura primeiro)
-        if (alvo.ui_deleted || alvo.ui_status === 'Deletado') {
+        if (alvo && (alvo.ui_deleted || alvo.ui_status === 'Deletado')) {
           alert('Restaure a atividade antes de editar.');
           return;
         }
-                    
-        // guarda snapshot para desfazer (somente se já existia no banco)
-        if (alvo.atividadeId && !alvo.ui_edit_original) {
-          alvo.ui_edit_original = { cnae: alvo.cnae, area: alvo.area, subarea: alvo.subarea };
+        if (!alvo) {
+          editAtvIndex = null;
+          modalAtividadeBackdrop.style.display = 'none';
+          return;
         }
-                    
+
+        const before = snapAtv(alvo);
+        const after  = { cnae, area, subarea };
+
+        const mudou = JSON.stringify(before) !== JSON.stringify(after);
+        if (!mudou) {
+          // nada mudou -> não marca como Editado
+          editAtvIndex = null;
+          addAtividadeBtn.textContent = 'Adicionar';
+          qs('#modalAtividadeBackdrop .modal h3').textContent = 'Adicionar Atividade';
+          modalAtividadeBackdrop.style.display = 'none';
+          return;
+        }
+
+        if (alvo.atividadeId && !alvo.ui_edit_original) {
+          alvo.ui_edit_original = { ...alvo };
+        }
+
         alvo.cnae = cnae;
         alvo.area = area;
         alvo.subarea = subarea;
-                    
-        // status
-        if (!alvo.atividadeId) {
-          // ainda não existe no banco => continua "Novo"
-          alvo.ui_status = 'Novo';
-        } else {
-          // já existia => virou "Editado"
+
+        if (alvo.atividadeId) {
           alvo.ui_status = 'Editado';
+        } else {
+          alvo.ui_status = alvo.ui_status || 'Novo';
         }
-                    
+
         editAtvIndex = null;
         addAtividadeBtn.textContent = 'Adicionar';
         qs('#modalAtividadeBackdrop .modal h3').textContent = 'Adicionar Atividade';
-                    
+
         renderAtividades();
         modalAtividadeBackdrop.style.display = 'none';
         return;
       }
-  
+
       // NOVA
       atividades.push({ atividadeId: null, cnae, area, subarea, ui_status: 'Novo', ui_deleted: false });
       renderAtividades();

@@ -222,6 +222,15 @@ try {
         if ($cat === 'CONTABIL') {
             if (!isset($documentos['CONTABIL'][$sub])) $documentos['CONTABIL'][$sub] = [];
             $documentos['CONTABIL'][$sub][] = $item;
+        
+        } elseif (strpos($sub, 'OUTRO') === 0) {
+            if (!isset($documentos[$cat][$sub])) $documentos[$cat][$sub] = [];
+            if (isset($documentos[$cat][$sub]['id_documento'])) {
+                $documentos[$cat][$sub] = [ $documentos[$cat][$sub] ];
+            }
+        
+            $documentos[$cat][$sub][] = $item;
+        
         } else {
             $documentos[$cat][$sub] = $item;
         }
