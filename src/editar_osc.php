@@ -1980,30 +1980,69 @@ if (!$oscIdVinculada) {
             }
         }
 
-        async function aplicarAlteracoesDocsOsc(oscId) {
-            const erros = [];
+        async function atualizarDocumentoMetaOsc(oscId, doc) {
+          try {
+            const fd = new FormData();
+            fd.append('id_osc', oscId);
+            fd.append('id_documento', doc.id_documento);
 
-            // 1) Excluir documentos existentes marcados
-            for (const id of Array.from(docsOscDeletes)) {
-                try {
-                    await excluirDocumentoServidor(id);
-                } catch (e) {
-                    erros.push(`(Excluir #${id}) ${e.message || 'falha ao excluir.'}`);
-                }
+            if (doc.descricao != null && String(doc.descricao).trim() !== '') {
+              fd.append('descricao', String(doc.descricao).trim());
+            }
+            if (doc.ano_referencia != null && String(doc.ano_referencia).trim() !== '') {
+              fd.append('ano_referencia', String(doc.ano_referencia).trim());
             }
 
-            // 2) Enviar somente os novos (com arquivo)
-            for (const doc of docsOsc) {
-                if (doc.ui_deleted) continue;   // <- NÃO envia se está "Deletado"
-                if (!doc.file) continue;
-                const err = await enviarDocumentoOsc(oscId, doc);
-                if (err) erros.push(err);
+            const resp = await fetch('ajax_upload_documento.php', { method: 'POST', body: fd });
+            const txt = await resp.text();
+
+            let data;
+            try { data = JSON.parse(txt); }
+            catch { throw new Error('Resposta inválida ao atualizar metadados do documento.'); }
+
+            if (data.status !== 'ok') {
+              throw new Error(data.mensagem || 'Erro ao atualizar metadados do documento.');
             }
 
-            return erros;
+            return null;
+          } catch (e) {
+            const label = (doc.tipo_label || doc.tipo || '') + (doc.tipo === 'CND' && doc.subtipo_label ? ` — ${doc.subtipo_label}` : '');
+            return `(${label}) ${e.message || 'falha ao atualizar.'}`;
+          }
         }
 
-
+        async function aplicarAlteracoesDocsOsc(oscId) {
+          const erros = [];
+                    
+          // 1) Excluir documentos existentes marcados
+          for (const id of Array.from(docsOscDeletes)) {
+            try { await excluirDocumentoServidor(id); }
+            catch (e) { erros.push(`(Excluir #${id}) ${e.message || 'falha ao excluir.'}`); }
+          }
+                    
+          // 2) Atualizar metadados (ano/descrição) SEM trocar arquivo
+          for (const doc of docsOsc) {
+            if (doc.ui_deleted) continue;
+            if (!doc.id_documento) continue;
+            if (!doc.ui_meta_update) continue;
+            if (doc.file) continue;
+                    
+            const err = await atualizarDocumentoMetaOsc(oscId, doc);
+            if (err) erros.push(err);
+            else delete doc.ui_meta_update;
+          }
+                    
+          // 3) Enviar somente os novos/substituídos (com arquivo)
+          for (const doc of docsOsc) {
+            if (doc.ui_deleted) continue;
+            if (!doc.file) continue;
+                    
+            const err = await enviarDocumentoOsc(oscId, doc);
+            if (err) erros.push(err);
+          }
+                    
+          return erros;
+        }
 
     const FUNCAO_LABELS = {
         DIRETOR: 'Diretor(a)',
@@ -3506,7 +3545,7 @@ if (!$oscIdVinculada) {
                 alert("Erro ao atualizar OSC: " + (result.error || "desconhecido"));
                 return;
             }
-            // após atualizar dados, aplica alterações de documentos (mesma lógica do cadastro)
+            
             let errosDocs = [];
             try {
                 errosDocs = await aplicarAlteracoesDocsOsc(oscId);

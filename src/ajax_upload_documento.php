@@ -58,6 +58,138 @@ if (!$id_osc_raw || !ctype_digit((string)$id_osc_raw)) {
 }
 $id_osc = (int)$id_osc_raw;
 
+// --------------------------------------------------------
+// ATUALIZA METADADOS
+// --------------------------------------------------------
+$id_documento_raw = $_POST['id_documento'] ?? null;
+if ($id_documento_raw !== null && $id_documento_raw !== '') {
+
+    if (!ctype_digit((string)$id_documento_raw)) {
+        echo json_encode(["status" => "erro", "mensagem" => "ID do documento inválido."]);
+        exit;
+    }
+    $id_documento = (int)$id_documento_raw;
+
+    $temArquivo = isset($_FILES['arquivo'])
+        && is_array($_FILES['arquivo'])
+        && ($_FILES['arquivo']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+
+    if ($temArquivo) {
+        echo json_encode([
+            "status"   => "erro",
+            "mensagem" => "Para substituir o arquivo, utilize o fluxo padrão de upload/substituição."
+        ]);
+        exit;
+    }
+
+    $stmt = $conn->prepare("SELECT categoria, subtipo FROM documento WHERE id_documento = ? AND osc_id = ? LIMIT 1");
+    if (!$stmt) {
+        echo json_encode(["status" => "erro", "mensagem" => "Erro ao preparar consulta do documento.", "erro_sql" => $conn->error]);
+        exit;
+    }
+    $stmt->bind_param("ii", $id_documento, $id_osc);
+    $stmt->execute();
+    $docDb = $stmt->get_result()->fetch_assoc();
+    if (!$docDb) {
+        echo json_encode(["status" => "erro", "mensagem" => "Documento não encontrado para esta OSC."]);
+        exit;
+    }
+
+    $categoriaDb = strtoupper((string)$docDb['categoria']);
+    $subtipoDb   = strtoupper((string)$docDb['subtipo']);
+
+    $descricao_in = array_key_exists('descricao', $_POST) ? trim((string)$_POST['descricao']) : null;
+    $ano_in_raw   = array_key_exists('ano_referencia', $_POST) ? trim((string)$_POST['ano_referencia']) : null;
+
+    // ano
+    $anoVaiAtualizar = false;
+    $anoRefNormalizado = null;
+    if ($ano_in_raw !== null) {
+        $ano_in_raw = trim($ano_in_raw);
+        if ($ano_in_raw === '') {
+            echo json_encode(["status" => "erro", "mensagem" => "Ano de referência não pode ficar vazio."]);
+            exit;
+        }
+        if (!ctype_digit((string)$ano_in_raw) || (int)$ano_in_raw < 1900) {
+            echo json_encode(["status" => "erro", "mensagem" => "Ano de referência inválido."]);
+            exit;
+        }
+        $anoRefNormalizado = (int)$ano_in_raw;
+        $anoVaiAtualizar = true;
+    }
+
+    // regra:
+    if ($categoriaDb === 'CONTABIL' && in_array($subtipoDb, ['BALANCO_PATRIMONIAL', 'DRE'], true)) {
+        if (!$anoVaiAtualizar) {
+            echo json_encode([
+                "status"   => "erro",
+                "mensagem" => "Ano de referência é obrigatório para documentos contábeis (Balanço Patrimonial / DRE)."
+            ]);
+            exit;
+        }
+    }
+
+    // descrição:
+    $descVaiAtualizar = false;
+    $descricaoFinal = null;
+    if ($descricao_in !== null) {
+        $descricao_in = trim($descricao_in);
+        if ($descricao_in !== '' && strpos($subtipoDb, 'OUTRO') === 0) {
+            $descricaoFinal = $descricao_in;
+            $descVaiAtualizar = true;
+        }
+    }
+
+    if (!$anoVaiAtualizar && !$descVaiAtualizar) {
+        echo json_encode(["status" => "erro", "mensagem" => "Nenhuma alteração de metadados foi enviada."]);
+        exit;
+    }
+
+    $sets = [];
+    $types = "";
+    $vals = [];
+
+    if ($descVaiAtualizar) {
+        $sets[] = "descricao = ?";
+        $types .= "s";
+        $vals[] = $descricaoFinal;
+    }
+    if ($anoVaiAtualizar) {
+        $sets[] = "ano_referencia = ?";
+        $types .= "i";
+        $vals[] = $anoRefNormalizado;
+    }
+
+    $sql = "UPDATE documento SET " . implode(", ", $sets) . " WHERE id_documento = ? AND osc_id = ? LIMIT 1";
+    $types .= "ii";
+    $vals[] = $id_documento;
+    $vals[] = $id_osc;
+
+    $stmtUp = $conn->prepare($sql);
+    if (!$stmtUp) {
+        echo json_encode(["status" => "erro", "mensagem" => "Erro ao preparar UPDATE do documento.", "erro_sql" => $conn->error]);
+        exit;
+    }
+    $stmtUp->bind_param($types, ...$vals);
+
+    if (!$stmtUp->execute()) {
+        echo json_encode(["status" => "erro", "mensagem" => "Erro ao atualizar metadados do documento.", "erro_sql" => $stmtUp->error]);
+        exit;
+    }
+
+    echo json_encode([
+        "status"         => "ok",
+        "mensagem"       => "Metadados do documento atualizados com sucesso!",
+        "id_documento"   => $id_documento,
+        "osc_id"         => $id_osc,
+        "categoria"      => $categoriaDb,
+        "subtipo"        => $subtipoDb,
+        "ano_referencia" => $anoVaiAtualizar ? $anoRefNormalizado : null,
+        "descricao"      => $descVaiAtualizar ? $descricaoFinal : null
+    ]);
+    exit;
+}
+
 // ----------------------------------------------------
 // MODO UPDATE
 // ----------------------------------------------------
