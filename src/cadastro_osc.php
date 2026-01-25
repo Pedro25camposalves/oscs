@@ -394,11 +394,11 @@ require 'autenticacao.php';
                 <div class="row" style="margin-top:10px">
                     <div style="flex:1">
                         <label for="usuarioSenha">Senha do usuário (*)</label>
-                        <input id="usuarioSenha" type="password" required />
+                        <input id="usuarioSenha" type="password" minlength="6" required />
                     </div>
                     <div style="flex:1">
                         <label for="usuarioSenhaConf">Confirmar senha (*)</label>
-                        <input id="usuarioSenhaConf" type="password" required />
+                        <input id="usuarioSenhaConf" type="password" minlength="6" required />
                     </div>
                 </div>
 
@@ -2093,6 +2093,36 @@ require 'autenticacao.php';
                 }
             }, 0);
         }
+
+    function mascaraCNPJ(cnpj) {
+    cnpj.value = cnpj.value
+        .replace(/\D/g, "")
+        .replace(/^(\d{2})(\d)/, "$1.$2")
+        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+        .replace(/\.(\d{3})(\d)/, ".$1/$2")
+        .replace(/(\d{4})(\d)/, "$1-$2")
+        .slice(0, 18);
+}
+
+    function mascaraTelefone(tel) {
+        tel.value = tel.value
+            .replace(/\D/g, "")
+            .replace(/^(\d{2})(\d)/, "($1) $2")
+            .replace(/(\d{4,5})(\d{4})$/, "$1-$2")
+            .slice(0, 15);
+    }
+
+    document.getElementById("CNPJ").addEventListener("input", function () {
+        mascaraCNPJ(this);
+    });
+
+    document.getElementById("telefone").addEventListener("input", function () {
+        mascaraTelefone(this);
+    });
+
+    document.getElementById("envTelefone").addEventListener("input", function () {
+        mascaraTelefone(this);
+    });
 
         updatePreviews();
 

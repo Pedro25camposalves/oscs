@@ -74,9 +74,11 @@ while ($row = $resultAtividades->fetch_assoc()) {
     $atividades[] = $row;
 }
 
-$stmt = $conn->prepare("SELECT osc.*, template_web.*, cores.*, imovel.* FROM osc
-LEFT JOIN template_web ON template_web.osc_id = osc.id LEFT JOIN cores ON cores.id_cores = osc.id 
-LEFT JOIN imovel ON imovel.osc_id = osc.id WHERE osc.id = ?;");
+$stmt = $conn->prepare("SELECT osc.*, template_web.*, cores.*, imovel.*, endereco.* FROM osc
+LEFT JOIN template_web ON template_web.osc_id = osc.id 
+LEFT JOIN cores ON cores.id_cores = osc.id 
+LEFT JOIN imovel ON imovel.osc_id = osc.id 
+LEFT JOIN endereco ON endereco.id = imovel.endereco_id WHERE osc.id = ?;");
 $stmt->bind_param("i", $osc);
 $stmt->execute();
 $result = $stmt->get_result();
