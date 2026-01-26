@@ -16,7 +16,12 @@ function json_fail(string $msg, int $http = 400): void {
 $usuarioId = $_SESSION['id'] ?? $_SESSION['usuario_id'] ?? null;
 if (!$usuarioId) json_fail('Sessão inválida. Faça login novamente.', 401);
 
-$oscId = $_SESSION['osc_id'] ?? null;
+$stmt = $conn->prepare("SELECT osc_id FROM usuario WHERE id = ? LIMIT 1");
+$stmt->bind_param("i", $usuarioId);
+$stmt->execute();
+$res = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+$oscId = (int)($res['osc_id'] ?? 0);
 if (!$oscId) json_fail('Este usuário não possui OSC vinculada.', 403);
 
 $projetoId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
