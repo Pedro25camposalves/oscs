@@ -409,14 +409,14 @@ if (!$ok) {
     </div>
 </header>
 <main>
-<!-- TABS DE NAVEGAÇÃO (OSC / PROJETOS) -->
-    <div class="tabs-top" id="tabsTop">
-        <button type="button" class="tab-btn" id="tabOsc"><span class="dot"></span>OSC</button>
-        <button type="button" class="tab-btn" id="tabProjetos"><span class="dot"></span>Projetos</button>
-        <button type="button" class="tab-btn" id="tabEditarProjeto"><span class="dot"></span>Editar Projeto</button>
-    </div>
+  <!-- TABS DE NAVEGAÇÃO (OSC / PROJETOS) -->
+  <div class="tabs-top" id="tabsTop">
+      <a class="tab-btn" href="editar_osc.php"><span class="dot"></span>OSC</a>
+      <a class="tab-btn" href="projetos_osc.php"><span class="dot"></span>Projetos</a>
+      <a class="tab-btn is-active" href="projetos_osc.php"><span class="dot"></span>Editar Projeto</a>
+  </div>
 
-<form id="oscForm" onsubmit="event.preventDefault();saveData()">
+<form id="projForm" onsubmit="event.preventDefault();saveProjeto()">
     <input type="hidden" id="oscId" value="<?= (int)$oscIdVinculada ?>" />
     <input type="hidden" id="projetoId" value="<?= (int)$projetoId ?>" />
 
@@ -550,20 +550,20 @@ if (!$ok) {
           <div>
             <div class="grid">
               <div>
-                <label for="logo">Logo (*)</label>
-                <div class="envolvidos-list" id="imgCard_logo"></div>
-                <input id="logo" type="file" accept="image/*" />
+                <label for="projLogo">Logo (*)</label>
+                <div class="envolvidos-list" id="imgCard_projLogo"></div>
+                <input id="projLogo" type="file" accept="image/*" />
               </div>
                 
               <div>
-                <label for="capa">Capa (*)</label>
-                <div class="envolvidos-list" id="imgCard_capa"></div>
-                <input id="capa" type="file" accept="image/*" />
+                <label for="projImgDescricao">Capa (*)</label>
+                <div class="envolvidos-list" id="imgCard_projImgDescricao"></div>
+                <input id="projImgDescricao" type="file" accept="image/*" />
               </div>
                 
               <div>
-                <label for="labelDepoimento">Vídeo de Depoimento</label>
-                <input id="labelDepoimento" type="text" />
+                <label for="projDepoimento">Depoimento</label>
+                <input id="projDepoimento" type="text" />
               </div>
 
               <div style="margin-top:10px;">
@@ -583,12 +583,12 @@ if (!$ok) {
                 <div class="row" style="align-items:center">
                   <div>
                     <div class="small">Logo</div>
-                    <div class="images-preview" id="previewlogo"></div>
+                    <div class="images-preview" id="previewProjLogo"></div>
                   </div>
                 
                   <div style="margin-left:12px">
-                    <div class="small">Capa</div>
-                    <div class="images-preview" id="previewLogoCompleta"></div>
+                    <div class="small">Imagem</div>
+                    <div class="images-preview" id="previewProjImgDescricao"></div>
                   </div>
                 </div>
               </div>
@@ -812,6 +812,163 @@ if (!$ok) {
     const qsa = s => document.querySelectorAll(s);
 
 
+    // ===== Helpers =====
+    function escapeHtml(str) {
+      return String(str ?? '').replace(/[&<>"]/g, (ch) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;'
+      }[ch]));
+    }
+    // mantém só números (ex.: telefone/CEP)
+    function onlyDigits(v) {
+      return String(v ?? '').replace(/\D+/g, '');
+    }
+
+    function fileNameFromUrl(url) {
+      if (!url) return '';
+      try {
+        const clean = String(url).split('?')[0].split('#')[0];
+        return clean.split('/').pop() || clean;
+      } catch {
+        return String(url);
+      }
+    }
+
+    
+    // ===== Validação imediata de arquivo (documentos) =====
+    const DOC_EXT_PERMITIDAS = new Set([
+      'pdf','doc','docx','xls','xlsx','odt','ods','csv','txt','rtf','jpg','jpeg','png','webp'
+    ]);
+
+    function getExt(nome) {
+      const i = String(nome || '').lastIndexOf('.');
+      return i >= 0 ? String(nome).slice(i + 1).toLowerCase() : '';
+    }
+
+    function validarArquivoDocumento(file) {
+      if (!file) return true;
+      const ext = getExt(file.name);
+      if (!DOC_EXT_PERMITIDAS.has(ext)) {
+        alert(`Formato inválido: .${ext || '(sem extensão)'}\n\nPermitidos: ${Array.from(DOC_EXT_PERMITIDAS).map(e=>'.'+e).join(' ')}`);
+        return false;
+      }
+      return true;
+    }
+
+    function validarInputArquivoDocumento(inputEl) {
+      if (!inputEl) return true;
+      const f = (inputEl.files && inputEl.files[0]) ? inputEl.files[0] : null;
+      if (!f) return true;
+      const ok = validarArquivoDocumento(f);
+      if (!ok) inputEl.value = ''; // limpa na hora pra evitar retrabalho
+      return ok;
+    }
+
+    function readFileAsDataURL(file) {
+      return new Promise((res, rej) => {
+        if (!file) return res(null);
+        const fr = new FileReader();
+        fr.onload = () => res(fr.result);
+        fr.onerror = rej;
+        fr.readAsDataURL(file);
+      });
+    }
+
+    function criarCardImagem({ titulo, url, file, onRemove, thumbWide = false }) {
+      const c = document.createElement('div');
+      c.className = 'envolvido-card';
+
+      const img = document.createElement('img');
+      img.src = file ? URL.createObjectURL(file) : url;
+      img.style.width = thumbWide ? '86px' : '48px';
+      img.style.height = '48px';
+      img.style.objectFit = 'cover';
+
+      const info = document.createElement('div');
+      const nome = file ? file.name : fileNameFromUrl(url);
+
+      info.innerHTML = `
+        <div style="font-weight:600">${escapeHtml(titulo)}</div>
+        <div class="small">${escapeHtml(nome)}</div>
+      `;
+
+      c.appendChild(img);
+      c.appendChild(info);
+
+      if (typeof onRemove === 'function') {
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'btn';
+        remove.textContent = '✕';
+        remove.style.padding = '6px 8px';
+        remove.style.marginLeft = '8px';
+        remove.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          onRemove(ev);
+        });
+        c.appendChild(remove);
+      }
+
+      return c;
+    }
+
+    async function updatePreviews() {
+      // preview do PROJETO (logo + imagem de descrição)
+      const inputLogo = qs('#projLogo');
+      const inputImg  = qs('#projImgDescricao');
+
+      const previewProjLogoEl = qs('#previewProjLogo');
+      const previewProjImgEl  = qs('#previewProjImgDescricao');
+
+      if (previewProjLogoEl) previewProjLogoEl.innerHTML = '';
+      if (previewProjImgEl)  previewProjImgEl.innerHTML  = '';
+
+      const l1 = inputLogo?.files?.[0] || null;
+      const i1 = inputImg?.files?.[0]  || null;
+
+      // Logo
+      if (previewProjLogoEl) {
+        if (l1) {
+          const src = await readFileAsDataURL(l1);
+          const img = document.createElement('img');
+          img.src = src;
+          previewProjLogoEl.appendChild(img);
+        } else {
+          let urlExistente = null;
+          try { urlExistente = (existingLogos && existingLogos.logo) ? existingLogos.logo : null; } catch (_) { urlExistente = null; }
+          if (urlExistente) {
+            const img = document.createElement('img');
+            img.src = urlExistente;
+            previewProjLogoEl.appendChild(img);
+          }
+        }
+      }
+
+      // Imagem de descrição
+      if (previewProjImgEl) {
+        if (i1) {
+          const src = await readFileAsDataURL(i1);
+          const img = document.createElement('img');
+          img.src = src;
+          previewProjImgEl.appendChild(img);
+        } else {
+          let urlExistente = null;
+          try { urlExistente = (existingCapa && existingCapa.img_descricao) ? existingCapa.img_descricao : null; } catch (_) { urlExistente = null; }
+          if (urlExistente) {
+            const img = document.createElement('img');
+            img.src = urlExistente;
+            previewProjImgEl.appendChild(img);
+          }
+        }
+      }
+    }
+
+
+
+
     // ===== COLLAPSE "CARD SANDUÍCHE" =====
     function initCardCollapse() {
       const safeGet = (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } };
@@ -873,69 +1030,127 @@ if (!$ok) {
     const projetoId = Number(qs('#projetoId')?.value || 0);
 
     // inputs template
-    const logo   = qs('#logo');
-    const logoCompleta  = qs('#logoCompleta');
-    const capa       = qs('#capa');
-    const banner2       = qs('#banner2');
-    const banner3       = qs('#banner3');
+    const projLogo = qs('#projLogo');
+    const projImgDescricao = qs('#projImgDescricao');
 
-    const previewlogo  = qs('#previewlogo');
-    const previewLogoCompleta = qs('#previewLogoCompleta');
-    const previewBanners      = qs('#previewBanners');
-
-    const bgColor  = qs('#bgColor');
-    const secColor = qs('#secColor');
-    const terColor = qs('#terColor');
-    const quaColor = qs('#quaColor');
-    const fonColor = qs('#fonColor');
-
-    const swBg  = qs('#swBg');
-    const swSec = qs('#swSec');
-    const swTer = qs('#swTer');
-    const swQua = qs('#swQua');
-    const swFon = qs('#swFon');
-
-    // docs fixos
-    const docEstatuto     = qs('#docEstatuto');
-    const docAta          = qs('#docAta');
-    const docCndFederal   = qs('#docCndFederal');
-    const docCndEstadual  = qs('#docCndEstadual');
-    const docCndMunicipal = qs('#docCndMunicipal');
-    const docFgts         = qs('#docFgts');
-    const docTrabalhista  = qs('#docTrabalhista');
-    const docCartCnpj     = qs('#docCartCnpj');
+    // atualiza cards/preview das imagens assim que o usuário escolhe um arquivo
+    const refreshTemplateImagesUI = () => {
+      try { renderTemplateImageCards(); } catch (e) { console.error('renderTemplateImageCards (change) falhou:', e); }
+      try { Promise.resolve(updatePreviews()).catch(e => console.error('updatePreviews (change) falhou:', e)); }
+      catch (e) { console.error('updatePreviews (change) falhou:', e); }
+    };
+    if (projLogo) projLogo.addEventListener('change', refreshTemplateImagesUI);
+    if (projImgDescricao) projImgDescricao.addEventListener('change', refreshTemplateImagesUI);
 
     // listas
     const envolvidos = []; // { tipo, envolvidoId, fotoPreview|fotoUrl, fotoFile, nome, telefone, email, funcao }
     let editEnvIndex = null; // null : novo, !=null : editando
     const balancos   = []; // { ano, file }
     const dres       = []; // { ano, file }    
-    const imoveisOsc = []; // { enderecoId|null, descricao, situacao, cep, cidade, bairro, logradouro, numero, complemento, principal }
+    const imoveisOsc = []; // { enderecoId|null, descricao, cep, cidade, bairro, logradouro, numero, complemento, principal }
     let editImovelIndex = null;
 
     // imagens já existentes vindas do servidor
-    let existingLogos = { logo: null, logoCompleta: null };
-    let existingBanners = { capa: null, banner2: null, banner3: null };
+    let existingLogos = { logo: null };
+    let existingCapa = { img_descricao: null };
 
-		// pendencias de remocao de imagens do template (logos/banners)
-		let templateRemover = { logo_simples:false, logo_completa:false, capa:false, banner2:false, banner3:false };
-		let templateBackupUrl = { logo_simples:null, logo_completa:null, capa:null, banner2:null, banner3:null };
+		// imagens do template (logo + imagem de descrição)
 
     let envFotoExistingUrl = null; // quando editar: foto do BD
+    let envFotoOriginalUrl = null; // URL original do servidor (pra restaurar)
     let envFotoRemover = false; // <-- ADD: pediu pra remover a foto atual?
 
     let envFotoPreviewUrl = null; // dataURL do preview (pendente)
     let envFotoFileCache  = null; // File pendente (pra envio)
 
     // ===== DOCUMENTOS (mesma lógica do cadastro_osc.php) =====
-        const docsOsc = []; // {categoria,tipo,subtipo,descricao,ano_referencia,link,file,id_documento?,url?,nome?}
-        const docsOscDeletes = new Set(); // ids de documentos existentes marcados para exclusão
+        const docsProjeto = []; // {categoria,tipo,subtipo,descricao,ano_referencia,link,file,id_documento?,url?,nome?}
+        const docsProjetoDeletes = new Set(); // ids de documentos existentes marcados para exclusão
 
-        const docsOscList = qs('#docsProjetoList');
+        const docsProjetoList = qs('#docsProjetoList');
         const openDocOscModal = qs('#openDocProjetoModal');
         const modalDocOscBackdrop = qs('#modalDocProjetoBackdrop');
         const addDocOscBtn = qs('#addDocProjetoBtn');
         const cancelDocOscBtn = qs('#closeDocProjetoModal');
+
+        // --- Modal de documento do PROJETO (abrir/fechar/adicionar) ---
+        if (openDocOscModal && modalDocOscBackdrop) {
+          openDocOscModal.addEventListener('click', () => {
+            resetDocOscCampos();
+            modalDocOscBackdrop.style.display = 'flex';
+          });
+
+          // fecha ao clicar fora
+          modalDocOscBackdrop.addEventListener('click', (e) => {
+            if (e.target === modalDocOscBackdrop) modalDocOscBackdrop.style.display = 'none';
+          });
+        }
+
+        if (cancelDocOscBtn && modalDocOscBackdrop) {
+          cancelDocOscBtn.addEventListener('click', () => {
+            modalDocOscBackdrop.style.display = 'none';
+          });
+        }
+
+        if (addDocOscBtn && modalDocOscBackdrop) {
+          addDocOscBtn.addEventListener('click', () => {
+            const categoria = (docCategoria?.value || '').trim();
+            const tipoSel = (docTipo?.value || '').trim();
+            const subtipoSel = (docSubtipo?.value || '').trim();
+
+            if (!categoria) { alert('Selecione a categoria do documento.'); return; }
+            if (!tipoSel) { alert('Selecione o tipo do documento.'); return; }
+
+            // No BD, o "subtipo" normalmente guarda a chave final do documento:
+            // - para CND: CND_FEDERAL / CND_ESTADUAL...
+            // - demais: PLANO_TRABALHO / DECRETO...
+            const subtipoDb = (tipoSel.toUpperCase() === 'CND' && subtipoSel) ? subtipoSel : tipoSel;
+
+            const descricao = (docDescricao?.value || '').trim();
+            const link = (docLink?.value || '').trim();
+            const anoRef = (docAnoRef?.value || '').trim();
+            const arquivo = (docArquivo?.files && docArquivo.files[0]) ? docArquivo.files[0] : null;
+
+            if (!arquivo && !link) {
+              alert('Informe um arquivo ou um link para o documento.');
+              return;
+            }
+
+            // Regra de múltiplos (quando não permitir, substitui o existente e marca para exclusão)
+            const permiteMulti = tipoPermiteMultiplos(categoria, tipoSel, subtipoDb);
+            if (!permiteMulti) {
+              const idxExist = docsProjeto.findIndex(d => d && d.categoria === categoria && ((d.subtipo && d.subtipo === subtipoDb) || (!d.subtipo && d.tipo === subtipoDb) || ((d.subtipo || d.tipo) === subtipoDb)));
+              if (idxExist >= 0) {
+                const dOld = docsProjeto[idxExist];
+                const oldId = dOld?.id_documento ?? dOld?.id ?? null;
+                if (oldId) docsProjetoDeletes.add(oldId);
+                docsProjeto.splice(idxExist, 1);
+              }
+            }
+
+            const doc = {
+              id: null,
+              id_documento: null,
+              categoria,
+              tipo: (tipoSel.toUpperCase() === 'CND') ? 'CND' : tipoSel,
+              subtipo: (tipoSel.toUpperCase() === 'CND') ? subtipoDb : '',
+              tipo_label: getTipoLabel(categoria, (tipoSel.toUpperCase() === 'CND') ? 'CND' : tipoSel),
+              subtipo_label: (tipoSel.toUpperCase() === 'CND') ? (() => { try { const arr=(typeof SUBTIPOS_POR_TIPO_CND!=='undefined'&&Array.isArray(SUBTIPOS_POR_TIPO_CND))?SUBTIPOS_POR_TIPO_CND:[]; const f=arr.find(x=>x&&x.key===subtipoDb); return f?f.label:''; } catch { return ''; } })() : '',
+              ano_referencia: anoRef,
+              descricao,
+              link,
+              url: '',
+              nome: arquivo ? arquivo.name : null,
+              file: arquivo,
+              ui_status: 'Novo',
+            };
+
+            docsProjeto.push(doc);
+            renderdocsProjeto();
+            modalDocOscBackdrop.style.display = 'none';
+          });
+        }
+
 
         const docCategoria = qs('#docCategoria');
         const docTipoGroup      = qs('#docTipoGroup');
@@ -979,7 +1194,7 @@ if (!$ok) {
           });
         }
 
-        let docEditTarget = null; // referência ao objeto dentro de docsOsc
+        let docEditTarget = null; // referência ao objeto dentro de docsProjeto
 
         const ORDEM_CATEGORIAS_OSC = [
     { key: 'EXECUCAO',    numero: 1 },
@@ -1014,6 +1229,17 @@ const TIPOS_POR_CATEGORIA_OSC = {
     ],
 };
 
+// Labels de funções no Projeto (espelho do cadastro_projeto.php)
+const FUNCAO_LABELS = {
+  DIRETOR: 'Diretor(a)',
+  COORDENADOR: 'Coordenador(a)',
+  FINANCEIRO: 'Financeiro',
+  MARKETING: 'Marketing',
+  RH: 'Recursos Humanos (RH)',
+  PARTICIPANTE: 'Participante',
+};
+
+
 const SUBTIPOS_DUP_PERMITIDOS = new Set(['OUTRO', 'BALANCO_PATRIMONIAL', 'DRE', 'DECRETO']);
 
 const SUBTIPOS_POR_TIPO_CND = [
@@ -1021,6 +1247,94 @@ const SUBTIPOS_POR_TIPO_CND = [
             { key: 'CND_ESTADUAL', label: 'Estadual' },
             { key: 'CND_MUNICIPAL', label: 'Municipal' },
         ];
+// =========================
+// Carrega documentos existentes vindos do AJAX (formato: documentos[categoria][subtipo] = item | [itens])
+// Normaliza para o array `docsProjeto` (usado pela UI).
+// =========================
+function carregardocsProjetoExistentes(documentosTree) {
+  docsProjeto.length = 0;
+
+  if (!documentosTree || typeof documentosTree !== 'object') return;
+
+  const labelTipo = (categoria, tipo) => {
+    try {
+      const arr = (typeof TIPOS_POR_CATEGORIA_OSC !== 'undefined' && TIPOS_POR_CATEGORIA_OSC && TIPOS_POR_CATEGORIA_OSC[categoria]) ? TIPOS_POR_CATEGORIA_OSC[categoria] : [];
+      const f = arr.find(x => x && x.value === tipo);
+      return f ? f.label : (tipo || '');
+    } catch {
+      return (tipo || '');
+    }
+  };
+
+  const labelSubtipoCND = (sub) => {
+    try {
+      const arr = (typeof SUBTIPOS_POR_TIPO_CND !== 'undefined' && Array.isArray(SUBTIPOS_POR_TIPO_CND)) ? SUBTIPOS_POR_TIPO_CND : [];
+      const f = arr.find(x => x && x.key === sub);
+      return f ? f.label : '';
+    } catch {
+      return '';
+    }
+  };
+
+  const pushDoc = (categoria, raw) => {
+    if (!raw || typeof raw !== 'object') return;
+
+    const cat = categoria || raw.categoria || 'OUTROS';
+    const sub = raw.subtipo || raw.tipo || raw.chave || '';
+
+    // No BD, `subtipo` carrega o "tipo" (ex.: PLANO_TRABALHO / DECRETO / CND_FEDERAL...)
+    let tipo = sub || '';
+    let subtipo = '';
+    let subtipo_label = '';
+
+    if (/^CND_/i.test(tipo)) {
+      subtipo = tipo.toUpperCase();
+      tipo = 'CND';
+      subtipo_label = labelSubtipoCND(subtipo);
+    }
+
+    const doc = {
+      // IDs (o render usa d.id; o ajax usa id_documento)
+      id: raw.id_documento ?? raw.id ?? null,
+      id_documento: raw.id_documento ?? raw.id ?? null,
+
+      categoria: cat,
+      tipo: tipo,
+      subtipo: subtipo,
+
+      tipo_label: labelTipo(cat, tipo),
+      subtipo_label: subtipo_label,
+
+      ano_referencia: (() => { const v = (raw.ano_referencia ?? ''); const s = String(v).trim(); return (s === '0' || s === '0000') ? '' : s; })(),
+      descricao: raw.descricao ?? '',
+      link: raw.link ?? '',
+
+      // arquivo
+      url: raw.url ?? raw.documento ?? '',
+      nome: raw.nome ?? (raw.documento ? String(raw.documento).split('/').pop() : null),
+
+      // UI
+      ui_status: null,
+    };
+
+    docsProjeto.push(doc);
+  };
+
+  Object.keys(documentosTree).forEach(cat => {
+    const grupo = documentosTree[cat];
+    if (!grupo || typeof grupo !== 'object') return;
+
+    Object.keys(grupo).forEach(sub => {
+      const val = grupo[sub];
+      if (Array.isArray(val)) {
+        val.forEach(item => pushDoc(cat, item));
+      } else {
+        pushDoc(cat, val);
+      }
+    });
+  });
+}
+
 
         function tipoPermiteMultiplos(categoria, tipo, subtipo) {
     const st = (subtipo || tipo || '').toString().trim().toUpperCase();
@@ -1193,7 +1507,7 @@ function getTipoLabel(categoria, tipo) {
 
                 const showLink = isTipoLinkDoc(docEditTarget.tipo);
                 const novaDescricao = showDesc ? (editDocDescricao?.value || '').trim() : (docEditTarget.descricao || '');
-                const novoAno       = showAno  ? (editDocAno?.value || '').trim()       : (docEditTarget.ano_referencia || '');
+                const novoAno       = showAno  ? (editDocAno?.value || '').trim()       : '';
 
                 const novoLink = showLink ? (editDocLink?.value || '').trim() : (docEditTarget.link || '');
                 if (showDesc && !novaDescricao) {
@@ -1255,46 +1569,47 @@ function getTipoLabel(categoria, tipo) {
                         // file permanece como está
                     }
 
-                    renderDocsOsc();
+                    renderdocsProjeto();
                     fecharModalEditarDocumento();
                     return;
                 }
 
-                // ===== CASO: trocou arquivo -> substituição (mantém lógica existente) =====
+                // ===== CASO: trocou arquivo -> substituição (update no MESMO registro) =====
                 if (docEditTarget.id_documento) {
-                    const originalRef = docEditTarget;
-                    const originalId  = String(docEditTarget.id_documento);
+                    // guarda original só na primeira vez (para permitir desfazer)
+                    if (!docEditTarget.ui_meta_original) {
+                        docEditTarget.ui_meta_original = {
+                            descricao: docEditTarget.descricao || '',
+                            ano_referencia: docEditTarget.ano_referencia || '',
+                            link: docEditTarget.link || ''
+                        };
+                    }
 
-                    docsOscDeletes.add(originalId);
-
-                    const idxGlobal = docsOsc.indexOf(docEditTarget);
-                    if (idxGlobal !== -1) docsOsc.splice(idxGlobal, 1);
-
-                    docsOsc.push({
-                      categoria: docEditTarget.categoria,
-                      tipo: docEditTarget.tipo,
-                      tipo_label: docEditTarget.tipo_label || getTipoLabel(docEditTarget.categoria, docEditTarget.tipo),
-                      subtipo: docEditTarget.subtipo || docEditTarget.tipo,
-                      subtipo_label: docEditTarget.subtipo_label || '',
-                      descricao: showDesc ? novaDescricao : (docEditTarget.descricao || ''),
-                      link: showLink ? novoLink : (docEditTarget.link || ''),
-                      ano_referencia: showAno ? novoAno : (docEditTarget.ano_referencia || ''),
-                      file: novoArquivo,
-                      ui_status: 'Editado',
-                      ui_edit_original: originalRef,
-                      ui_edit_original_id: originalId,
-                    });
-                } else {
                     if (showDesc) docEditTarget.descricao = novaDescricao;
-                    if (showAno) docEditTarget.ano_referencia = novoAno;
+                    if (showAno)  docEditTarget.ano_referencia = novoAno;
                     if (showLink) docEditTarget.link = novoLink;
+
+                    // substitui arquivo e marca para UPDATE (será enviado com id_documento)
                     docEditTarget.file = novoArquivo;
+                    docEditTarget.ui_meta_update = true;
+
+                    if (docEditTarget.ui_status !== 'Novo' && docEditTarget.ui_status !== 'Deletado') {
+                        docEditTarget.ui_status = 'Editado';
+                    }
+                } else {
+                    // rascunho (ainda não foi pro servidor)
+                    if (showDesc) docEditTarget.descricao = novaDescricao;
+                    if (showAno)  docEditTarget.ano_referencia = novoAno;
+                    if (showLink) docEditTarget.link = novoLink;
+
+                    docEditTarget.file = novoArquivo;
+
                     if (docEditTarget.ui_status !== 'Novo') {
-                      docEditTarget.ui_status = 'Editado';
+                        docEditTarget.ui_status = 'Editado';
                     }
                 }
 
-                renderDocsOsc();
+renderdocsProjeto();
                 fecharModalEditarDocumento();
             });
         } else {
@@ -1306,754 +1621,154 @@ function getTipoLabel(categoria, tipo) {
           if (docEditTarget.ui_status !== 'Novo') {
             docEditTarget.ui_status = 'Editado';
           }
-          renderDocsOsc();
+          renderdocsProjeto();
           fecharModalEditarDocumento();        
         }        
 
-        function renderDocsOsc() {
-            if (!docsOscList) return;
-            docsOscList.innerHTML = '';
+    function renderdocsProjeto() {
+      if (!docsProjetoList) return;
+      docsProjetoList.innerHTML = '';
 
-            ORDEM_CATEGORIAS_OSC.forEach(({ key, numero }) => {
-                const docsCat = docsOsc.filter(d => d.categoria === key);
+      // Use as constantes de PROJETO se existirem; se não, cai no que já estiver no arquivo
+      const ORDEM = (typeof ORDEM_CATEGORIAS_PROJETO !== 'undefined') ? ORDEM_CATEGORIAS_PROJETO : ORDEM_CATEGORIAS_OSC;
+      const LABEL = (typeof LABEL_CATEGORIA_PROJETO !== 'undefined') ? LABEL_CATEGORIA_PROJETO : LABEL_CATEGORIA_OSC;
 
-                const sec = document.createElement('div');
-                sec.style.width = '100%';
+      ORDEM.forEach(({ key, numero }) => {
+        const docsCat = (docsProjeto || []).filter(d => d.categoria === key);
 
-                const titulo = document.createElement('div');
-                titulo.className = 'section-title';
-                titulo.style.marginTop = '8px';
-                titulo.textContent = `${numero}. ${LABEL_CATEGORIA_OSC[key] || key}`;
-                sec.appendChild(titulo);
+        const sec = document.createElement('div');
+        sec.style.width = '100%';
 
-                if (!docsCat.length) {
-                    const vazio = document.createElement('div');
-                    vazio.className = 'small';
-                    vazio.textContent = 'Nenhum documento cadastrado!';
-                    vazio.style.marginBottom = '4px';
-                    sec.appendChild(vazio);
-                } else {
-                    docsCat.forEach(d => {
-                        const c = document.createElement('div');
-                        c.className = 'envolvido-card';
+        const titulo = document.createElement('div');
+        titulo.className = 'section-title';
+        titulo.style.marginTop = '8px';
+        titulo.textContent = `${numero}. ${LABEL[key] || key}`;
+        sec.appendChild(titulo);
 
-                        let linha = d.tipo_label || d.tipo || '';
-                        if (d.tipo === 'CND' && d.subtipo_label) {
-                            linha += ' — ' + d.subtipo_label;
-                        } else if ((d.tipo === 'OUTRO' || d.tipo === 'OUTRO_INSTITUCIONAL' || d.tipo === 'OUTRO_CONTABIL') && d.descricao) {
-                            linha += ' — ' + d.descricao;
-                        }
+        if (!docsCat.length) {
+          const vazio = document.createElement('div');
+          vazio.className = 'small';
+          vazio.textContent = 'Nenhum documento cadastrado!';
+          vazio.style.marginBottom = '4px';
+          sec.appendChild(vazio);
 
-                        const nomeArquivo = (d.file && d.file.name) || d.nome || (d.url ? fileNameFromUrl(d.url) : '—');
-
-                        const info = document.createElement('div');
-
-                        const statusLinha = d.ui_status
-                          ? `<div class="small muted">${escapeHtml(d.ui_status)}</div>`
-                          : '';
-                                    
-                        const statusTxt = d.ui_status || ''; // (use o mesmo campo que você já está usando)
-                        const statusCls = statusTxt === 'Novo' ? 'on' : 'off';
-                        const statusPill = statusTxt
-                          ? `<span class="status-pill ${statusCls}">${escapeHtml(statusTxt)}</span>`
-                          : '';
-                                    
-                        info.innerHTML = `
-                          <div style="display:flex; align-items:center; gap:10px;">
-                            <div style="font-weight:600">${escapeHtml(linha)}</div>
-                          </div>
-                                    
-                          ${d.ano_referencia ? `<div class="small" style="font-weight:bold">Ano: ${escapeHtml(d.ano_referencia)}</div>` : ''}
-                          ${d.link ? `<div class="small">Link: ${escapeHtml(d.link)}</div>` : ''}
-                          <div class="small">Arquivo: ${escapeHtml(nomeArquivo || '—')}</div>
-                        `;
-
-                        if (d.url) {
-                            const a = document.createElement('a');
-                            a.href = d.url;
-                            a.target = '_blank';
-                            a.rel = 'noopener';
-                            a.className = 'small';
-                            a.textContent = 'Visualizar';
-                            a.style.display = 'inline-block';
-                            a.style.marginTop = '4px';
-                            info.appendChild(a);
-                        }
-
-                        const edit = document.createElement('button');
-                        edit.type = 'button';                // <- CRÍTICO
-                        edit.className = 'btn';
-                        edit.textContent = '✎';
-                        edit.style.padding = '6px 8px';
-                        const bloqueiaEdicaoDoc = (d.ui_status === 'Novo' || d.ui_status === 'Deletado');
-                        if (bloqueiaEdicaoDoc) {
-                          edit.disabled = true; 
-                          edit.title = 'Documento está como Novo';
-                          edit.style.opacity = '0.60';
-                          edit.style.cursor = 'not-allowed';
-                        }
-                        edit.addEventListener('click', (e) => {
-                          e.preventDefault();                // <- CRÍTICO
-                          e.stopPropagation();               // <- recomendado
-                          abrirModalEditarDocumento(d);
-                        });
-
-                        // status pill (fica ao lado esquerdo do lápis)
-                        let statusPillEl = null;
-                        if (d.ui_status) {
-                          statusPillEl = document.createElement('span');
-                          statusPillEl.className = 'status-pill ' + (d.ui_status === 'Novo' ? 'on' : 'off');
-                          statusPillEl.textContent = d.ui_status;
-                        }
-                                    
-                        const remove = document.createElement('button');
-                        remove.type = 'button';
-                        remove.className = 'btn';
-                        remove.style.padding = '6px 8px';
-
-                        const isEditado  = (d.ui_status === 'Editado');
-                        const isDeletado = (d.ui_deleted || d.ui_status === 'Deletado');
-
-                        // ícone: volta para Editado/Deletado
-                        remove.textContent = (isEditado || isDeletado) ? '↩' : '✕';
-
-                        // tooltip
-                        remove.title = isEditado
-                          ? 'Desfazer edição'
-                          : (isDeletado ? 'Restaurar' : ((d.ui_status === 'Novo' || !d.id_documento) ? 'Remover' : 'Deletar'));
-
-                        remove.addEventListener('click', (e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-
-                          // 1) se está EDITADO -> desfazer edição
-                          if (d.ui_status === 'Editado') {
-
-                            // A) edição com substituição (tem original salvo)
-                            if (d.ui_edit_original) {
-                              const orig = d.ui_edit_original || null;
-                              const origId = d.ui_edit_original_id || (orig?.id_documento ? String(orig.id_documento) : null);
-
-                              // remove o "substituto editado"
-                              const idx = docsOsc.indexOf(d);
-                              if (idx !== -1) docsOsc.splice(idx, 1);
-
-                              // tira o original da lista de exclusão
-                              if (origId) docsOscDeletes.delete(origId);
-
-                              // devolve o original pra lista
-                              if (orig && !docsOsc.includes(orig)) {
-                                orig.ui_deleted = false;
-                                if (orig.ui_status) delete orig.ui_status;
-                                if (orig.ui_status_prev) delete orig.ui_status_prev;
-                                docsOsc.push(orig);
-                              }
-
-                              renderDocsOsc();
-                              return;
-                            }
-
-                            // B) edição só de metadados (descrição/ano), sem trocar arquivo
-                            if (d.ui_meta_original) {
-                              d.descricao = d.ui_meta_original.descricao || '';
-                              d.ano_referencia = d.ui_meta_original.ano_referencia || '';
-                        d.link = d.ui_meta_original.link || '';
-                              delete d.ui_meta_original;
-                              delete d.ui_meta_update;
-                              delete d.ui_status;
-                              renderDocsOsc();
-                              return;
-                            }
-
-                            // fallback: só limpa o status
-                            delete d.ui_meta_update;
-                            delete d.ui_status;
-                            renderDocsOsc();
-                            return;
-                          }
-
-                          // 2) se é NOVO (rascunho) -> some de vez
-                          if (d.ui_status === 'Novo' || !d.id_documento) {
-                            const idx = docsOsc.indexOf(d);
-                            if (idx !== -1) docsOsc.splice(idx, 1);
-                            renderDocsOsc();
-                            return;
-                          }
-
-                          // 3) já está DELETADO -> restaurar
-                          const idStr = String(d.id_documento);
-
-                          if (d.ui_deleted || d.ui_status === 'Deletado') {
-                            // BLOQUEIA RESTAURAR se já existe outro doc ativo do mesmo tipo (quando não permite duplicidade)
-                            if (!tipoPermiteMultiplos(d.categoria, d.tipo, d.subtipo)) {
-                              const alvoSub = d.subtipo || d.tipo;
-                                        
-                              const existeAtivoMesmoTipo = docsOsc.some(x =>
-                                x !== d &&
-                                !x.ui_deleted &&                         // ativo (não deletado)
-                                x.categoria === d.categoria &&
-                                x.tipo === d.tipo &&
-                                ((x.subtipo || x.tipo) === alvoSub)
-                              );
-                                        
-                              if (existeAtivoMesmoTipo) {
-                                alert('Não é possível restaurar este documento porque já existe um documento ativo desse mesmo tipo.\n\nRemova o novo para restaurar o antigo.');
-                                return;
-                              }
-                            }
-                            d.ui_deleted = false;
-                            docsOscDeletes.delete(idStr);
-
-                            d.ui_status = d.ui_status_prev || '';
-                            delete d.ui_status_prev;
-                            if (!d.ui_status) delete d.ui_status;
-
-                            renderDocsOsc();
-                            return;
-                          }
-
-                          // 4) caso normal -> marcar como deletado
-                          d.ui_deleted = true;
-                          d.ui_status_prev = d.ui_status || '';
-                          d.ui_status = 'Deletado';
-                          docsOscDeletes.add(idStr);
-
-                          renderDocsOsc();
-                        });
-                                    
-                        const actions = document.createElement('div');
-                        actions.style.marginLeft = 'auto';
-                        actions.style.display = 'flex';
-                        actions.style.alignItems = 'center';
-                        actions.style.gap = '8px';
-
-                        // aqui entra o status ANTES do lápis
-                        if (statusPillEl) actions.appendChild(statusPillEl);
-
-                        actions.appendChild(edit);
-                        actions.appendChild(remove);
-
-                        c.appendChild(info);
-                        c.appendChild(actions);
-                        sec.appendChild(c);
-                    });
-                }
-
-                docsOscList.appendChild(sec);
-            });
+          docsProjetoList.appendChild(sec);
+          return;
         }
 
-        if (openDocOscModal) {
-            openDocOscModal.addEventListener('click', () => {
-                resetDocOscCampos();
-                if (modalDocOscBackdrop) modalDocOscBackdrop.style.display = 'flex';
-            });
-        }
+        docsCat.forEach(d => {
+          const c = document.createElement('div');
+          c.className = 'envolvido-card';
 
-        if (cancelDocOscBtn) {
-          cancelDocOscBtn.addEventListener('click', fecharModalDocOsc);
-        }
-
-        if (modalDocOscBackdrop) {
-            modalDocOscBackdrop.addEventListener('click', (e) => {
-                if (e.target === modalDocOscBackdrop) {
-                    modalDocOscBackdrop.style.display = 'none';
-                }
-            });
-        }
-
-        if (addDocOscBtn) {
-            addDocOscBtn.addEventListener('click', () => {
-                const categoria   = docCategoria?.value;
-                const tipo        = docTipo?.value;
-                const tipo_label  = getTipoLabel(categoria, tipo);
-
-                let subtipo       = tipo;
-                let subtipo_label = '';
-
-                if (tipo === 'CND') {
-                  const sub = docSubtipo.value;
-                  if (!sub) {
-                    alert('Selecione o subtipo (Federal, Estadual ou Municipal).');
-                    return;
-                  }
-                  subtipo = 'CND_' + sub; // CND_FEDERAL / CND_ESTADUAL / CND_MUNICIPAL
-                  subtipo_label = docSubtipo.options[docSubtipo.selectedIndex]?.text || '';
-                }
-
-                const ano_referencia =
-                  (categoria === 'CONTABIL' && (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE'))
-                    ? (docAnoRef.value || '').trim()
-                    : '';
-
-                const descricao = (tipo === 'OUTRO')
-                    ? (docDescricao?.value || '').trim()
-                    : '';
-
-                const link = (tipo === 'DECRETO')
-                    ? (docLink?.value || '').trim()
-                    : '';
-
-                const file = docArquivo?.files?.[0] || null;
-                if (file && !validarArquivoDocumento(file)) {
-                  docArquivo.value = '';
-                  return;
-                }
-
-                if (!categoria || !tipo) {
-                    alert('Selecione categoria e tipo.');
-                    return;
-                }
-
-                if (tipo === 'OUTRO' && !descricao) {
-                    alert('Informe uma descrição.');
-                    return;
-                }
-
-                if ((tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE') && !ano_referencia) {
-                    alert('Informe o ano de referência.');
-                    return;
-                }
-
-                if (tipo === 'DECRETO' && !link) {
-                    alert('Informe o link do Decreto/Portaria.');
-                    return;
-                }
-
-                // Para todos os tipos, exceto DECRETO, arquivo é obrigatório
-                if (tipo !== 'DECRETO' && !file) {
-                  alert('Selecione um arquivo.');
-                  return;
-                }
-
-                // Regra de duplicidade (espelha o cadastro_projeto.php)
-                if (!tipoPermiteMultiplos(categoria, tipo, subtipo)) {
-                    const jaTem = docsOsc.some(d => !d.ui_deleted && d.categoria === categoria && d.tipo === tipo && d.subtipo === subtipo);
-                    if (jaTem) {
-                        alert('Já existe um documento desse tipo. Remova o existente para adicionar outro.');
-                        return;
-                    }
-                }
-
-                docsOsc.push({
-                    categoria,
-                    tipo,
-                    tipo_label,
-                    subtipo,
-                    subtipo_label,
-                    descricao,
-                    link,
-                    ano_referencia,
-                    file,
-                    ui_status: 'Novo',
-                });
-
-                renderDocsOsc();
-                if (modalDocOscBackdrop) modalDocOscBackdrop.style.display = 'none';
-            });
-        }
-
-        // ===== Validação imediata de arquivo (documentos) =====
-        const DOC_EXT_PERMITIDAS = new Set([
-          'pdf','doc','docx','xls','xlsx','odt','ods','csv','txt','rtf'
-        ]);
-
-        function getExt(nome) {
-          const i = String(nome || '').lastIndexOf('.');
-          return i >= 0 ? String(nome).slice(i + 1).toLowerCase() : '';
-        }
-
-        function validarArquivoDocumento(file) {
-          if (!file) return true;
-          const ext = getExt(file.name);
-          if (!DOC_EXT_PERMITIDAS.has(ext)) {
-            alert(`Formato inválido: .${ext || '(sem extensão)'}\n\nPermitidos: ${Array.from(DOC_EXT_PERMITIDAS).map(e=>'.'+e).join(' ')}`);
-            return false;
+          let linha = d.tipo_label || d.tipo || '';
+          if (d.tipo === 'CND' && d.subtipo_label) {
+            linha += ' — ' + d.subtipo_label;
+          } else if ((d.tipo === 'OUTRO' || d.tipo === 'OUTRO_INSTITUCIONAL' || d.tipo === 'OUTRO_CONTABIL') && d.descricao) {
+            linha += ' — ' + d.descricao;
           }
-          return true;
-        }
 
-        function validarInputArquivoDocumento(inputEl) {
-          if (!inputEl) return true;
-          const f = inputEl.files && inputEl.files[0] ? inputEl.files[0] : null;
-          if (!f) return true;
-          const ok = validarArquivoDocumento(f);
-          if (!ok) inputEl.value = ''; // limpa na hora pra evitar retrabalho
-          return ok;
-        }
+          const nomeArquivo =
+            (d.file && d.file.name) ||
+            d.nome ||
+            (d.url ? fileNameFromUrl(d.url) : '—');
 
-        function asArray(v) {
-            if (!v) return [];
-            return Array.isArray(v) ? v : [v];
-        }
+          const info = document.createElement('div');
+          info.innerHTML = `
+            <div style="font-weight:600">${escapeHtml(linha)}</div>
 
-        function carregarDocsOscExistentes(documentos) {
-    docsOsc.splice(0, docsOsc.length);
-    docsOscDeletes.clear();
+            ${d.ano_referencia ? `<div class="small" style="font-weight:bold">Ano: ${escapeHtml(d.ano_referencia)}</div>` : ''}
+            ${d.link ? `<div class="small">Link: ${escapeHtml(d.link)}</div>` : ''}
+            <div class="small">Arquivo: ${escapeHtml(nomeArquivo || '—')}</div>
+          `;
 
-    const src = documentos || {};
+          // Status (pill) — à direita, igual card de endereço
+          let statusPillEl = null;
+          if (d.ui_status) {
+            statusPillEl = document.createElement('span');
+            const cls = (d.ui_status === 'Novo') ? 'on' : 'off';
+            statusPillEl.className = 'status-pill ' + cls;
+            statusPillEl.textContent = String(d.ui_status);
+          }
 
-    const normUpper = (v) => String(v ?? '').trim().toUpperCase();
-    const asArray   = (v) => Array.isArray(v) ? v : (v ? [v] : []);
+          if (d.url) {
+            const a = document.createElement('a');
+            a.href = d.url;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            a.className = 'small';
+            a.textContent = 'Visualizar';
+            a.style.display = 'inline-block';
+            a.style.marginTop = '4px';
+            info.appendChild(a);
+          }
 
-    const inferTipoFromSubtipo = (sub) => {
-        const st = normUpper(sub);
-        if (st.startsWith('CND_')) return 'CND';
-        if (st === 'OUTRO') return 'OUTRO';
-        if (st === 'DECRETO') return 'DECRETO';
-        if (st === 'BALANCO_PATRIMONIAL') return 'BALANCO_PATRIMONIAL';
-        if (st === 'DRE') return 'DRE';
-        return st;
-    };
+          // Ações (editar / excluir)
+          const actions = document.createElement('div');
+          actions.style.marginLeft = 'auto';
+          actions.style.display = 'flex';
+          actions.style.alignItems = 'center';
+          actions.style.gap = '8px';
 
-    const inferSubtipoLabel = (sub) => {
-        const st = normUpper(sub);
-        if (st.startsWith('CND_')) {
-            const suf = st.substring(4);
-            const map = { FEDERAL: 'Federal', ESTADUAL: 'Estadual', MUNICIPAL: 'Municipal' };
-            return map[suf] || suf;
-        }
-        return '';
-    };
+          const edit = document.createElement('button');
+          edit.type = 'button';
+          edit.className = 'btn';
+          edit.textContent = '✎';
+          edit.style.padding = '6px 8px';
 
-    const pushDoc = (categoria, subtipo, doc) => {
-        if (!doc) return;
+          const bloqueiaEdicaoDoc = (d.ui_status === 'Novo' || d.ui_status === 'Deletado');
+          if (bloqueiaEdicaoDoc) {
+            edit.disabled = true;
+            edit.title = 'Documento está como Novo/Deletado';
+            edit.style.opacity = '0.60';
+            edit.style.cursor = 'not-allowed';
+          }
 
-        const cat = normUpper(categoria || doc.categoria);
-        const st  = normUpper(subtipo || doc.subtipo || doc.tipo);
+          edit.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            abrirModalEditarDocumento(d);
+          });
 
-        const tipo          = inferTipoFromSubtipo(st);
-        const tipo_label    = getTipoLabel(cat, tipo);
-        const subtipo_label = inferSubtipoLabel(st);
+          const del = document.createElement('button');
+          del.type = 'button';
+          del.className = 'btn';
+          del.textContent = '✕';
+          del.style.padding = '6px 8px';
+          del.title = 'Marcar para exclusão';
 
-        docsOsc.push({
-            categoria: cat,
-            tipo,
-            tipo_label,
-            subtipo: st,
-            subtipo_label,
-            descricao: (doc.descricao || '').trim(),
-            link: (doc.link || '').trim(),
-            ano_referencia: (doc.ano_referencia ?? doc.anoReferencia ?? '').toString().trim(),
-            file: null,
-            id_documento: doc.id_documento || doc.id || null,
-            url: doc.url || doc.documento || doc.link_arquivo || doc.caminho || '',
-            nome: doc.nome || doc.nome_original || doc.nomeArquivo || '',
+          del.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // marca para exclusão (sem depender de "onRemove" fantasma)
+            if (d && d.id) {
+              docsProjetoDeletes.add(d.id);
+              d.ui_status = 'Deletado';
+            } else {
+              // se ainda não tem id (novo/pedente), remove da lista local
+              const idx = docsProjeto.indexOf(d);
+              if (idx >= 0) docsProjeto.splice(idx, 1);
+            }
+            renderdocsProjeto();
+          });
+
+          if (statusPillEl) actions.appendChild(statusPillEl);
+          actions.appendChild(edit);
+          actions.appendChild(del);
+
+          c.appendChild(info);
+          c.appendChild(actions);
+          sec.appendChild(c);
         });
-    };
 
-    // Aceita: (1) array de docs, (2) objeto por categoria, (3) objeto por categoria->subtipo
-    if (Array.isArray(src)) {
-        src.forEach((doc) => pushDoc(doc.categoria, doc.subtipo || doc.tipo, doc));
-    } else {
-        Object.keys(src || {}).forEach((catKey) => {
-            const bloco = src[catKey];
-
-            // categoria -> [docs]
-            if (Array.isArray(bloco)) {
-                bloco.forEach((doc) => pushDoc(catKey, doc.subtipo || doc.tipo, doc));
-                return;
-            }
-
-            // categoria -> { subtipo: doc|[docs] }
-            if (bloco && typeof bloco === 'object') {
-                Object.keys(bloco).forEach((subKey) => {
-                    asArray(bloco[subKey]).forEach((doc) => pushDoc(catKey, subKey, doc));
-                });
-            }
-        });
-    }
-
-    renderDocsOsc();
-}
-
-async function excluirDocumentoServidor(idDocumento) {
-            const fd = new FormData();
-            fd.append('id_documento', idDocumento);
-
-            const resp = await fetch('ajax_deletar_documento.php', {
-                method: 'POST',
-                body: fd
-            });
-
-            const txt = await resp.text();
-            let data;
-            try { data = JSON.parse(txt); }
-            catch { throw new Error('Resposta inválida ao excluir documento.'); }
-
-            if (!data.success) {
-                throw new Error(data.error || 'Falha ao excluir documento.');
-            }
-        }
-
-        async function enviarDocumentoOsc(oscId, projetoId, doc) {
-            try {
-                const fd = new FormData();
-                fd.append('id_osc', oscId);
-                fd.append('projeto_id', projetoId);
-                fd.append('categoria', doc.categoria);
-                fd.append('tipo', doc.tipo);
-                fd.append('subtipo', doc.subtipo);
-
-                if (doc.descricao) fd.append('descricao', doc.descricao);
-                if (doc.link) fd.append('link', doc.link);
-                if (doc.ano_referencia) fd.append('ano_referencia', doc.ano_referencia);
-                if (doc.file) fd.append('arquivo', doc.file);
-
-                const resp = await fetch('ajax_upload_documento.php', { method: 'POST', body: fd });
-                const txt = await resp.text();
-                let data;
-                try { data = JSON.parse(txt); 
-                  if (doc.link != null && String(doc.link).trim() !== '') {
-                    fd.append('link', String(doc.link).trim());
-                  }
-                  if (doc.link != null && String(doc.link).trim() !== '') {
-                    fd.append('link', String(doc.link).trim());
-                  }
-                }
-                catch { throw new Error('Resposta inválida ao enviar documento.'); }
-
-                if (data.status !== 'ok') {
-                    throw new Error(data.mensagem || 'Erro ao enviar documento.');
-                }
-
-                return null;
-            } catch (e) {
-                const label = (doc.tipo_label || doc.tipo || '') + (doc.tipo === 'CND' && doc.subtipo_label ? ` — ${doc.subtipo_label}` : '');
-                return `(${label}) ${e.message || 'falha ao enviar.'}`;
-            }
-        }
-
-        async function atualizarDocumentoMetaOsc(oscId, projetoId, doc) {
-          try {
-            const fd = new FormData();
-            fd.append('id_osc', oscId);
-            fd.append('projeto_id', projetoId);
-            fd.append('id_documento', doc.id_documento);
-
-            if (doc.descricao != null && String(doc.descricao).trim() !== '') {
-              fd.append('descricao', String(doc.descricao).trim());
-            }
-            if (doc.ano_referencia != null && String(doc.ano_referencia).trim() !== '') {
-              fd.append('ano_referencia', String(doc.ano_referencia).trim());
-            }
-
-            const resp = await fetch('ajax_upload_documento.php', { method: 'POST', body: fd });
-            const txt = await resp.text();
-
-            let data;
-            try { data = JSON.parse(txt); }
-            catch { throw new Error('Resposta inválida ao atualizar metadados do documento.'); }
-
-            if (data.status !== 'ok') {
-              throw new Error(data.mensagem || 'Erro ao atualizar metadados do documento.');
-            }
-
-            return null;
-          } catch (e) {
-            const label = (doc.tipo_label || doc.tipo || '') + (doc.tipo === 'CND' && doc.subtipo_label ? ` — ${doc.subtipo_label}` : '');
-            return `(${label}) ${e.message || 'falha ao atualizar.'}`;
-          }
-        }
-
-        async function aplicarAlteracoesDocsOsc(oscId, projetoId) {
-          const erros = [];
-                    
-          // 1) Excluir documentos existentes marcados
-          for (const id of Array.from(docsOscDeletes)) {
-            try { await excluirDocumentoServidor(id); }
-            catch (e) { erros.push(`(Excluir #${id}) ${e.message || 'falha ao excluir.'}`); }
-          }
-                    
-          // 2) Atualizar metadados (ano/descrição) SEM trocar arquivo
-          for (const doc of docsOsc) {
-            if (doc.ui_deleted) continue;
-            if (!doc.id_documento) continue;
-            if (!doc.ui_meta_update) continue;
-            if (doc.file) continue;
-                    
-            const err = await atualizarDocumentoMetaOsc(oscId, projetoId, doc);
-            if (err) erros.push(err);
-            else delete doc.ui_meta_update;
-          }
-                    
-          // 3) Enviar novos/substituídos (arquivo) e também DECRETO (link, sem arquivo)
-          for (const doc of docsOsc) {
-            if (doc.ui_deleted) continue;
-
-            const enviarSemArquivo = (doc.tipo === 'DECRETO' && !!doc.link);
-            if (!doc.file && !enviarSemArquivo) continue;
-
-            const err = await enviarDocumentoOsc(oscId, projetoId, doc);
-            if (err) erros.push(err);
-          }
-                    return erros;
-        }
-
-    const FUNCAO_LABELS = {
-        DIRETOR: 'Diretor(a)',
-        COORDENADOR: 'Coordenador(a)',
-        FINANCEIRO: 'Financeiro',
-        MARKETING: 'Marketing',
-        RH: 'Recursos Humanos (RH)',
-        PARTICIPANTE: 'Participante'
-    };
-
-    function escapeHtml(str) {
-        return String(str ?? '').replace(/[&<>"]/g, (ch) => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;'
-        }[ch]));
-    }
-
-    function norm(v) {
-      return (v ?? '').toString().trim();
-    }
-    function eq(a, b) {
-      return norm(a) === norm(b);
-    }
-    function changedStrFields(before, after, fields) {
-      return fields.some(f => !eq(before[f], after[f]));
-    }
-    function eqBool(a, b) {
-      return (!!a) === (!!b);
-    }
-
-    function readFileAsDataURL(file) {
-        return new Promise((res, rej) => {
-            if (!file) return res(null);
-            const fr = new FileReader();
-            fr.onload = () => res(fr.result);
-            fr.onerror = rej;
-            fr.readAsDataURL(file);
-        });
-    }
-
-    async function updatePreviews() {
-        // Editor de PROJETO: só temos "logo" e "capa".
-        const previewlogo  = qs('#previewlogo');
-        const previewCapa  = qs('#previewLogoCompleta'); // o HTML usa esse id para a CAPA
-
-        if (previewlogo) previewlogo.innerHTML = '';
-        if (previewCapa) previewCapa.innerHTML = '';
-
-        const l1 = logo?.files?.[0] || null;
-        const b1 = capa?.files?.[0] || null;
-
-        // logo
-        if (previewlogo) {
-          if (l1) {
-            const src = await readFileAsDataURL(l1);
-            const img = document.createElement('img');
-            img.src = src;
-            previewlogo.appendChild(img);
-          } else if (existingLogos.logo) {
-            const img = document.createElement('img');
-            img.src = existingLogos.logo;
-            previewlogo.appendChild(img);
-          }
-        }
-
-        // capa
-        if (previewCapa) {
-          if (b1) {
-            const src = await readFileAsDataURL(b1);
-            const img = document.createElement('img');
-            img.src = src;
-            previewCapa.appendChild(img);
-          } else if (existingBanners.capa) {
-            const img = document.createElement('img');
-            img.src = existingBanners.capa;
-            previewCapa.appendChild(img);
-          }
-        }
-    }
-
-    [logo, logoCompleta, capa, banner2, banner3].filter(Boolean).forEach(el => {
-      el.addEventListener('change', () => {
-        renderTemplateImageCards();
-        updatePreviews();
+        docsProjetoList.appendChild(sec);
       });
-    });
-
-    [bgColor, secColor, terColor, quaColor, fonColor].filter(Boolean).forEach(el => el.addEventListener('input', updatePreviews));
-
-    function fileNameFromUrl(url) {
-      if (!url) return '';
-      try {
-        const clean = url.split('?')[0].split('#')[0];
-        return clean.split('/').pop() || clean;
-      } catch {
-        return String(url);
-      }
-    }
-
-    function criarCardImagem({ titulo, url, file, onRemove, thumbWide = false }) {
-      const c = document.createElement('div');
-      c.className = 'envolvido-card';
-
-      const img = document.createElement('img');
-      img.src = file ? URL.createObjectURL(file) : url;
-      img.style.width = thumbWide ? '86px' : '48px';
-      img.style.height = '48px';
-      img.style.objectFit = 'cover';
-
-      const info = document.createElement('div');
-      const nome = file ? file.name : fileNameFromUrl(url);
-      const link = file ? '' : (url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener"></a>` : '');
-
-      info.innerHTML = `
-        <div style="font-weight:600">${escapeHtml(titulo)}</div>
-        <div class="small">${escapeHtml(nome)} ${link ? '' + link : ''}</div>
-      `;
-
-      const remove = document.createElement('button');
-      remove.type = 'button';
-      remove.className = 'btn';
-      remove.textContent = '✕';
-      remove.style.padding = '6px 8px';
-      remove.style.marginLeft = '8px';
-      remove.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        onRemove?.(ev);
-      });
-
-      c.appendChild(img);
-      c.appendChild(info);
-      c.appendChild(remove);
-      return c;
-    }
-
-    // chama seu endpoint de deleção no servidor/BD
-    async function excluirImagemTemplateServidor(oscId, campo) {
-      const fd = new FormData();
-      fd.append('osc_id', String(oscId));
-      fd.append('campo', campo); // logo_simples | logo_completa | capa | banner2 | banner3
-
-      const resp = await fetch('ajax_deletar_template_imagem.php', { method: 'POST', body: fd });
-      const text = await resp.text();
-
-      let data;
-      try { data = JSON.parse(text); }
-      catch {
-        console.error('Delete imagem template resposta inválida:', text);
-        throw new Error('Resposta inválida do servidor ao excluir imagem.');
-      }
-
-      if (!data.success) throw new Error(data.error || 'Erro ao excluir imagem.');
-      return data;
     }
 
     function renderTemplateImageCards() {
       const itens = [
-        { campo: 'logo_simples',  titulo: 'Logo simples',   input: logo,  getUrl: () => existingLogos.logo,  setUrl: (v) => existingLogos.logo = v,  slot: '#imgCard_logo',  wide: false },
-        { campo: 'logo_completa', titulo: 'Logo completa',  input: logoCompleta, getUrl: () => existingLogos.logoCompleta, setUrl: (v) => existingLogos.logoCompleta = v, slot: '#imgCard_logoCompleta', wide: true  },
-        { campo: 'capa',       titulo: 'Banner 1',       input: capa,      getUrl: () => existingBanners.capa,   setUrl: (v) => existingBanners.capa = v,   slot: '#imgCard_capa',      wide: true  },
-        { campo: 'banner2',       titulo: 'Banner 2',       input: banner2,      getUrl: () => existingBanners.banner2,   setUrl: (v) => existingBanners.banner2 = v,   slot: '#imgCard_banner2',      wide: true  },
-        { campo: 'banner3',       titulo: 'Banner 3',       input: banner3,      getUrl: () => existingBanners.banner3,   setUrl: (v) => existingBanners.banner3 = v,   slot: '#imgCard_banner3',      wide: true  },
+        { titulo: 'Logo', input: projLogo, url: () => existingLogos.logo, slot: '#imgCard_projLogo', wide: false },
+        { titulo: 'Imagem de descrição', input: projImgDescricao, url: () => existingCapa.img_descricao, slot: '#imgCard_projImgDescricao', wide: true },
       ];
 
       itens.forEach(it => {
@@ -2062,124 +1777,196 @@ async function excluirDocumentoServidor(idDocumento) {
         slot.innerHTML = '';
 
         const file = it.input?.files?.[0] || null;
+        const url = (typeof it.url === 'function') ? it.url() : null;
+
+        // Arquivo novo escolhido (antes de salvar): mostra preview + status + restaurar
         if (file) {
-            templateRemover[it.campo] = false;
-            templateBackupUrl[it.campo] = null;
-            const cardNovo = criarCardImagem({
-                titulo: 'NOVA ' + it.titulo,
-                file,
-                onRemove: () => {
-                    it.input.value = '';
-                    renderTemplateImageCards();
-                    updatePreviews();
-                },
-                thumbWide: it.wide
-            });
-          slot.appendChild(cardNovo);
+          const c = document.createElement('div');
+          c.className = 'envolvido-card';
+
+          const img = document.createElement('img');
+          const objUrl = URL.createObjectURL(file);
+          img.src = objUrl;
+          img.onload = () => { try { URL.revokeObjectURL(objUrl); } catch (_) {} };
+          img.style.width = it.wide ? '86px' : '48px';
+          img.style.height = '48px';
+          img.style.objectFit = 'cover';
+
+          const info = document.createElement('div');
+          info.innerHTML = `
+            <div style="font-weight:600">${escapeHtml(it.titulo)}</div>
+            <div class="small">${escapeHtml(file.name)}</div>
+          `;
+
+          const actions = document.createElement('div');
+          actions.style.marginLeft = 'auto';
+          actions.style.display = 'flex';
+          actions.style.alignItems = 'center';
+          actions.style.gap = '8px';
+
+          const pill = document.createElement('span');
+          pill.className = 'status-pill on';
+          pill.textContent = 'Nova';
+
+          const restore = document.createElement('button');
+          restore.type = 'button';
+          restore.className = 'btn';
+          restore.textContent = '↩';
+          restore.style.padding = '6px 8px';
+          restore.title = 'Restaurar';
+          restore.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            it.input.value = '';
+            renderTemplateImageCards();
+            Promise.resolve(updatePreviews()).catch(() => {});
+          });
+
+          actions.appendChild(pill);
+          actions.appendChild(restore);
+
+          c.appendChild(img);
+          c.appendChild(info);
+          c.appendChild(actions);
+
+          slot.appendChild(c);
           return;
         }
 
-        const url = it.getUrl();
+        // Sem arquivo novo: mostra a atual (sem status "ATUAL")
         if (url) {
           const cardExistente = criarCardImagem({
             titulo: it.titulo,
             url,
-            onRemove: () => {
-              templateRemover[it.campo] = true;
-              templateBackupUrl[it.campo] = url;
-              it.setUrl(null);
-              it.input.value = '';
-            
-              renderTemplateImageCards();
-              updatePreviews();
-            },
             thumbWide: it.wide
           });
           slot.appendChild(cardExistente);
           return;
         }
 
-        if (!url && templateRemover[it.campo] && templateBackupUrl[it.campo]) {
-          const cardPendente = criarCardImagem({
-            titulo: '🗑️ DELEÇÃO PENDENTE — ' + it.titulo,
-            url: templateBackupUrl[it.campo],
-            onRemove: () => {
-              templateRemover[it.campo] = false;
-              it.setUrl(templateBackupUrl[it.campo]);
-              templateBackupUrl[it.campo] = null;
-            
-              renderTemplateImageCards();
-              updatePreviews();
-            },
-            thumbWide: it.wide
-          });
-      
-          slot.appendChild(cardPendente);
-        }
+        // sem arquivo e sem URL existente → vazio
       });
-    }
+    } 
 
     function renderEnvFotoCard() {
-        const slot = qs('#imgCard_envFoto');
-        const input = qs('#envFoto');
-        if (!slot || !input) return;
-        
-        slot.innerHTML = '';
-        
-        const file = input.files?.[0] || null;
-        
-        // 1) file do input (acabou de escolher)
-        if (file) {
-          const cardNovo = criarCardImagem({
-            titulo: 'NOVA FOTO',
-            file,
-            onRemove: () => {
-              input.value = '';
-              envFotoPreviewUrl = null;
-              envFotoFileCache  = null;
-              envFotoRemover = false;     
-              renderEnvFotoCard();
-            },
-            thumbWide: false
-          });
-          slot.appendChild(cardNovo);
-          return;
-        }
+    const slot = qs('#imgCard_envFoto');
+    const input = qs('#envFoto');
+    if (!slot || !input) return;
 
-        // 2) preview pendente
-        if (envFotoPreviewUrl) {
-          const cardPendente = criarCardImagem({
-            titulo: 'NOVA FOTO (PENDENTE)',
-            url: envFotoPreviewUrl,
-            onRemove: () => {
-              envFotoPreviewUrl = null;
-              envFotoFileCache  = null;
-              envFotoRemover = false;
-              renderEnvFotoCard();
-            },
-            thumbWide: false
-          });
-          slot.appendChild(cardPendente);
-          return;
-        }
+    const PLACEHOLDER = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
 
-        // 3) foto atual do servidor
-        if (envFotoExistingUrl) {
-          const cardExistente = criarCardImagem({
-            titulo: 'FOTO ATUAL',
-            url: envFotoExistingUrl,
-            onRemove: () => {
-              envFotoExistingUrl = null;
-              envFotoPreviewUrl = null;
-              envFotoFileCache  = null;
-              envFotoRemover = true;
-              renderEnvFotoCard();
-            },
-            thumbWide: false
-          });
-          slot.appendChild(cardExistente);
-        }
+    slot.innerHTML = '';
+
+    const fileInput = input.files?.[0] || null;
+    const fileCache = envFotoFileCache || null;
+    const hasNewFile = !!fileInput || !!fileCache;
+    const isRemoved  = !!envFotoRemover;
+
+    // Resolve o que exibir
+    let srcFile = null;
+    let srcUrl  = null;
+    let nomeLinha = '';
+
+    if (fileInput) {
+      srcFile = fileInput;
+      nomeLinha = fileInput.name || '';
+    } else if (fileCache) {
+      // quando reabre o modal com "foto pendente"
+      if (fileCache instanceof File) {
+        srcFile = fileCache;
+        nomeLinha = fileCache.name || '';
+      } else {
+        srcUrl = envFotoPreviewUrl || null;
+        nomeLinha = fileNameFromUrl(srcUrl) || '';
+      }
+    } else if (isRemoved) {
+      srcUrl = PLACEHOLDER;
+      nomeLinha = 'Sem foto';
+    } else if (envFotoExistingUrl) {
+      srcUrl = envFotoExistingUrl;
+      nomeLinha = fileNameFromUrl(envFotoExistingUrl) || '';
+    } else {
+      srcUrl = PLACEHOLDER;
+      nomeLinha = 'Sem foto';
     }
+
+    // Card (visual igual aos outros: info à esquerda, ações à direita)
+    const c = document.createElement('div');
+    c.className = 'envolvido-card';
+
+    const img = document.createElement('img');
+    img.src = srcFile ? URL.createObjectURL(srcFile) : (srcUrl || PLACEHOLDER);
+
+    const info = document.createElement('div');
+    info.innerHTML = `
+      <div style="font-weight:600">Foto</div>
+      <div class="small">${escapeHtml(nomeLinha || '')}</div>
+    `;
+
+    const actions = document.createElement('div');
+    actions.style.marginLeft = 'auto';
+    actions.style.display = 'flex';
+    actions.style.gap = '8px';
+    actions.style.alignItems = 'center';
+
+    // Pill NOVA (só quando substitui / tem arquivo pendente)
+    if (hasNewFile) {
+      const pill = document.createElement('span');
+      pill.className = 'status-pill on';
+      pill.textContent = 'NOVA';
+      actions.appendChild(pill);
+    }
+
+    // Restaurar (volta pro estado original e limpa pendências)
+    if (hasNewFile || isRemoved) {
+      const restore = document.createElement('button');
+      restore.type = 'button';
+      restore.className = 'btn';
+      restore.textContent = '↩';
+      restore.title = 'Restaurar';
+      restore.style.padding = '6px 8px';
+      restore.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        input.value = '';
+        envFotoPreviewUrl = null;
+        envFotoFileCache  = null;
+        envFotoRemover    = false;
+        envFotoExistingUrl = envFotoOriginalUrl || envFotoExistingUrl || null;
+        renderEnvFotoCard();
+      });
+      actions.appendChild(restore);
+    }
+
+// Deletar (marca pra remover do servidor)
+if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
+  const del = document.createElement('button');
+  del.type = 'button';
+  del.className = 'btn';
+  del.textContent = '✕';
+  del.title = 'Deletar foto';
+  del.style.padding = '6px 8px';
+  del.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    input.value = '';
+    envFotoPreviewUrl = null;
+    envFotoFileCache  = null;
+    envFotoRemover    = true;
+    envFotoExistingUrl = null;
+    renderEnvFotoCard();
+  });
+  actions.appendChild(del);
+}
+
+    c.appendChild(img);
+    c.appendChild(info);
+    c.appendChild(actions);
+
+    slot.appendChild(c);
+}
+
+
 
     // ===== MODAL ENVOLVIDOS =====
     const modalBackdrop       = qs('#modalBackdrop');
@@ -2204,6 +1991,8 @@ async function excluirDocumentoServidor(idDocumento) {
         envFotoExistingUrl = null;
         envFotoPreviewUrl  = null;
         envFotoFileCache   = null;
+
+        envFotoOriginalUrl = null;
         envFotoRemover     = false;
         renderEnvFotoCard();
     });
@@ -2232,6 +2021,7 @@ async function excluirDocumentoServidor(idDocumento) {
         qs('#envFuncaoNovo').value = e.funcao || '';
         
         envFotoExistingUrl = e.fotoUrl || null;
+        envFotoOriginalUrl = e.fotoUrl || null;
         envFotoPreviewUrl  = e.fotoPreview || null;
         envFotoFileCache   = e.fotoFile || null;
 
@@ -2578,7 +2368,7 @@ async function excluirDocumentoServidor(idDocumento) {
       const complemento = (qs('#imovelComplemento')?.value || '').trim();
       const principal   = qs('#imovelPrincipal').checked;
 
-      if (!situacao || !cep || !cidade || !logradouro || !bairro || !numero) {
+      if (!cep || !cidade || !logradouro || !bairro || !numero) {
         alert(
           'Preencha todos os campos do imóvel antes de salvar:' +
           '\n- CEP' +
@@ -2593,7 +2383,6 @@ async function excluirDocumentoServidor(idDocumento) {
       // snapshot simples para detectar mudanças
       const snapImovel = (x) => ({
         descricao:   (x?.descricao || '').trim(),
-        situacao:    (x?.situacao || '').trim(),
         cep:         (x?.cep || '').trim(),
         cidade:      (x?.cidade || '').trim(),
         bairro:      (x?.bairro || '').trim(),
@@ -2610,7 +2399,7 @@ async function excluirDocumentoServidor(idDocumento) {
         const temId = !!(alvo.enderecoId || alvo.id);
 
         const before = snapImovel(alvo);
-        const after  = { descricao, situacao, cep, cidade, bairro, logradouro, numero, complemento, principal: !!principal };
+        const after  = { descricao, cep, cidade, bairro, logradouro, numero, complemento, principal: !!principal };
 
         // Se marcou como principal e ele não era, isso também altera o antigo principal
         const vaiVirarPrincipal = after.principal && !before.principal;
@@ -2649,7 +2438,6 @@ async function excluirDocumentoServidor(idDocumento) {
         }
 
         alvo.descricao   = descricao;
-        alvo.situacao    = situacao;
         alvo.cep         = cep;
         alvo.cidade      = cidade;
         alvo.bairro      = bairro;
@@ -2682,7 +2470,7 @@ async function excluirDocumentoServidor(idDocumento) {
 
         imoveisOsc.push({
           enderecoId: null,
-          descricao, situacao, cep, cidade, bairro, logradouro, numero, complemento,
+          descricao, cep, cidade, bairro, logradouro, numero, complemento,
           principal,
           ui_status: 'Novo',
           ui_deleted: false
@@ -2710,7 +2498,6 @@ async function excluirDocumentoServidor(idDocumento) {
 
         const info = document.createElement('div');
         const desc = (m.descricao || '').trim();
-        const sit  = (m.situacao || '').trim();
 
         const numeroComp = [m.numero, m.complemento]
           .map(v => (v ?? '').toString().trim())
@@ -2847,18 +2634,25 @@ async function excluirDocumentoServidor(idDocumento) {
       try {
         // limpa estados de UI reaproveitados do editar_osc.php
         envolvidos.length = 0;
-        docsOsc.length = 0;
-        docsOscDeletes.clear();
+        docsProjeto.length = 0;
+        docsProjetoDeletes.clear();
         imoveisOsc.length = 0;
         renderEnvolvidos();
-        renderDocsOsc();
+        renderdocsProjeto();
         renderImoveisOsc();
 
-        existingLogos = { logo: null, logoCompleta: null };
-        existingBanners = { capa: null, banner2: null, banner3: null };
-        Object.keys(templateRemover).forEach(k => templateRemover[k] = false);
-        Object.keys(templateBackupUrl).forEach(k => templateBackupUrl[k] = null);
-
+        existingLogos = { logo: null };
+        existingCapa  = { img_descricao: null };
+                    
+        // limpa pendências de docs do PROJETO (se existir)
+        if (typeof docPendentesProjeto === 'object' && docPendentesProjeto) {
+          Object.keys(docPendentesProjeto).forEach(cat => {
+            if (docPendentesProjeto[cat] && typeof docPendentesProjeto[cat] === 'object') {
+              Object.keys(docPendentesProjeto[cat]).forEach(k => delete docPendentesProjeto[cat][k]);
+            }
+          });
+        }
+                    
         const response = await fetch(`ajax_obter_projeto.php?id=${projetoId}`);
         const result = await response.json();
 
@@ -2878,11 +2672,11 @@ async function excluirDocumentoServidor(idDocumento) {
         setVal('#projDataFim', p.data_fim || '');
 
         setVal('#projDescricao', p.descricao || '');
-        setVal('#labelDepoimento', p.depoimento || '');
+        setVal('#projDepoimento', p.depoimento || '');
 
         // template imagens
         existingLogos.logo = p.logo || null;
-        existingBanners.capa = p.img_descricao || null;
+        existingCapa.img_descricao = p.img_descricao || null;
         try { renderTemplateImageCards(); } catch (e) { console.error('renderTemplateImageCards (loadProjetoData) falhou:', e); }
         try { updatePreviews(); } catch (e) { console.error('updatePreviews (loadProjetoData) falhou:', e); }
 
@@ -2913,7 +2707,6 @@ async function excluirDocumentoServidor(idDocumento) {
             imoveisOsc.push({
               enderecoId: x.endereco_id ?? x.enderecoId ?? null,
               descricao: x.descricao ?? '',
-              situacao: '',
               cep: x.cep ?? '',
               cidade: x.cidade ?? '',
               bairro: x.bairro ?? '',
@@ -2928,383 +2721,369 @@ async function excluirDocumentoServidor(idDocumento) {
         }
 
         // documentos
-        carregarDocsOscExistentes(p.documentos);
-        renderDocsOsc();
+        carregardocsProjetoExistentes(p.documentos);
+        renderdocsProjeto();
 
       } catch (e) {
         console.error(e);
         alert('Erro ao carregar dados do Projeto. Veja o console.');
       }
     }
-
-// ===== CARREGAR OSC (auto) =====
-    async function loadOscData() {
-      if (!oscId) return;
-        
+    
+    // ===== SAVE (FormData compatível) =====
+    
+    // ===== SALVAR PROJETO (sem lógica de OSC) =====
+    
+    // =========================
+    // Documentos do PROJETO — pendências (upload / update / delete)
+    // =========================
+    function temPendenciasDocsProjeto() {
       try {
-        envolvidos.length = 0;
-        docsOsc.length = 0;
-        docsOscDeletes.clear();
-        renderEnvolvidos();
-        renderDocsOsc();
+        if (typeof docsProjetoDeletes !== 'undefined' && docsProjetoDeletes && docsProjetoDeletes.size > 0) return true;
 
-        existingLogos = { logo: null, logoCompleta: null };
-        existingBanners = { capa: null, banner2: null, banner3: null };
-
-        Object.keys(templateRemover).forEach(k => templateRemover[k] = false);
-        Object.keys(templateBackupUrl).forEach(k => templateBackupUrl[k] = null);
-    
-        const response = await fetch(`ajax_obter_osc.php?id=${oscId}`);
-        const result = await response.json();
-    
-        if (!result.success || !result.data) {
-          alert('Erro ao carregar dados da OSC: ' + (result.error || 'desconhecido'));
-          return;
-        }
-    
-        const osc = result.data;
-    
-        // cores
-        if (osc.cores) {
-          if (osc.cores.bg)  bgColor.value  = osc.cores.bg;
-          if (osc.cores.sec) secColor.value = osc.cores.sec;
-          if (osc.cores.ter) terColor.value = osc.cores.ter;
-          if (osc.cores.qua) quaColor.value = osc.cores.qua;
-          if (osc.cores.fon) fonColor.value = osc.cores.fon;
-        }
-    
-        // textos
-        if (osc.nomeOsc) setVal('#nomeOsc', osc.nomeOsc);
-        if (osc.sigla) setVal('#sigla', osc.sigla);
-        if (osc.anoFundacao) setVal('#anoFundacao', osc.anoFundacao);
-        if (osc.instagram) setVal('#instagram', osc.instagram);
-    
-        if (osc.historia) setVal('#historia', osc.historia);
-        if (osc.missao) setVal('#missao', osc.missao);
-        if (osc.visao) setVal('#visao', osc.visao);
-        if (osc.valores) setVal('#valores', osc.valores);
-    
-        // transparência
-        if (osc.cnpj) setVal('#CNPJ', osc.cnpj);
-        if (osc.razaoSocial) setVal('#razaoSocial', osc.razaoSocial);
-        if (osc.nomeFantasia) setVal('#nomeFantasia', osc.nomeFantasia);
-        if (osc.anoCNPJ) setVal('#anoCNPJ', osc.anoCNPJ);
-        if (osc.responsavelLegal) setVal('#responsavelLegal', osc.responsavelLegal);
-        if (osc.situacaoCadastral) setVal('#situacaoCadastral', osc.situacaoCadastral);
-        if (osc.telefone) setVal('#telefone', osc.telefone);
-        if (osc.email) setVal('#email', osc.email);
-        if (osc.oQueFaz) setVal('#oQueFaz', osc.oQueFaz);
-    
-        // envolvidos
-        if (Array.isArray(osc.envolvidos)) {
-          osc.envolvidos.forEach(d => {
-            const funcao = String(d.funcao ?? d.funcao_ator ?? d.funcao_envolvido ?? '').trim();
-        
-            envolvidos.push({
-                tipo: 'existente',
-                envolvidoId: d.id ?? d.envolvido_id ?? null,
-                fotoUrl: d.foto || null,
-                fotoPreview: null,
-                fotoFile: null,
-                removerFoto: false, // <-- ADD
-                nome: d.nome || '',
-                telefone: d.telefone || '',
-                email: d.email || '',
-                funcao,
-                ui_deleted: false
-            });
-          });
-          renderEnvolvidos();
-        }
-
-        // ===== TEXTO DO BANNER =====
-        const label =
-          (osc.labelDepoimento ?? null) ||
-          (osc.banners?.labelDepoimento ?? null) ||
-          (osc.template?.label_banner ?? null) ||
-          '';
-
-        setVal('#labelDepoimento', label);
-
-        // ===== IMÓVEIS (múltiplos) =====
-        imoveisOsc.length = 0;
-
-        if (Array.isArray(osc.imoveis) && osc.imoveis.length) {
-          osc.imoveis.forEach(x => {
-            imoveisOsc.push({
-              enderecoId: x.endereco_id ?? null,
-              descricao: x.descricao ?? '',
-              situacao: x.situacao ?? '',
-              cep: x.cep ?? '',
-              cidade: x.cidade ?? '',
-              bairro: x.bairro ?? '',
-              logradouro: x.logradouro ?? '',
-              numero: x.numero ?? '',
-              complemento: x.complemento ?? '',
-              principal: !!x.principal
-            });
-          });
-        } else if (osc.imovel) {
-          const x = osc.imovel;
-          imoveisOsc.push({
-            enderecoId: x.endereco_id ?? null,
-            descricao: x.descricao ?? '',
-            situacao: x.situacao ?? '',
-            cep: x.cep ?? '',
-            cidade: x.cidade ?? '',
-            bairro: x.bairro ?? '',
-            logradouro: x.logradouro ?? '',
-            numero: x.numero ?? '',
-            complemento: x.complemento ?? '',
-            principal: true
+        if (typeof docsProjeto !== 'undefined' && Array.isArray(docsProjeto)) {
+          return docsProjeto.some(d => {
+            if (!d || typeof d !== 'object') return false;
+            const id = d.id_documento ?? d.id ?? null;
+            const temArquivo = (d.file && (d.file instanceof File));
+            const temLink = (typeof d.link === 'string' && d.link.trim() !== '');
+            const mudou = (d.ui_status === 'Editado') || (!id && (temArquivo || temLink));
+            return !!mudou;
           });
         }
-
-        if (imoveisOsc.length && !imoveisOsc.some(i => i.principal)) {
-          imoveisOsc[0].principal = true;
-        }
-
-        renderImoveisOsc();
-
-        // ===== template/imagens =====
-        if (osc.template) {
-          existingLogos.logo  = osc.template.logo_simples  || null;
-          existingLogos.logoCompleta = osc.template.logo_completa || null;
-          existingBanners.capa    = osc.template.capa || null;
-          existingBanners.banner2    = osc.template.banner2 || null;
-          existingBanners.banner3    = osc.template.banner3 || null;
-        }
-        // Robustez: se algum detalhe do template quebrar, não deixa a carga de documentos morrer junto.
-        try {
-          renderTemplateImageCards();
-        } catch (e) {
-          console.error('renderTemplateImageCards falhou:', e);
-        }
-        // ===== documentos existentes (mesma lógica do cadastro_osc.php) =====
-        docsOsc.length = 0;
-        docsOscDeletes.clear();
-        const docsSrc = (osc.documentos ?? osc.documentos_osc ?? osc.documentosOsc ?? osc.docs ?? osc.documentosExistentes ?? osc.docs_osc ?? null);
-        carregarDocsOscExistentes(docsSrc);
-        renderDocsOsc();
-
-        try {
-          await updatePreviews();
-        } catch (e) {
-          console.error('updatePreviews falhou:', e);
-        }
-
-      } catch (err) {
-        console.error('Erro ao buscar dados da OSC:', err);
-        alert('Erro ao carregar dados da OSC');
+        return false;
+      } catch {
+        return false;
       }
     }
 
-    // ===== SAVE (FormData compatível) =====
-    async function saveData() {
-        if (!oscId) {
-            alert('OSC não vinculada ao usuário.');
-            return;
+    async function postDocAction(action, fd) {
+      fd.append('doc_action', action);
+      fd.append('projeto_id', String(projetoId));
+      fd.append('id_osc', String(oscId));
+
+      const resp = await fetch('ajax_atualizar_projeto.php', { method: 'POST', body: fd });
+      const txt = await resp.text();
+
+      let data;
+      try { data = JSON.parse(txt); }
+      catch {
+        throw new Error('Resposta inválida do servidor (documentos).');
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Falha ao processar documentos.');
+      }
+
+      return data;
+    }
+
+    async function aplicarAlteracoesdocsProjeto(oscId, projetoId) {
+      const erros = [];
+
+      // 1) Exclusões
+      if (typeof docsProjetoDeletes !== 'undefined' && docsProjetoDeletes && docsProjetoDeletes.size) {
+        for (const idDoc of Array.from(docsProjetoDeletes)) {
+          try {
+            const fd = new FormData();
+            fd.append('id_documento', String(idDoc));
+            await postDocAction('delete', fd);
+          } catch (e) {
+            erros.push(`Excluir documento #${idDoc}: ${e.message || e}`);
+          }
         }
+      }
 
-        const fd = new FormData();
-        fd.append('osc_id', oscId);
+      // 2) Updates (metadados e/ou troca de arquivo)
+      const toUpdate = (Array.isArray(docsProjeto) ? docsProjeto : []).filter(d => {
+        const id = d?.id_documento ?? d?.id ?? null;
+        return !!id && d?.ui_status === 'Editado';
+      });
 
-        // cores
-        fd.append('cores[bg]',  bgColor.value);
-        fd.append('cores[sec]', secColor.value);
-        fd.append('cores[ter]', terColor.value);
-        fd.append('cores[qua]', quaColor.value);
-        fd.append('cores[fon]', fonColor.value);
-
-        // dados OSC
-        fd.append('nomeOsc',     qs("#nomeOsc").value);
-        fd.append('sigla',       qs("#sigla").value);
-        fd.append('anoFundacao', qs("#anoFundacao").value);
-        fd.append('instagram',   qs("#instagram").value);
-
-        fd.append('historia', qs("#historia").value);
-        fd.append('missao',   qs("#missao").value);
-        fd.append('visao',    qs("#visao").value);
-        fd.append('valores',  qs("#valores").value);
-
-        // transparência
-        fd.append('razaoSocial',       qs("#razaoSocial").value);
-        fd.append('nomeFantasia',      qs("#nomeFantasia").value);
-        fd.append('situacaoCadastral', qs("#situacaoCadastral").value);
-        fd.append('anoCNPJ',           qs("#anoCNPJ").value);
-        fd.append('responsavelLegal',  qs("#responsavelLegal").value);
-        fd.append('email',             qs("#email").value);
-        fd.append('oQueFaz',           qs("#oQueFaz").value);
-        fd.append('cnpj',              qs("#CNPJ").value);
-        fd.append('telefone',          qs("#telefone").value);
-
-        const imoveisParaEnvio = imoveisOsc.map(m => ({
-          endereco_id: (m.endereco_id || m.enderecoId || 0),
-          descricao: (m.descricao || ''),
-          situacao: (m.situacao || ''),
-          principal: (Number(m.principal) === 1 || m.principal === true) ? 1 : 0,
-          cep: (m.cep || ''),
-          cidade: (m.cidade || ''),
-          bairro: (m.bairro || ''),
-          logradouro: (m.logradouro || ''),
-          numero: (m.numero || ''),
-          complemento: (m.complemento || ''),
-          ui_status: (m.ui_status || ''),
-          ui_deleted: !!m.ui_deleted
-        }));
-        fd.append('imoveis', JSON.stringify(imoveisParaEnvio));
-
-        // template
-        fd.append('labelDepoimento', qs("#labelDepoimento").value);
-
-        // envolvidos
-        const envolvidosAtivos = envolvidos.filter(e => !e.ui_deleted);
-                    
-        const envolvidosParaEnvio = envolvidosAtivos.map((e, i) => ({
-          tipo: e.tipo || 'existente',
-          envolvido_id: e.envolvidoId || null,
-          nome: e.nome,
-          telefone: e.telefone,
-          email: e.email,
-          funcao: e.funcao,
-          foto: e.fotoUrl || '',
-          remover_foto: !!e.removerFoto
-        }));
-                    
-        fd.append('envolvidos', JSON.stringify(envolvidosParaEnvio));
-                    
-        // fotos envolvidos (se houver) — usa o MESMO índice do array enviado
-        envolvidosAtivos.forEach((e, i) => {
-          if (e.fotoFile) fd.append(`fotoEnvolvido_${i}`, e.fotoFile);
-        });
-
-        // fotos envolvidos (se houver)
-        envolvidos.forEach((e, i) => {
-            if (e.fotoFile) fd.append(`fotoEnvolvido_${i}`, e.fotoFile);
-        });
-
-        // imagens do template (somente se trocar)
-        if (logo.files[0])  fd.append('logo',  logo.files[0]);
-        if (logoCompleta.files[0]) fd.append('logoCompleta', logoCompleta.files[0]);
-        if (capa.files[0])      fd.append('capa',      capa.files[0]);
-        if (banner2.files[0])      fd.append('banner2',      banner2.files[0]);
-        if (banner3.files[0])      fd.append('banner3',      banner3.files[0]);
-
+      for (const d of toUpdate) {
+        const id = d.id_documento ?? d.id;
         try {
-            const response = await fetch("ajax_atualizar_osc.php", { method: "POST", body: fd });
-            const text = await response.text();
-            console.log("Resposta bruta do servidor (update):", text);
+          const fd = new FormData();
+          fd.append('id_documento', String(id));
 
-            let result;
-            try { result = JSON.parse(text); }
-            catch {
-                alert("Resposta do servidor não é JSON válido. Veja o console.");
-                return;
-            }
+          // no BD, a coluna `subtipo` costuma carregar a chave (tipo) do documento
+          const subtipoDb = (d.subtipo && String(d.subtipo).trim() !== '') ? String(d.subtipo) : String(d.tipo || '');
+          fd.append('categoria', String(d.categoria || ''));
+          fd.append('subtipo', subtipoDb);
 
-            if (!result.success) {
-                alert("Erro ao atualizar OSC: " + (result.error || "desconhecido"));
-                return;
-            }
-            
-            let errosDocs = [];
-            try {
-                errosDocs = await aplicarAlteracoesDocsOsc(oscId, projetoId);
-            } catch (e) {
-                console.error('Falha geral ao aplicar alterações de documentos:', e);
-                errosDocs.push('Falha inesperada ao aplicar alterações de documentos.');
-            }
+          fd.append('descricao', String(d.descricao || ''));
+          fd.append('ano_referencia', String(d.ano_referencia || ''));
+          fd.append('link', String(d.link || ''));
 
-            if (errosDocs.length === 0) {
-                alert('OSC atualizada com sucesso!');
-            } else {
-                alert('OSC atualizada, mas alguns documentos falharam:\n\n' + errosDocs.map(e => '- ' + e).join('\n'));
-            }
+          if (d.file && (d.file instanceof File)) {
+            fd.append('arquivo', d.file);
+          }
 
-
-
-            // ===== APLICA REMOÇÕES PENDENTES DE IMAGENS DO TEMPLATE =====
-            const camposPendentes = Object.entries(templateRemover)
-              .filter(([, v]) => v)
-              .map(([k]) => k);
-
-            // Se tiver arquivo novo no mesmo campo, não deleta (substituição já resolve)
-            const temNovo = {
-              logo_simples: !!logo.files[0],
-              logo_completa: !!logoCompleta.files[0],
-              capa: !!capa.files[0],
-              banner2: !!banner2.files[0],
-              banner3: !!banner3.files[0],
-            };
-
-            const deletarAgora = camposPendentes.filter(campo => !temNovo[campo]);
-
-            for (const campo of deletarAgora) {
-              try {
-                await excluirImagemTemplateServidor(oscId, campo);
-              } catch (e) {
-                console.error('Falha ao deletar imagem pendente:', campo, e);
-                errosDocs.push(`(Imagem ${campo}) ${e.message || 'falha ao excluir no servidor.'}`);
-              }
-            }
-
-            // limpa pendências
-            Object.keys(templateRemover).forEach(k => templateRemover[k] = false);
-            Object.keys(templateBackupUrl).forEach(k => templateBackupUrl[k] = null);
-
-
-
-            window.location.reload();
-        } catch (error) {
-            console.error("Erro ao enviar dados:", error);
-            alert("Erro ao enviar dados ao servidor.");
+          await postDocAction('update', fd);
+          d.ui_status = null;
+          if (d.file && (d.file instanceof File)) delete d.file;
+        } catch (e) {
+          erros.push(`Atualizar documento #${id}: ${e.message || e}`);
         }
-    }
+      }
 
-    // ===== TABS (OSC / PROJETOS) =====
-    function initTabsTopo() {
-      const tabOsc = qs('#tabOsc');
-      const tabProjetos = qs('#tabProjetos');
-      if (!tabOsc || !tabProjetos) return;
-
-      // Ajuste aqui para os nomes reais dos seus endpoints
-      const ENDPOINT_OSC = 'editar_osc.php';
-      const ENDPOINT_PROJETOS = 'projetos_osc.php';
-
-      const path = (window.location.pathname || '').toLowerCase();
-
-      // Heurística: se a URL atual contém "projet" => ativa Projetos, senão OSC
-      const estouEmProjetos = path.includes('projet');
-
-      tabOsc.classList.toggle('is-active', !estouEmProjetos);
-      tabProjetos.classList.toggle('is-active', estouEmProjetos);
-
-      // Mantém o oscId no redirect (se você usar ?id=)
-      const id = Number(qs('#oscId')?.value || 0);
-
-      tabOsc.addEventListener('click', () => {
-        // já está em OSC? não faz nada
-        if (!estouEmProjetos) return;
-
-        const url = id ? `${ENDPOINT_OSC}?id=${encodeURIComponent(id)}` : ENDPOINT_OSC;
-        window.location.href = url;
+      // 3) Criações (novos docs / substituições)
+      const toCreate = (Array.isArray(docsProjeto) ? docsProjeto : []).filter(d => {
+        const id = d?.id_documento ?? d?.id ?? null;
+        if (id) return false;
+        const temArquivo = (d?.file && (d.file instanceof File));
+        const temLink = (typeof d?.link === 'string' && d.link.trim() !== '');
+        return temArquivo || temLink;
       });
 
-      tabProjetos.addEventListener('click', () => {
-        // já está em Projetos? não faz nada
-        if (estouEmProjetos) return;
+      for (const d of toCreate) {
+        try {
+          const fd = new FormData();
 
-        const url = id ? `${ENDPOINT_PROJETOS}?id=${encodeURIComponent(id)}` : ENDPOINT_PROJETOS;
-        window.location.href = url;
-      });
+          const subtipoDb = (d.subtipo && String(d.subtipo).trim() !== '') ? String(d.subtipo) : String(d.tipo || '');
+          fd.append('categoria', String(d.categoria || ''));
+          fd.append('subtipo', subtipoDb);
+
+          fd.append('descricao', String(d.descricao || ''));
+          fd.append('ano_referencia', String(d.ano_referencia || ''));
+          fd.append('link', String(d.link || ''));
+
+          if (d.file && (d.file instanceof File)) {
+            fd.append('arquivo', d.file);
+          }
+
+          const r = await postDocAction('create', fd);
+
+          // atualiza ID/URL retornados (se vierem)
+          if (r && r.id_documento) {
+            d.id = r.id_documento;
+            d.id_documento = r.id_documento;
+          }
+          if (r && r.url) d.url = r.url;
+
+          d.ui_status = null;
+          if (d.file && (d.file instanceof File)) delete d.file;
+        } catch (e) {
+          const tipoShow = (d?.subtipo || d?.tipo || 'doc');
+          erros.push(`Adicionar documento (${tipoShow}): ${e.message || e}`);
+        }
+      }
+
+      // 4) Se deu certo (ou quase), limpa marcações locais
+      if (typeof docsProjetoDeletes !== 'undefined' && docsProjetoDeletes && docsProjetoDeletes.size) {
+        // Só limpa os que realmente deletaram sem erro (para não perder a referência).
+        // Estratégia simples: se houve erro, mantém; se não houve erro, limpa tudo.
+        if (erros.length === 0) docsProjetoDeletes.clear();
+      }
+
+      return erros;
     }
 
-    // chama no carregamento
-    initTabsTopo();
-    // Boot seguro: se algo falhar aqui, não derruba o carregamento da página.
-    try { updatePreviews(); } catch (e) { console.error('updatePreviews (boot) falhou:', e); }
-    try { renderTemplateImageCards(); } catch (e) { console.error('renderTemplateImageCards (boot) falhou:', e); }
-    if (projetoId) loadProjetoData();
+
+    async function saveProjeto() {
+      try {
+        if (!projetoId) {
+          alert('Projeto inválido.');
+          return;
+        }
+
+        const nome = qs('#projNome')?.value?.trim() || '';
+        const status = qs('#projStatus')?.value?.trim() || '';
+        const email = (qs('#projEmail')?.value || '').trim();
+        const telefone = onlyDigits((qs('#projTelefone')?.value || '').trim()).slice(0, 11);
+
+        const dataInicio = qs('#projDataInicio')?.value || '';
+        const dataFim = qs('#projDataFim')?.value || '';
+        const descricao = (qs('#projDescricao')?.value || '').trim();
+        const depoimento = (qs('#projDepoimento')?.value || '').trim();
+
+        if (!nome || !status) {
+          alert('Preencha nome e status do projeto.');
+          return;
+        }
+        if (!dataInicio) {
+          alert('Data início é obrigatória.');
+          return;
+        }
+        if (dataFim && dataFim < dataInicio) {
+          alert('Data fim não pode ser menor que a data início.');
+          return;
+        }
+
+        const logoFile = projLogo?.files?.[0] || null;
+        const imgDescFile = projImgDescricao?.files?.[0] || null;
+
+        // no cadastro: logo e imagem são obrigatórias.
+        // na edição: pode manter as atuais, mas deve existir ao menos uma (atual ou nova).
+        if (!logoFile && !existingLogos.logo) {
+          alert('Logo é obrigatório.');
+          return;
+        }
+        if (!imgDescFile && !existingCapa.img_descricao) {
+          alert('Imagem de descrição é obrigatória.');
+          return;
+        }
+
+        // monta payload
+        const fd = new FormData();
+        fd.append('projeto_id', String(projetoId));
+        fd.append('id_osc', String(oscId));
+
+        fd.append('nome', nome);
+        fd.append('status', status);
+        fd.append('email', email);
+        fd.append('telefone', telefone);
+
+        fd.append('data_inicio', dataInicio);
+        fd.append('data_fim', dataFim || '');
+        fd.append('descricao', descricao);
+        fd.append('depoimento', depoimento);
+
+        if (logoFile) fd.append('logo', logoFile);
+        if (imgDescFile) fd.append('img_descricao', imgDescFile);
+
+        // envolvidos (mantém estrutura do cadastro_projeto.php; campos extras são opcionais)
+        const existentes = [];
+        const novos = [];
+        let novoFotoIndex = 0;
+
+        for (const e of (envolvidos || [])) {
+          if (e?.ui_deleted) continue;
+
+          if (e.tipo === 'existente') {
+            if (!e.envolvidoId) continue;
+            existentes.push({
+              envolvido_osc_id: e.envolvidoId,
+              funcao: e.funcao || '',
+              contrato_data_inicio: e.contrato_data_inicio || e.data_inicio || '',
+              contrato_data_fim: e.contrato_data_fim || e.data_fim || '',
+              contrato_salario: e.contrato_salario || e.salario || ''
+            });
+            continue;
+          }
+
+          if (e.tipo === 'novo') {
+            const fotoKey = e.fotoFile ? `novo_env_foto_${novoFotoIndex++}` : '';
+            if (e.fotoFile) fd.append(fotoKey, e.fotoFile);
+
+            novos.push({
+              nome: e.nome || '',
+              telefone: e.telefone || '',
+              email: e.email || '',
+              funcao_projeto: e.funcao || '',
+              foto_key: fotoKey,
+              contrato_data_inicio: e.contrato_data_inicio || '',
+              contrato_data_fim: e.contrato_data_fim || '',
+              contrato_salario: e.contrato_salario || ''
+            });
+          }
+        }
+
+        fd.append('envolvidos', JSON.stringify({ existentes, novos }));
+
+        // endereços (reaproveitando imoveisOsc)
+        const endExistentes = [];
+        const endNovos = [];
+
+        for (const a of (imoveisOsc || [])) {
+          if (!a) continue;
+
+          // Se o usuário marcou como deletado no front, NÃO envia para o backend.
+          // O ajax_atualizar_projeto.php limpa e recria o vínculo (endereco_projeto), então
+          // basta não reenviar para o endereço sumir do projeto após salvar.
+          if (a.ui_deleted || a.ui_status === 'Deletado') continue;
+          const principal = !!a.principal;
+
+          if (a.enderecoId) {
+            endExistentes.push({
+              endereco_id: a.enderecoId,
+              descricao: a.descricao || '',
+              cep: (a.cep || ''),
+              cidade: a.cidade || '',
+              logradouro: a.logradouro || '',
+              numero: a.numero || '',
+              complemento: a.complemento || '',
+              bairro: a.bairro || '',
+              principal
+            });
+          } else {
+            endNovos.push({
+              descricao: a.descricao || '',
+              cep: (a.cep || ''),
+              cidade: a.cidade || '',
+              logradouro: a.logradouro || '',
+              numero: a.numero || '',
+              complemento: a.complemento || '',
+              bairro: a.bairro || '',
+              principal
+            });
+          }
+        }
+
+        fd.append('enderecos', JSON.stringify({ existentes: endExistentes, novos: endNovos }));
+
+        const resp = await fetch('ajax_atualizar_projeto.php', { method: 'POST', body: fd });
+        const text = await resp.text();
+
+        let data;
+        try { data = JSON.parse(text); }
+        catch {
+          console.error('Resposta inválida ao salvar projeto:', text);
+          alert('Resposta inválida do servidor ao salvar.');
+          return;
+        }
+
+        if (!data.success) {
+          alert('Erro ao salvar projeto: ' + (data.error || 'desconhecido'));
+          return;
+        }
+
+        // aplica docs pendentes (upload/deleção/meta) — só se tiver algo marcado
+        if (temPendenciasDocsProjeto()) {
+          try {
+            const errosDocs = await aplicarAlteracoesdocsProjeto(oscId, projetoId);
+            if (Array.isArray(errosDocs) && errosDocs.length) {
+              alert('Projeto atualizado, mas alguns documentos falharam:\n\n' + errosDocs.map(e => '- ' + e).join('\n'));
+            } else {
+              alert('Projeto atualizado com sucesso!');
+            }
+          } catch (e) {
+            console.error(e);
+            alert('Projeto atualizado, mas ocorreu falha ao processar documentos pendentes.');
+          }
+        } else {
+          alert('Projeto atualizado com sucesso!');
+        }
+
+        try { if (logoFile) projLogo.value = ''; } catch (_) {}
+        try { if (imgDescFile) projImgDescricao.value = ''; } catch (_) {}
+        try { renderTemplateImageCards(); } catch (_) {}
+        try { Promise.resolve(updatePreviews()).catch(()=>{}); } catch (_) {}
+
+        // recarrega para refletir links/urls atualizadas
+        await loadProjetoData();
+
+      } catch (e) {
+        console.error(e);
+        alert('Erro ao salvar. Veja o console.');
+      }
+    }
+
+    // ===== BOOT =====
+    // (colocado no final do arquivo pra garantir que o DOM já existe)
+    (function boot() {
+
+      // updatePreviews é async — então tratamos rejeição pra não “matar” o resto silenciosamente
+      try { Promise.resolve(updatePreviews()).catch(e => console.error('updatePreviews (boot) falhou:', e)); }
+      catch (e) { console.error('updatePreviews (boot) falhou:', e); }
+
+      try { renderTemplateImageCards(); } catch (e) { console.error('renderTemplateImageCards (boot) falhou:', e); }
+
+      if (projetoId) {
+        try { Promise.resolve(loadProjetoData()).catch(e => console.error('loadProjetoData (boot) falhou:', e)); }
+        catch (e) { console.error('loadProjetoData (boot) falhou:', e); }
+      }
+    })();
 </script>
 </body>
 </html>
