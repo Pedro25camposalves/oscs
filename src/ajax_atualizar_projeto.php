@@ -25,12 +25,45 @@ function is_valid_date(?string $d): bool {
     return $dt && $dt->format('Y-m-d') === $d;
 }
 
+function project_root(): string {
+    static $root = null;
+    if ($root !== null) return $root;
+
+    // Detecta automaticamente onde está a pasta "assets" (alguns projetos ficam em /src, outros no root)
+    $candidates = [
+        realpath(__DIR__),
+        realpath(__DIR__ . DIRECTORY_SEPARATOR . '..'),
+    ];
+
+    foreach ($candidates as $c) {
+        if ($c && is_dir($c . DIRECTORY_SEPARATOR . 'assets')) {
+            $root = $c;
+            return $root;
+        }
+    }
+
+    // Fallback conservador: mantém ao lado deste arquivo
+    $root = $candidates[0] ?: __DIR__;
+    return $root;
+}
+
 function fs_path_from_url(string $url): string {
-    // Converte "assets/..." em caminho físico baseado na pasta do projeto (mesma lógica do ajax_criar_projeto.php)
-    $root = realpath(__DIR__);
-    $rel  = ltrim($url, '/');
-    $rel  = str_replace('/', DIRECTORY_SEPARATOR, $rel);
-    return $root . DIRECTORY_SEPARATOR . $rel;
+    // Converte "assets/..." em caminho físico baseado no root do projeto
+    $url = trim($url);
+    $url = str_replace('\\', '/', $url);
+
+    // se vier URL completa, remove esquema e domínio
+    $url = preg_replace('#^https?://[^/]+/#i', '', $url);
+
+    $rel = ltrim($url, '/');
+
+    // evita path traversal
+    if ($rel !== '' && preg_match('#(^|/)\.\.(/|$)#', $rel)) {
+        json_fail('Caminho de arquivo inválido.');
+    }
+
+    $rel = str_replace('/', DIRECTORY_SEPARATOR, $rel);
+    return project_root() . DIRECTORY_SEPARATOR . $rel;
 }
 
 
@@ -536,11 +569,31 @@ $envRootUrl = "assets/oscs/osc-{$oscId}/envolvidos";
 $envRootFs  = fs_path_from_url($envRootUrl);
 ensure_dir($envRootFs);
 
-$logoPath = handle_image_upload('logo', $imgDirFs, $imgUrlBase, 'logo');
-$imgPath  = handle_image_upload('img_descricao', $imgDirFs, $imgUrlBase, 'img_descricao');
+$deleteAfterCommit = [];
 
-if (!$logoPath) $logoPath = $projetoRow['logo'];
-if (!$imgPath)  $imgPath  = $projetoRow['img_descricao'];
+// uploads (opcionais)
+$logoNew = handle_image_upload('logo', $imgDirFs, $imgUrlBase, 'logo');
+$imgNew  = handle_image_upload('img_descricao', $imgDirFs, $imgUrlBase, 'img_descricao');
+
+$logoPath = $projetoRow['logo'];
+$imgPath  = $projetoRow['img_descricao'];
+
+// se veio novo, agenda exclusão do antigo (para não acumular no servidor)
+if ($logoNew) {
+    $logoPath = $logoNew;
+    $old = (string)($projetoRow['logo'] ?? '');
+    if ($old !== '' && $old !== $logoNew && strpos($old, 'assets/') === 0) {
+        $deleteAfterCommit[] = fs_path_from_url($old);
+    }
+}
+if ($imgNew) {
+    $imgPath = $imgNew;
+    $old = (string)($projetoRow['img_descricao'] ?? '');
+    if ($old !== '' && $old !== $imgNew && strpos($old, 'assets/') === 0) {
+        $deleteAfterCommit[] = fs_path_from_url($old);
+    }
+}
+
 
 $conn->begin_transaction();
 
@@ -591,11 +644,16 @@ try {
     $existentes = $envolvidos['existentes'] ?? [];
     $novos      = $envolvidos['novos'] ?? [];
 
-    $stmtCheckEnv = $conn->prepare("SELECT id FROM envolvido_osc WHERE id = ? AND osc_id = ? LIMIT 1");
+    $stmtCheckEnv = $conn->prepare("SELECT id, foto, nome, telefone, email FROM envolvido_osc WHERE id = ? AND osc_id = ? LIMIT 1");
 
     $stmtInsEnvProj = $conn->prepare("INSERT INTO envolvido_projeto (envolvido_osc_id, projeto_id, funcao, data_inicio, data_fim, salario, ativo)
                                       VALUES (?, ?, ?, ?, ?, ?, 1)");
 
+// atualizações opcionais em envolvido_osc (edição no modal do projeto)
+$stmtUpdEnvBasic = $conn->prepare("UPDATE envolvido_osc SET nome = ?, telefone = ?, email = ? WHERE id = ? AND osc_id = ?");
+$stmtUpdEnvFotoNull = $conn->prepare("UPDATE envolvido_osc SET foto = NULL WHERE id = ? AND osc_id = ?");
+
+$stmtUpdEnvFoto = $conn->prepare("UPDATE envolvido_osc SET foto = ? WHERE id = ? AND osc_id = ?");
     foreach ($existentes as $e) {
         $envId = $e['envolvido_osc_id'] ?? null;
         if (!is_numeric($envId)) continue;
@@ -616,7 +674,60 @@ try {
         $ok = $stmtCheckEnv->get_result()->fetch_assoc();
         if (!$ok) continue;
 
-        $cdiSql = ($cdi === '' ? null : $cdi);
+
+
+// atualiza dados básicos do envolvido (se o front enviou)
+$hasBasic = array_key_exists('nome', $e) || array_key_exists('telefone', $e) || array_key_exists('email', $e);
+if ($hasBasic) {
+    $uNome  = trim((string)($e['nome'] ?? ''));
+    $uTel   = substr(only_digits($e['telefone'] ?? ''), 0, 11);
+    $uEmail = trim((string)($e['email'] ?? ''));
+    if ($uEmail !== '' && !filter_var($uEmail, FILTER_VALIDATE_EMAIL)) $uEmail = '';
+
+    // evita zerar nome por engano
+    if ($uNome !== '') {
+        $stmtUpdEnvBasic->bind_param("sssii", $uNome, $uTel, $uEmail, $envId, $oscId);
+        $stmtUpdEnvBasic->execute();
+    }
+}
+
+// foto: remover/substituir (se o front enviou)
+$removerFoto = !empty($e['remover_foto']) || !empty($e['removerFoto']) || !empty($e['remover_foto_env']) || !empty($e['removerFotoEnv']);
+$fotoKey = trim((string)($e['foto_key'] ?? $e['fotoKey'] ?? ''));
+
+$temNovaFoto = ($fotoKey !== '' && isset($_FILES[$fotoKey]) && is_array($_FILES[$fotoKey]) && (($_FILES[$fotoKey]['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK));
+
+if ($removerFoto || $temNovaFoto) {
+    $oldUrl = (string)($ok['foto'] ?? '');
+
+    // pastas do envolvido (padrão do sistema)
+    $envBaseUrl    = $envRootUrl . "/envolvido-{$envId}";
+    $envImgUrlBase = $envBaseUrl . "/imagens";
+    ensure_dir(fs_path_from_url($envImgUrlBase));
+
+    // se vai substituir, salva nova foto
+    if ($temNovaFoto) {
+        $fotoPath = handle_image_upload($fotoKey, fs_path_from_url($envImgUrlBase), $envImgUrlBase, 'foto');
+        if ($fotoPath) {
+            $stmtUpdEnvFoto->bind_param("sii", $fotoPath, $envId, $oscId);
+            $stmtUpdEnvFoto->execute();
+        }
+    } else {
+        // remover
+        $stmtUpdEnvFotoNull->bind_param("ii", $envId, $oscId);
+        $stmtUpdEnvFotoNull->execute();
+    }
+
+    // remove arquivo antigo (se for um asset local)
+    if ($oldUrl !== '' && strpos($oldUrl, 'assets/') === 0) {
+        $root = project_root();
+        $oldFs = fs_path_from_url($oldUrl);
+        $oldReal = @realpath($oldFs);
+        if ($oldReal && $root && strpos($oldReal, $root) === 0 && is_file($oldReal)) {
+            @unlink($oldReal);
+        }
+    }
+}        $cdiSql = ($cdi === '' ? null : $cdi);
         $cdfSql = ($cdf === '' ? null : $cdf);
 
         $cdiBind = ($cdiSql === null ? '' : $cdiSql);
@@ -648,8 +759,7 @@ try {
 
     // novos envolvidos
     $stmtInsEnvOsc = $conn->prepare("INSERT INTO envolvido_osc (osc_id, foto, nome, telefone, email, funcao) VALUES (?, NULL, ?, ?, ?, 'PARTICIPANTE')");
-    $stmtUpdEnvFoto = $conn->prepare("UPDATE envolvido_osc SET foto = ? WHERE id = ? AND osc_id = ?");
-    foreach ($novos as $n) {
+        foreach ($novos as $n) {
         $nNome = trim((string)($n['nome'] ?? ''));
         if ($nNome === '') continue;
 
@@ -797,6 +907,19 @@ try {
     }
 
     $conn->commit();
+
+    // pós-commit: remove arquivos antigos substituídos (evita acumular no servidor)
+    if (!empty($deleteAfterCommit)) {
+        $root = project_root();
+        foreach ($deleteAfterCommit as $oldFs) {
+            $oldFs = (string)$oldFs;
+            $oldReal = @realpath($oldFs);
+            if ($oldReal && $root && strpos($oldReal, $root) === 0 && is_file($oldReal)) {
+                @unlink($oldReal);
+            }
+        }
+    }
+
     echo json_encode(['success' => true], JSON_UNESCAPED_UNICODE);
     exit;
 

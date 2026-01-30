@@ -839,7 +839,7 @@ if (!$ok) {
     
     // ===== Validação imediata de arquivo (documentos) =====
     const DOC_EXT_PERMITIDAS = new Set([
-      'pdf','doc','docx','xls','xlsx','odt','ods','csv','txt','rtf','jpg','jpeg','png','webp'
+      'pdf','doc','docx','xls','xlsx','odt','ods','csv','txt','rtf'
     ]);
 
     function getExt(nome) {
@@ -1095,36 +1095,72 @@ if (!$ok) {
         if (addDocOscBtn && modalDocOscBackdrop) {
           addDocOscBtn.addEventListener('click', () => {
             const categoria = (docCategoria?.value || '').trim();
-            const tipoSel = (docTipo?.value || '').trim();
-            const subtipoSel = (docSubtipo?.value || '').trim();
+            const tipoSel   = (docTipo?.value || '').trim();
 
             if (!categoria) { alert('Selecione a categoria do documento.'); return; }
-            if (!tipoSel) { alert('Selecione o tipo do documento.'); return; }
+            if (!tipoSel)   { alert('Selecione o tipo do documento.'); return; }
 
-            // No BD, o "subtipo" normalmente guarda a chave final do documento:
-            // - para CND: CND_FEDERAL / CND_ESTADUAL...
-            // - demais: PLANO_TRABALHO / DECRETO...
-            const subtipoDb = (tipoSel.toUpperCase() === 'CND' && subtipoSel) ? subtipoSel : tipoSel;
+            const precisaAno  = (categoria === 'CONTABIL' && (tipoSel === 'BALANCO_PATRIMONIAL' || tipoSel === 'DRE'));
+            const precisaDesc = (tipoSel === 'OUTRO');
+            const precisaLink = (tipoSel.toUpperCase() === 'DECRETO');
+
+            // chave (subtipo) no BD: para CND => CND_FEDERAL / CND_ESTADUAL / CND_MUNICIPAL
+            let subtipoDb = tipoSel;
+            let subtipoLabel = '';
+
+            if (tipoSel.toUpperCase() === 'CND') {
+              const sub = (docSubtipo?.value || '').trim();
+              if (!sub) { alert('Selecione o subtipo da Certidão Negativa.'); return; }
+              subtipoDb = 'CND_' + sub.toUpperCase();
+              subtipoLabel = (docSubtipo?.options && docSubtipo.selectedIndex >= 0)
+                ? (docSubtipo.options[docSubtipo.selectedIndex].text || '')
+                : '';
+            }
 
             const descricao = (docDescricao?.value || '').trim();
-            const link = (docLink?.value || '').trim();
-            const anoRef = (docAnoRef?.value || '').trim();
-            const arquivo = (docArquivo?.files && docArquivo.files[0]) ? docArquivo.files[0] : null;
+            const link      = (docLink?.value || '').trim();
+            const anoRef    = (docAnoRef?.value || '').trim();
+            const arquivo   = (docArquivo?.files && docArquivo.files[0]) ? docArquivo.files[0] : null;
 
-            if (!arquivo && !link) {
-              alert('Informe um arquivo ou um link para o documento.');
+            // validações (espelhando o editar_osc.php)
+            if (precisaDesc && !descricao) {
+              alert('Informe uma descrição para o documento.');
               return;
             }
 
-            // Regra de múltiplos (quando não permitir, substitui o existente e marca para exclusão)
+            if (precisaAno) {
+              if (!anoRef) { alert('Informe o ano de referência.'); return; }
+              if (!/^\d{4}$/.test(anoRef)) { alert('Ano de referência inválido.'); return; }
+            }
+
+            if (precisaLink && !link) {
+              alert('Informe o link do documento oficial.');
+              return;
+            }
+
+            if (arquivo) {
+              if (!validarArquivoDocumento(arquivo)) {
+                if (docArquivo) docArquivo.value = '';
+                return;
+              }
+            }
+
+            if (!precisaLink && !arquivo) {
+              alert('Selecione um arquivo para o documento.');
+              return;
+            }
+
+            // Regra de múltiplos (igual OSC: não substitui automaticamente)
             const permiteMulti = tipoPermiteMultiplos(categoria, tipoSel, subtipoDb);
             if (!permiteMulti) {
-              const idxExist = docsProjeto.findIndex(d => d && d.categoria === categoria && ((d.subtipo && d.subtipo === subtipoDb) || (!d.subtipo && d.tipo === subtipoDb) || ((d.subtipo || d.tipo) === subtipoDb)));
-              if (idxExist >= 0) {
-                const dOld = docsProjeto[idxExist];
-                const oldId = dOld?.id_documento ?? dOld?.id ?? null;
-                if (oldId) docsProjetoDeletes.add(oldId);
-                docsProjeto.splice(idxExist, 1);
+              const jaTem = docsProjeto.some(d => {
+                if (!d || d.ui_deleted) return false;
+                const key = (d.subtipo && String(d.subtipo).trim() !== '') ? String(d.subtipo) : String(d.tipo || '');
+                return d.categoria === categoria && key === subtipoDb;
+              });
+              if (jaTem) {
+                alert('Já existe um documento desse tipo. Remova o existente para adicionar outro.');
+                return;
               }
             }
 
@@ -1135,10 +1171,10 @@ if (!$ok) {
               tipo: (tipoSel.toUpperCase() === 'CND') ? 'CND' : tipoSel,
               subtipo: (tipoSel.toUpperCase() === 'CND') ? subtipoDb : '',
               tipo_label: getTipoLabel(categoria, (tipoSel.toUpperCase() === 'CND') ? 'CND' : tipoSel),
-              subtipo_label: (tipoSel.toUpperCase() === 'CND') ? (() => { try { const arr=(typeof SUBTIPOS_POR_TIPO_CND!=='undefined'&&Array.isArray(SUBTIPOS_POR_TIPO_CND))?SUBTIPOS_POR_TIPO_CND:[]; const f=arr.find(x=>x&&x.key===subtipoDb); return f?f.label:''; } catch { return ''; } })() : '',
-              ano_referencia: anoRef,
-              descricao,
-              link,
+              subtipo_label: (tipoSel.toUpperCase() === 'CND') ? (subtipoLabel || labelSubtipoCND(subtipoDb)) : '',
+              ano_referencia: precisaAno ? anoRef : '',
+              descricao: descricao,
+              link: link,
               url: '',
               nome: arquivo ? arquivo.name : null,
               file: arquivo,
