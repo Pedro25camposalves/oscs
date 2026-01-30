@@ -12,10 +12,10 @@ if (!$usuarioId) {
     exit('Sessão inválida. Faça login novamente.');
 }
 
-// =============================================
-// OSC vinculada ao usuário master
-// agora pela coluna usuario.osc_id (FK pra osc.id)
-// =============================================
+
+$teste = $_GET['id'];
+error_log("eventos_projeto.php chamado com id: " . var_export($teste, true));
+
 $stmt = $conn->prepare("SELECT osc_id FROM usuario WHERE id = ? LIMIT 1");
 $stmt->bind_param("i", $usuarioId);
 $stmt->execute();
@@ -24,7 +24,32 @@ $oscIdVinculada = $res['osc_id'] ?? null;
 
 if (!$oscIdVinculada) {
     http_response_code(403);
-    exit('Este usuário não possui OSC vinculada. Contate o administrador do sistema.');
+    exit('Este usuário não possui OSC vinculada.');
+}
+
+// =============================================
+// OSC vinculada ao usuário master
+// agora pela coluna usuario.osc_id (FK pra osc.id)
+// =============================================
+$projetoId = $_GET['id'];
+
+if (!$projetoId) {
+    http_response_code(400);
+    exit('Projeto inválido.');
+}
+$stmt = $conn->prepare("
+    SELECT id 
+    FROM projeto 
+    WHERE id = ? AND osc_id = ?
+    LIMIT 1
+");
+$stmt->bind_param("ii", $projetoId, $oscIdVinculada);
+$stmt->execute();
+$res = $stmt->get_result()->fetch_assoc();
+
+if (!$res) {
+    http_response_code(403);
+    exit('Você não tem permissão para acessar este projeto.');
 }
 
 // =============================================
@@ -33,32 +58,39 @@ if (!$oscIdVinculada) {
 // logo, img_descricao, descricao, data_inicio, data_fim,
 // depoimento, status
 // =============================================
-$projetos = [];
+$eventos = [];
+
 try {
     $sql = "
         SELECT
-            p.id,
-            p.nome,
-            p.descricao,
-            p.img_descricao AS imagem_capa,
-            p.data_inicio,
-            p.data_fim,
-            p.status
-        FROM projeto p
-        WHERE p.osc_id = ?
-        ORDER BY p.nome ASC, p.id DESC
+            e.id,
+            e.projeto_id,
+            e.pai_id,
+            e.tipo,
+            e.nome,
+            e.descricao,
+            e.img_capa,
+            e.data_inicio,
+            e.data_fim,
+            e.status
+        FROM evento e
+        WHERE e.projeto_id = ?
+        ORDER BY e.data_inicio ASC, e.id DESC
     ";
-    $stmtProj = $conn->prepare($sql);
-    if ($stmtProj) {
-        $stmtProj->bind_param("i", $oscIdVinculada);
-        $stmtProj->execute();
-        $rs = $stmtProj->get_result();
+
+    $stmtEvt = $conn->prepare($sql);
+
+    if ($stmtEvt) {
+        $stmtEvt->bind_param("i", $projetoId);
+        $stmtEvt->execute();
+
+        $rs = $stmtEvt->get_result();
         while ($row = $rs->fetch_assoc()) {
-            $projetos[] = $row;
+            $eventos[] = $row;
         }
     }
 } catch (Throwable $e) {
-    $projetos = [];
+    $eventos = [];
 }
 ?>
 <!doctype html>
@@ -543,19 +575,24 @@ try {
 
         <div class="projects-grid">
 
-            <?php foreach ($projetos as $p): ?>
+            <?php foreach ($eventos as $e): ?>
                 <?php
-                    $id          = (int)($p['id'] ?? 0);
-                    $nome        = $p['nome'] ?? 'Projeto sem nome';
-                    $img         = $p['imagem_capa'] ?? '';
-                    $dataInicio  = $p['data_inicio'] ?? null;
-                    $dataFim     = $p['data_fim'] ?? null;
-                    $statusProj  = $p['status'] ?? '';
-            
-                    $bgFallback = "linear-gradient(135deg, rgba(108,92,231,.85), rgba(0,170,102,.65))";
-                    $bgImg      = $img ? "url('" . htmlspecialchars($img, ENT_QUOTES) . "')" : $bgFallback;
-            
-                    // datas
+                    $id         = (int)($e['id'] ?? 0);
+                    $nome       = $e['nome'] ?? 'Evento sem nome';
+                    $img        = $e['img_capa'] ?? '';
+                    $tipo       = $e['tipo'] ?? '';
+                    $dataInicio = $e['data_inicio'] ?? null;
+                    $dataFim    = $e['data_fim'] ?? null;
+                    $statusEvt  = $e['status'] ?? '';
+
+                    $bgFallback = "linear-gradient(135deg, rgba(255,118,117,.85), rgba(9,132,227,.65))";
+                    $bgImg      = $img
+                        ? "url('" . htmlspecialchars($img, ENT_QUOTES) . "')"
+                        : $bgFallback;
+
+                    // =============================
+                    // Datas
+                    // =============================
                     $textoDatas = '';
                     if (!empty($dataInicio)) {
                         try {
@@ -563,7 +600,7 @@ try {
                         } catch (Throwable $e) {
                             $dtInicioFmt = $dataInicio;
                         }
-            
+
                         if (!empty($dataFim)) {
                             try {
                                 $dtFimFmt = (new DateTime($dataFim))->format('d/m/Y');
@@ -575,41 +612,55 @@ try {
                             $textoDatas = "Início: {$dtInicioFmt}";
                         }
                     }
-            
-                    $statusLabel = $statusProj !== '' ? $statusProj : 'SEM STATUS';
+
+                    $statusLabel = $statusEvt !== '' ? $statusEvt : 'SEM STATUS';
                 ?>
-                <a class="project-card"
-                   style="--bgimg: <?= $bgImg ?>;"
-                   data-nome="<?= htmlspecialchars($nome, ENT_QUOTES) ?>">
+
+                <a class="project-card event-card"
+                style="--bgimg: <?= $bgImg ?>;"
+                data-nome="<?= htmlspecialchars($nome, ENT_QUOTES) ?>"
+                data-tipo="<?= htmlspecialchars($tipo, ENT_QUOTES) ?>">
+
                     <div class="project-bg"></div>
                     <div class="project-overlay"></div>
+
                     <div class="project-content">
                         <span class="project-chip">
                             <?= htmlspecialchars($statusLabel) ?>
                         </span>
-            
-                        <h3 class="project-title"><?= htmlspecialchars($nome) ?></h3>
-            
-                        <?php if ($textoDatas !== ''): ?>
-                            <p class="project-dates"><?= htmlspecialchars($textoDatas) ?></p>
+
+                        <h3 class="project-title">
+                            <?= htmlspecialchars($nome) ?>
+                        </h3>
+
+                        <?php if ($tipo): ?>
+                            <p class="project-subtitle">
+                                Tipo: <?= htmlspecialchars($tipo) ?>
+                            </p>
                         <?php endif; ?>
-                        
+
+                        <?php if ($textoDatas !== ''): ?>
+                            <p class="project-dates">
+                                <?= htmlspecialchars($textoDatas) ?>
+                            </p>
+                        <?php endif; ?>
+
                         <div class="project-actions">
                             <button
                                 type="button"
                                 class="btn btn-ghost btn-icon"
-                                title="Editar projeto"
-                                data-action="editar-projeto"
-                                data-id="<?= (int)$id ?>">
+                                title="Editar evento"
+                                data-action="editar-evento"
+                                data-id="<?= $id ?>">
                                 <span class="icon-pencil">✏</span>
                             </button>
 
                             <button
                                 type="button"
                                 class="btn btn-ghost"
-                                data-action="eventos-projeto"
-                                data-id="<?= (int)$id ?>">
-                                Eventos
+                                data-action="detalhes-evento"
+                                data-id="<?= $id ?>">
+                                Detalhes
                             </button>
                         </div>
                     </div>
@@ -617,7 +668,7 @@ try {
             <?php endforeach; ?>
                         
             <!-- CARD + (NOVO EVENTO) -->
-            <a class="plus-card" href="cadastro_projeto.php?osc_id=<?= (int)$oscIdVinculada ?>">
+            <a class="plus-card" href="cadastro_evento.php?osc_id=<?= (int)$oscIdVinculada ?>&projeto_id=<?= (int)$projetoId ?>">
                 <div class="plus-inner">
                     <div class="plus-icon" aria-hidden="true"></div>
                     <div class="plus-text">Novo Evento</div>
