@@ -74,6 +74,32 @@ while ($row = $resultAtividades->fetch_assoc()) {
     $atividades[] = $row;
 }
 
+//consulta para trazer os eventos do banco de dados
+/*
+  $stmtNoticia = $conn->prepare(" --atualizar as colunas quando forem criadas no banco
+      SELECT id, titulo, imagem, data_evento
+      FROM evento_oficina
+      ORDER BY i DESC
+      LIMIT 4");
+  $stmtNoticia->bind_param("i", $osc);
+  $stmtNoticia->execute();
+  $resultNoticias = $stmtNoticias->get_result();
+
+  $noticias = [];
+  while ($row = $resultNoticias->fetch_assoc()) {
+      $noticias[] = $row;
+  }
+  function h($s) {
+    return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8');
+  }
+
+  function dataBR($data) {
+      if (!$data) return '';
+      $ts = strtotime($data);
+      return $ts ? date('d/m/Y', $ts) : $data;
+  }
+*/
+
 $stmt = $conn->prepare("SELECT osc.*, template_web.*, cores.*, imovel.*, endereco.* FROM osc
 LEFT JOIN template_web ON template_web.osc_id = osc.id 
 LEFT JOIN cores ON cores.id_cores = osc.id 
@@ -95,7 +121,7 @@ $cor1 = $row["cor1"];
 $cor2 = $row["cor2"];
 $cor3 = $row["cor3"];
 $cor4 = $row["cor4"];
-$cor_font = $row["cor4"];
+$cor_font = $row["cor5"];
 // --------------------------
 // INICIO
 // --------------------------
@@ -183,7 +209,7 @@ $buscaEndereco = trim(
       border-top: 1px solid #ddd;
       padding: 15px;
       text-align: center;
-      color: #666;
+      color: <?php echo $cor5; ?>;
       margin-top: 50px;
     }
 
@@ -223,6 +249,100 @@ $buscaEndereco = trim(
     #acontecimentos .card:hover {
       transform: translateY(-5px);
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+    }
+
+    #acontecimentos .card-news {
+      display: flex;
+      min-width: 0;
+    }
+
+    #acontecimentos .news-card {
+      width: 100%;
+      border-radius: 18px;
+      overflow: hidden;
+      background: <?php echo $background; ?>;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      border: 1px solid rgba(0,0,0,0.06);
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    #acontecimentos .news-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 35px rgba(0,0,0,0.12);
+    }
+
+    #acontecimentos .news-media {
+      position: relative;
+      height: 190px;
+    }
+
+    #acontecimentos .news-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform: scale(1);
+      transition: transform .35s ease;
+    }
+
+    #acontecimentos .news-card:hover .news-media img {
+      transform: scale(1.06);
+    }
+
+    /* overlay leve pra dar contraste com a data */
+    #acontecimentos .news-media::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.45), rgba(0,0,0,0));
+      pointer-events: none;
+    }
+
+    #acontecimentos .news-date {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.92);
+      color: #222;
+      backdrop-filter: blur(6px);
+    }
+
+    #acontecimentos .news-body {
+      padding: 16px 16px 18px;
+    }
+
+    #acontecimentos .news-title {
+      margin: 0;
+      font-weight: 600;
+      line-height: 1.25;
+      color: <?php echo $cor_font; ?>;
+    }
+    
+
+    /* deixa o título ficar com “cara de link” no hover */
+    #acontecimentos .news-card:hover .news-title {
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+    #acontecimentos .news-link {
+      display: block;
+      height: 100%;
+      text-decoration: none;
+      color: inherit;
+      width: 100%;
+    }
+
+    #acontecimentos .news-link:focus-visible {
+      outline: 3px solid #f28b00;
+      outline-offset: 4px;
+      border-radius: 18px;
     }
 
     /* ===========================================================
@@ -447,6 +567,96 @@ $buscaEndereco = trim(
       font-weight: 400;
     }
 
+    @media (max-width: 768px) {
+      section.container-fluid.p-0 img.img-fluid {
+      display: block;
+      margin: 0 auto;
+      }
+    }
+
+    #transparencia .tsec{
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    #transparencia .tbox{
+      background: #fff;
+      border-radius: 12px;
+      padding: 22px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    #transparencia .tsec-title{
+      color: <?php echo $cor2; ?>;
+      border-bottom: 2px solid <?php echo $cor2; ?>;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+
+    #transparencia .tinfo{
+      border-left: 4px solid <?php echo $cor2; ?>;
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    #transparencia .tinfo strong{
+      min-width: 180px;
+    }
+
+    #transparencia .tdoc-item{
+      border-left: 4px solid <?php echo $cor2; ?>;
+      transition: background-color .2s ease, transform .2s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+    }
+
+    #transparencia .tdoc-item:hover{
+      background-color: #f8f9fa;
+      transform: translateX(4px);
+    }
+
+    #transparencia .tdoc-left h6{
+      margin: 0 0 2px;
+      font-weight: 700;
+    }
+
+    #transparencia .tdoc-left small{
+      display: block;
+    }
+
+    #transparencia .tdoc-btn{
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* mobile: empilha botão abaixo */
+    @media (max-width: 576px){
+      #transparencia .tdoc-item{
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      #transparencia .tdoc-btn{
+        width: 100%;
+        justify-content: center;
+      }
+      #transparencia .tinfo{
+        flex-direction: column;
+      }
+      #transparencia .tinfo strong{
+        min-width: 0;
+      }
+    }
+
   </style>
 
   <script>
@@ -617,10 +827,6 @@ $buscaEndereco = trim(
   <nav class="navbar navbar-expand-lg navbar-light shadow-sm sticky-top" style="background-color: <?php echo $cor1; ?>;">
     <div class="container">
       <img src="<?php echo $logo_nobg; ?>" class="img-fluid" style="max-width: 80px;" alt="Logo <?php echo $sigla?>">
-      <!-- <div style="margin-left: 8px;">
-        <h7><strong>ASSOCEST</strong></h7>
-      </div> -->
-
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -657,78 +863,38 @@ $buscaEndereco = trim(
         <section id="acontecimentos" class="my-5">
           <div class="container">
             <h2 class="text-center section-title mb-5"><strong>Últimas Notícias</strong></h2>
-            <div class="row">
-              <!-- Coluna esquerda: cards -->
-              <div class="col-lg-8">
-                <div class="row g-4">
-                  <!-- Card 1 -->
-                  <div class="col-md-6 card-news">
-                    <div class="card border-0 shadow-sm h-100">
-                      <img src="/assets/images/inst-5.webp" class="card-img-top" alt="Evento 1">
-                      <div class="card-body">
-                        <h6 class="card-title fw-semibold">Primeira Graduação de Karatê Promovida</h6>
-                        <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 15/04/2025</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Card 2 -->
-                  <div class="col-md-6 card-news">
-                    <div class="card border-0 shadow-sm h-100">
-                      <img src="/assets/images/inst-6.webp" class="card-img-top" alt="Evento 2">
-                      <div class="card-body">
-                        <h6 class="card-title fw-semibold">O Dentista chegou!</h6>
-                        <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 20/02/2025</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Card 3 -->
-                  <div class="col-md-6 card-news">
-                    <div class="card border-0 shadow-sm h-100">
-                      <img src="/assets/images/inst-7.webp" class="card-img-top" alt="Evento 3">
-                      <div class="card-body">
-                        <h6 class="card-title fw-semibold">Celebrando os 26 anos de Promovida</h6>
-                        <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 20/08/2024</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Card 4 -->
-                  <div class="col-md-6 card-news">
-                    <div class="card border-0 shadow-sm h-100">
-                      <img src="/assets/images/inst-8.webp" class="card-img-top" alt="Evento 4">
-                      <div class="card-body">
-                        <h6 class="card-title fw-semibold">Evento Solidário</h6>
-                        <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 15/01/2024</p>
-                      </div>
-                    </div>
-                  </div>
+            <div class="row g-4">
+              <?php if (empty($noticias)): ?>
+                <div class="col-12">
+                  <p class="text-center text-muted mb-0">Nenhuma notícia cadastrada ainda.</p>
                 </div>
-              </div>
-
-              <!-- Coluna direita: ações -->
-              <div class="col-lg-4 mt-4 mt-lg-0">
-                <div class="help-box text-center text-white">
-                  <div id="help-section">
-                    <div class="help-header py-3 fw-bold">
-                      COMO VOCÊ PODE AJUDAR?
-                    </div>
-                    <div class="help-option py-4">
-                      <i class="bi bi-heart-fill fs-2"></i>
-                      <h5 class="mt-2">DOAÇÕES</h5>
-                    </div>
-                    <div class="help-option py-4">
-                      <i class="bi bi-people-fill fs-2"></i>
-                      <h5 class="mt-2">COLABORADORES</h5>
-                    </div>
-                    <div class="help-option py-4">
-                      <i class="bi bi-cart-fill fs-2"></i>
-                      <h5 class="mt-2">BAZAR</h5>
-                    </div>
+              <?php else: ?>
+                <?php foreach ($noticias as $n): 
+                  $id = (int)$n['id'];
+                  $titulo = $n['titulo'] ?? '';
+                  $img = $n['imagem'] ?? '';
+                  $imgSrc = $img ?: 'assets/oscs/osc-1/projetos/projeto-1/imagens/img_descricao-20260125230348-7a805535.jpg" alt="Evento 4';
+                  $data = dataBR($n['data_evento'] ?? null);
+                  // Link do evento pelo ID
+                  $link = "/evento.php?id={$id}&osc={$osc}";
+                ?>
+                  <div class="col-12 col-md-6 col-xl-3 card-news">
+                    <a href="<?= h($link) ?>" class="news-link">
+                      <article class="news-card h-100">
+                        <div class="news-media">
+                          <img src="<?= h($imgSrc) ?>" alt="<?= h($titulo) ?>">
+                          <?php if ($data): ?>
+                            <span class="news-date"><i class="bi bi-calendar3"></i> <?= h($data) ?></span>
+                          <?php endif; ?>
+                        </div>
+                        <div class="news-body">
+                          <h6 class="news-title"><?= h($titulo) ?></h6>
+                        </div>
+                      </article>
+                    </a>
                   </div>
-                </div>
-              </div>
+                <?php endforeach; ?>
+              <?php endif; ?>
             </div>
           </div>
         </section>
@@ -887,174 +1053,232 @@ $buscaEndereco = trim(
       <hr>
       <div class="container my-5">
         <div class="osc-detalhes">
-          <h3><strong>Nome fantasia: </strong><?php echo $nome_fantasia; ?></h3>
-          <div class="info-grid">
-            <div class="info-block">
-              <strong><i class="bi bi-database"></i> Sigla OSC:</strong>
-              <span><?php echo $sigla; ?></span>
+          <div class="tsec">
+            <h3><strong>Nome fantasia: </strong><?php echo $nome_fantasia; ?></h3>
+            <div class="info-grid">
+              <div class="info-block">
+                <strong><i class="bi bi-database"></i> Sigla OSC:</strong>
+                <span><?php echo $sigla; ?></span>
+              </div>
+              <div class="info-block">
+                <strong><i class="bi bi-person"></i> Situação cadastral:</strong>
+                <span><?php echo $situacao_cad; ?></span>
+              </div>
             </div>
-            <div class="info-block">
-              <strong><i class="bi bi-person"></i> Situação cadastral:</strong>
-              <span><?php echo $situacao_cad; ?></span>
+            <hr>
+            <div class="info-grid">
+              <div class="info-block">
+                <strong><i class="bi bi-house"></i> Situação do imóvel:</strong>
+                <span><?php echo $situacao_imo; ?></span>
+              </div>
+              <div class="info-block">
+                <strong><i class="bi bi-calendar"></i> Ano de cadastro de CNPJ:</strong>
+                <span><?php echo $ano_cadastro; ?></span>
+              </div>
+              <div class="info-block">
+                <strong><i class="bi bi-building"></i> Ano de fundação:</strong>
+                <span><?php echo $ano_fundacao; ?></span>
+              </div>
+              <div class="info-block">
+                <strong><i class="bi bi-person"></i> Responsável legal:</strong>
+                <span><?php echo $responsavel; ?></span>
+              </div>
+              <div class="info-block">
+                <strong><i class="bi bi-envelope-at"></i> E-mail:</strong>
+                <span><?php echo $email; ?></span>
+              </div>
+              <div class="info-block" style="grid-column: 1 / -1;">
+                <strong><i class="bi bi-info-circle"></i> O que a OSC faz:</strong>
+                <span><?php echo $oq_faz; ?></span>
+              </div>
             </div>
-          </div>
+            <hr>
+            <div class="tbox">
+              <h3 class="tsec-title">
+                <i class="bi bi-file-earmark-text me-2"></i>Documentos Institucionais
+              </h3>
 
-          <hr>
+              <div class="list-group">
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">Estatuto</h6>
+                    <small class="text-muted">Documento institucional da OSC</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn"
+                    onclick="visualizar('estatuto')"
+                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
 
-          <div class="info-grid">
-            <div class="info-block">
-              <strong><i class="bi bi-house"></i> Situação do imóvel:</strong>
-              <span><?php echo $situacao_imo; ?></span>
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">Ata</h6>
+                    <small class="text-muted">Ata de constituição e registros</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn"
+                    onclick="visualizar('ata')"
+                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+              </div>
             </div>
-            <div class="info-block">
-              <strong><i class="bi bi-calendar"></i> Ano de cadastro de CNPJ:</strong>
-              <span><?php echo $ano_cadastro; ?></span>
-            </div>
-            <div class="info-block">
-              <strong><i class="bi bi-building"></i> Ano de fundação:</strong>
-              <span><?php echo $ano_fundacao; ?></span>
-            </div>
-            <div class="info-block">
-              <strong><i class="bi bi-person"></i> Responsável legal:</strong>
-              <span><?php echo $responsavel; ?></span>
-            </div>
-            <div class="info-block">
-              <strong><i class="bi bi-envelope-at"></i> E-mail:</strong>
-              <span><?php echo $email; ?></span>
-            </div>
-            <div class="info-block" style="grid-column: 1 / -1;">
-              <strong><i class="bi bi-info-circle"></i> O que a OSC faz:</strong>
-              <span><?php echo $oq_faz; ?></span>
-            </div>
-          </div>
-          <hr>
-          <h4><strong>Documentos Institucionais</strong></h4>
-
-          <div class="info-grid">
-            <div class="info-block">
-              <strong><i class="bi bi-file-text"></i> Estatuto:</strong>
-              <button class="btn btn-primary btn-sm" onclick="visualizar('estatuto')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
-                Visualizar Documento
-              </button>
-              
-            </div>
-            <div class="info-block">
-              <strong><i class="bi bi-file-text"></i> Ata:</strong>
-              <button class="btn btn-primary btn-sm" onclick="visualizar('ata')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
-                Visualizar Documento
-              </button>
-            </div>
+            <!-- 2 div Certidões -->
             
-          </div>
+            <div class="tbox">
+              <h3 class="tsec-title">
+                <i class="bi bi-file-earmark-check me-2"></i>Certidões (CNDs)
+              </h3>
 
-          <!-- 2 div Certidões -->
-          <hr>
-          <h4><strong>Certidões (CNDs)</strong></h4>
+              <div class="list-group">
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">CND Federal</h6>
+                    <small class="text-muted">Certidão negativa federal</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('cnd_federal')"
+                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
 
-          <div class="info-grid">
-            <div class="info-block">
-              <strong><i class="bi bi-file-text"></i> CND Federal:</strong>
-              <button class="btn btn-primary btn-sm" onclick="visualizar('cnd_federal')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
-                Visualizar Documento
-              </button>
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">CND Estadual</h6>
+                    <small class="text-muted">Certidão negativa estadual</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('cnd_estadual')"
+                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">CND Municipal</h6>
+                    <small class="text-muted">Certidão negativa municipal</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('cnd_municipal')"
+                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">FGTS</h6>
+                    <small class="text-muted">Regularidade do FGTS</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('fgts')"
+                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">Trabalhista</h6>
+                    <small class="text-muted">Certidão negativa trabalhista</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('trabalhista')"
+                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+              </div>
             </div>
+            <!-- 3 div Utilidade Pública -->
+            <div class="tbox">
+              <h3 class="tsec-title">
+                <i class="bi bi-award me-2"></i>Utilidade Pública
+              </h3>
 
-            <div class="info-block">
-              <strong><i class="bi bi-file-text"></i> CND Estadual:</strong>
-              <button class="btn btn-primary btn-sm" onclick="visualizar('cnd_estadual')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
-                Visualizar Documento
-              </button>
+              <div class="list-group">
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">Lei de Utilidade Pública Federal</h6>
+                    <small class="text-muted">Link externo</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn"
+                    onclick="window.open('https://www2.camara.leg.br/legin/fed/lei/1930-1939/lei-91-28-agosto-1935-398006-normaatualizada-pl.html','_blank')"
+                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    <i class="bi bi-box-arrow-up-right"></i> Abrir
+                  </button>
+                </div>
+
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">Lei de Utilidade Pública Estadual</h6>
+                    <small class="text-muted">Link externo</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn"
+                    onclick="window.open('https://www.almg.gov.br/atividade-parlamentar/leis/legislacao-mineira/lei/texto/print.html?tipo=LEI&num=12972&ano=1998&comp=&cons=','_blank')"
+                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    <i class="bi bi-box-arrow-up-right"></i> Abrir
+                  </button>
+                </div>
+
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">Lei de Utilidade Pública Municipal</h6>
+                    <small class="text-muted">Link externo</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn"
+                    onclick="window.open('https://leismunicipais.com.br/a/mg/p/paracatu/lei-ordinaria/2025/403/4021/lei-ordinaria-n-4021-2025-autoriza-o-poder-executivo-a-majorar-a-destinacao-de-recursos-para-a-associacao-esther-siqueira-tillmann-e-da-outras-providencias?q=associa%E7%E3o','_blank')"
+                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    <i class="bi bi-box-arrow-up-right"></i> Abrir
+                  </button>
+                </div>
+              </div>
             </div>
-
-            <div class="info-block">
-              <strong><i class="bi bi-file-text"></i> CND Municipal:</strong>
-              <button class="btn btn-primary btn-sm" onclick="visualizar('cnd_municipal')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
-                Visualizar Documento
-              </button>
+            <!-- 4 div Utilidade Pública -->
+            <div class="tbox">
+              <h3 class="tsec-title">
+                <i class="bi bi-person-vcard me-2"></i>Cadastro e Identificação
+              </h3>
+              <div class="list-group">
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">Cartão CNPJ</h6>
+                    <small class="text-muted">Documento de identificação</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('cartaoCNPJ')"
+                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+              </div>
             </div>
+            <!-- 4 div Documentos Contábeis -->
+            <div class="tbox">
+              <h3 class="tsec-title">
+                <i class="bi bi-calculator me-2"></i>Documentos Contábeis
+              </h3>
 
-            <div class="info-block">
-              <strong><i class="bi bi-file-text"></i> FGTS:</strong>
-              <button class="btn btn-primary btn-sm" onclick="visualizar('fgts')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
-                Visualizar Documento
-              </button>
-            </div>
+              <div class="list-group">
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">Balanço Patrimonial</h6>
+                    <small class="text-muted">Documento contábil</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('balanco_patrimonial')"
+                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
 
-            <div class="info-block">
-              <strong><i class="bi bi-file-text"></i> Trabalhista:</strong>
-              <button class="btn btn-primary btn-sm" onclick="visualizar('trabalhista')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
-                Visualizar Documento
-              </button>
-            </div>
-
-            </div>
-
-          <!-- 3 div Utilidade Pública -->
-          <hr>
-          <h4><strong>Utilidade Pública</strong></h4>
-
-          <div class="info-grid">
-            <div class="info-block">
-              <strong><i class="bi bi-file-text"></i> Lei de Utilidade Pública Federal:</strong>
-              <button
-                class="btn btn-primary btn-sm"
-                onclick="window.open('https://www2.camara.leg.br/legin/fed/lei/1930-1939/lei-91-28-agosto-1935-398006-normaatualizada-pl.html', '_blank')"
-                style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
-                  Visualizar Documento
-              </button>
-            </div>
-
-            <div class="info-block">
-              <strong><i class="bi bi-file-text"></i> Lei de Utilidade Pública Estadual:</strong>
-              <button
-                class="btn btn-primary btn-sm"
-                onclick="window.open('https://www.almg.gov.br/atividade-parlamentar/leis/legislacao-mineira/lei/texto/print.html?tipo=LEI&num=12972&ano=1998&comp=&cons=', '_blank')"
-                style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
-                  Visualizar Documento
-              </button>
-            </div>
-
-            <div class="info-block">
-              <strong><i class="bi bi-file-text"></i> Lei de Utilidade Pública Municipal:</strong>
-              <button
-                class="btn btn-primary btn-sm"
-                onclick="window.open('https://leismunicipais.com.br/a/mg/p/paracatu/lei-ordinaria/2025/403/4021/lei-ordinaria-n-4021-2025-autoriza-o-poder-executivo-a-majorar-a-destinacao-de-recursos-para-a-associacao-esther-siqueira-tillmann-e-da-outras-providencias?q=associa%E7%E3o', '_blank')"
-                style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
-                  Visualizar Documento
-              </button>
-            </div>
-          </div>
-
-          <!-- 4 div Utilidade Pública -->
-          <hr>
-          <h4><strong>Cadastro e Identificação</strong></h4>
-
-          <div class="info-grid">
-            <div class="info-block">
-              <strong><i class="bi bi-file-text"></i>Cartão CNPJ</strong>
-              <button class="btn btn-primary btn-sm" onclick="visualizar('cartaoCNPJ')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
-                Visualizar Documento
-              </button>
-            </div>
-          </div>
-
-          <!-- 4 div Documentos Contábeis -->
-          <hr>
-          <h4><strong>Documentos Contábeis</strong></h4>
-
-          <div class="info-grid">
-            <div class="info-block">
-              <strong><i class="bi bi-file-text"></i>Balanço Patrimonial</strong>
-              <button class="btn btn-primary btn-sm" onclick="visualizar('balanco_patrimonial')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
-                Visualizar Documento
-              </button>
-            </div>
-
-            <div class="info-block">
-              <strong><i class="bi bi-file-text"></i>DRE (Demonstração do Resultado do Exercício)</strong>
-              <button class="btn btn-primary btn-sm" onclick="visualizar('dre')" style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
-                Visualizar Documento
-              </button>
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">DRE</h6>
+                    <small class="text-muted">Demonstração do Resultado do Exercício</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('dre')"
+                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1179,12 +1403,12 @@ $buscaEndereco = trim(
             </div>
           </div>
         </div>
-      </div>
+      </div> 
     </section>
     </div>
   </main>
   <footer style="background-color: <?php echo $cor3; ?>;">
-    <p>© 2025 OSC Exemplo - Todos os direitos reservados.</p>
+    <p>© 2025 OSCTECH - Todos os direitos reservados.</p>
   </footer>
 
   <script>
