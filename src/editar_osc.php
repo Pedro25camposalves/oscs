@@ -387,18 +387,11 @@ if (!$oscIdVinculada) {
 
 <main>
 
-<!-- TABS DE NAVEGAÇÃO (OSC / PROJETOS) -->
-    <div class="tabs-top" id="tabsTop">
-        <button type="button" class="tab-btn" id="tabOsc">
-            <span class="dot"></span>
-            OSC
-        </button>
-
-        <button type="button" class="tab-btn" id="tabProjetos">
-            <span class="dot"></span>
-            Projetos
-        </button>
-    </div>
+  <!-- TABS DE NAVEGAÇÃO -->
+  <div class="tabs-top" id="tabsTop">
+      <a class="tab-btn is-active" href="editar_osc.php"><span class="dot"></span>OSC</a>
+      <a class="tab-btn" href="projetos_osc.php"><span class="dot"></span>Projetos</a>
+  </div>
 
 <form id="oscForm" onsubmit="event.preventDefault();saveData()">
     <input type="hidden" id="oscId" value="<?= (int)$oscIdVinculada ?>" />
@@ -1013,6 +1006,7 @@ if (!$oscIdVinculada) {
 		let templateBackupUrl = { logo_simples:null, logo_completa:null, banner1:null, banner2:null, banner3:null };
 
     let envFotoExistingUrl = null; // quando editar: foto do BD
+    let envFotoOriginalUrl = null; // URL original do servidor (pra restaurar)
     let envFotoRemover = false; // <-- ADD: pediu pra remover a foto atual?
 
     let envFotoPreviewUrl = null; // dataURL do preview (pendente)
@@ -2187,21 +2181,27 @@ if (!$oscIdVinculada) {
         <div class="small">${escapeHtml(nome)} ${link ? '' + link : ''}</div>
       `;
 
-      const remove = document.createElement('button');
-      remove.type = 'button';
-      remove.className = 'btn';
-      remove.textContent = '✕';
-      remove.style.padding = '6px 8px';
-      remove.style.marginLeft = '8px';
-      remove.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        onRemove?.(ev);
-      });
+      // Remove (✕) é opcional — se não passar onRemove, o card vira apenas visualização.
+      if (typeof onRemove === 'function') {
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'btn';
+        remove.textContent = '✕';
+        remove.style.padding = '6px 8px';
+        remove.style.marginLeft = '8px';
+        remove.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          onRemove(ev);
+        });
+        c.appendChild(img);
+        c.appendChild(info);
+        c.appendChild(remove);
+        return c;
+      }
 
       c.appendChild(img);
       c.appendChild(info);
-      c.appendChild(remove);
       return c;
     }
 
@@ -2227,11 +2227,11 @@ if (!$oscIdVinculada) {
 
     function renderTemplateImageCards() {
       const itens = [
-        { campo: 'logo_simples',  titulo: 'Logo simples',   input: logoSimples,  getUrl: () => existingLogos.logoSimples,  setUrl: (v) => existingLogos.logoSimples = v,  slot: '#imgCard_logoSimples',  wide: false },
-        { campo: 'logo_completa', titulo: 'Logo completa',  input: logoCompleta, getUrl: () => existingLogos.logoCompleta, setUrl: (v) => existingLogos.logoCompleta = v, slot: '#imgCard_logoCompleta', wide: true  },
-        { campo: 'banner1',       titulo: 'Banner 1',       input: banner1,      getUrl: () => existingBanners.banner1,   setUrl: (v) => existingBanners.banner1 = v,   slot: '#imgCard_banner1',      wide: true  },
-        { campo: 'banner2',       titulo: 'Banner 2',       input: banner2,      getUrl: () => existingBanners.banner2,   setUrl: (v) => existingBanners.banner2 = v,   slot: '#imgCard_banner2',      wide: true  },
-        { campo: 'banner3',       titulo: 'Banner 3',       input: banner3,      getUrl: () => existingBanners.banner3,   setUrl: (v) => existingBanners.banner3 = v,   slot: '#imgCard_banner3',      wide: true  },
+        { campo: 'logo_simples',  titulo: 'Logo simples',   input: logoSimples,  getUrl: () => existingLogos.logoSimples,  slot: '#imgCard_logoSimples',  wide: false },
+        { campo: 'logo_completa', titulo: 'Logo completa',  input: logoCompleta, getUrl: () => existingLogos.logoCompleta, slot: '#imgCard_logoCompleta', wide: true  },
+        { campo: 'banner1',       titulo: 'Banner 1',       input: banner1,      getUrl: () => existingBanners.banner1,   slot: '#imgCard_banner1',      wide: true  },
+        { campo: 'banner2',       titulo: 'Banner 2',       input: banner2,      getUrl: () => existingBanners.banner2,   slot: '#imgCard_banner2',      wide: true  },
+        { campo: 'banner3',       titulo: 'Banner 3',       input: banner3,      getUrl: () => existingBanners.banner3,   slot: '#imgCard_banner3',      wide: true  },
       ];
 
       itens.forEach(it => {
@@ -2240,124 +2240,196 @@ if (!$oscIdVinculada) {
         slot.innerHTML = '';
 
         const file = it.input?.files?.[0] || null;
+        const url  = it.getUrl?.() || null;
+
+        // Arquivo novo escolhido (antes de salvar): mostra preview + status "NOVA" + restaurar
         if (file) {
-            templateRemover[it.campo] = false;
-            templateBackupUrl[it.campo] = null;
-            const cardNovo = criarCardImagem({
-                titulo: 'NOVA ' + it.titulo,
-                file,
-                onRemove: () => {
-                    it.input.value = '';
-                    renderTemplateImageCards();
-                    updatePreviews();
-                },
-                thumbWide: it.wide
-            });
-          slot.appendChild(cardNovo);
+          const c = document.createElement('div');
+          c.className = 'envolvido-card';
+
+          const img = document.createElement('img');
+          const objUrl = URL.createObjectURL(file);
+          img.src = objUrl;
+          img.onload = () => { try { URL.revokeObjectURL(objUrl); } catch (_) {} };
+          img.style.width = it.wide ? '86px' : '48px';
+          img.style.height = '48px';
+          img.style.objectFit = 'cover';
+
+          const info = document.createElement('div');
+          info.innerHTML = `
+            <div style="font-weight:600">${escapeHtml(it.titulo)}</div>
+            <div class="small">${escapeHtml(file.name)}</div>
+          `;
+
+          const actions = document.createElement('div');
+          actions.style.marginLeft = 'auto';
+          actions.style.display = 'flex';
+          actions.style.alignItems = 'center';
+          actions.style.gap = '8px';
+
+          const pill = document.createElement('span');
+          pill.className = 'status-pill on';
+          pill.textContent = 'Nova';
+
+          const restore = document.createElement('button');
+          restore.type = 'button';
+          restore.className = 'btn';
+          restore.textContent = '↩';
+          restore.style.padding = '6px 8px';
+          restore.title = 'Restaurar';
+          restore.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            it.input.value = '';
+            renderTemplateImageCards();
+            Promise.resolve(updatePreviews()).catch(() => {});
+          });
+
+          actions.appendChild(pill);
+          actions.appendChild(restore);
+
+          c.appendChild(img);
+          c.appendChild(info);
+          c.appendChild(actions);
+
+          slot.appendChild(c);
           return;
         }
 
-        const url = it.getUrl();
+        // Sem arquivo novo: mostra a atual (sem status "ATUAL" e sem botão de deleção)
         if (url) {
           const cardExistente = criarCardImagem({
             titulo: it.titulo,
             url,
-            onRemove: () => {
-              templateRemover[it.campo] = true;
-              templateBackupUrl[it.campo] = url;
-              it.setUrl(null);
-              it.input.value = '';
-            
-              renderTemplateImageCards();
-              updatePreviews();
-            },
             thumbWide: it.wide
           });
           slot.appendChild(cardExistente);
           return;
         }
 
-        if (!url && templateRemover[it.campo] && templateBackupUrl[it.campo]) {
-          const cardPendente = criarCardImagem({
-            titulo: '🗑️ DELEÇÃO PENDENTE — ' + it.titulo,
-            url: templateBackupUrl[it.campo],
-            onRemove: () => {
-              templateRemover[it.campo] = false;
-              it.setUrl(templateBackupUrl[it.campo]);
-              templateBackupUrl[it.campo] = null;
-            
-              renderTemplateImageCards();
-              updatePreviews();
-            },
-            thumbWide: it.wide
-          });
-      
-          slot.appendChild(cardPendente);
-        }
+        // sem arquivo e sem URL existente → vazio
       });
     }
 
     function renderEnvFotoCard() {
-        const slot = qs('#imgCard_envFoto');
-        const input = qs('#envFoto');
-        if (!slot || !input) return;
-        
-        slot.innerHTML = '';
-        
-        const file = input.files?.[0] || null;
-        
-        // 1) file do input (acabou de escolher)
-        if (file) {
-          const cardNovo = criarCardImagem({
-            titulo: 'NOVA FOTO',
-            file,
-            onRemove: () => {
-              input.value = '';
-              envFotoPreviewUrl = null;
-              envFotoFileCache  = null;
-              envFotoRemover = false;     
-              renderEnvFotoCard();
-            },
-            thumbWide: false
-          });
-          slot.appendChild(cardNovo);
-          return;
-        }
+    const slot = qs('#imgCard_envFoto');
+    const input = qs('#envFoto');
+    if (!slot || !input) return;
 
-        // 2) preview pendente
-        if (envFotoPreviewUrl) {
-          const cardPendente = criarCardImagem({
-            titulo: 'NOVA FOTO (PENDENTE)',
-            url: envFotoPreviewUrl,
-            onRemove: () => {
-              envFotoPreviewUrl = null;
-              envFotoFileCache  = null;
-              envFotoRemover = false;
-              renderEnvFotoCard();
-            },
-            thumbWide: false
-          });
-          slot.appendChild(cardPendente);
-          return;
-        }
+    const PLACEHOLDER = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
 
-        // 3) foto atual do servidor
-        if (envFotoExistingUrl) {
-          const cardExistente = criarCardImagem({
-            titulo: 'FOTO ATUAL',
-            url: envFotoExistingUrl,
-            onRemove: () => {
-              envFotoExistingUrl = null;
-              envFotoPreviewUrl = null;
-              envFotoFileCache  = null;
-              envFotoRemover = true;
-              renderEnvFotoCard();
-            },
-            thumbWide: false
-          });
-          slot.appendChild(cardExistente);
-        }
+    slot.innerHTML = '';
+
+    const fileInput = input.files?.[0] || null;
+    const fileCache = envFotoFileCache || null;
+    const hasNewFile = !!fileInput || !!fileCache;
+    const isRemoved  = !!envFotoRemover;
+
+    // Resolve o que exibir
+    let srcFile = null;
+    let srcUrl  = null;
+    let nomeLinha = '';
+
+    if (fileInput) {
+      srcFile = fileInput;
+      nomeLinha = fileInput.name || '';
+    } else if (fileCache) {
+      // quando reabre o modal com "foto pendente"
+      if (fileCache instanceof File) {
+        srcFile = fileCache;
+        nomeLinha = fileCache.name || '';
+      } else {
+        srcUrl = envFotoPreviewUrl || null;
+        nomeLinha = fileNameFromUrl(srcUrl) || '';
+      }
+    } else if (isRemoved) {
+      srcUrl = PLACEHOLDER;
+      nomeLinha = 'Sem foto';
+    } else if (envFotoExistingUrl) {
+      srcUrl = envFotoExistingUrl;
+      nomeLinha = fileNameFromUrl(envFotoExistingUrl) || '';
+    } else {
+      srcUrl = PLACEHOLDER;
+      nomeLinha = 'Sem foto';
     }
+
+    // Card (visual igual aos outros: info à esquerda, ações à direita)
+    const c = document.createElement('div');
+    c.className = 'envolvido-card';
+
+    const img = document.createElement('img');
+    img.src = srcFile ? URL.createObjectURL(srcFile) : (srcUrl || PLACEHOLDER);
+
+    const info = document.createElement('div');
+    info.innerHTML = `
+      <div style="font-weight:600">Foto</div>
+      <div class="small">${escapeHtml(nomeLinha || '')}</div>
+    `;
+
+    const actions = document.createElement('div');
+    actions.style.marginLeft = 'auto';
+    actions.style.display = 'flex';
+    actions.style.gap = '8px';
+    actions.style.alignItems = 'center';
+
+    // Pill NOVA (só quando substitui / tem arquivo pendente)
+    if (hasNewFile) {
+      const pill = document.createElement('span');
+      pill.className = 'status-pill on';
+      pill.textContent = 'NOVA';
+      actions.appendChild(pill);
+    }
+
+    // Restaurar (volta pro estado original e limpa pendências)
+    if (hasNewFile || isRemoved) {
+      const restore = document.createElement('button');
+      restore.type = 'button';
+      restore.className = 'btn';
+      restore.textContent = '↩';
+      restore.title = 'Restaurar';
+      restore.style.padding = '6px 8px';
+      restore.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        input.value = '';
+        envFotoPreviewUrl = null;
+        envFotoFileCache  = null;
+        envFotoRemover    = false;
+        envFotoExistingUrl = envFotoOriginalUrl || envFotoExistingUrl || null;
+        renderEnvFotoCard();
+      });
+      actions.appendChild(restore);
+    }
+
+// Deletar (marca pra remover do servidor)
+if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
+  const del = document.createElement('button');
+  del.type = 'button';
+  del.className = 'btn';
+  del.textContent = '✕';
+  del.title = 'Deletar foto';
+  del.style.padding = '6px 8px';
+  del.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    input.value = '';
+    envFotoPreviewUrl = null;
+    envFotoFileCache  = null;
+    envFotoRemover    = true;
+    envFotoExistingUrl = null;
+    renderEnvFotoCard();
+  });
+  actions.appendChild(del);
+}
+
+    c.appendChild(img);
+    c.appendChild(info);
+    c.appendChild(actions);
+
+    slot.appendChild(c);
+}
+
+
 
     // ===== MODAL ENVOLVIDOS =====
     const modalBackdrop       = qs('#modalBackdrop');
@@ -2382,6 +2454,8 @@ if (!$oscIdVinculada) {
         envFotoExistingUrl = null;
         envFotoPreviewUrl  = null;
         envFotoFileCache   = null;
+
+        envFotoOriginalUrl = null;
         envFotoRemover     = false;
         renderEnvFotoCard();
     });
@@ -2410,6 +2484,7 @@ if (!$oscIdVinculada) {
         qs('#envFuncaoNovo').value = e.funcao || '';
         
         envFotoExistingUrl = e.fotoUrl || null;
+        envFotoOriginalUrl = e.fotoUrl || null;
         envFotoPreviewUrl  = e.fotoPreview || null;
         envFotoFileCache   = e.fotoFile || null;
 
@@ -3532,7 +3607,6 @@ if (!$oscIdVinculada) {
         try {
             const response = await fetch("ajax_atualizar_osc.php", { method: "POST", body: fd });
             const text = await response.text();
-            console.log("Resposta bruta do servidor (update):", text);
 
             let result;
             try { result = JSON.parse(text); }
@@ -3599,47 +3673,6 @@ if (!$oscIdVinculada) {
             alert("Erro ao enviar dados ao servidor.");
         }
     }
-
-    // ===== TABS (OSC / PROJETOS) =====
-    function initTabsTopo() {
-      const tabOsc = qs('#tabOsc');
-      const tabProjetos = qs('#tabProjetos');
-      if (!tabOsc || !tabProjetos) return;
-
-      // Ajuste aqui para os nomes reais dos seus endpoints
-      const ENDPOINT_OSC = 'editar_osc.php';
-      const ENDPOINT_PROJETOS = 'projetos_osc.php';
-
-      const path = (window.location.pathname || '').toLowerCase();
-
-      // Heurística: se a URL atual contém "projet" => ativa Projetos, senão OSC
-      const estouEmProjetos = path.includes('projet');
-
-      tabOsc.classList.toggle('is-active', !estouEmProjetos);
-      tabProjetos.classList.toggle('is-active', estouEmProjetos);
-
-      // Mantém o oscId no redirect (se você usar ?id=)
-      const id = Number(qs('#oscId')?.value || 0);
-
-      tabOsc.addEventListener('click', () => {
-        // já está em OSC? não faz nada
-        if (!estouEmProjetos) return;
-
-        const url = id ? `${ENDPOINT_OSC}?id=${encodeURIComponent(id)}` : ENDPOINT_OSC;
-        window.location.href = url;
-      });
-
-      tabProjetos.addEventListener('click', () => {
-        // já está em Projetos? não faz nada
-        if (estouEmProjetos) return;
-
-        const url = id ? `${ENDPOINT_PROJETOS}?id=${encodeURIComponent(id)}` : ENDPOINT_PROJETOS;
-        window.location.href = url;
-      });
-    }
-
-    // chama no carregamento
-    initTabsTopo();
 
     // ===== COLLAPSE "CARD SANDUÍCHE" =====
     function initCardCollapse() {
