@@ -111,6 +111,31 @@ CREATE TABLE IF NOT EXISTS `projeto` (
   DEFAULT CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_general_ci;
 
+-- -----------------------------------------------------
+-- Tabela GALERIA_PROJETO
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `galeria_projeto` (
+  `id`                INT          NOT NULL AUTO_INCREMENT,
+  `projeto_id`        INT          NOT NULL,
+  `evento_oficina_id` INT          NULL DEFAULT NULL,
+  `img`               VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_galeria_projeto_projeto1_idx` (`projeto_id` ASC),
+  INDEX `fk_galeria_projeto_evento_oficina1_idx` (`evento_oficina_id` ASC),
+  CONSTRAINT `fk_galeria_projeto_projeto1`
+    FOREIGN KEY (`projeto_id`)
+    REFERENCES `projeto` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_galeria_projeto_evento_oficina1`
+    FOREIGN KEY (`evento_oficina_id`)
+    REFERENCES `evento_oficina` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB
+  AUTO_INCREMENT=1
+  DEFAULT CHARACTER SET=utf8mb4
+  COLLATE=utf8mb4_general_ci;
 
 -- -----------------------------------------------------
 -- Tabela EVENTO_OFICINA

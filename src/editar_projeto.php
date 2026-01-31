@@ -59,6 +59,22 @@ if (!$ok) {
     exit('Projeto não encontrado ou não pertence à sua OSC.');
 }
 
+
+// Eventos/Oficinas do projeto (para a Galeria)
+$eventosProjeto = [];
+try {
+    $stE = $conn->prepare("SELECT id, tipo, nome, data_inicio FROM evento_oficina WHERE projeto_id = ? ORDER BY COALESCE(data_inicio,'0000-00-00') DESC, id DESC");
+    $stE->bind_param("i", $projetoId);
+    $stE->execute();
+    $rsE = $stE->get_result();
+    while ($r = $rsE->fetch_assoc()) {
+        $eventosProjeto[] = $r;
+    }
+    $stE->close();
+} catch (Throwable $e) {
+    $eventosProjeto = [];
+}
+
 ?>
 <!doctype html>
 <html lang="pt-BR">
@@ -177,6 +193,39 @@ if (!$ok) {
             border-radius: 6px;
             object-fit: cover
         }
+
+        /* ===== Galeria ===== */
+        .galeria-grid{
+            display:grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap:10px;
+            margin-top:10px;
+            max-height: 470px; /* ~4 linhas (scroll interno se passar disso) */
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .galeria-item{
+            position: relative;
+            background:#fafafa;
+            border:1px solid #f0f0f0;
+            border-radius:8px;
+            overflow:hidden;
+            display:block;
+        }
+        .galeria-item img{
+            width:100%;
+            height:110px;
+            object-fit:cover;
+            display:block;
+        }
+        .galeria-empty{
+            grid-column:1 / -1;
+            padding:10px;
+            border:1px dashed #e6e6e9;
+            border-radius:8px;
+            background: rgba(0,0,0,.02);
+        }
+
 
         #imoveisList{
           display:flex;
@@ -550,7 +599,53 @@ if (!$ok) {
     </div>
 </div>
 
+
 <!-- SEÇÃO 5 -->
+    <div style="margin-top:16px" class="card card-collapse" data-collapse-id="galeria">
+      <div class="card-head" data-collapse-head>
+        <h2>Galeria</h2>
+        <button type="button" class="card-toggle" data-collapse-btn>
+          <span class="label">Abrir</span>
+          <span class="chev">▾</span>
+        </button>
+      </div>
+
+      <div class="card-body" data-collapse-body>
+        <div class="grid cols-2" style="margin-top:10px; align-items:end">
+          <div style="grid-column:1 / -1;">
+            <label for="galeriaDestino">Vincular a</label>
+            <select id="galeriaDestino">
+              <option value="">Projeto (geral)</option>
+              <?php foreach ($eventosProjeto as $ev):
+                $evId   = (int)($ev['id'] ?? 0);
+                $evTipo = (string)($ev['tipo'] ?? '');
+                $evNome = (string)($ev['nome'] ?? '');
+                $evData = (string)($ev['data_inicio'] ?? '');
+                $label  = trim(($evTipo ? $evTipo . ': ' : '') . $evNome);
+                if ($evData) $label .= " — " . $evData;
+              ?>
+                <option value="<?= $evId ?>"><?= htmlspecialchars($label) ?></option>
+              <?php endforeach; ?>
+            </select>
+            <div class="small muted" style="margin-top:6px">Envie imagens para o projeto (geral) ou para um evento/oficina específico.</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div id="galeriaGrid" class="galeria-grid">
+          <div class="galeria-empty small muted">Carregando galeria…</div>
+        </div>
+
+        <input type="file" id="galeriaFiles" accept="image/*" multiple style="display:none" />
+
+        <div style="margin-top:10px">
+          <button type="button" class="btn btn-ghost" id="btnGaleriaAdd">+ Adicionar</button>
+        </div>
+      </div>
+    </div>
+
+<!-- SEÇÃO 6 -->
     <div style="margin-top:16px" class="card card-collapse" data-collapse-id="template">
       <div class="card-head" data-collapse-head>
         <h2>Exibição no site</h2>
@@ -3086,6 +3181,9 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
         carregardocsProjetoExistentes(p.documentos);
         renderdocsProjeto();
 
+        // galeria
+        try { await loadGaleria(); } catch (e) { console.error('loadGaleria (loadProjetoData) falhou:', e); }
+
       } catch (e) {
         console.error(e);
         alert('Erro ao carregar dados do Projeto. Veja o console.');
@@ -3431,6 +3529,131 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
       }
     }
 
+
+    // =========================
+    // Galeria (Projeto / Evento)
+    // =========================
+    let galeriaImagens = [];
+
+    function getGaleriaDestino() {
+      const sel = qs('#galeriaDestino');
+      const v = sel ? String(sel.value || '').trim() : '';
+      const n = parseInt(v, 10);
+      return Number.isFinite(n) && n > 0 ? n : null;
+    }
+
+    function renderGaleria() {
+      const grid = qs('#galeriaGrid');
+      if (!grid) return;
+
+      if (!Array.isArray(galeriaImagens) || galeriaImagens.length === 0) {
+        grid.innerHTML = `<div class="galeria-empty small muted">Nenhuma imagem na galeria ainda.</div>`;
+        return;
+      }
+
+      grid.innerHTML = galeriaImagens.map(it => {
+        const url = escapeHtml(it.img || '');
+        return `<a class="galeria-item" href="${url}" target="_blank" rel="noopener">
+                  <img src="${url}" alt="Imagem da galeria">
+                </a>`;
+      }).join('');
+    }
+
+    async function loadGaleria() {
+      const pid = Number(qs('#projetoId')?.value || 0);
+      if (!pid) return;
+
+      const fd = new FormData();
+      fd.append('action', 'list');
+      fd.append('projeto_id', String(pid));
+
+      const eventoId = getGaleriaDestino();
+      if (eventoId) fd.append('evento_oficina_id', String(eventoId));
+
+      const resp = await fetch('ajax_galeria_projeto.php', { method: 'POST', body: fd });
+      const txt = await resp.text();
+
+      let data;
+      try { data = JSON.parse(txt); }
+      catch {
+        console.error('Resposta inválida (galeria):', txt);
+        throw new Error('Resposta inválida do servidor (galeria).');
+      }
+
+      if (!data.success) throw new Error(data.error || 'Falha ao carregar galeria.');
+
+      galeriaImagens = Array.isArray(data.images) ? data.images : [];
+      renderGaleria();
+    }
+
+    async function uploadGaleria(files) {
+      const pid = Number(qs('#projetoId')?.value || 0);
+      if (!pid) return;
+
+      const fd = new FormData();
+      fd.append('action', 'upload');
+      fd.append('projeto_id', String(pid));
+
+      const eventoId = getGaleriaDestino();
+      if (eventoId) fd.append('evento_oficina_id', String(eventoId));
+
+      for (const f of files) {
+        if (!(f instanceof File)) continue;
+        fd.append('imagens[]', f);
+      }
+
+      const resp = await fetch('ajax_galeria_projeto.php', { method: 'POST', body: fd });
+      const txt = await resp.text();
+
+      let data;
+      try { data = JSON.parse(txt); }
+      catch {
+        console.error('Resposta inválida (upload galeria):', txt);
+        throw new Error('Resposta inválida do servidor (upload da galeria).');
+      }
+
+      if (!data.success) throw new Error(data.error || 'Falha ao enviar imagens.');
+
+      await loadGaleria();
+    }
+
+    function initGaleriaUI() {
+      const sel = qs('#galeriaDestino');
+      const file = qs('#galeriaFiles');
+      const btn  = qs('#btnGaleriaAdd');
+
+      if (sel) {
+        sel.addEventListener('change', () => {
+          Promise.resolve(loadGaleria()).catch(e => console.error(e));
+        });
+      }
+
+      if (btn && file) {
+        btn.addEventListener('click', () => file.click());
+
+        file.addEventListener('change', () => {
+          const files = Array.from(file.files || []);
+          if (!files.length) return;
+
+          const oldText = btn.textContent;
+          btn.disabled = true;
+          btn.textContent = 'Enviando...';
+
+          Promise.resolve(uploadGaleria(files))
+            .catch(e => {
+              console.error(e);
+              alert('Erro ao enviar imagens: ' + (e.message || e));
+            })
+            .finally(() => {
+              try { file.value = ''; } catch (_) {}
+              btn.disabled = false;
+              btn.textContent = oldText || '+ Adicionar';
+            });
+        });
+      }
+    }
+
+
     function mascaraTelefone(tel) {
         tel.value = tel.value.replace(/\D/g, "")
             .replace(/^(\d{2})(\d)/, "($1) $2")
@@ -3455,6 +3678,8 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
       catch (e) { console.error('updatePreviews (boot) falhou:', e); }
 
       try { renderTemplateImageCards(); } catch (e) { console.error('renderTemplateImageCards (boot) falhou:', e); }
+
+      try { initGaleriaUI(); } catch (e) { console.error('initGaleriaUI (boot) falhou:', e); }
 
       if (projetoId) {
         try { Promise.resolve(loadProjetoData()).catch(e => console.error('loadProjetoData (boot) falhou:', e)); }
