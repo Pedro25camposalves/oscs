@@ -566,23 +566,23 @@ try {
             </div>
 
             <div>
-              <label for="novoEnvNome">Nome (*)</label>
-              <input id="novoEnvNome" type="text" />
+              <label for="envNome">Nome (*)</label>
+              <input id="envNome" type="text" required />
             </div>
 
             <div>
-              <label for="novoEnvTelefone">Telefone</label>
-              <input id="novoEnvTelefone" inputmode="numeric" type="text" />
+              <label for="envTelefone">Telefone</label>
+              <input id="envTelefone" inputmode="numeric" type="text" />
             </div>
 
             <div>
-              <label for="novoEnvEmail">E-mail</label>
-              <input id="novoEnvEmail" type="text" />
+              <label for="envEmail">E-mail</label>
+              <input id="envEmail" type="text" />
             </div>
 
             <div style="margin-bottom: 5px;">
-              <label for="novoEnvFuncaoProjeto">Função (*)</label>
-              <select id="novoEnvFuncaoProjeto">
+              <label for="envFuncaoNovo">Função (*)</label>
+              <select id="envFuncaoNovo" required>
                 <option value="">Selecione...</option>
                 <option value="DIRETOR">Diretor(a)</option>
                 <option value="COORDENADOR">Coordenador(a)</option>
@@ -1030,10 +1030,10 @@ try {
     const novoContratoSalario = qs('#novoContratoSalario');
 
     const novoEnvFoto = qs('#novoEnvFoto');
-    const novoEnvNome = qs('#novoEnvNome');
-    const novoEnvTelefone = qs('#novoEnvTelefone');
-    const novoEnvEmail = qs('#novoEnvEmail');
-    const novoEnvFuncaoProjeto = qs('#novoEnvFuncaoProjeto');
+    const novoEnvNome = qs('#envNome');
+    const novoEnvTelefone = qs('#envTelefone');
+    const novoEnvEmail = qs('#envEmail');
+    const novoEnvFuncaoProjeto = qs('#envFuncaoNovo');
     const previewNovoEnvolvido = qs('#previewNovoEnvolvido');
     const addNovoEnvolvidoProjetoBtn = qs('#addNovoEnvolvidoProjetoBtn');
 
