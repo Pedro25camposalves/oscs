@@ -46,11 +46,13 @@ try {
   $envolvidosProj = [];
 }
 
-// Endereços do PROJETO
+// Endereços disponíveis (PROJETO + outros EVENTOS do mesmo projeto)
 $enderecosProj = [];
 try {
   if ($projetoId > 0) {
-    $sqlEnd = "
+
+    // 1) Endereços vinculados ao PROJETO
+    $sqlEndProj = "
       SELECT e.id, e.descricao, e.cep, e.cidade, e.logradouro, e.bairro, e.numero, e.complemento, ep.principal
       FROM endereco_projeto ep
       JOIN endereco e ON e.id = ep.endereco_id
@@ -58,18 +60,44 @@ try {
       WHERE ep.projeto_id = ? AND p.osc_id = ?
       ORDER BY ep.principal DESC, e.cidade, e.logradouro, e.numero
     ";
-    $stE = $conn->prepare($sqlEnd);
-    $stE->bind_param("ii", $projetoId, $oscIdVinculada);
-    $stE->execute();
-    $rsE = $stE->get_result();
-    while ($row = $rsE->fetch_assoc()) {
-      $enderecosProj[] = $row;
+    $stEP = $conn->prepare($sqlEndProj);
+    $stEP->bind_param("ii", $projetoId, $oscIdVinculada);
+    $stEP->execute();
+    $rsEP = $stEP->get_result();
+
+    $mapEnd = [];
+    while ($row = $rsEP->fetch_assoc()) {
+      $mapEnd[(string)$row['id']] = $row;
     }
+
+    // 2) Endereços já usados em OUTROS EVENTOS/OFICINAS do mesmo projeto
+    // (não depende de coluna 'principal' em endereco_evento_oficina)
+    $sqlEndEvs = "
+      SELECT DISTINCT e.id, e.descricao, e.cep, e.cidade, e.logradouro, e.bairro, e.numero, e.complemento, 0 AS principal
+      FROM endereco_evento_oficina eeo
+      JOIN evento_oficina eo ON eo.id = eeo.evento_oficina_id
+      JOIN projeto p ON p.id = eo.projeto_id
+      JOIN endereco e ON e.id = eeo.endereco_id
+      WHERE eo.projeto_id = ? AND p.osc_id = ?
+      ORDER BY e.cidade, e.logradouro, e.numero
+    ";
+    $stEE = $conn->prepare($sqlEndEvs);
+    $stEE->bind_param("ii", $projetoId, $oscIdVinculada);
+    $stEE->execute();
+    $rsEE = $stEE->get_result();
+
+    while ($row = $rsEE->fetch_assoc()) {
+      $k = (string)$row['id'];
+      if (!isset($mapEnd[$k])) {
+        $mapEnd[$k] = $row;
+      }
+    }
+
+    $enderecosProj = array_values($mapEnd);
   }
 } catch (Throwable $e) {
   $enderecosProj = [];
 }
-
 error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId, true));
 ?>
 <!doctype html>
@@ -645,7 +673,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
 
         <!-- MODO: NOVO -->
         <div id="modoNovoEnvolvido" style="display:none;">
-          <div class="grid" style="margin-top:10px;">
+          <div class="grid">
             <div>
               <div class="small">Visualização</div>
               <div class="images-preview" id="previewNovoEnvolvido"></div>
@@ -654,15 +682,21 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
               <label for="novoEnvFoto">Foto</label>
               <input id="novoEnvFoto" type="file" accept="image/*" />
             </div>
-
             <div>
-              <label for="novoEnvNome">Nome (*)</label>
-              <input id="novoEnvNome" type="text" />
+              <label for="envNome">Nome (*)</label>
+              <input id="envNome" type="text" required />
             </div>
-
-            <div style="margin-bottom: 5px;">
-              <label for="novoEnvFuncaoEvento">Função (*)</label>
-              <select id="novoEnvFuncaoEvento">
+            <div>
+              <label for="envTelefone">Telefone</label>
+              <input id="envTelefone" inputmode="numeric" type="text" />
+            </div>
+            <div>
+              <label for="envEmail">E-mail</label>
+              <input id="envEmail" type="text" />
+            </div>
+            <div>
+              <label for="envFuncaoNovo">Função (*)</label>
+              <select id="envFuncaoNovo" required>
                 <option value="">Selecione...</option>
                 <option value="DIRETOR">Diretor(a)</option>
                 <option value="COORDENADOR">Coordenador(a)</option>
@@ -672,7 +706,6 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
                 <option value="PARTICIPANTE">Participante</option>
               </select>
             </div>
-
           </div>
 
           <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
@@ -768,8 +801,10 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       const envolvidoProjInfo = qs('#envolvidoProjInfo');
 
       const novoEnvFoto = qs('#novoEnvFoto');
-      const novoEnvNome = qs('#novoEnvNome');
-      const novoEnvFuncaoEvento = qs('#novoEnvFuncaoEvento');
+      const novoEnvNome = qs('#envNome');
+      const novoEnvTelefone = qs('#envTelefone');
+      const novoEnvEmail = qs('#envEmail');
+      const novoEnvFuncaoEvento = qs('#envFuncaoNovo');
       const previewNovoEnvolvido = qs('#previewNovoEnvolvido');
       const addNovoEnvolvidoEventoBtn = qs('#addNovoEnvolvidoEventoBtn');
 
@@ -866,6 +901,8 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
         function limparNovoEnvolvidoCampos() {
           novoEnvFoto.value = '';
           novoEnvNome.value = '';
+          if (novoEnvTelefone) novoEnvTelefone.value = '';
+          if (novoEnvEmail) novoEnvEmail.value = '';
           novoEnvFuncaoEvento.value = '';
           previewNovoEnvolvido.innerHTML = '';
         }
@@ -888,7 +925,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
             return;
           }
 
-          const jaExiste = envolvidosEvento.some(x => x.tipo === 'existente' && String(x.envolvido_osc_id) === String(id));
+          const jaExiste = envolvidosEvento.some(x => x.tipo === 'existente' && String(x.envolvido_proj_id) === String(id));
           if (jaExiste) {
             alert('Este envolvido já foi adicionado ao projeto.');
             return;
@@ -902,7 +939,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
 
           const novoEnvolvido = {
             tipo: 'existente',
-            envolvido_osc_id: e.id,
+            envolvido_proj_id: e.id,
             nome: e.nome,
             foto: e.foto || '',
             funcao_projeto: funcaoProj
@@ -918,8 +955,9 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
 
         addNovoEnvolvidoEventoBtn.addEventListener('click', async () => {
           const nome = novoEnvNome.value.trim();
+          const telefone = (typeof onlyDigits === 'function' ? onlyDigits((novoEnvTelefone.value || '').trim()).slice(0,11) : (novoEnvTelefone.value || '').trim());
+          const email = (novoEnvEmail.value || '').trim();
           const funcaoProj = novoEnvFuncaoEvento.value.trim();
-
           if (!nome || !funcaoProj) {
             alert('Preencha Nome e Função no projeto.');
             return;
@@ -940,6 +978,8 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
           envolvidosEvento.push({
             tipo: 'novo',
             nome,
+            telefone,
+            email,
             funcao_projeto: funcaoProj,
             fotoFile,
             fotoPreview
@@ -1193,13 +1233,13 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       setCamposEnderecoDisabled(true);
     });
 
-    function renderEnderecosEvento() {
+    function renderEnderecosEvento(){
       listaEnderecosEvento.innerHTML = '';
-
+                
       enderecosEvento.forEach((e, i) => {
         const c = document.createElement('div');
         c.className = 'chip';
-
+                
         const info = document.createElement('div');
         c.style.alignItems = 'flex-start';
 
@@ -1278,10 +1318,6 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       fd.append('nome', nome);
       fd.append('status', status);
 
-      const tipo = qs('#projTipo').value.trim();
-      fd.append('tipo', tipo);
-
-
       fd.append('data_inicio', dataInicio);
       fd.append('data_fim', dataFim || '');
       fd.append('descricao', descricao);
@@ -1291,7 +1327,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       const existentes = envolvidosEvento
         .filter(e => e.tipo === 'existente')
         .map(e => ({
-          envolvido_osc_id: e.envolvido_osc_id,
+          envolvido_proj_id: e.envolvido_proj_id,
           funcao: e.funcao_projeto,
           contrato_data_inicio: e.contrato_data_inicio || '',
           contrato_data_fim: e.contrato_data_fim || '',
@@ -1307,6 +1343,9 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
 
         novos.push({
           nome: e.nome,
+          telefone: e.telefone || '',
+          email: e.email || '',
+          funcao_osc: 'PARTICIPANTE',
           funcao_projeto: e.funcao_projeto,
           foto_key: fotoKey,
           contrato_data_inicio: e.contrato_data_inicio || '',

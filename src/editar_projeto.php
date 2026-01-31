@@ -25,6 +25,22 @@ if (!$oscIdVinculada) {
     exit('Este usuário não possui OSC vinculada. Contate o administrador do sistema.');
 }
 
+// Envolvidos da OSC (para seleção "Existente" no modal do Projeto)
+$envolvidosOsc = [];
+try {
+    $st = $conn->prepare("SELECT id, nome, foto, funcao, telefone, email FROM envolvido_osc WHERE osc_id = ? ORDER BY nome");
+    $st->bind_param("i", $oscIdVinculada);
+    $st->execute();
+    $rs = $st->get_result();
+    while ($row = $rs->fetch_assoc()) {
+        $envolvidosOsc[] = $row;
+    }
+    $st->close();
+} catch (Throwable $e) {
+    $envolvidosOsc = [];
+}
+
+
 // Projeto que será editado (vem por ?id=...)
 $projetoId = (int)($_GET['id'] ?? 0);
 if ($projetoId <= 0) {
@@ -612,6 +628,104 @@ if (!$ok) {
 
 </main>
 
+<!-- MODAL ENVOLVIDO DO PROJETO (Adicionar: existente/novo) -->
+<div id="modalEnvolvidoProjetoBackdrop" class="modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Envolvido no Projeto">
+    <h3>Adicionar Envolvido</h3>
+
+    <div class="row" style="margin-top:10px; justify-content:flex-start;">
+      <label style="display:flex; gap:8px; align-items:center; font-size:13px; color:var(--muted);">
+        <input type="radio" name="modoEnvolvidoProjeto" value="existente" checked />Existente</label>
+
+      <label style="display:flex; gap:8px; align-items:center; font-size:13px; color:var(--muted);">
+        <input type="radio" name="modoEnvolvidoProjeto" value="novo" />Novo</label>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- MODO: EXISTENTE -->
+    <div id="modoExistenteEnvolvidoProjeto">
+      <div class="grid" style="margin-top:10px;">
+        <div>
+          <div class="small">Foto</div>
+          <div class="images-preview" id="previewEnvolvidoSelecionadoProjeto"></div>
+        </div>
+
+        <div>
+          <label for="selectEnvolvidoOscProjeto">Envolvido na OSC (*)</label>
+          <select id="selectEnvolvidoOscProjeto">
+            <option value="">Selecione...</option>
+          </select>
+          <div class="small" style="margin-top:6px;" id="envolvidoOscInfoProjeto"></div>
+        </div>
+
+        <div style="margin-bottom: 5px;">
+          <label for="funcaoNoProjetoProjeto">Função (*)</label>
+          <select id="funcaoNoProjetoProjeto">
+            <option value="">Selecione...</option>
+            <option value="DIRETOR">Diretor(a)</option>
+            <option value="COORDENADOR">Coordenador(a)</option>
+            <option value="FINANCEIRO">Financeiro</option>
+            <option value="MARKETING">Marketing</option>
+            <option value="RH">Recursos Humanos (RH)</option>
+            <option value="PARTICIPANTE">Participante</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+        <button class="btn btn-ghost" id="closeEnvolvidoProjetoModal" type="button">Cancelar</button>
+        <button class="btn btn-primary" id="addEnvolvidoProjetoBtn" type="button">Adicionar</button>
+      </div>
+    </div>
+
+    <!-- MODO: NOVO -->
+    <div id="modoNovoEnvolvidoProjeto" style="display:none;">
+      <div id="envNovoContainerProjeto" style="margin-top:8px">
+        <div class="grid">
+          <div>
+            <div class="small">Visualização</div>
+            <div class="images-preview" id="previewNovoEnvolvidoProjeto"></div>
+          </div>
+          <div>
+            <label for="novoEnvFotoProjeto">Foto</label>
+            <input id="novoEnvFotoProjeto" type="file" accept="image/*" />
+          </div>
+          <div>
+            <label for="envNomeProjeto">Nome (*)</label>
+            <input id="envNomeProjeto" type="text" required />
+          </div>
+          <div>
+            <label for="envTelefoneProjeto">Telefone</label>
+            <input id="envTelefoneProjeto" inputmode="numeric" type="text" />
+          </div>
+          <div>
+            <label for="envEmailProjeto">E-mail</label>
+            <input id="envEmailProjeto" type="text" />
+          </div>
+          <div>
+            <label for="envFuncaoNovoProjeto">Função (*)</label>
+            <select id="envFuncaoNovoProjeto" required>
+              <option value="">Selecione...</option>
+              <option value="DIRETOR">Diretor(a)</option>
+              <option value="COORDENADOR">Coordenador(a)</option>
+              <option value="FINANCEIRO">Financeiro</option>
+              <option value="MARKETING">Marketing</option>
+              <option value="RH">Recursos Humanos (RH)</option>
+              <option value="PARTICIPANTE">Participante</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+        <button class="btn btn-ghost" id="closeEnvolvidoProjetoModal2" type="button">Cancelar</button>
+        <button class="btn btn-primary" id="addNovoEnvolvidoProjetoBtn" type="button">Adicionar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL DOS ENVOLVIDOS (igual ao cadastro) -->
 <div id="modalBackdrop" class="modal-backdrop">
     <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Envolvido">
@@ -1028,6 +1142,213 @@ if (!$ok) {
 
     const oscId = Number(qs('#oscId')?.value || 0);
     const projetoId = Number(qs('#projetoId')?.value || 0);
+    const ENVOLVIDOS_OSC = <?= json_encode($envolvidosOsc, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+
+    // ====== MODAL ENVOLVIDO DO PROJETO (Adicionar: existente/novo) ======
+    const modalEnvolvidoProjetoBackdrop = qs('#modalEnvolvidoProjetoBackdrop');
+    const modoExistenteEnvolvidoProjeto = qs('#modoExistenteEnvolvidoProjeto');
+    const modoNovoEnvolvidoProjeto      = qs('#modoNovoEnvolvidoProjeto');
+
+    const selectEnvolvidoOscProjeto = qs('#selectEnvolvidoOscProjeto');
+    const previewEnvolvidoSelecionadoProjeto = qs('#previewEnvolvidoSelecionadoProjeto');
+    const envolvidoOscInfoProjeto = qs('#envolvidoOscInfoProjeto');
+    const funcaoNoProjetoProjeto = qs('#funcaoNoProjetoProjeto');
+
+    const closeEnvolvidoProjetoModal  = qs('#closeEnvolvidoProjetoModal');
+    const closeEnvolvidoProjetoModal2 = qs('#closeEnvolvidoProjetoModal2');
+    const addEnvolvidoProjetoBtn      = qs('#addEnvolvidoProjetoBtn');
+    const addNovoEnvolvidoProjetoBtn  = qs('#addNovoEnvolvidoProjetoBtn');
+
+    const previewNovoEnvolvidoProjeto = qs('#previewNovoEnvolvidoProjeto');
+    const novoEnvFotoProjeto   = qs('#novoEnvFotoProjeto');
+    const envNomeProjeto       = qs('#envNomeProjeto');
+    const envTelefoneProjeto   = qs('#envTelefoneProjeto');
+    const envEmailProjeto      = qs('#envEmailProjeto');
+    const envFuncaoNovoProjeto = qs('#envFuncaoNovoProjeto');
+
+    function setModoEnvolvidoProjeto(modo){
+      if (!modoExistenteEnvolvidoProjeto || !modoNovoEnvolvidoProjeto) return;
+      const isNovo = (modo === 'novo');
+      modoExistenteEnvolvidoProjeto.style.display = isNovo ? 'none' : 'block';
+      modoNovoEnvolvidoProjeto.style.display      = isNovo ? 'block' : 'none';
+
+      const radios = document.querySelectorAll('input[name="modoEnvolvidoProjeto"]');
+      radios.forEach(r => { r.checked = (r.value === modo); });
+    }
+
+    function preencherSelectEnvolvidosOscProjeto(){
+      if (!selectEnvolvidoOscProjeto) return;
+      selectEnvolvidoOscProjeto.innerHTML = '<option value="">Selecione...</option>';
+      (ENVOLVIDOS_OSC || []).forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e.id;
+        opt.textContent = e.nome + (e.funcao ? ` (${e.funcao})` : '');
+        selectEnvolvidoOscProjeto.appendChild(opt);
+      });
+    }
+
+    function getEnvolvidoOscByIdProjeto(id){
+      return (ENVOLVIDOS_OSC || []).find(x => String(x.id) === String(id)) || null;
+    }
+
+    function renderPreviewEnvolvidoSelecionadoProjeto(){
+      if (!previewEnvolvidoSelecionadoProjeto || !envolvidoOscInfoProjeto || !selectEnvolvidoOscProjeto) return;
+
+      previewEnvolvidoSelecionadoProjeto.innerHTML = '';
+      envolvidoOscInfoProjeto.textContent = '';
+
+      const id = selectEnvolvidoOscProjeto.value;
+      if (!id) return;
+
+      const e = getEnvolvidoOscByIdProjeto(id);
+      if (!e) return;
+
+      const img = document.createElement('img');
+      img.src = e.foto
+        ? e.foto
+        : 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="140" height="80"><rect width="100%" height="100%" fill="%23eee"/></svg>';
+      previewEnvolvidoSelecionadoProjeto.appendChild(img);
+
+      const detalhes = [];
+      if (e.telefone) detalhes.push(`Telefone: ${e.telefone}`);
+      if (e.email) detalhes.push(`E-mail: ${e.email}`);
+      envolvidoOscInfoProjeto.textContent = detalhes.join(' • ');
+    }
+
+    async function updatePreviewNovoEnvolvidoProjeto(){
+      if (!previewNovoEnvolvidoProjeto) return;
+      previewNovoEnvolvidoProjeto.innerHTML = '';
+
+      const f = novoEnvFotoProjeto?.files?.[0] || null;
+      if (!f) return;
+
+      const src = await readFileAsDataURL(f);
+      if (!src) return;
+
+      const img = document.createElement('img');
+      img.src = src;
+      previewNovoEnvolvidoProjeto.appendChild(img);
+    }
+
+    if (selectEnvolvidoOscProjeto) {
+      selectEnvolvidoOscProjeto.addEventListener('change', renderPreviewEnvolvidoSelecionadoProjeto);
+    }
+    if (novoEnvFotoProjeto) {
+      novoEnvFotoProjeto.addEventListener('change', updatePreviewNovoEnvolvidoProjeto);
+    }
+
+    // troca de modo
+    document.addEventListener('change', (e) => {
+      const t = e.target;
+      if (!(t instanceof HTMLInputElement)) return;
+      if (t.name !== 'modoEnvolvidoProjeto') return;
+      setModoEnvolvidoProjeto(t.value);
+    });
+
+    function fecharModalEnvolvidoProjeto(){
+      if (!modalEnvolvidoProjetoBackdrop) return;
+      modalEnvolvidoProjetoBackdrop.style.display = 'none';
+    }
+
+    if (closeEnvolvidoProjetoModal) closeEnvolvidoProjetoModal.addEventListener('click', fecharModalEnvolvidoProjeto);
+    if (closeEnvolvidoProjetoModal2) closeEnvolvidoProjetoModal2.addEventListener('click', fecharModalEnvolvidoProjeto);
+
+    if (modalEnvolvidoProjetoBackdrop){
+      modalEnvolvidoProjetoBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalEnvolvidoProjetoBackdrop) fecharModalEnvolvidoProjeto();
+      });
+    }
+
+    // Adicionar EXISTENTE
+    if (addEnvolvidoProjetoBtn){
+      addEnvolvidoProjetoBtn.addEventListener('click', () => {
+        const id = (selectEnvolvidoOscProjeto?.value || '').trim();
+        const funcaoProj = (funcaoNoProjetoProjeto?.value || '').trim();
+
+        if (!id || !funcaoProj){
+          alert('Selecione o envolvido da OSC e preencha a função no projeto.');
+          return;
+        }
+
+        const jaIdx = envolvidos.findIndex(x =>
+          x && x.tipo === 'existente' && String(x.envolvidoId) === String(id)
+        );
+
+        if (jaIdx >= 0){
+          const ja = envolvidos[jaIdx];
+          if (ja.ui_deleted || ja.ui_status === 'Deletado'){
+            // "Re-adiciona" restaurando
+            ja.ui_deleted = false;
+            ja.ui_status = 'Editado';
+            ja.funcao = funcaoProj;
+            renderEnvolvidos();
+            fecharModalEnvolvidoProjeto();
+            return;
+          }
+          alert('Este envolvido já foi adicionado ao projeto.');
+          return;
+        }
+
+        const e = getEnvolvidoOscByIdProjeto(id);
+        if (!e){
+          alert('Envolvido inválido.');
+          return;
+        }
+
+        envolvidos.push({
+          tipo: 'existente',
+          envolvidoId: Number(e.id),
+          fotoUrl: e.foto || null,
+          fotoPreview: null,
+          fotoFile: null,
+          nome: e.nome || '',
+          telefone: e.telefone || '',
+          email: e.email || '',
+          funcao: funcaoProj,
+          ui_status: '',
+          ui_deleted: false
+        });
+
+        renderEnvolvidos();
+        fecharModalEnvolvidoProjeto();
+      });
+    }
+
+    // Adicionar NOVO
+    if (addNovoEnvolvidoProjetoBtn){
+      addNovoEnvolvidoProjetoBtn.addEventListener('click', async () => {
+        const fotoFile = novoEnvFotoProjeto?.files?.[0] || null;
+        const fotoPreview = fotoFile ? await readFileAsDataURL(fotoFile) : null;
+
+        const nome = (envNomeProjeto?.value || '').trim();
+        const telefone = (envTelefoneProjeto?.value || '').trim();
+        const email = (envEmailProjeto?.value || '').trim();
+        const funcao = (envFuncaoNovoProjeto?.value || '').trim();
+
+        if (!nome || !funcao){
+          alert('Preencha pelo menos o Nome e a Função do envolvido!');
+          return;
+        }
+
+        envolvidos.push({
+          tipo: 'novo',
+          envolvidoId: null,
+          fotoUrl: null,
+          fotoPreview,
+          fotoFile,
+          nome,
+          telefone,
+          email,
+          funcao,
+          ui_status: 'Novo',
+          ui_deleted: false
+        });
+
+        renderEnvolvidos();
+        fecharModalEnvolvidoProjeto();
+      });
+    }
+
 
     // inputs template
     const projLogo = qs('#projLogo');
@@ -2012,26 +2333,31 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
     const envFoto = qs('#envFoto');
     envFoto.addEventListener('change', renderEnvFotoCard);
 
-    openEnvolvidoModal.addEventListener('click', () => {
-        editEnvIndex = null;
-        addEnvolvidoBtn.textContent = 'Adicionar';
-        qs('.modal h3').textContent = 'Adicionar Envolvido';
+    openEnvolvidoModal.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
 
-        modalBackdrop.style.display = 'flex';
-        qs('#envFoto').value = '';
-        qs('#envNome').value = '';
-        qs('#envTelefone').value = '';
-        qs('#envEmail').value = '';
-        qs('#envFuncaoNovo').value = '';
-        
-        envFotoExistingUrl = null;
-        envFotoPreviewUrl  = null;
-        envFotoFileCache   = null;
+        // Abre o modal "Adicionar" (existente/novo)
+        if (!modalEnvolvidoProjetoBackdrop) return;
+        modalEnvolvidoProjetoBackdrop.style.display = 'flex';
 
-        envFotoOriginalUrl = null;
-        envFotoRemover     = false;
-        renderEnvFotoCard();
+        setModoEnvolvidoProjeto('existente');
+        preencherSelectEnvolvidosOscProjeto();
+        if (selectEnvolvidoOscProjeto) selectEnvolvidoOscProjeto.value = '';
+        if (funcaoNoProjetoProjeto) funcaoNoProjetoProjeto.value = '';
+
+        if (previewEnvolvidoSelecionadoProjeto) previewEnvolvidoSelecionadoProjeto.innerHTML = '';
+        if (envolvidoOscInfoProjeto) envolvidoOscInfoProjeto.textContent = '';
+
+        // limpa modo novo
+        if (novoEnvFotoProjeto) novoEnvFotoProjeto.value = '';
+        if (envNomeProjeto) envNomeProjeto.value = '';
+        if (envTelefoneProjeto) envTelefoneProjeto.value = '';
+        if (envEmailProjeto) envEmailProjeto.value = '';
+        if (envFuncaoNovoProjeto) envFuncaoNovoProjeto.value = '';
+        if (previewNovoEnvolvidoProjeto) previewNovoEnvolvidoProjeto.innerHTML = '';
     });
+
 
     closeEnvolvidoModal.addEventListener('click', () => {
         modalBackdrop.style.display = 'none';

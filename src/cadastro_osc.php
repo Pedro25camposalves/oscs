@@ -996,15 +996,12 @@ require 'autenticacao.php';
                 const desc = (imo.descricao || '').trim();
                 const sit  = (imo.situacao || '').trim();
 
-                const numeroComp = [imo.numero, imo.complemento]
-                  .map(v => (v ?? '').toString().trim())
-                  .filter(Boolean)
-                  .join(' ');
-
-                const endereco = [imo.cep, imo.cidade, imo.logradouro, numeroComp, imo.bairro]
-                  .map(v => (v ?? '').toString().trim())
-                  .filter(Boolean)
-                  .join(', ');
+                                const rua  = [imo.logradouro, imo.numero].filter(Boolean).join(', ');
+                const comp = imo.complemento ? ` ${imo.complemento}` : '';
+                const bairro = imo.bairro ? ` - ${imo.bairro}` : '';
+                const cidade = imo.cidade ? ` • ${imo.cidade}` : '';
+                const cep = imo.cep ? ` • CEP ${imo.cep}` : '';
+                const endereco = (rua ? (rua + comp + bairro) : '').trim() + cidade + cep;
 
                 info.innerHTML = `
                   <div class="small"><b>${escapeHtml(desc || '-')}</b></div>

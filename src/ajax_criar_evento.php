@@ -293,9 +293,24 @@ try {
             $stInsEO->execute();
             $novoEnvId = (int)$conn->insert_id;
 
-            // salva foto se veio
-            if ($fotoKey !== '') {
-                $fotoUrl = save_uploaded_image($fotoKey, $envRootFs, $envRootUrl, 'envolvido');
+            // 2) cria pastas do envolvido conforme seu padrão (igual no ajax_criar_projeto.php)
+            $envBaseUrl     = $envRootUrl . "/envolvido-{$novoEnvId}";
+            $envImgUrlBase  = $envBaseUrl . "/imagens";
+            $envDocUrlBase  = $envBaseUrl . "/documentos";
+
+            ensure_dir(fs_path_from_url($envImgUrlBase));
+            ensure_dir(fs_path_from_url($envDocUrlBase));
+
+            // 3) salva foto (se veio)
+            $fotoUrl = null;
+            if ($fotoKey !== '' && isset($_FILES[$fotoKey]) && ($_FILES[$fotoKey]['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+                $backup = $_FILES['__tmp__'] ?? null;
+                $_FILES['__tmp__'] = $_FILES[$fotoKey];
+
+                $fotoUrl = save_uploaded_image('__tmp__', fs_path_from_url($envImgUrlBase), $envImgUrlBase, 'foto');
+
+                if ($backup !== null) $_FILES['__tmp__'] = $backup; else unset($_FILES['__tmp__']);
+
                 $stUpdEOFoto->bind_param("sii", $fotoUrl, $novoEnvId, $oscId);
                 $stUpdEOFoto->execute();
             }
