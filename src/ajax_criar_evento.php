@@ -1,5 +1,5 @@
 <?php
-// ajax_criar_projeto.php
+// ajax_criar_evento.php
 
 $TIPOS_PERMITIDOS = ['OSC_MASTER'];
 $RESPOSTA_JSON    = true;
@@ -8,11 +8,6 @@ require 'autenticacao.php';
 require 'conexao.php';
 
 header('Content-Type: application/json; charset=utf-8');
-
-$projeto_id = $_GET['projeto_id'] ?? null;
-var_dump($projeto_id);
-var_dump($_POST);       // Campos normais
-var_dump($_FILES);      // Arquivos enviados
 
 function json_fail(string $msg, int $http = 400): void {
     http_response_code($http);
@@ -31,7 +26,7 @@ function is_valid_date(?string $d): bool {
 }
 
 function fs_path_from_url(string $url): string {
-    // Converte "/assets/..." em caminho físico baseado na pasta do projeto
+    // Converte "assets/..." em caminho físico baseado na pasta do projeto
     $root = realpath(__DIR__);
     $rel  = ltrim($url, '/');
     $rel  = str_replace('/', DIRECTORY_SEPARATOR, $rel);
@@ -71,17 +66,17 @@ function save_uploaded_image(string $field, string $destDirFs, string $destUrlBa
         throw new RuntimeException("Arquivo '$field' não é imagem válida (MIME: $mime).");
     }
 
-    $ext = $allowed[$mime];
+    $ext  = $allowed[$mime];
     $name = $prefix . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(4)) . '.' . $ext;
 
     ensure_dir($destDirFs);
 
-    $destFs  = rtrim($destDirFs, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $name;
+    $destFs = rtrim($destDirFs, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $name;
     if (!move_uploaded_file($f['tmp_name'], $destFs)) {
         throw new RuntimeException("Não consegui salvar o arquivo '$field' no destino.");
     }
 
-    // URL para salvar no banco (sempre com / e absoluto do projeto)
+    // URL para salvar no banco (sempre com /)
     return rtrim($destUrlBase, '/') . '/' . $name;
 }
 
@@ -92,17 +87,27 @@ try {
         json_fail('Método inválido. Use POST.', 405);
     }
 
+    $projetoId = isset($_GET['projeto_id']) ? (int)$_GET['projeto_id'] : 0;
+    if ($projetoId <= 0) json_fail('Parâmetro projeto_id inválido.');
+
     // ====== Descobre OSC do usuário logado ======
     $usuarioId = $_SESSION['id'] ?? $_SESSION['usuario_id'] ?? null;
     if (!$usuarioId) json_fail('Sessão inválida. Faça login novamente.', 401);
 
-    $st = $conn->prepare("SELECT osc_id, tipo FROM usuario WHERE id = ? LIMIT 1");
+    $st = $conn->prepare("SELECT osc_id FROM usuario WHERE id = ? LIMIT 1");
     $st->bind_param("i", $usuarioId);
     $st->execute();
     $u = $st->get_result()->fetch_assoc();
 
     $oscId = (int)($u['osc_id'] ?? 0);
     if ($oscId <= 0) json_fail('Usuário não possui OSC vinculada.', 403);
+
+    // ====== Garante que o projeto é da mesma OSC ======
+    $stProj = $conn->prepare("SELECT id FROM projeto WHERE id = ? AND osc_id = ? LIMIT 1");
+    $stProj->bind_param("ii", $projetoId, $oscId);
+    $stProj->execute();
+    $proj = $stProj->get_result()->fetch_assoc();
+    if (!$proj) json_fail("Projeto #{$projetoId} não encontrado (ou não pertence à sua OSC).", 404);
 
     // ====== Campos do evento ======
     $nome       = trim((string)($_POST['nome'] ?? ''));
@@ -115,7 +120,13 @@ try {
 
     if ($nome === '') json_fail('Nome do evento é obrigatório.');
     if (!in_array($status, $statusAllowed, true)) json_fail('Status inválido.');
+
+    $tipo = trim((string)($_POST['tipo'] ?? ''));
+    $tipoAllowed = ['EVENTO','OFICINA'];
+    if (!in_array($tipo, $tipoAllowed, true)) json_fail('Tipo inválido.');
+
     if (!is_valid_date($dataInicio)) json_fail('Data início inválida.');
+
     if ($dataFim !== '' && !is_valid_date($dataFim)) json_fail('Data fim inválida.');
     if ($dataFim !== '' && $dataFim < $dataInicio) json_fail('Data fim não pode ser menor que a data início.');
 
@@ -141,31 +152,24 @@ try {
     // ====== Transação ======
     $conn->begin_transaction();
 
-    // Insere projeto com placeholders (logo/img_descricao são NOT NULL)
+    // Insere evento (img_capa com placeholder pra garantir NOT NULL)
     $placeholder = '__PENDENTE__';
-    $dataFimDb = ($dataFim !== '') ? $dataFim : null;
-    $descDb    = ($descricao !== '') ? $descricao : null;
-    $pai_id = null; // nenhum pai para eventos no momento
+    $dataFimDb   = ($dataFim !== '') ? $dataFim : null;
+    $descDb      = ($descricao !== '') ? $descricao : null;
+    $paiId       = null; // sem pai por enquanto
 
     $stIns = $conn->prepare("
         INSERT INTO evento_oficina
-        (projeto_id, pai_id, nome, img_capa, descricao, data_inicio, data_fim, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (projeto_id, pai_id, tipo, nome, img_capa, descricao, data_inicio, data_fim, status)
+        VALUES
+            (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
-    $projeto_id = (int)$projeto_id;
-
-    $res = $conn->prepare("SELECT id FROM projeto WHERE id = ? LIMIT 1");
-    $res->bind_param("i", $projeto_id);
-    $res->execute();
-    $ok = $res->get_result()->fetch_assoc();
-    if (!$ok) {
-        throw new RuntimeException("Projeto #{$projeto_id} não encontrado no banco atual.");
-    }
 
     $stIns->bind_param(
-        "iissssss",
-        $projeto_id,
-        $pai_id,
+        "iisssssss",
+        $projetoId,
+        $paiId,
+        $tipo,
         $nome,
         $placeholder,
         $descDb,
@@ -174,11 +178,11 @@ try {
         $status
     );
     $stIns->execute();
-    $evento_id = $conn->insert_id;
-     
-    // ====== Pastas do projeto ======
-    $baseUrlProjeto = "assets/oscs/osc-{$oscId}/projetos/projeto-{$projeto_id}";
-    $imgUrlBase     = $baseUrlProjeto . "/imagens";
+    $eventoId = (int)$conn->insert_id;
+
+    // ====== Pastas do evento ======
+    $baseUrlEvento = "assets/oscs/osc-{$oscId}/projetos/projeto-{$projetoId}/eventos/evento-{$eventoId}";
+    $imgUrlBase    = $baseUrlEvento . "/imagens";
 
     $imgDirFs = fs_path_from_url($imgUrlBase);
 
@@ -188,14 +192,21 @@ try {
     $envRootFs  = fs_path_from_url($envRootUrl);
     ensure_dir($envRootFs);
 
-    // ====== Salva logo e imagem descrição ======
-    $imgDescUrl = save_uploaded_image('img_descricao', $imgDirFs, $imgUrlBase, 'img_descricao');
+    // ====== Salva imagem de capa (img_descricao no form) ======
+    $imgCapaUrl = save_uploaded_image('img_descricao', $imgDirFs, $imgUrlBase, 'img_capa');
 
     $stUpd = $conn->prepare("UPDATE evento_oficina SET img_capa = ? WHERE id = ? AND projeto_id = ?");
-    $stUpd->bind_param("sii", $imgDescUrl, $evento_id, $projeto_id);
+    $stUpd->bind_param("sii", $imgCapaUrl, $eventoId, $projetoId);
     $stUpd->execute();
 
-    // ====== Envolvidos existentes ======
+    // ====== Vínculo Envolvido -> Evento (mantém hierarquia: OSC -> Projeto -> Evento) ======
+    $stInsEEO = $conn->prepare("
+        INSERT INTO envolvido_evento_oficina (envolvido_osc_id, evento_oficina_id, projeto_id, funcao)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE funcao = VALUES(funcao)
+    ");
+
+    // ====== Envolvidos existentes (vincula no projeto) ======
     if (count($envExistentes) > 0) {
         $stCheckEnv = $conn->prepare("SELECT id FROM envolvido_osc WHERE id = ? AND osc_id = ? LIMIT 1");
         $stInsEP = $conn->prepare("
@@ -213,30 +224,24 @@ try {
             $envId = (int)($e['envolvido_osc_id'] ?? 0);
             if ($envId <= 0) continue;
 
-            // valida se pertence à mesma OSC (segurança)
+            // valida se pertence à mesma OSC
             $stCheckEnv->bind_param("ii", $envId, $oscId);
             $stCheckEnv->execute();
             $ok = $stCheckEnv->get_result()->fetch_assoc();
-            if (!$ok) throw new RuntimeException("Envolvido #{$envId} não pertence à OSC.");
+            if (!$ok) throw new RuntimeException("Envolvido #{$envId} não pertence à OSC atual.");
 
-            $funcao = trim((string)($e['funcao'] ?? ''));
-            if ($funcao === '') $funcao = 'PARTICIPANTE';
+            $funcaoProj = trim((string)($e['funcao'] ?? 'PARTICIPANTE'));
+            if ($funcaoProj === '') $funcaoProj = 'PARTICIPANTE';
 
-            $cIni = trim((string)($e['contrato_data_inicio'] ?? ''));
-            $cFim = trim((string)($e['contrato_data_fim'] ?? ''));
-            $sal  = trim((string)($e['contrato_salario'] ?? ''));
+            $cIni = trim((string)($e['contrato_data_inicio'] ?? '')) ?: null;
+            $cFim = trim((string)($e['contrato_data_fim'] ?? '')) ?: null;
+            $sal  = trim((string)($e['contrato_salario'] ?? '')) ?: null;
 
-            $cIniDb = (is_valid_date($cIni) ? $cIni : null);
-            $cFimDb = (is_valid_date($cFim) ? $cFim : null);
-
-            if ($cIniDb && $cFimDb && $cFimDb < $cIniDb) {
-                throw new RuntimeException("Contrato do envolvido #{$envId}: data fim menor que início.");
-            }
-
-            $salDb = ($sal !== '') ? (float)$sal : null;
-
-            $stInsEP->bind_param("iisssd", $envId, $projeto_id, $funcao, $cIniDb, $cFimDb, $salDb);
+            $stInsEP->bind_param("iissss", $envId, $projetoId, $funcaoProj, $cIni, $cFim, $sal);
             $stInsEP->execute();
+            // vincula também no EVENTO (envolvido_evento_oficina)
+            $stInsEEO->bind_param("iiis", $envId, $eventoId, $projetoId, $funcaoProj);
+            $stInsEEO->execute();
         }
     }
 
@@ -267,67 +272,55 @@ try {
         foreach ($envNovos as $e) {
             $nomeN = trim((string)($e['nome'] ?? ''));
             if ($nomeN === '') continue;
-        
+
             $emailN = trim((string)($e['email'] ?? ''));
             if ($emailN !== '' && strlen($emailN) > 100) $emailN = substr($emailN, 0, 100);
-        
+
             $funcaoOsc = trim((string)($e['funcao_osc'] ?? 'PARTICIPANTE'));
             if (!in_array($funcaoOsc, $funcaoOscAllowed, true)) $funcaoOsc = 'PARTICIPANTE';
-        
+
             $funcaoProj = trim((string)($e['funcao_projeto'] ?? 'PARTICIPANTE'));
             if ($funcaoProj === '') $funcaoProj = 'PARTICIPANTE';
-        
-            $cIni = trim((string)($e['contrato_data_inicio'] ?? ''));
-            $cFim = trim((string)($e['contrato_data_fim'] ?? ''));
-            $sal  = trim((string)($e['contrato_salario'] ?? ''));
-        
-            $cIniDb = (is_valid_date($cIni) ? $cIni : null);
-            $cFimDb = (is_valid_date($cFim) ? $cFim : null);
-            if ($cIniDb && $cFimDb && $cFimDb < $cIniDb) {
-                throw new RuntimeException("Contrato do novo envolvido '{$nomeN}': data fim menor que início.");
-            }
-            $salDb = ($sal !== '') ? (float)$sal : null;
-        
-            // 1) insere sem foto
+            // contrato (opcional)
+            $cIni = trim((string)($e['contrato_data_inicio'] ?? '')) ?: null;
+            $cFim = trim((string)($e['contrato_data_fim'] ?? '')) ?: null;
+            $sal  = trim((string)($e['contrato_salario'] ?? '')) ?: null;
+
+            $fotoKey = trim((string)($e['foto_key'] ?? ''));
+
+            // cria envolvido na OSC
             $stInsEO->bind_param("isss", $oscId, $nomeN, $emailN, $funcaoOsc);
             $stInsEO->execute();
             $novoEnvId = (int)$conn->insert_id;
-        
-            // 2) cria pastas do envolvido conforme seu padrão
-            $envBaseUrl     = $envRootUrl . "/envolvido-{$novoEnvId}";
-            $envImgUrlBase  = $envBaseUrl . "/imagens";
-        
-            ensure_dir(fs_path_from_url($envImgUrlBase));
-        
-            // 3) salva foto
-            $fotoUrl = null;
-            $fotoKey = trim((string)($e['foto_key'] ?? ''));
-            if ($fotoKey !== '' && isset($_FILES[$fotoKey]) && ($_FILES[$fotoKey]['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
-                $backup = $_FILES['__tmp__'] ?? null;
-                $_FILES['__tmp__'] = $_FILES[$fotoKey];
-            
-                $fotoUrl = save_uploaded_image('__tmp__', fs_path_from_url($envImgUrlBase), $envImgUrlBase, 'foto');
-            
-                if ($backup !== null) $_FILES['__tmp__'] = $backup; else unset($_FILES['__tmp__']);
-            
-                // 4) update no banco com a URL final
+
+            // salva foto se veio
+            if ($fotoKey !== '') {
+                $fotoUrl = save_uploaded_image($fotoKey, $envRootFs, $envRootUrl, 'envolvido');
                 $stUpdEOFoto->bind_param("sii", $fotoUrl, $novoEnvId, $oscId);
                 $stUpdEOFoto->execute();
             }
-        
-            $stInsEP2->bind_param("iisssd", $novoEnvId, $projeto_id, $funcaoProj, $cIniDb, $cFimDb, $salDb);
+
+            // vincula no projeto
+            $stInsEP2->bind_param("iissss", $novoEnvId, $projetoId, $funcaoProj, $cIni, $cFim, $sal);
             $stInsEP2->execute();
+            // vincula também no EVENTO (envolvido_evento_oficina)
+            $stInsEEO->bind_param("iiis", $novoEnvId, $eventoId, $projetoId, $funcaoProj);
+            $stInsEEO->execute();
         }
     }
 
-    // ====== Endereços existentes ======
+    // ====== Endereços existentes (vincula no evento) ======
     if (count($endExistentes) > 0) {
-        $stInsEndProj = $conn->prepare("INSERT IGNORE INTO endereco_projeto (projeto_id, endereco_id, principal) VALUES (?, ?, ?)");
         $stCheckEnd = $conn->prepare("SELECT id FROM endereco WHERE id = ? LIMIT 1");
+        $stInsEndEv = $conn->prepare("
+            INSERT IGNORE INTO endereco_evento_oficina (evento_oficina_id, endereco_id, principal)
+            VALUES (?, ?, ?)
+        ");
 
         foreach ($endExistentes as $e) {
             $endId = (int)($e['endereco_id'] ?? 0);
             if ($endId <= 0) continue;
+
             $principal = !empty($e['principal']) ? 1 : 0;
 
             $stCheckEnd->bind_param("i", $endId);
@@ -335,21 +328,25 @@ try {
             $ok = $stCheckEnd->get_result()->fetch_assoc();
             if (!$ok) throw new RuntimeException("Endereço #{$endId} não existe.");
 
-            $stInsEndProj->bind_param("iii", $projeto_id, $endId, $principal);
-            $stInsEndProj->execute();
+            $stInsEndEv->bind_param("iii", $eventoId, $endId, $principal);
+            $stInsEndEv->execute();
         }
     }
 
-    // ====== Endereços novos ======
+    // ====== Endereços novos (cria e vincula no evento) ======
     if (count($endNovos) > 0) {
         $stInsEnd = $conn->prepare("
             INSERT INTO endereco (descricao, cep, cidade, logradouro, bairro, numero, complemento)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
-        $stInsEndProj2 = $conn->prepare("INSERT IGNORE INTO endereco_projeto (projeto_id, endereco_id, principal) VALUES (?, ?, ?)");
+
+        $stInsEndEv2 = $conn->prepare("
+            INSERT IGNORE INTO endereco_evento_oficina (evento_oficina_id, endereco_id, principal)
+            VALUES (?, ?, ?)
+        ");
 
         foreach ($endNovos as $e) {
-            $cidade = trim((string)($e['cidade'] ?? ''));
+            $cidade     = trim((string)($e['cidade'] ?? ''));
             $logradouro = trim((string)($e['logradouro'] ?? ''));
             if ($cidade === '' || $logradouro === '') {
                 throw new RuntimeException("Endereço novo precisa de Cidade e Logradouro.");
@@ -365,26 +362,24 @@ try {
 
             $stInsEnd->bind_param("sssssss", $desc, $cep, $cidade, $logradouro, $bairro, $numero, $compl);
             $stInsEnd->execute();
-
             $endId = (int)$conn->insert_id;
 
-            $stInsEndProj2->bind_param("iii", $projeto_id, $endId, $principal);
-            $stInsEndProj2->execute();
+            $stInsEndEv2->bind_param("iii", $eventoId, $endId, $principal);
+            $stInsEndEv2->execute();
         }
     }
 
     $conn->commit();
 
     echo json_encode([
-        'success' => true,
-        'projeto_id' => $projeto_id
+        'success'   => true,
+        'evento_id' => $eventoId,
+        'projeto_id'=> $projetoId
     ], JSON_UNESCAPED_UNICODE);
 
 } catch (Throwable $e) {
     if (isset($conn) && $conn instanceof mysqli) {
         try { $conn->rollback(); } catch (Throwable $x) {}
     }
-
-    // Não joga stack pro front; dá um erro útil e limpinho
-    json_fail("Falha ao criar projeto: " . $e->getMessage(), 500);
+    json_fail("Falha ao criar evento: " . $e->getMessage(), 500);
 }

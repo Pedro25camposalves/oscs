@@ -13,53 +13,63 @@ if (!$usuarioId) {
   exit('Sessão inválida. Faça login novamente.');
 }
 
-// OSC vinculada ao usuário master (agora pegando direto da tabela usuario)
+// OSC vinculada ao usuário
 $stmt = $conn->prepare("SELECT osc_id FROM usuario WHERE id = ? LIMIT 1");
 $stmt->bind_param("i", $usuarioId);
 $stmt->execute();
 $res = $stmt->get_result()->fetch_assoc();
 $oscIdVinculada = (int)($res['osc_id'] ?? 0);
 
-// Envolvidos da OSC
-$envolvidosOsc = [];
+// Projeto em edição
+$projetoId = (int)($_GET['projeto_id'] ?? 0);
+
+// Envolvidos do PROJETO
+$envolvidosProj = [];
 try {
-  $st = $conn->prepare("SELECT id, nome, foto, funcao FROM envolvido_osc WHERE osc_id = ? ORDER BY nome");
-  $st->bind_param("i", $oscIdVinculada);
-  $st->execute();
-  $rs = $st->get_result();
-  while ($row = $rs->fetch_assoc()) {
-    $envolvidosOsc[] = $row;
+  if ($projetoId > 0) {
+    $st = $conn->prepare("
+      SELECT eo.id, eo.nome, eo.foto, ep.funcao
+      FROM envolvido_projeto ep
+      JOIN envolvido_osc eo ON eo.id = ep.envolvido_osc_id
+      JOIN projeto p ON p.id = ep.projeto_id
+      WHERE ep.projeto_id = ? AND p.osc_id = ? AND ep.ativo = 1
+      ORDER BY eo.nome
+    ");
+    $st->bind_param("ii", $projetoId, $oscIdVinculada);
+    $st->execute();
+    $rs = $st->get_result();
+    while ($row = $rs->fetch_assoc()) {
+      $envolvidosProj[] = $row;
+    }
   }
 } catch (Throwable $e) {
-  $envolvidosOsc = [];
+  $envolvidosProj = [];
 }
 
-// Endereços já existentes “visíveis” para essa OSC (por projetos/eventos/imóveis)
-$enderecosOsc = [];
+// Endereços do PROJETO
+$enderecosProj = [];
 try {
-  $sqlEnd = "
-        SELECT DISTINCT e.id, e.descricao, e.cep, e.cidade, e.logradouro, e.bairro, e.numero, e.complemento
-        FROM endereco e
-        LEFT JOIN endereco_projeto ep ON ep.endereco_id = e.id
-        LEFT JOIN projeto p ON p.id = ep.projeto_id
-        LEFT JOIN endereco_evento_oficina eeo ON eeo.endereco_id = e.id
-        LEFT JOIN evento_oficina eo ON eo.id = eeo.evento_oficina_id
-        LEFT JOIN projeto p2 ON p2.id = eo.projeto_id
-        LEFT JOIN imovel i ON i.endereco_id = e.id
-        WHERE (p.osc_id = ? OR p2.osc_id = ? OR i.osc_id = ?)
-        ORDER BY e.cidade, e.logradouro, e.numero
+  if ($projetoId > 0) {
+    $sqlEnd = "
+      SELECT e.id, e.descricao, e.cep, e.cidade, e.logradouro, e.bairro, e.numero, e.complemento, ep.principal
+      FROM endereco_projeto ep
+      JOIN endereco e ON e.id = ep.endereco_id
+      JOIN projeto p ON p.id = ep.projeto_id
+      WHERE ep.projeto_id = ? AND p.osc_id = ?
+      ORDER BY ep.principal DESC, e.cidade, e.logradouro, e.numero
     ";
-  $stE = $conn->prepare($sqlEnd);
-  $stE->bind_param("iii", $oscIdVinculada, $oscIdVinculada, $oscIdVinculada);
-  $stE->execute();
-  $rsE = $stE->get_result();
-  while ($row = $rsE->fetch_assoc()) {
-    $enderecosOsc[] = $row;
+    $stE = $conn->prepare($sqlEnd);
+    $stE->bind_param("ii", $projetoId, $oscIdVinculada);
+    $stE->execute();
+    $rsE = $stE->get_result();
+    while ($row = $rsE->fetch_assoc()) {
+      $enderecosProj[] = $row;
+    }
   }
 } catch (Throwable $e) {
-  $enderecosOsc = [];
+  $enderecosProj = [];
 }
-$projetoId = $_GET['projeto_id'] ?? null;
+
 error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId, true));
 ?>
 <!doctype html>
@@ -68,7 +78,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Painel — Novo Evento</title>
+  <title>Painel — Novo Evento/Oficina</title>
 
   <style>
     :root {
@@ -389,7 +399,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
 <body>
   <header>
     <h1>
-      Painel de Controle — Novo Evento
+      Painel de Controle — Novo Evento/Oficina
     </h1>
 
     <div class="header-right">
@@ -405,15 +415,16 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
   <main>
     <div class="tabs-top" id="tabsTop">
       <a class="tab-btn" href="editar_osc.php"><span class="dot"></span>OSC</a>
-      <a class="tab-btn" href="projetos_osc.php"><span class="dot"></span>Eventos</a>
-      <a class="tab-btn is-active" href="projetos_osc.php"><span class="dot"></span>Novo Evento</a>
+      <a class="tab-btn" href="projetos_osc.php"><span class="dot"></span>Projetos</a>
+      <a class="tab-btn" href="eventos_osc.php"><span class="dot"></span>Eventos</a>
+      <a class="tab-btn is-active" href="cadastro_evento.php"><span class="dot"></span>Novo Evento</a>
     </div>
 
     <form id="projForm" onsubmit="event.preventDefault(); saveEvento();">
 
-      <!-- SEÇÃO 1: INFORMAÇÕES DO PROJETO -->
+      <!-- SEÇÃO 1 -->
       <div class="card">
-        <h2>Informações do evento</h2>
+        <h2>Informações do evento/oficina</h2>
         <div class="divider"></div>
         <div class="grid cols-2">
           <div>
@@ -423,10 +434,9 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
           <div>
             <label for="projStatus">Status (*)</label>
             <select id="projStatus" required>
-              <option value="PENDENTE">Pendente</option>
-              <option value="PLANEJAMENTO">Planejamento</option>
-              <option value="EXECUCAO">Execução</option>
-              <option value="ENCERRADO">Encerrado</option>
+              <option value="PENDENTE">A iniciar</option>
+              <option value="EXECUCAO">Em andamento</option>
+              <option value="ENCERRADO">Finalizado</option>
             </select>
           </div>
         </div>
@@ -454,7 +464,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
         </div>
       </div>
 
-      <!-- SEÇÃO 2: ENVOLVIDOS DO PROJETO -->
+      <!-- SEÇÃO 2 -->
       <div class="card">
         <h2>Envolvidos</h2>
         <div class="divider"></div>
@@ -465,7 +475,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
         </div>
       </div>
 
-      <!-- SEÇÃO 3: ENDEREÇOS DO PROJETO -->
+      <!-- SEÇÃO 3 -->
       <div class="card">
         <h2>Endereços de execução</h2>
         <div class="divider"></div>
@@ -477,7 +487,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       </div>
 
 
-      <!-- SEÇÃO 5: EXIBIÇÃO DO SITE -->
+      <!-- SEÇÃO 5 -->
       <div class="card">
         <div class="grid cols-2">
           <div>
@@ -520,15 +530,15 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       </div>
     </form>
 
-    <!-- MODAL ENDEREÇO PROJETO -->
+    <!-- MODAL ENDEREÇO -->
     <div id="modalEnderecoEventoBackdrop" class="modal-backdrop">
       <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Endereço ao Evento">
         <h3>Adicionar Endereço</h3>
 
         <div class="grid" style="margin-top:10px;">
           <div>
-            <label for="selectEnderecoOsc">Utilizar endereço já cadastrado (opcional)</label>
-            <select id="selectEnderecoOsc">
+            <label for="selectEnderecoProj">Utilizar endereço já cadastrado (opcional)</label>
+            <select id="selectEnderecoProj">
               <option value="">Selecione...</option>
             </select>
           </div>
@@ -582,7 +592,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       </div>
     </div>
 
-    <!-- MODAL ENVOLVIDO PROJETO -->
+    <!-- MODAL ENVOLVIDO -->
     <div id="modalEnvolvidoEventoBackdrop" class="modal-backdrop">
       <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Envolvido no Evento">
         <h3>Adicionar Envolvido</h3>
@@ -605,11 +615,11 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
               <div class="images-preview" id="previewEnvolvidoSelecionado"></div>
             </div>
             <div>
-              <label for="selectEnvolvidoOsc">Envolvido na OSC (*)</label>
-              <select id="selectEnvolvidoOsc">
+              <label for="selectEnvolvidoProj">Envolvido no Projeto (*)</label>
+              <select id="selectEnvolvidoProj">
                 <option value="">Selecione...</option>
               </select>
-              <div class="small" style="margin-top:6px;" id="envolvidoOscInfo"></div>
+              <div class="small" style="margin-top:6px;" id="envolvidoProjInfo"></div>
             </div>
 
             <div style="margin-bottom: 5px;">
@@ -625,22 +635,6 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
               </select>
             </div>
 
-            <div class="divider"></div>
-            <h4 style="margin: 0;">Contrato</h4>
-            <div class="grid cols-3" style="margin-top: 0px;">
-              <div>
-                <label for="contratoDataInicio">Data início (*)</label>
-                <input id="contratoDataInicio" type="date" />
-              </div>
-              <div>
-                <label for="contratoDataFim">Data fim</label>
-                <input id="contratoDataFim" type="date" />
-              </div>
-              <div>
-                <label for="contratoSalario">Remuneração</label>
-                <input id="contratoSalario" type="text" inputmode="decimal" placeholder="Ex: 1500,00" />
-              </div>
-            </div>
           </div>
 
           <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
@@ -679,23 +673,6 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
               </select>
             </div>
 
-            <div class="divider"></div>
-            <h4 style="margin: 0;">Contrato</h4>
-            <div class="grid cols-3" style="margin-top: 0px;">
-              <div>
-                <label for="novoContratoDataInicio">Data início (*)</label>
-                <input id="novoContratoDataInicio" type="date" required />
-              </div>
-              <div>
-                <label for="novoContratoDataFim">Data fim</label>
-                <input id="novoContratoDataFim" type="date" />
-              </div>
-              <div>
-                <label for="novoContratoSalario">Remuneração</label>
-                <input id="novoContratoSalario" type="text" inputmode="decimal" placeholder="Ex: 1500,00" />
-              </div>
-            </div>
-
           </div>
 
           <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
@@ -715,52 +692,42 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
     const listaEnvolvidosEvento = qs('#listaEnvolvidosEvento');
     
 
-
-                  function renderEnvolvidosEvento() {
-                      console.log('Chamando renderEnvolvidosEvento');
-  console.log('Array envolvidosEvento:', envolvidosEvento);
-
-          listaEnvolvidosEvento.innerHTML = '';
-
-          envolvidosEvento.forEach((e, i) => {
-            const c = document.createElement('div');
-            c.className = 'chip';
-
-            const img = document.createElement('img');
-            const imgSrc = e.fotoPreview || e.foto ||
-              'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
-            img.src = imgSrc;
-
-            const contratoResumo = (e.contrato_data_inicio || e.contrato_data_fim || e.contrato_salario) ?
-              `<div class="small">Contrato: ${escapeHtml(e.contrato_data_inicio || '—')} → ${escapeHtml(e.contrato_data_fim || '—')} • R$ ${escapeHtml(e.contrato_salario || '—')}</div>` :
-              '';
-
-            const info = document.createElement('div');
-            const badge = e.tipo === 'novo' ?
-              `<span class="small" style="display:inline-block; padding:2px 8px; border:1px solid #ddd; border-radius:999px; margin-left:6px;">Novo</span>` :
-              '';
-            info.innerHTML = `
+    function renderEnvolvidosEvento() {
+      listaEnvolvidosEvento.innerHTML = '';
+      envolvidosEvento.forEach((e, i) => {
+        const c = document.createElement('div');
+        c.className = 'chip';
+        const img = document.createElement('img');
+        const imgSrc = e.fotoPreview || e.foto ||
+          'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
+        img.src = imgSrc;
+        const contratoResumo = (e.contrato_data_inicio || e.contrato_data_fim || e.contrato_salario) ?
+          `<div class="small">Contrato: ${escapeHtml(e.contrato_data_inicio || '—')} → ${escapeHtml(e.contrato_data_fim || '—')} • R$ ${escapeHtml(e.contrato_salario || '—')}</div>` :
+          '';
+        const info = document.createElement('div');
+        const badge = e.tipo === 'novo' ?
+          `<span class="small" style="display:inline-block; padding:2px 8px; border:1px solid #ddd; border-radius:999px; margin-left:6px;">Novo</span>` :
+          '';
+        info.innerHTML = `
           <div style="font-weight:600">${escapeHtml(e.nome)} ${badge}</div>
           <div class="small">Função: ${escapeHtml(e.funcao_projeto)}</div>
           ${contratoResumo}
-        `;
-
-            const remove = document.createElement('button');
-            remove.className = 'btn';
-            remove.textContent = '✕';
-            remove.style.padding = '6px 8px';
-            remove.style.marginLeft = '8px';
-            remove.addEventListener('click', () => {
-              envolvidosEvento.splice(i, 1);
-              renderEnvolvidosEvento();
-            });
-
-            c.appendChild(img);
-            c.appendChild(info);
-            c.appendChild(remove);
-            listaEnvolvidosEvento.appendChild(c);
+          `;
+          const remove = document.createElement('button');
+          remove.className = 'btn';
+          remove.textContent = '✕';
+          remove.style.padding = '6px 8px';
+          remove.style.marginLeft = '8px';
+          remove.addEventListener('click', () => {
+            envolvidosEvento.splice(i, 1);
+            renderEnvolvidosEvento();
           });
-        }
+          c.appendChild(img);
+          c.appendChild(info);
+          c.appendChild(remove);
+          listaEnvolvidosEvento.appendChild(c);
+      });
+    }
 
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -778,7 +745,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       const closeEnderecoEventoModal = qs('#closeEnderecoEventoModal');
       const addEnderecoEventoBtn = qs('#addEnderecoEventoBtn');
 
-      const selectEnderecoOsc = qs('#selectEnderecoOsc');
+      const selectEnderecoProj = qs('#selectEnderecoProj');
 
       const endDescricao = qs('#endDescricao');
       const endCep = qs('#endCep');
@@ -789,31 +756,16 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       const endComplemento = qs('#endComplemento');
       const endPrincipal = qs('#endPrincipal');
 
-      // -- ENVOLVIDOS DO PROJETO --
-      console.log('JS do modal carregou');
-       // mistura existente/novo
-      console.log('envolvidosEvento iniciado:', envolvidosEvento);
-
-      
-
       const modalEnvolvidoEventoBackdrop = qs('#modalEnvolvidoEventoBackdrop');
       const openEnvolvidoEventoModal = qs('#openEnvolvidoEventoModal');
       const closeEnvolvidoEventoModal = qs('#closeEnvolvidoEventoModal');
       const closeEnvolvidoEventoModal2 = qs('#closeEnvolvidoEventoModal2');
       const addEnvolvidoEventoBtn = qs('#addEnvolvidoEventoBtn');
 
-      const selectEnvolvidoOsc = qs('#selectEnvolvidoOsc');
+      const selectEnvolvidoProj = qs('#selectEnvolvidoProj');
       const funcaoNoEvento = qs('#funcaoNoEvento');
       const previewEnvolvidoSelecionado = qs('#previewEnvolvidoSelecionado');
-      const envolvidoOscInfo = qs('#envolvidoOscInfo');
-
-      const contratoDataInicio = qs('#contratoDataInicio');
-      const contratoDataFim = qs('#contratoDataFim');
-      const contratoSalario = qs('#contratoSalario');
-
-      const novoContratoDataInicio = qs('#novoContratoDataInicio');
-      const novoContratoDataFim = qs('#novoContratoDataFim');
-      const novoContratoSalario = qs('#novoContratoSalario');
+      const envolvidoProjInfo = qs('#envolvidoProjInfo');
 
       const novoEnvFoto = qs('#novoEnvFoto');
       const novoEnvNome = qs('#novoEnvNome');
@@ -822,20 +774,16 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       const addNovoEnvolvidoEventoBtn = qs('#addNovoEnvolvidoEventoBtn');
 
       const modoExistente = qs('#modoExistenteEnvolvido');
-      console.log(modoExistente);
       const modoNovo = qs('#modoNovoEnvolvido');
       const radiosModo = document.querySelectorAll('input[name="modoEnvolvido"]');
 
 
       openEnvolvidoEventoModal.addEventListener('click', () => {
-        preencherSelectEnvolvidosOsc();
-        selectEnvolvidoOsc.value = '';
+        preencherSelectEnvolvidosProj();
+        selectEnvolvidoProj.value = '';
         funcaoNoEvento.value = '';
-        contratoDataInicio.value = '';
-        contratoDataFim.value = '';
-        contratoSalario.value = '';
         previewEnvolvidoSelecionado.innerHTML = '';
-        envolvidoOscInfo.textContent = '';
+        envolvidoProjInfo.textContent = '';
 
         limparNovoEnvolvidoCampos();
         setModoEnvolvido('existente');
@@ -866,28 +814,28 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
 
         radiosModo.forEach(r => r.addEventListener('change', () => setModoEnvolvido(r.value)));
 
-        function preencherSelectEnvolvidosOsc() {
-          selectEnvolvidoOsc.innerHTML = `<option value="">Selecione...</option>`;
-          ENVOLVIDOS_OSC.forEach(e => {
+        function preencherSelectEnvolvidosProj() {
+          selectEnvolvidoProj.innerHTML = `<option value="">Selecione...</option>`;
+          ENVOLVIDOS_PROJETO.forEach(e => {
             const opt = document.createElement('option');
             opt.value = e.id;
             opt.textContent = e.nome + (e.funcao ? ` (${e.funcao})` : '');
-            selectEnvolvidoOsc.appendChild(opt);
+            selectEnvolvidoProj.appendChild(opt);
           });
         }
 
-        function getEnvolvidoOscById(id) {
-          return ENVOLVIDOS_OSC.find(x => String(x.id) === String(id)) || null;
+        function getEnvolvidoProjById(id) {
+          return ENVOLVIDOS_PROJETO.find(x => String(x.id) === String(id)) || null;
         }
 
         function renderPreviewEnvolvidoSelecionado() {
           previewEnvolvidoSelecionado.innerHTML = '';
-          envolvidoOscInfo.textContent = '';
+          envolvidoProjInfo.textContent = '';
 
-          const id = selectEnvolvidoOsc.value;
+          const id = selectEnvolvidoProj.value;
           if (!id) return;
 
-          const e = getEnvolvidoOscById(id);
+          const e = getEnvolvidoProjById(id);
           if (!e) return;
 
           const img = document.createElement('img');
@@ -897,9 +845,9 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
           previewEnvolvidoSelecionado.appendChild(img);
 
           const detalhes = [];
-          envolvidoOscInfo.textContent = detalhes.join(' • ');
+          envolvidoProjInfo.textContent = detalhes.join(' • ');
         }
-        selectEnvolvidoOsc.addEventListener('change', renderPreviewEnvolvidoSelecionado);
+        selectEnvolvidoProj.addEventListener('change', renderPreviewEnvolvidoSelecionado);
 
         async function updatePreviewNovoEnvolvido() {
           previewNovoEnvolvido.innerHTML = '';
@@ -920,9 +868,6 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
           novoEnvNome.value = '';
           novoEnvFuncaoEvento.value = '';
           previewNovoEnvolvido.innerHTML = '';
-          novoContratoDataInicio.value = '';
-          novoContratoDataFim.value = '';
-          novoContratoSalario.value = '';
         }
 
 
@@ -934,47 +879,24 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
         });
 
         addEnvolvidoEventoBtn.addEventListener('click', () => {
-          console.log('Clique no botão detectado');
 
-          const id = selectEnvolvidoOsc.value;
+          const id = selectEnvolvidoProj.value;
           const funcaoProj = funcaoNoEvento.value.trim();
-          console.log('Valores selecionados:', {
-            id,
-            funcaoProj
-          });
 
           if (!id || !funcaoProj) {
             alert('Selecione a pessoa e preencha a função no projeto.');
-            console.log('Validação falhou: id ou função em branco');
             return;
           }
 
           const jaExiste = envolvidosEvento.some(x => x.tipo === 'existente' && String(x.envolvido_osc_id) === String(id));
-          console.log('Verificação se já existe:', jaExiste);
           if (jaExiste) {
             alert('Este envolvido já foi adicionado ao projeto.');
             return;
           }
 
-          const e = getEnvolvidoOscById(id);
-          console.log('Envolvido encontrado:', e);
+          const e = getEnvolvidoProjById(id);
           if (!e) {
             alert('Envolvido inválido.');
-            return;
-          }
-
-          const cIni = contratoDataInicio.value || '';
-          const cFim = contratoDataFim.value || '';
-          const cSal = normalizeMoneyBR(contratoSalario.value);
-          console.log('Dados do contrato:', {
-            cIni,
-            cFim,
-            cSal
-          });
-
-          if (cIni && cFim && cFim < cIni) {
-            alert('No contrato, a data fim não pode ser menor que a data início.');
-            console.log('Validação de datas do contrato falhou');
             return;
           }
 
@@ -983,20 +905,14 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
             envolvido_osc_id: e.id,
             nome: e.nome,
             foto: e.foto || '',
-            funcao_projeto: funcaoProj,
-            contrato_data_inicio: cIni,
-            contrato_data_fim: cFim,
-            contrato_salario: cSal
+            funcao_projeto: funcaoProj
           };
 
-          console.log('Adicionando envolvido:', novoEnvolvido);
           envolvidosEvento.push(novoEnvolvido);
 
           renderEnvolvidosEvento();
-          console.log('Envolvidos após adição:', envolvidosEvento);
 
           modalEnvolvidoEventoBackdrop.style.display = 'none';
-          console.log('Modal fechado');
         });
 
 
@@ -1021,26 +937,13 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
           const fotoFile = novoEnvFoto.files?.[0] || null;
           const fotoPreview = fotoFile ? await readFileAsDataURL(fotoFile) : '';
 
-          const cIni = novoContratoDataInicio.value || '';
-          const cFim = novoContratoDataFim.value || '';
-          const cSal = normalizeMoneyBR(novoContratoSalario.value);
-
-          if (cIni && cFim && cFim < cIni) {
-            alert('No contrato, a data fim não pode ser menor que a data início.');
-            return;
-          }
-
           envolvidosEvento.push({
             tipo: 'novo',
             nome,
             funcao_projeto: funcaoProj,
             fotoFile,
-            fotoPreview,
-            contrato_data_inicio: cIni,
-            contrato_data_fim: cFim,
-            contrato_salario: cSal
+            fotoPreview
           });
-          console.log('envolvidosEvento após adicionar novo:', envolvidosEvento);
 
           renderEnvolvidosEvento();
           limparNovoEnvolvidoCampos();
@@ -1052,7 +955,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       // Abre modal
       openEnderecoEventoModal.addEventListener('click', () => {
         preencherSelectEnderecos();
-        selectEnderecoOsc.value = '';
+        selectEnderecoProj.value = '';
         limparCamposEndereco();
         setCamposEnderecoDisabled(false);
         if (endPrincipal) endPrincipal.checked = false;
@@ -1061,7 +964,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
 
       closeEnderecoEventoModal.addEventListener('click', () => {
         modalEnderecoEventoBackdrop.style.display = 'none';
-        selectEnderecoOsc.value = '';
+        selectEnderecoProj.value = '';
         limparCamposEndereco();
         setCamposEnderecoDisabled(false);
         if (endPrincipal) endPrincipal.checked = false;
@@ -1070,7 +973,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       modalEnderecoEventoBackdrop.addEventListener('click', (e) => {
         if (e.target === modalEnderecoEventoBackdrop) {
           modalEnderecoEventoBackdrop.style.display = 'none';
-          selectEnderecoOsc.value = '';
+          selectEnderecoProj.value = '';
           limparCamposEndereco();
           setCamposEnderecoDisabled(false);
           if (endPrincipal) endPrincipal.checked = false;
@@ -1079,7 +982,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
 
       // Botão "Adicionar" com regra: selecionou -> existente, senão -> novo
       addEnderecoEventoBtn.addEventListener('click', () => {
-        const id = selectEnderecoOsc.value;
+        const id = selectEnderecoProj.value;
         const principalMarcado = !!(endPrincipal && endPrincipal.checked);
 
         // Se marcou como principal, desmarca todos os outros
@@ -1152,10 +1055,8 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
     });
 
     const OSC_ID = <?= (int)$oscIdVinculada ?>;
-    const ENVOLVIDOS_OSC = <?= json_encode($envolvidosOsc, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
-    const ENDERECOS_OSC = <?= json_encode($enderecosOsc, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
-
-    
+    const ENVOLVIDOS_PROJETO = <?= json_encode($envolvidosProj, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    const ENDERECOS_PROJ = <?= json_encode($enderecosProj, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
     // ====== HELPERS ======
     function escapeHtml(str) {
@@ -1241,17 +1142,17 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
     }
 
     function preencherSelectEnderecos() {
-      selectEnderecoOsc.innerHTML = `<option value="">Selecione...</option>`;
-      ENDERECOS_OSC.forEach(e => {
+      selectEnderecoProj.innerHTML = `<option value="">Selecione...</option>`;
+      ENDERECOS_PROJ.forEach(e => {
         const opt = document.createElement('option');
         opt.value = e.id;
         opt.textContent = labelEndereco(e);
-        selectEnderecoOsc.appendChild(opt);
+        selectEnderecoProj.appendChild(opt);
       });
     }
 
     function getEnderecoById(id) {
-      return ENDERECOS_OSC.find(x => String(x.id) === String(id)) || null;
+      return ENDERECOS_PROJ.find(x => String(x.id) === String(id)) || null;
     }
 
     function limparCamposEndereco() {
@@ -1274,8 +1175,8 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       endComplemento.value = e.complemento || '';
     }
 
-    selectEnderecoOsc.addEventListener('change', () => {
-      const id = selectEnderecoOsc.value;
+    selectEnderecoProj.addEventListener('change', () => {
+      const id = selectEnderecoProj.value;
 
       // Se limpou o select -> modo "novo"
       if (!id) {
@@ -1357,7 +1258,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       const imgDescFile = projImgDescricao.files?.[0] || null;
 
       if (!nome || !status) {
-        alert('Preencha nome e status do projeto.');
+        alert('Preencha nome e status do evento.');
         return;
       }
       if (!dataInicio) {
@@ -1376,6 +1277,10 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       const fd = new FormData();
       fd.append('nome', nome);
       fd.append('status', status);
+
+      const tipo = qs('#projTipo').value.trim();
+      fd.append('tipo', tipo);
+
 
       fd.append('data_inicio', dataInicio);
       fd.append('data_fim', dataFim || '');
@@ -1445,13 +1350,13 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       }));
 
       try {
-        const resp = await fetch('ajax_criar_evento.php?projeto_id=' + <?php echo $projetoId; ?> + '&osc_id=' + <?php echo $oscIdVinculada ?>, {
+        const resp = await fetch('ajax_criar_evento.php?projeto_id=<?php echo (int)$projetoId; ?>', {
           method: 'POST',
           body: fd
         });
         const text = await resp.text();
 
-        console.log('Resposta do servidor:', text);
+        
 
         let result;
         try {
@@ -1463,27 +1368,22 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
         }
 
         if (!result.success) {
-          alert('Erro ao criar projeto: ' + (result.error || 'desconhecido'));
+          alert('Erro ao criar evento: ' + (result.error || 'desconhecido'));
           return;
         }
 
+        const eventoId = result.evento_id;
         const projetoId = result.projeto_id;
 
         const erros = [];
 
         if (erros.length === 0) {
-          alert('Evento criado com sucesso! Documentos enviados (se houver).');
+          alert('Evento criado com sucesso!');
         } else {
-          alert('Evento criado, mas alguns documentos falharam:\n\n' + erros.map(e => '- ' + e).join('\n'));
+          alert('Evento criado, mas algo falhou:\n\n' + erros.map(e => '- ' + e).join('\n'));
         }
 
         resetEvento();
-        console.log('Dados prontos para envio (simulação):');
-        for (let [key, value] of fd.entries()) {
-          console.log(key, value);
-        }
-        alert('Simulação: dados prontos para envio ao servidor. Veja o console.');
-
       } catch (e) {
         console.error(e);
         alert('Erro ao enviar dados ao servidor.');
@@ -1495,7 +1395,6 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
 
       qs('#projForm').reset();
       envolvidosEvento.length = 0;
-      docsEvento.length = 0;
       enderecosEvento.length = 0;
 
       renderEnvolvidosEvento();

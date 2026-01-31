@@ -219,6 +219,7 @@ CREATE TABLE IF NOT EXISTS `endereco` (
 CREATE TABLE IF NOT EXISTS `endereco_evento_oficina` (
   `evento_oficina_id` INT NOT NULL,
   `endereco_id`       INT NOT NULL,
+  `principal`   TINYINT(1)  NOT NULL DEFAULT 0,
   PRIMARY KEY (`evento_oficina_id`, `endereco_id`),
   INDEX `idx_eo_endereco_endereco` (`endereco_id`),
   CONSTRAINT `fk_eo_endereco_evento_oficina`
