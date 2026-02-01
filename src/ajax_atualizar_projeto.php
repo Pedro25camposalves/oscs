@@ -647,7 +647,7 @@ try {
     $stmtCheckEnv = $conn->prepare("SELECT id, foto, nome, telefone, email FROM envolvido_osc WHERE id = ? AND osc_id = ? LIMIT 1");
 
     $stmtInsEnvProj = $conn->prepare("INSERT INTO envolvido_projeto (envolvido_osc_id, projeto_id, funcao, data_inicio, data_fim, salario, ativo)
-                                      VALUES (?, ?, ?, ?, ?, ?, 1)");
+                                      VALUES (?, ?, ?, NULLIF(?, ''), NULLIF(?, ''), NULLIF(?, ''), 1)");
 
 // atualizações opcionais em envolvido_osc (edição no modal do projeto)
 $stmtUpdEnvBasic = $conn->prepare("UPDATE envolvido_osc SET nome = ?, telefone = ?, email = ? WHERE id = ? AND osc_id = ?");

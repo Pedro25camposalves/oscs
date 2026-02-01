@@ -61,7 +61,7 @@ $stmt = $conn->prepare("
       eo.id AS envolvido_id,
       eo.nome, eo.telefone, eo.email, eo.foto,
       ep.funcao AS funcao_projeto,
-      ep.data_inicio, ep.data_fim, ep.salario, ep.ativo
+      ep.data_inicio AS contrato_data_inicio, ep.data_fim AS contrato_data_fim, ep.salario AS contrato_salario, ep.ativo
     FROM envolvido_projeto ep
     INNER JOIN envolvido_osc eo ON eo.id = ep.envolvido_osc_id
     WHERE ep.projeto_id = ?
@@ -78,9 +78,9 @@ while ($row = $res->fetch_assoc()) {
         'email' => $row['email'],
         'foto' => $row['foto'],
         'funcao' => $row['funcao_projeto'],
-        'data_inicio' => $row['data_inicio'],
-        'data_fim' => $row['data_fim'],
-        'salario' => $row['salario'],
+        'contrato_data_inicio' => $row['contrato_data_inicio'],
+        'contrato_data_fim' => $row['contrato_data_fim'],
+        'contrato_salario' => $row['contrato_salario'],
         'ativo' => $row['ativo'],
     ];
 }

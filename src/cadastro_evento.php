@@ -472,7 +472,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
         <div class="grid cols-2" style="margin-top:10px;">
           <div>
             <label for="projTipo">Tipo (*)</label>
-            <select id="projTipo" required>
+            <select id="projTipo" name="tipo" required>
               <option value="EVENTO">Evento</option>
               <option value="OFICINA">Oficina</option>
             </select>
@@ -1291,6 +1291,8 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       const nome = qs('#projNome').value.trim();
       const status = qs('#projStatus').value.trim();
 
+      const tipo = qs('#projTipo').value.trim();
+
       const dataInicio = qs('#projDataInicio').value;
       const dataFim = qs('#projDataFim').value;
       const descricao = qs('#projDescricao').value.trim();
@@ -1301,8 +1303,13 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
         alert('Preencha nome e status do evento.');
         return;
       }
+
       if (!dataInicio) {
         alert('Data início é obrigatória.');
+        return;
+      }
+      if (!tipo || !['EVENTO','OFICINA'].includes(tipo)) {
+        alert('Selecione um tipo válido (Evento ou Oficina).');
         return;
       }
       if (!imgDescFile) {
@@ -1317,6 +1324,9 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       const fd = new FormData();
       fd.append('nome', nome);
       fd.append('status', status);
+
+      // Obrigatório para o backend (ajax_criar_evento.php): EVENTO | OFICINA
+      fd.append('tipo', tipo);
 
       fd.append('data_inicio', dataInicio);
       fd.append('data_fim', dataFim || '');
