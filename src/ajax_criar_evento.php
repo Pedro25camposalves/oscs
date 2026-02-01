@@ -209,18 +209,15 @@ try {
     // ====== Envolvidos existentes (vincula no projeto) ======
     if (count($envExistentes) > 0) {
         $stCheckEnv = $conn->prepare("SELECT id FROM envolvido_osc WHERE id = ? AND osc_id = ? LIMIT 1");
-        $stInsEP = $conn->prepare("
-            INSERT INTO envolvido_projeto (envolvido_osc_id, projeto_id, funcao, data_inicio, data_fim, salario, ativo)
-            VALUES (?, ?, ?, ?, ?, ?, 1)
+        $stInsEP = $conn->prepare(
+            "
+            INSERT INTO envolvido_projeto (envolvido_osc_id, projeto_id, funcao, ativo)
+            VALUES (?, ?, ?, 1)
             ON DUPLICATE KEY UPDATE
               funcao = VALUES(funcao),
-              data_inicio = VALUES(data_inicio),
-              data_fim = VALUES(data_fim),
-              salario = VALUES(salario),
               ativo = 1
         ");
-
-        foreach ($envExistentes as $e) {
+foreach ($envExistentes as $e) {
             $envId = (int)($e['envolvido_osc_id'] ?? 0);
             if ($envId <= 0) continue;
 
@@ -233,11 +230,7 @@ try {
             $funcaoProj = trim((string)($e['funcao'] ?? 'PARTICIPANTE'));
             if ($funcaoProj === '') $funcaoProj = 'PARTICIPANTE';
 
-            $cIni = trim((string)($e['contrato_data_inicio'] ?? '')) ?: null;
-            $cFim = trim((string)($e['contrato_data_fim'] ?? '')) ?: null;
-            $sal  = trim((string)($e['contrato_salario'] ?? '')) ?: null;
-
-            $stInsEP->bind_param("iissss", $envId, $projetoId, $funcaoProj, $cIni, $cFim, $sal);
+            $stInsEP->bind_param("iis", $envId, $projetoId, $funcaoProj);
             $stInsEP->execute();
             // vincula também no EVENTO (envolvido_evento_oficina)
             $stInsEEO->bind_param("iiis", $envId, $eventoId, $projetoId, $funcaoProj);
@@ -250,46 +243,45 @@ try {
         $funcaoOscAllowed = ['DIRETOR','COORDENADOR','FINANCEIRO','MARKETING','RH','PARTICIPANTE'];
 
         $stInsEO = $conn->prepare("
-            INSERT INTO envolvido_osc (osc_id, foto, nome, email, funcao)
-            VALUES (?, NULL, ?, ?, ?)
+            INSERT INTO envolvido_osc (osc_id, foto, nome, telefone, email, funcao)
+            VALUES (?, NULL, ?, ?, ?, ?)
         ");
 
         $stUpdEOFoto = $conn->prepare("
             UPDATE envolvido_osc SET foto = ? WHERE id = ? AND osc_id = ?
         ");
 
-        $stInsEP2 = $conn->prepare("
-            INSERT INTO envolvido_projeto (envolvido_osc_id, projeto_id, funcao, data_inicio, data_fim, salario, ativo)
-            VALUES (?, ?, ?, ?, ?, ?, 1)
+        $stInsEP2 = $conn->prepare(
+            "
+            INSERT INTO envolvido_projeto (envolvido_osc_id, projeto_id, funcao, ativo)
+            VALUES (?, ?, ?, 1)
             ON DUPLICATE KEY UPDATE
               funcao = VALUES(funcao),
-              data_inicio = VALUES(data_inicio),
-              data_fim = VALUES(data_fim),
-              salario = VALUES(salario),
               ativo = 1
         ");
-
-        foreach ($envNovos as $e) {
+foreach ($envNovos as $e) {
             $nomeN = trim((string)($e['nome'] ?? ''));
             if ($nomeN === '') continue;
 
             $emailN = trim((string)($e['email'] ?? ''));
             if ($emailN !== '' && strlen($emailN) > 100) $emailN = substr($emailN, 0, 100);
 
+            $telN = only_digits((string)($e['telefone'] ?? ''));
+            if (strlen($telN) > 15) $telN = substr($telN, 0, 15);
+
             $funcaoOsc = trim((string)($e['funcao_osc'] ?? 'PARTICIPANTE'));
             if (!in_array($funcaoOsc, $funcaoOscAllowed, true)) $funcaoOsc = 'PARTICIPANTE';
 
-            $funcaoProj = trim((string)($e['funcao_projeto'] ?? 'PARTICIPANTE'));
-            if ($funcaoProj === '') $funcaoProj = 'PARTICIPANTE';
-            // contrato (opcional)
-            $cIni = trim((string)($e['contrato_data_inicio'] ?? '')) ?: null;
-            $cFim = trim((string)($e['contrato_data_fim'] ?? '')) ?: null;
-            $sal  = trim((string)($e['contrato_salario'] ?? '')) ?: null;
+            $funcaoEvento = trim((string)($e['funcao_projeto'] ?? 'PARTICIPANTE'));
+            if ($funcaoEvento === '') $funcaoEvento = 'PARTICIPANTE';
+
+            // Regra: ao cadastrar NOVO envolvido via EVENTO, ele entra no PROJETO como PARTICIPANTE
+            $funcaoProj = 'PARTICIPANTE';
 
             $fotoKey = trim((string)($e['foto_key'] ?? ''));
 
             // cria envolvido na OSC
-            $stInsEO->bind_param("isss", $oscId, $nomeN, $emailN, $funcaoOsc);
+            $stInsEO->bind_param("issss", $oscId, $nomeN, $telN, $emailN, $funcaoOsc);
             $stInsEO->execute();
             $novoEnvId = (int)$conn->insert_id;
 
@@ -316,10 +308,10 @@ try {
             }
 
             // vincula no projeto
-            $stInsEP2->bind_param("iissss", $novoEnvId, $projetoId, $funcaoProj, $cIni, $cFim, $sal);
+            $stInsEP2->bind_param("iis", $novoEnvId, $projetoId, $funcaoProj);
             $stInsEP2->execute();
             // vincula também no EVENTO (envolvido_evento_oficina)
-            $stInsEEO->bind_param("iiis", $novoEnvId, $eventoId, $projetoId, $funcaoProj);
+            $stInsEEO->bind_param("iiis", $novoEnvId, $eventoId, $projetoId, $funcaoEvento);
             $stInsEEO->execute();
         }
     }
