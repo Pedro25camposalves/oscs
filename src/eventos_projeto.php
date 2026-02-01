@@ -734,9 +734,9 @@ try {
             input.addEventListener('input', filtrar);
         }
 
-        // cliques nos botões dentro dos cards de projeto
+        // cliques no lápis (editar) dentro dos cards de evento
         document.addEventListener('click', (e) => {
-            const btn = e.target.closest('[data-action="editar-projeto"], [data-action="eventos-projeto"]');
+            const btn = e.target.closest('[data-action="editar-evento"]');
             if (!btn) return;
 
             const id = btn.getAttribute('data-id');
@@ -745,15 +745,9 @@ try {
             e.preventDefault();
             e.stopPropagation();
 
-            const acao = btn.getAttribute('data-action');
-
-            if (acao === 'editar-projeto') {
-                window.location.href = 'editar_projeto.php?id=' + encodeURIComponent(id);
-            } else if (acao === 'eventos-projeto') {
-                window.location.href = 'eventos_projeto.php?id=' + encodeURIComponent(id);
-            }
+            window.location.href = 'editar_evento.php?id=' + encodeURIComponent(id);
         });
-    })();
+})();
 </script>
 </body>
 </html>
