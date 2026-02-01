@@ -73,7 +73,7 @@ try {
             e.data_inicio,
             e.data_fim,
             e.status
-        FROM evento e
+        FROM evento_oficina e
         WHERE e.projeto_id = ?
         ORDER BY e.data_inicio ASC, e.id DESC
     ";
@@ -235,6 +235,28 @@ try {
         transform: translateZ(0);
     }
 
+    .event-card{
+        height:170px; /* mesmo tamanho visual do .plus-card */
+    }
+
+    .event-card .project-title{
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+    }
+
+    .event-card .project-subtitle,
+    .event-card .project-dates{
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .event-card .project-actions{
+        margin-top: auto; /* mantém os botões “no pé” sem esticar o card */
+    }
+
     .project-card:hover{
         transform: translateY(-2px);
         box-shadow: 0 16px 34px rgba(16, 24, 40, 0.12);
@@ -313,6 +335,16 @@ try {
         font-size:12px;
         width:fit-content;
     }
+
+
+
+    .chips-row{
+        display:flex;
+        gap:8px;
+        align-items:center;
+        flex-wrap:wrap;
+    }
+
 
     /* grid de infos (datas) igual à .kv das OSCs */
     .kv{
@@ -560,7 +592,7 @@ try {
     <div class="tabs-top" id="tabsTop">
         <a class="tab-btn" href="editar_osc.php"><span class="dot"></span>OSC</a>
         <a class="tab-btn" href="projetos_osc.php"><span class="dot"></span>Projetos</a>
-        <a class="tab-btn is-active" href="projetos_osc.php"><span class="dot"></span>Eventos</a>
+        <a class="tab-btn is-active" href="eventos_projeto.php?id=<?= $projetoId ?>"><span class="dot"></span>Eventos</a>
     </div>
 
     <div class="card">
@@ -614,7 +646,13 @@ try {
                     }
 
                     $statusLabel = $statusEvt !== '' ? $statusEvt : 'SEM STATUS';
-                ?>
+                
+
+                    $tipoNorm = strtoupper(trim((string)$tipo));
+                    $tipoPill = $tipo;
+                    if ($tipoNorm === 'EVENTO')  $tipoPill = 'Evento';
+                    if ($tipoNorm === 'OFICINA') $tipoPill = 'Oficina';
+?>
 
                 <a class="project-card event-card"
                 style="--bgimg: <?= $bgImg ?>;"
@@ -625,21 +663,17 @@ try {
                     <div class="project-overlay"></div>
 
                     <div class="project-content">
-                        <span class="project-chip">
-                            <?= htmlspecialchars($statusLabel) ?>
-                        </span>
+                        <div class="chips-row">
+                            <?php if (!empty($tipoPill)): ?>
+                                <span class="project-chip"><?= htmlspecialchars($tipoPill) ?></span>
+                            <?php endif; ?>
+                            <span class="project-chip"><?= htmlspecialchars($statusLabel) ?></span>
+                        </div>
 
                         <h3 class="project-title">
                             <?= htmlspecialchars($nome) ?>
                         </h3>
-
-                        <?php if ($tipo): ?>
-                            <p class="project-subtitle">
-                                Tipo: <?= htmlspecialchars($tipo) ?>
-                            </p>
-                        <?php endif; ?>
-
-                        <?php if ($textoDatas !== ''): ?>
+<?php if ($textoDatas !== ''): ?>
                             <p class="project-dates">
                                 <?= htmlspecialchars($textoDatas) ?>
                             </p>
@@ -653,14 +687,6 @@ try {
                                 data-action="editar-evento"
                                 data-id="<?= $id ?>">
                                 <span class="icon-pencil">✏</span>
-                            </button>
-
-                            <button
-                                type="button"
-                                class="btn btn-ghost"
-                                data-action="detalhes-evento"
-                                data-id="<?= $id ?>">
-                                Detalhes
                             </button>
                         </div>
                     </div>

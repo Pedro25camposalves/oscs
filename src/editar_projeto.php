@@ -755,7 +755,7 @@ try {
         </div>
 
         <div style="margin-bottom: 5px;">
-          <label for="funcaoNoProjetoProjeto">Função (*)</label>
+          <label for="funcaoNoProjetoProjeto">Função no projeto (*)</label>
           <select id="funcaoNoProjetoProjeto">
             <option value="">Selecione...</option>
             <option value="DIRETOR">Diretor(a)</option>
@@ -1757,14 +1757,12 @@ const TIPOS_POR_CATEGORIA_OSC = {
         { value: 'PLANO_TRABALHO',        label: 'Plano de Trabalho' },
         { value: 'PLANILHA_ORCAMENTARIA', label: 'Planilha Orçamentária' },
         { value: 'TERMO_COLABORACAO',     label: 'Termo de Colaboração' },
-        { value: 'OUTRO',                 label: 'Outro' },
     ],
     ESPECIFICOS: [
         { value: 'APOSTILAMENTO', label: 'Termo de Apostilamento' },
         { value: 'CND',           label: 'Certidão Negativa de Débito (CND)' },
         { value: 'DECRETO',       label: 'Decreto/Portaria' },
         { value: 'APTIDAO',       label: 'Aptidão para Receber Recursos' },
-        { value: 'OUTRO',         label: 'Outro' },
     ],
     CONTABIL: [
         { value: 'BALANCO_PATRIMONIAL', label: 'Balanço Patrimonial' },
@@ -2207,7 +2205,7 @@ renderdocsProjeto();
           let linha = d.tipo_label || d.tipo || '';
           if (d.tipo === 'CND' && d.subtipo_label) {
             linha += ' — ' + d.subtipo_label;
-          } else if ((d.tipo === 'OUTRO' || d.tipo === 'OUTRO_INSTITUCIONAL' || d.tipo === 'OUTRO_CONTABIL') && d.descricao) {
+          } else if ((d.tipo === 'OUTRO' || d.tipo === 'OUTRO_CONTABIL') && d.descricao) {
             linha += ' — ' + d.descricao;
           }
 
