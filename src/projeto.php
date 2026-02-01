@@ -3,12 +3,141 @@
 require_once 'conexao.php'; // precisa retornar $conn como mysqli
 
 $osc = $_GET['osc'] ?? null;
+$projeto = $_GET['projeto'] ?? null;
 
-if (!$osc || !is_numeric($osc)) {
+if (!$osc || !$projeto || !is_numeric($osc) || !is_numeric($projeto)) {
     echo "ID inválido";
     exit;
 }
 
+function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+function dataBR($date){
+  if(!$date) return null;
+  $ts = strtotime($date);
+  return $ts ? date('d/m/Y', $ts) : null;
+}
+function badgeStatus($status){
+  $s = strtoupper(trim((string)$status));
+  return match($s){
+    'EXECUCAO' => ['bg-success', 'Execução'],
+    'PLANEJAMENTO' => ['bg-primary', 'Planejamento'],
+    'PENDENTE' => ['bg-warning text-dark', 'Aguardando início'],
+    'ENCERRADO' => ['bg-secondary', 'Encerrado'],
+    default => ['bg-info text-dark', $status ?: 'Status']
+  };
+}
+
+$stmtDocs = $conn->prepare("SELECT subtipo, documento, ano_referencia, descricao FROM documento WHERE projeto_id = ? ORDER BY ano_referencia DESC, id_documento DESC");
+$stmtDocs->bind_param("i", $projeto);
+$stmtDocs->execute();
+$result = $stmtDocs->get_result();
+$documentos = [];
+while ($rowDoc = $result->fetch_assoc()) {
+    $documentos[] = $rowDoc;
+}
+
+$docsPorSubtipo = [];
+foreach ($documentos as $doc) {
+    $subtipo = strtolower(trim($doc['subtipo'] ?? ''));
+
+    if ($subtipo === 'outro') $subtipo = 'outros';
+
+    $docsPorSubtipo[$subtipo][] = [
+        'caminho' => '/oscs/src/' . ltrim($doc['documento'], '/'),
+        'nome'    => basename($doc['documento']),
+        'ano'     => $doc['ano_referencia'] ?? '',
+        'descricao' => $doc['descricao'] ?? ''
+    ];
+}
+
+$cndKeys = ['cnd_federal', 'cnd_estadual', 'cnd_municipal'];
+
+$listaCnds = [];
+foreach ($cndKeys as $k) {
+  if (!empty($docsPorSubtipo[$k])) {
+    $listaCnds = array_merge($listaCnds, $docsPorSubtipo[$k]);
+  }
+}
+
+// se tiver 1 ou mais CNDs, cria o grupo virtual "cnds"
+if (!empty($listaCnds)) {
+  $docsPorSubtipo['cnds'] = $listaCnds;
+}
+
+
+$pdfs = [];
+foreach ($docsPorSubtipo as $subtipo => $lista) {
+    if ($subtipo === 'outros') continue; 
+    if (count($lista) === 1) {
+        $pdfs[$subtipo] = $lista[0]['caminho'];
+    }
+}
+
+$stmtEO = $conn->prepare("
+  SELECT id, tipo, nome, descricao, img_capa, data_inicio, data_fim, status
+  FROM evento_oficina
+  WHERE projeto_id = ?
+  ORDER BY data_inicio DESC, id DESC
+");
+$stmtEO->bind_param("i", $projeto);
+$stmtEO->execute();
+
+$rows = $stmtEO->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$oficinas = [];
+$eventos  = [];
+
+foreach ($rows as $r) {
+  $tipo = strtoupper(trim($r['tipo'] ?? ''));
+  if ($tipo === 'OFICINA') {
+    $oficinas[] = $r;
+  } elseif ($tipo === 'EVENTO') {
+    $eventos[] = $r;
+  }
+}
+
+$stmtProjeto = $conn->prepare("
+  SELECT id, osc_id, nome, descricao, img_descricao, data_inicio, data_fim, telefone, email, status, logo
+  FROM projeto
+  WHERE id = ? AND osc_id = ?
+  LIMIT 1
+");
+$stmtProjeto->bind_param("ii", $projeto, $osc);
+$stmtProjeto->execute();
+$resProjeto = $stmtProjeto->get_result();
+
+$proj = $resProjeto->fetch_assoc();
+if (!$proj) {
+  echo "Projeto não encontrado";
+  exit;
+}
+
+$stmtEnvolvido = $conn->prepare("
+  SELECT envolvido_osc.id, envolvido_osc.nome, envolvido_projeto.funcao, envolvido_osc.foto, envolvido_osc.telefone, envolvido_osc.email, envolvido_projeto.salario, envolvido_projeto.data_inicio, envolvido_projeto.data_fim
+  FROM envolvido_projeto
+  LEFT JOIN envolvido_osc ON envolvido_osc.id = envolvido_projeto.envolvido_osc_id
+  WHERE envolvido_projeto.projeto_id = ?
+    AND envolvido_projeto.funcao <> 'PARTICIPANTE'
+  ORDER BY
+    CASE envolvido_projeto.funcao
+      WHEN 'DIRETOR' THEN 1
+      WHEN 'COORDENADOR' THEN 2
+      WHEN 'FINANCEIRO' THEN 3
+      WHEN 'MARKETING' THEN 4
+      WHEN 'RH' THEN 5
+      ELSE 99
+    END, envolvido_osc.nome ASC
+");
+$stmtEnvolvido->bind_param("i", $projeto);
+$stmtEnvolvido->execute();
+$envolvidosProjeto = $stmtEnvolvido->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$stmtFotos = $conn->prepare("SELECT img FROM galeria_projeto WHERE projeto_id = ? ORDER BY id DESC");
+$stmtFotos->bind_param("i", $projeto);
+$stmtFotos->execute();
+$fotosProjeto = $stmtFotos->get_result()->fetch_all(MYSQLI_ASSOC);
+
+//conculta para visual
 $stmt = $conn->prepare("SELECT osc.*, template_web.*, cores.* FROM osc
 LEFT JOIN template_web ON template_web.osc_id = osc.id LEFT JOIN cores ON cores.osc_id = osc.id WHERE osc.id = ?;");
 $stmt->bind_param("i", $osc); 
@@ -26,42 +155,18 @@ $cor1 = $row["cor1"];
 $cor2 = $row["cor2"];
 $cor3 = $row["cor3"];
 $cor4 = $row["cor4"];
-$cor_font = $row["cor1"];
-$background = '#ffffff';
-// --------------------------
-// INICIO
-// --------------------------
-$label_banner = $row["label_banner"];
-$missao = $row["missao"];
-$visao = $row["visao"];
-$valores = $row["valores"];
-// --------------------------
-// SOBRE
-// --------------------------
-//$cnae = $row["cnae"];
-$historia = $row["historia"];
-//$area_atuacao1 = $row["area_atuacao"];
-//$subarea1 = $row["subarea"];
-$area_atuacao2 = "Cultura e recreação";
-$subarea2 = "Não Informado";
-// --------------------------
-// TRANSPARENCIA
-// --------------------------
-$nome_fantasia = $row["nome_fantasia"];
-$sigla = "ASSOCEST";
-$situacao_cad = $row["situacao_cadastral"];
-$situacao_imo = "Não informado";
-$ano_cadastro = $row["ano_cnpj"];
-$ano_fundacao = $row["ano_fundacao"];
-$responsavel = "Não informado";
-$oq_faz = $row["oque_faz"];
-// --------------------------
-// INFORMAÇÕES GERAIS
-// --------------------------
-$logo_nobg = $row["logo_simples"];
-$endereco =  "AVENIDA TEREZA ANSELMO MASSARI <br> PARQUE BRASIL, Jacareí - SP<br> <strong>CEP:</strong> 12328-430";
-$email = $row["email"];
-$tel = $row["telefone"];
+$cor_fonte = $row["cor5"];
+//projeto
+$nome = $proj["nome"]?? '';
+$email = $proj["email"]?? '';
+$telefone = $proj["telefone"]?? '';
+$logo = $proj["logo"];
+$imagem = $proj["img_descricao"];
+$descricao = $proj["descricao"]?? '';
+$depoimento = $proj["depoimento"] ?? '';
+$dataInicioProjeto = $proj["data_inicio"] ?? null;
+$dataFimProjeto = $proj["data_fim"] ?? null;
+$statusProjeto = $proj["status"] ?? '';
 
 ?>
 
@@ -72,7 +177,7 @@ $tel = $row["telefone"];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Projetos - SPA</title>
+    <title><?php echo $nome ?></title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -81,14 +186,21 @@ $tel = $row["telefone"];
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     
     <style>
-        :root {
-            --primary-color: <?php echo $cor2; ?>;
-            --secondary-color: #6c757d;
+        html, body {
+            height: 100%;
         }
-        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: <?php echo $cor1 ?>;
+            display: flex;
+            flex-direction: column;
+        }
+        main {
+            flex: 1 0 auto;
+        }
+
+        footer {
+            flex-shrink: 0;
         }
         
         .btn {
@@ -109,20 +221,16 @@ $tel = $row["telefone"];
             color: #ffffff !important;
         }
 
-        
-
-        
-
         /* Navbar de abas */
         .nav-tabs-custom {
-            background-color: white;
+            background-color: <?php echo $cor2; ?>;
             padding: 1rem 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 2rem;
         }
         
         .nav-tabs-custom .nav-link {
-            color: #6c757d;
+            color: <?php echo $cor1; ?>;
             font-weight: 500;
             border: none;
             border-bottom: 3px solid transparent;
@@ -132,13 +240,13 @@ $tel = $row["telefone"];
         }
         
         .nav-tabs-custom .nav-link:hover {
-            color: var(--primary-color);
+            color: <?php echo $cor_fonte; ?>;
             border-bottom-color: #cce5ff;
         }
         
         .nav-tabs-custom .nav-link.active {
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
+            color: <?php echo $cor_fonte; ?>;
+            border-bottom-color: <?php echo $cor2; ?>;
             background-color: transparent;
         }
         
@@ -164,12 +272,6 @@ $tel = $row["telefone"];
             padding: 0.5rem 1rem;
         }
         
-        /* Carrossel */
-        .carousel-img {
-            height: 250px;
-            object-fit: cover;
-        }
-        
         /* Seções de conteúdo */
         .content-section {
             display: none;
@@ -193,7 +295,7 @@ $tel = $row["telefone"];
         
         /* Cards de documentos */
         .doc-card {
-            border-left: 4px solid var(--primary-color);
+            border-left: 4px solid <?php echo $cor2; ?>;
             transition: all 0.3s ease;
         }
         
@@ -201,7 +303,63 @@ $tel = $row["telefone"];
             background-color: #f8f9fa;
             transform: translateX(5px);
         }
-        
+
+        .doc-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .doc-item:hover {
+            background-color: #eef2f5;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+
+        .doc-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .doc-info i {
+            font-size: 20px;
+            color: #0d6efd; /* azul bootstrap */
+        }
+
+        .doc-nome {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .doc-nome:hover {
+            text-decoration: underline;
+        }
+
+        .doc-actions a {
+            color: #198754; /* verde bootstrap */
+            font-size: 18px;
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+
+        .doc-actions a:hover {
+            color: #146c43;
+            transform: scale(1.15);
+        }
+
+        .doc-ano {
+            margin-left: 6px;
+            font-size: 13px;
+            color: #6c757d;
+            font-weight: 400;
+        }
         /* Seção de Transparência */
         .transparency-section {
             background-color: white;
@@ -212,21 +370,10 @@ $tel = $row["telefone"];
         }
         
         .section-title {
-            color: var(--primary-color);
-            border-bottom: 2px solid var(--primary-color);
+            color: <?php echo $cor_fonte; ?>;
+            border-bottom: 2px solid <?php echo $cor2; ?>;
             padding-bottom: 0.5rem;
             margin-bottom: 1.5rem;
-        }
-        
-        
-        
-        /* Status badges */
-        .status-approved {
-            background-color: #28a745;
-        }
-        
-        .status-pending {
-            background-color: #ffc107;
         }
         
         /* Responsividade */
@@ -236,17 +383,248 @@ $tel = $row["telefone"];
                 font-size: 0.9rem;
             }
         }
+
+        .proj-desc-full{
+            overflow-wrap: anywhere; /* evita scroll lateral em strings grandes */
+            line-height: 1.65;
+        }
+
+        .env-avatar{
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex: 0 0 auto;
+            border: 2px solid rgba(0,0,0,0.08);
+        }
+
+        .proj-cover{
+            width: 100%;
+            max-width: 520px;     /* aumenta no desktop */
+            aspect-ratio: 16 / 10;  /* formato “capa” */
+            object-fit: cover;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        }
+
+        @media (max-width: 991px){
+            .proj-cover{ max-width: 420px; }
+        }
+
+        .env-card .card-body{
+            padding: 14px;
+        }
+
+        .env-avatar{
+            width: 60px;
+            height: 60px;
+        }
+
+        .proj-status{
+            padding: .55rem .9rem;
+            font-weight: 600;
+            letter-spacing: .2px;
+        }
+
+        .proj-text {
+            max-width: 680px;
+        }
+
+        .cor-text {
+            color: <?php echo $cor_fonte; ?> 
+        }
+        #pdfModal.modal {
+            position: fixed;
+            inset: 0;   
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            background: rgba(0,0,0,.55);
+            z-index: 9999;
+            box-sizing: border-box;
+        }
+        
+        /* caixa do modal */
+        #pdfModal .modal-content {
+            width: min(920px, 100%);
+            max-height: calc(100vh - 24px);
+            background: #fff;
+            border-radius: 12px;
+            padding: 14px;
+            margin: 0;
+            box-shadow: 0 18px 60px rgba(0,0,0,.25);
+            overflow: auto;
+            box-sizing: border-box;
+            display: flex;
+            position: relative;
+        }
+
+        /* header fixo */
+        #pdfModal .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        /* área rolável do conteúdo */
+        #pdfModal .modal-body {
+            padding: 12px 14px;
+            overflow: auto;             /* scroll interno */
+            flex: 1;
+        }
+
+        /* footer fixo */
+        #pdfModal .modal-footer {
+            padding: 12px 14px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* canvas centralizado */
+        #pdfViewer {
+            width: 100% !important;
+            height: auto !important;
+            display: block;
+            margin: 10px auto 0;
+        }
+
+        /* botão de fechar */
+        #pdfModal .close-btn {
+            position: sticky;         /* fica visível quando rolar */
+            top: 0;
+            float: right;
+            background: transparent;
+            font-size: 28px;
+            line-height: 1;
+            padding: 6px 10px;
+            cursor: pointer;
+            border-radius: 10px;
+            z-index: 2;
+        }
+
+        /* mobile: ocupa quase tudo */
+        @media (max-width: 576px) {
+            #pdfModal .modal-content {
+                width: 100%;
+                max-height: 92vh;
+            }
+        }
+        #listaDocumentos{
+            max-height: 60vh;
+            overflow: auto;
+        }
+
+        /* ===== GALERIA ===== */
+        .gallery-grid{
+            display: grid;
+            gap: 14px;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
+        .gallery-card{
+            border: 0;
+            background: transparent;
+            padding: 0;
+            cursor: pointer;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 8px 18px rgba(0,0,0,.10);
+            transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+        }
+
+        .gallery-card:hover{
+            transform: translateY(-4px);
+            box-shadow: 0 14px 28px rgba(0,0,0,.14);
+            filter: brightness(1.02);
+        }
+
+        .gallery-card img{
+            width: 100%;
+            aspect-ratio: 4 / 3;     /* quadradinho (muda pra 4/3 se quiser retangular) */
+            object-fit: cover;
+            display: block;
+        }
+
+        /* quebra responsiva */
+        @media (max-width: 1200px){
+            .gallery-grid{ grid-template-columns: repeat(4, 1fr); }
+        }
+        @media (max-width: 992px){
+            .gallery-grid{ grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 576px){
+            .gallery-grid{ grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .gallery-modal-content{
+            width: min(980px, 100%);
+            max-height: calc(100vh - 24px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gallery-body{
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-height: 55vh;
+        }
+
+        .gallery-view{
+            width: 100%;
+            max-width: 880px;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: 14px;
+            box-shadow: 0 14px 40px rgba(0,0,0,.18);
+            background: #f6f6f6;
+        }
+
+        /* setas sobre a imagem */
+        .gallery-nav{
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 44px;
+            border: 0;
+            border-radius: 999px;
+            background: rgba(0,0,0,.55);
+            color: #fff;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            z-index: 5;
+        }
+
+        .gallery-nav.prev{ left: 10px; }
+        .gallery-nav.next{ right: 10px; }
+
+        @media (max-width: 576px){
+            .gallery-nav{ width: 40px; height: 40px; }
+            .gallery-view{ max-height: 62vh; }
+        }
+
     </style>
 </head>
 <body>
     
     <!-- Header -->
-<header class="text-white py-4" style="background-color: var(--primary-color);">
+<header class="py-4 cor-text" style="background-color:  <?php echo $cor2; ?>">
     <div class="container d-flex align-items-center gap-4">
         
         <!-- LOGO -->
         <div style="width: 70px; height: 70px; overflow: hidden; border-radius: 8px;">
-            <img src="caminho/da/sua/logo.png" 
+            <img src="<?php echo $logo?>" 
                  alt="Logo" 
                  class="img-fluid w-100 h-100" 
                  style="object-fit: cover;">
@@ -254,7 +632,7 @@ $tel = $row["telefone"];
 
         <!-- TÍTULOS -->
         <div>
-            <h1 class="mb-0">Projeto Casulo</h1>
+            <h1 class="mb-0"><?php echo $nome ?></h1>
             <p class="mb-0 mt-2">Acompanhamento e Transparência de Projetos Sociais</p>
         </div>
 
@@ -267,17 +645,22 @@ $tel = $row["telefone"];
             <ul class="nav nav-tabs border-0">
                 <li class="nav-item">
                     <a class="nav-link active" onclick="showTab('oficinas')">
-                        <i class="bi bi-calendar-event me-2"></i>Oficinas
+                        <i class="bi bi-calendar-event me-2"></i>Oficinas e Eventos
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" onclick="showTab('descricao')">
-                        <i class="bi bi-file-text me-2"></i>Descrição
+                        <i class="bi bi-file-text me-2"></i>Sobre o Projeto
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" onclick="showTab('transparencia')">
                         <i class="bi bi-eye me-2"></i>Transparência
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showTab('galeria')">
+                        <i class="bi bi-images me-2"></i>Galeria
                     </a>
                 </li>
             </ul>
@@ -289,247 +672,191 @@ $tel = $row["telefone"];
         
         <!-- ABA: OFICINAS -->
         <section id="oficinas" class="content-section active">
-            <h2 class="mb-4">Oficinas Realizadas</h2>
-            
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                
-                <!-- Card Oficina 1 - PHP LOOP AQUI -->
-                <div class="col">
+            <h2 class="mb-4">Oficinas</h2>
+            <?php if (empty($oficinas)): ?>
+                <div class="alert alert-light border">Nenhuma oficina cadastrada para este projeto.</div>
+            <?php else: ?>
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                <?php foreach ($oficinas as $o): 
+                    $img = $o['img_capa'] ?? '';
+                    $imgSrc = $img ? '/oscs/src/' . ltrim($img, '/') : '/assets/images/projeto_placeholder.png';
+                    [$badgeClass, $badgeText] = badgeStatus($o['status'] ?? '');
+                ?>
+                    <div class="col">
                     <div class="card workshop-card h-100">
-                        <img src="https://picsum.photos/400/300?random=1" class="card-img-top" alt="Oficina 1">
+                        <img src="<?= h($imgSrc) ?>" class="card-img-top" alt="<?= h($o['nome'] ?? 'Oficina') ?>">
                         <div class="card-body">
-                            <h5 class="card-title">Oficina de Artesanato</h5>
-                            <div class="mb-3">
-                                <p class="mb-1"><strong>Data Inicial:</strong> 15/01/2024</p>
-                                <p class="mb-1"><strong>Data Final:</strong> 15/03/2024</p>
-                                <span class="badge bg-success badge-status">Em Andamento</span>
-                            </div>
-                            <p class="card-text">Oficina voltada para o desenvolvimento de habilidades em artesanato e trabalhos manuais, promovendo a criatividade e geração de renda.</p>
-                            
-                            <!-- Carrossel de Fotos -->
-                            <div id="carousel1" class="carousel slide mt-3" data-bs-ride="carousel">
-                                <div class="carousel-inner">
-                                    <div class="carousel-item active">
-                                        <img src="https://picsum.photos/400/250?random=10" class="d-block w-100 carousel-img" alt="Foto 1">
-                                    </div>
-                                    <div class="carousel-item">
-                                        <img src="https://picsum.photos/400/250?random=11" class="d-block w-100 carousel-img" alt="Foto 2">
-                                    </div>
-                                    <div class="carousel-item">
-                                        <img src="https://picsum.photos/400/250?random=12" class="d-block w-100 carousel-img" alt="Foto 3">
-                                    </div>
-                                    <div class="carousel-item">
-                                        <img src="https://picsum.photos/400/250?random=13" class="d-block w-100 carousel-img" alt="Foto 4">
-                                    </div>
-                                    <div class="carousel-item">
-                                        <img src="https://picsum.photos/400/250?random=14" class="d-block w-100 carousel-img" alt="Foto 5">
-                                    </div>
-                                </div>
-                                <button class="carousel-control-prev" type="button" data-bs-target="#carousel1" data-bs-slide="prev">
-                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                </button>
-                                <button class="carousel-control-next" type="button" data-bs-target="#carousel1" data-bs-slide="next">
-                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                </button>
-                            </div>
+                        <h5 class="card-title"><?= h($o['nome'] ?? '') ?></h5>
+                        <div class="mb-3">
+                            <p class="mb-1"><strong>Data Inicial:</strong> <?= h(dataBR($o['data_inicio'] ?? null) ?? '-') ?></p>
+                            <p class="mb-1"><strong>Data Final:</strong> <?= h(dataBR($o['data_fim'] ?? null) ?? '-') ?></p>
+                            <span class="badge <?= h($badgeClass) ?> badge-status"><?= h($badgeText) ?></span>
+                        </div>
+                        <p class="card-text clamp-3"><?= h($o['descricao'] ?? '') ?></p>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Card Oficina 2 -->
-                <div class="col">
-                    <div class="card workshop-card h-100">
-                        <img src="https://picsum.photos/400/300?random=2" class="card-img-top" alt="Oficina 2">
-                        <div class="card-body">
-                            <h5 class="card-title">Oficina de Tecnologia</h5>
-                            <div class="mb-3">
-                                <p class="mb-1"><strong>Data Inicial:</strong> 01/02/2024</p>
-                                <p class="mb-1"><strong>Data Final:</strong> 30/04/2024</p>
-                                <span class="badge bg-primary badge-status">Planejamento</span>
-                            </div>
-                            <p class="card-text">Capacitação em tecnologia da informação, incluindo informática básica, programação e ferramentas digitais para inclusão digital.</p>
-                            
-                            <!-- Carrossel de Fotos -->
-                            <div id="carousel2" class="carousel slide mt-3" data-bs-ride="carousel">
-                                <div class="carousel-inner">
-                                    <div class="carousel-item active">
-                                        <img src="https://picsum.photos/400/250?random=20" class="d-block w-100 carousel-img" alt="Foto 1">
-                                    </div>
-                                    <div class="carousel-item">
-                                        <img src="https://picsum.photos/400/250?random=21" class="d-block w-100 carousel-img" alt="Foto 2">
-                                    </div>
-                                    <div class="carousel-item">
-                                        <img src="https://picsum.photos/400/250?random=22" class="d-block w-100 carousel-img" alt="Foto 3">
-                                    </div>
-                                    <div class="carousel-item">
-                                        <img src="https://picsum.photos/400/250?random=23" class="d-block w-100 carousel-img" alt="Foto 4">
-                                    </div>
-                                    <div class="carousel-item">
-                                        <img src="https://picsum.photos/400/250?random=24" class="d-block w-100 carousel-img" alt="Foto 5">
-                                    </div>
-                                </div>
-                                <button class="carousel-control-prev" type="button" data-bs-target="#carousel2" data-bs-slide="prev">
-                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                </button>
-                                <button class="carousel-control-next" type="button" data-bs-target="#carousel2" data-bs-slide="next">
-                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                </button>
-                            </div>
-                        </div>
                     </div>
+                <?php endforeach; ?>
                 </div>
-                
-                <!-- Card Oficina 3 -->
-                <div class="col">
-                    <div class="card workshop-card h-100">
-                        <img src="https://picsum.photos/400/300?random=3" class="card-img-top" alt="Oficina 3">
-                        <div class="card-body">
-                            <h5 class="card-title">Oficina de Música</h5>
-                            <div class="mb-3">
-                                <p class="mb-1"><strong>Data Inicial:</strong> 10/03/2024</p>
-                                <p class="mb-1"><strong>Data Final:</strong> 10/06/2024</p>
-                                <span class="badge bg-warning text-dark badge-status">Aguardando Início</span>
-                            </div>
-                            <p class="card-text">Ensino de teoria musical e prática de instrumentos, desenvolvendo talentos e promovendo a expressão artística através da música.</p>
-                            
-                            <!-- Carrossel de Fotos -->
-                            <div id="carousel3" class="carousel slide mt-3" data-bs-ride="carousel">
-                                <div class="carousel-inner">
-                                    <div class="carousel-item active">
-                                        <img src="https://picsum.photos/400/250?random=30" class="d-block w-100 carousel-img" alt="Foto 1">
-                                    </div>
-                                    <div class="carousel-item">
-                                        <img src="https://picsum.photos/400/250?random=31" class="d-block w-100 carousel-img" alt="Foto 2">
-                                    </div>
-                                    <div class="carousel-item">
-                                        <img src="https://picsum.photos/400/250?random=32" class="d-block w-100 carousel-img" alt="Foto 3">
-                                    </div>
-                                    <div class="carousel-item">
-                                        <img src="https://picsum.photos/400/250?random=33" class="d-block w-100 carousel-img" alt="Foto 4">
-                                    </div>
-                                    <div class="carousel-item">
-                                        <img src="https://picsum.photos/400/250?random=34" class="d-block w-100 carousel-img" alt="Foto 5">
-                                    </div>
-                                </div>
-                                <button class="carousel-control-prev" type="button" data-bs-target="#carousel3" data-bs-slide="prev">
-                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                </button>
-                                <button class="carousel-control-next" type="button" data-bs-target="#carousel3" data-bs-slide="next">
-                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
+            <?php endif; ?>
 
-                
-            </div>
+            <hr class="my-5">
+
+            <h2 class="mb-4">Eventos</h2>
+            <?php if (empty($eventos)): ?>
+                <div class="alert alert-light border">Nenhum evento cadastrado para este projeto.</div>
+            <?php else: ?>
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                <?php foreach ($eventos as $e): 
+                    $img = $e['img_capa'] ?? '';
+                    $imgSrc = $img ? '/oscs/src/' . ltrim($img, '/') : '/assets/images/projeto_placeholder.png';
+                    [$badgeClass, $badgeText] = badgeStatus($e['status'] ?? '');
+                ?>
+                    <div class="col">
+                    <div class="card workshop-card h-100">
+                        <img src="<?= h($imgSrc) ?>" class="card-img-top" alt="<?= h($e['nome'] ?? 'Evento') ?>">
+                        <div class="card-body">
+                        <h5 class="card-title"><?= h($e['nome'] ?? '') ?></h5>
+
+                        <div class="mb-3">
+                            <p class="mb-1"><strong>Data Inicial:</strong> <?= h(dataBR($e['data_inicio'] ?? null) ?? '-') ?></p>
+                            <p class="mb-1"><strong>Data Final:</strong> <?= h(dataBR($e['data_fim'] ?? null) ?? '-') ?></p>
+                            <span class="badge <?= h($badgeClass) ?> badge-status"><?= h($badgeText) ?></span>
+                        </div>
+
+                        <p class="card-text clamp-3"><?= h($e['descricao'] ?? '') ?></p>
+                        </div>
+                    </div>
+                    </div>
+                <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         </section>
         
         <!-- ABA: DESCRIÇÃO -->
         <section id="descricao" class="content-section">
             <div class="transparency-section">
                 <h2 class="section-title">Descrição do Projeto</h2>
-                
 
-                
-
-        
-                
                 <div class="container my-4">
-  <div class="row align-items-start">
+                    <div class="row g-4 align-items-start">
 
-    <!-- COLUNA DE TEXTO (ESQUERDA) -->
-    <div class="col-md-8">
+                        <!-- TEXTO (ESQUERDA) -->
+                        <div class="col-lg-7">
 
-      <div class="mb-4">
-        <h5>Objetivo Geral</h5>
-        <p class="text-muted">
-          Promover a capacitação profissional e o desenvolvimento de habilidades técnicas e artísticas 
-          para jovens e adultos em situação de vulnerabilidade social, visando sua inclusão no mercado 
-          de trabalho e melhoria da qualidade de vida.
-        </p>
-      </div>
-      
-      <div class="mb-4">
-        <h5>Objetivos Específicos</h5>
-        <ul class="text-muted">
-          <li>Oferecer oficinas gratuitas de capacitação em diversas áreas</li>
-          <li>Promover a inclusão digital e o acesso à tecnologia</li>
-          <li>Desenvolver habilidades artísticas e expressivas</li>
-          <li>Facilitar a geração de renda através do empreendedorismo</li>
-          <li>Fortalecer vínculos comunitários e sociais</li>
-        </ul>
-      </div>
-      
-      <div class="mb-4">
-        <h5>Público-Alvo</h5>
-        <p class="text-muted">
-          Jovens entre 15 e 29 anos e adultos em situação de vulnerabilidade social, residentes 
-          nas comunidades atendidas pelo projeto. Prioridade para pessoas em situação de desemprego, 
-          baixa escolaridade e grupos em situação de exclusão social.
-        </p>
-      </div>
-      
-      <div class="mb-4">
-        <h5>Metodologia</h5>
-        <p class="text-muted">
-          As oficinas são ministradas por profissionais qualificados e voluntários, com carga horária 
-          de 40 a 80 horas cada. As aulas são teóricas e práticas, com fornecimento de material didático 
-          e certificado de conclusão. O acompanhamento pedagógico é realizado continuamente para garantir 
-          a qualidade do ensino e o aproveitamento dos participantes.
-        </p>
-      </div>
+                        <h3 class="mb-2"><?= h($nome) ?></h3>
+                        <?php [$stClass, $stText] = badgeStatus($statusProjeto ?? ''); ?>
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                            <span class="proj-status badge rounded-pill <?= h($stClass) ?>">
+                                <i class="bi bi-flag"></i> <?= h($stText) ?>
+                            </span>
 
-    </div>
+                            <?php if ($dataInicioProjeto): ?>
+                                <span class="badge bg-light text-dark border rounded-pill">
+                                <i class="bi bi-calendar-event"></i> Início: <?= h(dataBR($dataInicioProjeto)) ?>
+                                </span>
+                            <?php endif; ?>
 
-    <!-- COLUNA DA IMAGEM (DIREITA) -->
-    <div class="col-md-4">
-      <div class="text-center">
-        <img 
-          src="https://picsum.photos/500/500" 
-          alt="Imagem ilustrativa do projeto" 
-          class="img-fluid rounded shadow"
-        >
-        <!-- Você pode substituir o src pela imagem real -->
-      </div>
-    </div>
-
-  </div>
-</div>
-                
-                <div class="row mt-4">
-                    <div class="col-md-4 mb-3">
-                        <div class="card text-center">
-                            <div class="card-body">
-                                <i class="bi bi-people-fill text-primary" style="font-size: 3rem;"></i>
-                                <h5 class="card-title mt-3">500+</h5>
-                                <p class="card-text text-muted">Beneficiários Diretos</p>
+                            <?php if ($dataFimProjeto): ?>
+                                <span class="badge bg-light text-dark border rounded-pill">
+                                <i class="bi bi-calendar-check"></i> Fim: <?= h(dataBR($dataFimProjeto)) ?>
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                        <!-- DESCRIÇÃO ÚNICA (vem do banco) -->
+                        <div class="mb-4">
+                            <h5 class="mb-2">Descrição</h5>
+                            <div class="proj-text">
+                                <p class="text-muted proj-desc-full">
+                                <?= nl2br(h($descricao)) ?>
+                                </p>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="card text-center">
-                            <div class="card-body">
-                                <i class="bi bi-calendar-check text-success" style="font-size: 3rem;"></i>
-                                <h5 class="card-title mt-3">12 meses</h5>
-                                <p class="card-text text-muted">Duração do Projeto</p>
+
+                        <!-- CONTATO DO PROJETO -->
+                        <?php if (!empty($telefone) || !empty($email)): ?>
+                            <div class="mb-4">
+                            <h5 class="mb-2">Contato</h5>
+
+                            <?php if (!empty($telefone)): ?>
+                                <p class="mb-1">
+                                <i class="bi bi-telephone"></i>
+                                <strong>Telefone:</strong> <?= h($telefone) ?>
+                                </p>
+                            <?php endif; ?>
+
+                            <?php if (!empty($email)): ?>
+                                <p class="mb-0">
+                                <i class="bi bi-envelope"></i>
+                                <strong>E-mail:</strong> <?= h($email) ?>
+                                </p>
+                            <?php endif; ?>
                             </div>
+                        <?php endif; ?>
+                        <!-- ENVOLVIDOS (exceto participante) -->
+                        <div class="row g-4 mt-3">
+                            <h5 class="mb-2">Equipe</h5>
+                            <?php foreach ($envolvidosProjeto as $env): ?>
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="card border-0 shadow-sm h-100 env-card">
+                                        <div class="card-body text-center">
+                                            <img
+                                            src="<?= $env['foto']
+                                                ? '/oscs/src/' . ltrim($env['foto'], '/')
+                                                : '/oscs/src/assets/imagens/usuario_default.png'
+                                            ?>"
+                                            class="rounded-circle mb-3 env-avatar"
+                                            alt="<?= h($env['nome']) ?>"
+                                            >
+                                            <h6 class="fw-bold mb-0"><?= h($env['nome']) ?></h6>
+                                            <small class="text-muted d-block mb-2">
+                                            <?= h($env['funcao']) ?>
+                                            </small>
+                                            <div class="text-start small text-muted">
+                                                <div><i class="bi bi-calendar"></i>
+                                                    <strong>Vínculo:</strong>
+                                                    <?= h(dataBR($env['data_inicio'])) ?>
+                                                    →
+                                                    <?= h(dataBR($env['data_fim'])) ?>
+                                                </div>
+                                                <div><i class="bi bi-cash"></i>
+                                                    <strong>Salário:</strong>
+                                                    R$ <?= number_format($env['salario'], 2, ',', '.') ?>
+                                                </div>
+
+                                                <?php if ($env['telefone']): ?>
+                                                    <div><i class="bi bi-telephone"></i>
+                                                    <?= h($env['telefone']) ?>
+                                                    </div>
+                                                <?php endif; ?>
+
+                                                <?php if ($env['email']): ?>
+                                                    <div><i class="bi bi-envelope"></i>
+                                                    <?= h($env['email']) ?>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="card text-center">
-                            <div class="card-body">
-                                <i class="bi bi-book text-info" style="font-size: 3rem;"></i>
-                                <h5 class="card-title mt-3">15</h5>
-                                <p class="card-text text-muted">Oficinas Oferecidas</p>
+
+                        <!-- IMAGEM (DIREITA) -->
+                        <div class="col-lg-5">
+                            <div class="text-center">
+                                <img
+                                src="<?= h($imagem) ?>"
+                                alt="Imagem do projeto"
+                                class="img-fluid rounded shadow proj-cover">
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
+
         
         <!-- ABA: TRANSPARÊNCIA -->
         <section id="transparencia" class="content-section">
@@ -548,8 +875,8 @@ $tel = $row["telefone"];
                                 <h5 class="mb-1">Plano de Trabalho</h5>
                                 <p class="mb-1 text-muted">Documento detalhado com objetivos, metas e atividades do projeto</p>
                             </div>
-                            <button class="btn btn-primary btn-download">
-                                <i class="bi bi-download"></i> Download
+                            <button class="btn btn-primary btn-download" onclick="visualizar('plano_trabalho')">
+                                <i class="bi bi-eye"></i> visualizar
                             </button>
                         </div>
                     </a>
@@ -560,8 +887,8 @@ $tel = $row["telefone"];
                                 <h5 class="mb-1">Planilha Orçamentária</h5>
                                 <p class="mb-1 text-muted">Detalhamento de custos e previsão financeira</p>
                             </div>
-                            <button class="btn btn-primary btn-download">
-                                <i class="bi bi-download"></i> Download
+                            <button class="btn btn-primary btn-download" onclick="visualizar('planilha_orcamentaria')">
+                                <i class="bi bi-eye"></i> visualizar
                             </button>
                         </div>
                     </a>
@@ -572,8 +899,8 @@ $tel = $row["telefone"];
                                 <h5 class="mb-1">Termo de Colaboração (Contrato)</h5>
                                 <p class="mb-1 text-muted">Documento formal de parceria e compromissos assumidos</p>
                             </div>
-                            <button class="btn btn-primary btn-download">
-                                <i class="bi bi-download"></i> Download
+                            <button class="btn btn-primary btn-download" onclick="visualizar('termo_colaboracao')">
+                                <i class="bi bi-eye"></i> visualizar
                             </button>
                         </div>
                     </a>
@@ -598,8 +925,8 @@ $tel = $row["telefone"];
                                 <h5 class="mb-1">Relatório Financeiro Final</h5>
                                 <p class="mb-1 text-muted">Prestação de contas completa do projeto</p>
                             </div>
-                            <button class="btn btn-success btn-download">
-                                <i class="bi bi-download"></i> Download
+                            <button class="btn btn-success btn-download" onclick="visualizar('plano')">
+                                <i class="bi bi-eye"></i> visualizar
                             </button>
                         </div>
                     </a>
@@ -610,8 +937,8 @@ $tel = $row["telefone"];
                                 <h5 class="mb-1">Relatório de Execução</h5>
                                 <p class="mb-1 text-muted">Resultados alcançados e impactos do projeto</p>
                             </div>
-                            <button class="btn btn-success btn-download">
-                                <i class="bi bi-download"></i> Download
+                            <button class="btn btn-success btn-download" onclick="visualizar('plano_de_trabalho')">
+                                <i class="bi bi-eye"></i> visualizar
                             </button>
                         </div>
                     </a>
@@ -633,8 +960,8 @@ $tel = $row["telefone"];
                                 <p class="mb-1 text-muted">Alterações e ajustes no termo de colaboração original</p>
                                 <span class="badge status-approved">Aprovado</span>
                             </div>
-                            <button class="btn btn-primary btn-download">
-                                <i class="bi bi-download"></i> Download
+                            <button class="btn btn-primary btn-download" onclick="visualizar('apostilamento')">
+                                <i class="bi bi-eye"></i> visualizar
                             </button>
                         </div>
                     </div>
@@ -644,10 +971,9 @@ $tel = $row["telefone"];
                             <div class="flex-grow-1">
                                 <h5 class="mb-1">Certidões Negativas de Débitos (CNDs)</h5>
                                 <p class="mb-1 text-muted">Certidões federais, estaduais e municipais</p>
-                                <small class="text-info"><i class="bi bi-link-45deg"></i> Ligações com CNDs ativas e válidas</small>
                             </div>
-                            <button class="btn btn-primary btn-download">
-                                <i class="bi bi-download"></i> Visualizar
+                            <button class="btn btn-primary btn-download" onclick="visualizar('cnds')">
+                                <i class="bi bi-eye"></i> Visualizar
                             </button>
                         </div>
                     </div>
@@ -658,8 +984,8 @@ $tel = $row["telefone"];
                                 <h5 class="mb-1">Decreto/Portaria</h5>
                                 <p class="mb-1 text-muted">Documento oficial de autorização governamental</p>
                             </div>
-                            <button class="btn btn-primary btn-download">
-                                <i class="bi bi-download"></i> Download
+                            <button class="btn btn-primary btn-download" onclick="visualizar('decreto')">
+                                <i class="bi bi-eye"></i> visualizar
                             </button>
                         </div>
                     </div>
@@ -669,10 +995,9 @@ $tel = $row["telefone"];
                             <div class="flex-grow-1">
                                 <h5 class="mb-1">Aptidão para Receber Recursos</h5>
                                 <p class="mb-1 text-muted">Certificado de habilitação da OSC para receber doações</p>
-                                <span class="badge bg-success">OSC Habilitada</span>
                             </div>
-                            <button class="btn btn-primary btn-download">
-                                <i class="bi bi-download"></i> Download
+                            <button class="btn btn-primary btn-download" onclick="visualizar('aptidao')">
+                                <i class="bi bi-eye"></i> visualizar
                             </button>
                         </div>
                     </div>
@@ -690,70 +1015,82 @@ $tel = $row["telefone"];
                     e conformidade com as normas contábeis e fiscais vigentes.
                 </p>
                 
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="card doc-card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    <i class="bi bi-bar-chart-line text-primary me-2"></i>
-                                    Balanço Patrimonial
-                                </h5>
-                                <p class="card-text text-muted">Demonstração dos ativos, passivos e patrimônio líquido</p>
-                                <a href="#" class="btn btn-outline-primary btn-sm btn-download mt-2">
-                                    <i class="bi bi-file-pdf"></i> Baixar PDF
-                                </a>
+                <div class="list-group">
+                <!-- Balanço Patrimonial -->
+                    <div class="list-group-item doc-card">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">Balanço Patrimonial</h5>
+                                <p class="mb-1 text-muted">Demonstração dos ativos, passivos e patrimônio líquido</p>
                             </div>
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-download"
+                                onclick="visualizar('balanco_patrimonial')">
+                            <i class="bi bi-eye"></i> Visualizar
+                            </button>
                         </div>
                     </div>
-                    
-                    <div class="col-md-6">
-                        <div class="card doc-card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    <i class="bi bi-graph-up text-success me-2"></i>
-                                    Demonstração de Resultados (DRE)
-                                </h5>
-                                <p class="card-text text-muted">Receitas, despesas e resultado do exercício</p>
-                                <a href="#" class="btn btn-outline-success btn-sm btn-download mt-2">
-                                    <i class="bi bi-file-pdf"></i> Baixar PDF
-                                </a>
+
+                    <!-- DRE -->
+                    <div class="list-group-item doc-card">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">DRE (Demonstração do Resultado do Exercício)</h5>
+                                <p class="mb-1 text-muted">Receitas, despesas e resultado do exercício</p>
                             </div>
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-download"
+                                onclick="visualizar('dre')">
+                            <i class="bi bi-eye"></i> Visualizar
+                            </button>
                         </div>
                     </div>
-                    
-                    <div class="col-md-6">
-                        <div class="card doc-card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    <i class="bi bi-clipboard-data text-info me-2"></i>
-                                    Relatórios Contábeis
-                                </h5>
-                                <p class="card-text text-muted">Demonstrações e relatórios complementares</p>
-                                <a href="#" class="btn btn-outline-info btn-sm btn-download mt-2">
-                                    <i class="bi bi-folder-open"></i> Ver Documentos
-                                </a>
+
+                    <!-- Outros Documentos (subtipo OUTRO, lista com descrição dinâmica) -->
+                    <div class="list-group-item doc-card">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">Outros Documentos</h5>
+                                <p class="mb-1 text-muted">Documentos variados cadastrados no projeto (com descrição)</p>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="card doc-card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    <i class="bi bi-journal-text text-warning me-2"></i>
-                                    Outros Documentos Contábeis
-                                </h5>
-                                <p class="card-text text-muted">Notas explicativas, pareceres e documentos auxiliares</p>
-                                <a href="#" class="btn btn-outline-warning btn-sm btn-download mt-2">
-                                    <i class="bi bi-file-earmark-zip"></i> Baixar Todos
-                                </a>
-                            </div>
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-download"
+                                onclick="visualizar('outros')">
+                            <i class="bi bi-eye"></i> Visualizar
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-            
         </section>
+
+        <section id="galeria" class="content-section">
+            <h2 class="mb-4">Galeria</h2>
+
+            <?php if (empty($fotosProjeto ?? [])): ?>
+                <div class="alert alert-light border">Nenhuma foto cadastrada para este projeto.</div>
+            <?php else: ?>
+                <div class="gallery-grid">
+                <?php foreach (($fotosProjeto ?? []) as $i => $foto): 
+                    // Ajuste aqui conforme seu banco (ex: $foto['caminho'])
+                    $src = '/oscs/src/' . ltrim($foto['caminho'] ?? $foto, '/');
+                ?>
+                    <button
+                    type="button"
+                    class="gallery-card"
+                    onclick="openGallery(<?= (int)$i ?>)"
+                    aria-label="Abrir foto <?= (int)$i + 1 ?>"
+                    >
+                    <img src="<?= h($src) ?>" alt="Foto do projeto">
+                    </button>
+                <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </section>
+
         
     </main>
     
@@ -806,10 +1143,7 @@ $tel = $row["telefone"];
                 section.style.display = mostrar ? 'block' : 'none';
             }
         }
-        
-
-
-        
+    
         // Animação suave nos cards ao passar o mouse
         document.addEventListener('DOMContentLoaded', function() {
             const cards = document.querySelectorAll('.workshop-card, .doc-card');
@@ -819,19 +1153,332 @@ $tel = $row["telefone"];
                     this.style.transition = 'all 0.3s ease';
                 });
             });
-            
-            // Previne comportamento padrão dos links de download (para demonstração)
-            const downloadButtons = document.querySelectorAll('.btn-download');
-            downloadButtons.forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    alert('Funcionalidade de download será implementada com PHP backend');
-                });
-            });
         });
-        
-
     </script>
-    
+    <script>
+        // Monte este array com PHP (logo abaixo)
+        const galleryPhotos = <?= json_encode(
+            array_map(fn($f) => '/oscs/src/' . ltrim(($f['caminho'] ?? $f), '/'), $fotosProjeto ?? []),
+            JSON_UNESCAPED_SLASHES
+        ) ?>;
+
+        let _galleryIndex = 0;
+
+        function openGallery(index){
+            if(!galleryPhotos || galleryPhotos.length === 0) return;
+
+            _galleryIndex = Math.max(0, Math.min(index, galleryPhotos.length - 1));
+            updateGallery();
+            document.getElementById('galleryModal').style.display = 'flex';
+        }
+
+        function closeGallery(){
+            document.getElementById('galleryModal').style.display = 'none';
+        }
+
+        function updateGallery(){
+            const img = document.getElementById('galleryImage');
+            img.src = galleryPhotos[_galleryIndex];
+
+            const counter = document.getElementById('galleryCounter');
+            counter.textContent = `${_galleryIndex + 1} / ${galleryPhotos.length}`;
+        }
+
+        function nextPhoto(){
+            if(!galleryPhotos.length) return;
+            _galleryIndex = (_galleryIndex + 1) % galleryPhotos.length;
+            updateGallery();
+        }
+
+        function prevPhoto(){
+            if(!galleryPhotos.length) return;
+            _galleryIndex = (_galleryIndex - 1 + galleryPhotos.length) % galleryPhotos.length;
+            updateGallery();
+        }
+
+        // Fecha clicando fora da caixa
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('galleryModal');
+            if(modal && modal.style.display === 'flex' && e.target === modal){
+            closeGallery();
+            }
+        });
+
+        // Teclado: ESC / setas
+        document.addEventListener('keydown', (e) => {
+            const modal = document.getElementById('galleryModal');
+            if(!modal || modal.style.display !== 'flex') return;
+
+            if(e.key === 'Escape') closeGallery();
+            if(e.key === 'ArrowRight') nextPhoto();
+            if(e.key === 'ArrowLeft') prevPhoto();
+        });
+
+        // Swipe (mobile)
+        (function(){
+            const img = document.getElementById('galleryImage');
+            if(!img) return;
+
+            let startX = 0;
+            img.addEventListener('touchstart', (e) => startX = e.touches[0].clientX, {passive:true});
+            img.addEventListener('touchend', (e) => {
+            const endX = e.changedTouches[0].clientX;
+            const diff = endX - startX;
+            if(Math.abs(diff) < 40) return;
+            diff < 0 ? nextPhoto() : prevPhoto();
+            }, {passive:true});
+        })();
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        const pdfs = <?= json_encode($pdfs, JSON_UNESCAPED_SLASHES) ?>;
+        const documentos = <?= json_encode($docsPorSubtipo, JSON_UNESCAPED_SLASHES) ?>;
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // estado (pra re-render no resize)
+        let _pdfDoc = null;
+        let _pdfUrlAtual = null;
+        let _renderEmAndamento = false;
+
+        function visualizar(subtipo) {
+            if (subtipo === 'outros') {
+                if (documentos[subtipo] && documentos[subtipo].length > 0) {
+                abrirLista(subtipo);
+                } else {
+                alert("Nenhum documento disponível.");
+                }
+                return;
+            }
+            if (documentos[subtipo] && documentos[subtipo].length > 1) {
+                abrirLista(subtipo);
+            } else if (pdfs[subtipo]) {
+                abrirPDF(subtipo);
+            } else {
+                alert("Documento não disponível.");
+            }
+        }
+
+        // ========= helpers =========
+
+        function abrirModal() {
+        document.getElementById("pdfModal").style.display = "flex";
+        }
+
+        function limparCanvas() {
+        const canvas = document.getElementById("pdfViewer");
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Calcula scale pra caber no modal (largura disponível)
+        function calcularScaleParaCaber(page) {
+        const canvasContainer =
+            document.querySelector("#pdfModal .modal-content") || document.getElementById("pdfModal");
+
+        // fallback: usa viewport do window se não achar container
+        const larguraDisponivel = canvasContainer
+            ? Math.max(320, canvasContainer.clientWidth - 40) // folga interna
+            : Math.max(320, window.innerWidth - 80);
+
+        const viewportBase = page.getViewport({ scale: 1 });
+        return larguraDisponivel / viewportBase.width;
+        }
+
+        async function renderizarPrimeiraPagina(url) {
+        if (_renderEmAndamento) return; // evita render duplicado
+        _renderEmAndamento = true;
+
+        try {
+            const pdf = await pdfjsLib.getDocument(url).promise;
+            _pdfDoc = pdf;
+
+            const page = await pdf.getPage(1);
+
+            const scale = calcularScaleParaCaber(page);
+            const viewport = page.getViewport({ scale });
+
+            const canvas = document.getElementById("pdfViewer");
+            const context = canvas.getContext("2d");
+
+            // IMPORTANTE: tamanho real do bitmap do canvas (pra não distorcer)
+            canvas.width = Math.floor(viewport.width);
+            canvas.height = Math.floor(viewport.height);
+
+            // visual responsivo (não estoura)
+            canvas.style.width = "100%";
+            canvas.style.height = "auto";
+            canvas.style.display = "block";
+            canvas.style.margin = "0 auto";
+
+            await page.render({ canvasContext: context, viewport }).promise;
+        } catch (err) {
+            console.error(err);
+            alert("Erro ao carregar PDF.");
+        } finally {
+            _renderEmAndamento = false;
+        }
+        }
+
+        // ========= fluxo atual (mantido) =========
+
+        function abrirPDF(tipo) {
+        document.getElementById('listaDocumentos').style.display = 'none';
+        document.getElementById('pdfViewer').style.display = 'block';
+        document.getElementById('downloadLink').style.display = 'inline-block';
+
+        const pdfUrl = pdfs[tipo];
+
+        if (!pdfUrl) {
+            console.error("Tipo de PDF inválido:", tipo);
+            alert("Documento não disponível.");
+            return;
+        }
+
+        _pdfUrlAtual = pdfUrl;
+        document.getElementById('downloadLink').href = pdfUrl;
+
+        abrirModal();
+        limparCanvas();
+
+        // Renderização ajustada ao modal
+        renderizarPrimeiraPagina(pdfUrl);
+        }
+
+        function abrirLista(tipo) {
+        const lista = documentos[tipo];
+
+        if (!lista || lista.length === 0) {
+            alert("Nenhum documento disponível.");
+            return;
+        }
+
+        const container = document.getElementById('listaDocumentos');
+        container.innerHTML = '';
+        container.style.display = 'block';
+
+        document.getElementById('pdfViewer').style.display = 'none';
+        document.getElementById('downloadLink').style.display = 'none';
+
+        lista.forEach(doc => {
+            const item = document.createElement('div');
+            item.className = 'doc-item';
+
+            item.innerHTML = `
+                <div class="doc-info"">
+                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                    <div style="display:flex; flex-direction:column;">
+                    <span class="doc-nome" onclick="abrirPDFPorCaminho('${doc.caminho}')">
+                        ${doc.nome}
+                        ${doc.ano !== null && doc.ano !== undefined && doc.ano !== ''
+                        ? `<small class="doc-ano">(${doc.ano})</small>`
+                        : ``}
+                    </span>
+                    ${doc.descricao ? `<small class="text-muted" style="margin-top:4px;">${doc.descricao}</small>` : ``}
+                    </div>
+                </div>
+                <div class="doc-actions">
+                    <a href="${doc.caminho}" download title="Baixar documento">
+                    <i class="bi bi-download"></i>
+                    </a>
+                </div>
+            `;
+            container.appendChild(item);
+        });
+
+        abrirModal();
+        }
+
+        function abrirPDFPorCaminho(caminho) {
+        document.getElementById('listaDocumentos').style.display = 'none';
+        document.getElementById('pdfViewer').style.display = 'block';
+        document.getElementById('downloadLink').style.display = 'inline-block';
+
+        _pdfUrlAtual = caminho;
+        document.getElementById('downloadLink').href = caminho;
+
+        abrirModal();
+        limparCanvas();
+
+        // Renderização ajustada ao modal
+        renderizarPrimeiraPagina(caminho);
+        }
+
+        function fecharPDF() {
+        document.getElementById("pdfModal").style.display = "none";
+        _pdfDoc = null;
+        _pdfUrlAtual = null;
+        limparCanvas();
+        }
+
+        // ========= responsivo: ao redimensionar, re-render =========
+        window.addEventListener("resize", () => {
+        // se o modal estiver aberto e tem pdf carregado, re-renderiza
+        const modal = document.getElementById("pdfModal");
+        if (modal && modal.style.display === "flex" && _pdfUrlAtual) {
+            // Debounce simples
+            clearTimeout(window.__pdfResizeTimer);
+            window.__pdfResizeTimer = setTimeout(() => {
+            limparCanvas();
+            renderizarPrimeiraPagina(_pdfUrlAtual);
+            }, 150);
+        }
+        });
+    </script>
+
+
+    <div id="pdfModal" class="modal">
+        <div class="modal-content">
+        <div class="modal-header">
+            <strong>Documento</strong>
+            <button class="close-btn" type="button" onclick="fecharPDF()" aria-label="Fechar">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div id="listaDocumentos" style="display:none;"></div>
+            <canvas id="pdfViewer"></canvas>
+        </div>
+
+        <div class="modal-footer">
+            <a id="downloadLink" class="btn btn-success btn-sm" download style="display:none;">
+            Baixar PDF
+            </a>
+        </div>
+        </div>
+    </div>
+
+    <div id="galleryModal" class="modal" style="display:none;">
+        <div class="modal-content gallery-modal-content">
+            <div class="modal-header">
+                <strong>Galeria</strong>
+                <button class="close-btn" type="button" onclick="closeGallery()" aria-label="Fechar">&times;</button>
+            </div>
+
+            <div class="modal-body gallery-body">
+                <button class="gallery-nav prev" type="button" onclick="prevPhoto()" aria-label="Anterior">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+
+                <img id="galleryImage" src="" alt="Foto selecionada" class="gallery-view">
+
+                <button class="gallery-nav next" type="button" onclick="nextPhoto()" aria-label="Próxima">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+
+            <div class="modal-footer d-flex justify-content-between align-items-center">
+                <small id="galleryCounter" class="text-muted"></small>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm" type="button" onclick="prevPhoto()">
+                    <i class="bi bi-arrow-left"></i> Anterior
+                    </button>
+                    <button class="btn btn-sm" type="button" onclick="nextPhoto()">
+                    Próxima <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

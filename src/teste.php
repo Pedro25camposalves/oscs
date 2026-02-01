@@ -75,18 +75,20 @@ while ($row = $resultAtividades->fetch_assoc()) {
 }
 
 //consulta para trazer os eventos do banco de dados
-/*
-  $stmtNoticia = $conn->prepare(" --atualizar as colunas quando forem criadas no banco
-      SELECT id, titulo, imagem, data_evento
+
+  $stmtNoticia = $conn->prepare("
+      SELECT evento_oficina.id, evento_oficina.nome, evento_oficina.img_capa, evento_oficina.data_inicio, projeto.osc_id, evento_oficina.projeto_id
       FROM evento_oficina
-      ORDER BY i DESC
+      LEFT JOIN projeto ON projeto.id = evento_oficina.projeto_id
+      WHERE projeto.osc_id = ?  
+      ORDER BY evento_oficina.id DESC
       LIMIT 4");
   $stmtNoticia->bind_param("i", $osc);
   $stmtNoticia->execute();
-  $resultNoticias = $stmtNoticias->get_result();
+  $resultNoticia = $stmtNoticia->get_result();
 
   $noticias = [];
-  while ($row = $resultNoticias->fetch_assoc()) {
+  while ($row = $resultNoticia->fetch_assoc()) {
       $noticias[] = $row;
   }
   function h($s) {
@@ -98,7 +100,22 @@ while ($row = $resultAtividades->fetch_assoc()) {
       $ts = strtotime($data);
       return $ts ? date('d/m/Y', $ts) : $data;
   }
-*/
+
+// ==== PROJETOS DA OSC ====
+$stmtProj = $conn->prepare("
+  SELECT id, nome, descricao, logo, status
+  FROM projeto
+  WHERE osc_id = ?
+  ORDER BY id DESC
+");
+$stmtProj->bind_param("i", $osc);
+$stmtProj->execute();
+
+$resProj = $stmtProj->get_result();
+$projetos = [];
+while ($row = $resProj->fetch_assoc()) {
+  $projetos[] = $row;
+}
 
 $stmt = $conn->prepare("SELECT osc.*, template_web.*, cores.*, imovel.*, endereco.* FROM osc
 LEFT JOIN template_web ON template_web.osc_id = osc.id 
@@ -218,7 +235,7 @@ $buscaEndereco = trim(
     }
 
     .text-primary {
-      color: #f28b00 !important;
+      color: <?php echo $cor_font; ?> !important;
       /* apenas uma definição */
     }
 
@@ -349,12 +366,13 @@ $buscaEndereco = trim(
    6️⃣ BOTÕES
     =========================================================== */
     .btn-outline-warning {
-      color: #f28b00;
-      border-color: #f28b00;
+      color: <?php echo $cor_font; ?>;
+      border-color: <?php echo $cor_font; ?>;
+      --bs-btn-hover-border-color: <?php echo $cor2; ?>;
     }
 
     .btn-outline-warning:hover {
-      background-color: #f28b00;
+      background-color: <?php echo $cor3; ?>;
       color: #fff;
     }
 
@@ -588,7 +606,7 @@ $buscaEndereco = trim(
     }
 
     #transparencia .tsec-title{
-      color: <?php echo $cor2; ?>;
+      color: <?php echo $cor_font; ?>;
       border-bottom: 2px solid <?php echo $cor2; ?>;
       padding-bottom: 8px;
       margin-bottom: 16px;
@@ -655,6 +673,137 @@ $buscaEndereco = trim(
       #transparencia .tinfo strong{
         min-width: 0;
       }
+    }
+
+    /* ===== Projetos (visual clean) ===== */
+    .proj-title{
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      letter-spacing: .5px;
+    }
+
+    .proj-desc{
+      opacity: .92;
+      line-height: 1.6;
+      margin-bottom: 0;
+      white-space: normal;         /* garante quebra normal */
+      overflow-wrap: anywhere;     /* quebra mesmo sem espaços */
+      word-break: break-word; 
+    }
+
+    .proj-media{
+      width: min(340px, 100%);
+      aspect-ratio: 1 / 1;
+      margin: 0 auto;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #fff;
+      border: 6px solid <?php echo $cor2; ?>; /* se quiser ligar à paleta */
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      display: grid;
+      place-items: center;
+    }
+
+    .proj-img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* ou contain, dependendo do logo */
+    }
+
+    .proj-hr{
+      border: none;
+      height: 2px;
+      background: rgba(0,0,0,0.08);
+      margin: 28px 0 40px;
+    }
+
+    #pdfModal.modal {
+      position: fixed;
+      inset: 0;   
+      width: 100vw;
+      height: 100vh;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      background: rgba(0,0,0,.55);
+      z-index: 9999;
+      box-sizing: border-box;
+    }
+    
+    /* caixa do modal */
+    #pdfModal .modal-content {
+      width: min(920px, 100%);
+      max-height: calc(100vh - 24px);
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px;
+      margin: 0;
+      box-shadow: 0 18px 60px rgba(0,0,0,.25);
+      overflow: auto;
+      box-sizing: border-box;
+      display: flex;
+      position: relative;
+    }
+
+    /* header fixo */
+    #pdfModal .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    /* área rolável do conteúdo */
+    #pdfModal .modal-body {
+      padding: 12px 14px;
+      overflow: auto;             /* scroll interno */
+      flex: 1;
+    }
+
+    /* footer fixo */
+    #pdfModal .modal-footer {
+      padding: 12px 14px;
+      border-top: 1px solid #e9ecef;  
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* canvas centralizado */
+    #pdfViewer {
+      width: 100% !important;
+      height: auto !important;
+      display: block;
+      margin: 10px auto 0;
+    }
+
+    /* botão de fechar */
+    #pdfModal .close-btn {
+      position: sticky;         
+      top: 0;
+      float: right;
+      background: transparent;
+      font-size: 28px;
+      line-height: 1;
+      padding: 6px 10px;
+      cursor: pointer;
+      border-radius: 10px;
+      z-index: 2;
+    }
+
+    /* mobile: ocupa quase tudo */
+    @media (max-width: 576px) {
+      #pdfModal .modal-content {
+        width: 100%;
+        max-height: 92vh;
+      }
+    }
+    #listaDocumentos{
+      max-height: 60vh;
+      overflow: auto;
     }
 
   </style>
@@ -817,7 +966,6 @@ $buscaEndereco = trim(
       console.log(tons);
     })
 
-    // → ["#DC8E52", "#E3A976", "#E9C49A"
   </script>
 </head>
 
@@ -863,20 +1011,20 @@ $buscaEndereco = trim(
         <section id="acontecimentos" class="my-5">
           <div class="container">
             <h2 class="text-center section-title mb-5"><strong>Últimas Notícias</strong></h2>
-            <div class="row g-4">
+            <div class="row g-4 justify-content-center">
               <?php if (empty($noticias)): ?>
                 <div class="col-12">
                   <p class="text-center text-muted mb-0">Nenhuma notícia cadastrada ainda.</p>
                 </div>
               <?php else: ?>
                 <?php foreach ($noticias as $n): 
-                  $id = (int)$n['id'];
-                  $titulo = $n['titulo'] ?? '';
-                  $img = $n['imagem'] ?? '';
-                  $imgSrc = $img ?: 'assets/oscs/osc-1/projetos/projeto-1/imagens/img_descricao-20260125230348-7a805535.jpg" alt="Evento 4';
+                  $projetoId = (int)$n['projeto_id']; 
+                  $titulo = $n['nome'] ?? '';
+                  $img = $n['img_capa'] ?? '';
+                  $imgSrc = $img ?: 'alt="Evento 4';
                   $data = dataBR($n['data_evento'] ?? null);
                   // Link do evento pelo ID
-                  $link = "/evento.php?id={$id}&osc={$osc}";
+                  $link = "/oscs/src/projeto.php?osc={$osc}&projeto={$projetoId}";
                 ?>
                   <div class="col-12 col-md-6 col-xl-3 card-news">
                     <a href="<?= h($link) ?>" class="news-link">
@@ -962,7 +1110,7 @@ $buscaEndereco = trim(
     <div id="sobre" class="section">
       <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px;">Sobre Nós</h1>
       <div class="container my-5">
-        <p> <?php echo $historia; ?> </p>
+        <p style="overflow-wrap: anywhere;"> <?php echo $historia; ?> </p>
         <section id="equipe" class="my-5">
           <div class="container">
             <h2 class="text-center mb-4">Nossa Equipe</h2>
@@ -994,22 +1142,6 @@ $buscaEndereco = trim(
               <?php endforeach; ?>
             </div>
           </div>
-
-          <section id="apoiadores" class="section">
-            <h2 class="section-title">Nossos Apoiadores</h2>
-            <div class="carousel-logos">
-              <div class="carousel-track">
-                <div class="carousel-item"><img src="logo1.png" alt="Empresa 1"></div>
-                <div class="carousel-item"><img src="logo2.png" alt="Empresa 2"></div>
-                <div class="carousel-item"><img src="logo3.png" alt="Empresa 3"></div>
-                <div class="carousel-item"><img src="logo4.png" alt="Empresa 4"></div>
-                <div class="carousel-item"><img src="logo5.png" alt="Empresa 5"></div>
-                <!-- Repete para criar efeito infinito -->
-                <div class="carousel-item"><img src="logo1.png" alt="Empresa 1"></div>
-                <div class="carousel-item"><img src="logo2.png" alt="Empresa 2"></div>
-              </div>
-            </div>
-          </section>
           
           <?php if (empty($atividades)): ?>
             <p class="text-muted">Nenhuma atividade econômica cadastrada.</p>
@@ -1087,7 +1219,7 @@ $buscaEndereco = trim(
                 <strong><i class="bi bi-envelope-at"></i> E-mail:</strong>
                 <span><?php echo $email; ?></span>
               </div>
-              <div class="info-block" style="grid-column: 1 / -1;">
+              <div class="info-block" style="grid-column: 1 / -1; overflow-wrap: anywhere;">
                 <strong><i class="bi bi-info-circle"></i> O que a OSC faz:</strong>
                 <span><?php echo $oq_faz; ?></span>
               </div>
@@ -1106,7 +1238,7 @@ $buscaEndereco = trim(
                   </div>
                   <button class="btn btn-primary btn-sm tdoc-btn"
                     onclick="visualizar('estatuto')"
-                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
                     <i class="bi bi-eye"></i> Visualizar
                   </button>
                 </div>
@@ -1118,7 +1250,7 @@ $buscaEndereco = trim(
                   </div>
                   <button class="btn btn-primary btn-sm tdoc-btn"
                     onclick="visualizar('ata')"
-                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
                     <i class="bi bi-eye"></i> Visualizar
                   </button>
                 </div>
@@ -1138,7 +1270,7 @@ $buscaEndereco = trim(
                     <small class="text-muted">Certidão negativa federal</small>
                   </div>
                   <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('cnd_federal')"
-                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
                     <i class="bi bi-eye"></i> Visualizar
                   </button>
                 </div>
@@ -1149,7 +1281,7 @@ $buscaEndereco = trim(
                     <small class="text-muted">Certidão negativa estadual</small>
                   </div>
                   <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('cnd_estadual')"
-                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
                     <i class="bi bi-eye"></i> Visualizar
                   </button>
                 </div>
@@ -1160,7 +1292,7 @@ $buscaEndereco = trim(
                     <small class="text-muted">Certidão negativa municipal</small>
                   </div>
                   <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('cnd_municipal')"
-                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
                     <i class="bi bi-eye"></i> Visualizar
                   </button>
                 </div>
@@ -1171,7 +1303,7 @@ $buscaEndereco = trim(
                     <small class="text-muted">Regularidade do FGTS</small>
                   </div>
                   <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('fgts')"
-                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
                     <i class="bi bi-eye"></i> Visualizar
                   </button>
                 </div>
@@ -1182,7 +1314,7 @@ $buscaEndereco = trim(
                     <small class="text-muted">Certidão negativa trabalhista</small>
                   </div>
                   <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('trabalhista')"
-                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
                     <i class="bi bi-eye"></i> Visualizar
                   </button>
                 </div>
@@ -1202,7 +1334,7 @@ $buscaEndereco = trim(
                   </div>
                   <button class="btn btn-primary btn-sm tdoc-btn"
                     onclick="window.open('https://www2.camara.leg.br/legin/fed/lei/1930-1939/lei-91-28-agosto-1935-398006-normaatualizada-pl.html','_blank')"
-                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
                     <i class="bi bi-box-arrow-up-right"></i> Abrir
                   </button>
                 </div>
@@ -1214,7 +1346,7 @@ $buscaEndereco = trim(
                   </div>
                   <button class="btn btn-primary btn-sm tdoc-btn"
                     onclick="window.open('https://www.almg.gov.br/atividade-parlamentar/leis/legislacao-mineira/lei/texto/print.html?tipo=LEI&num=12972&ano=1998&comp=&cons=','_blank')"
-                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
                     <i class="bi bi-box-arrow-up-right"></i> Abrir
                   </button>
                 </div>
@@ -1226,7 +1358,7 @@ $buscaEndereco = trim(
                   </div>
                   <button class="btn btn-primary btn-sm tdoc-btn"
                     onclick="window.open('https://leismunicipais.com.br/a/mg/p/paracatu/lei-ordinaria/2025/403/4021/lei-ordinaria-n-4021-2025-autoriza-o-poder-executivo-a-majorar-a-destinacao-de-recursos-para-a-associacao-esther-siqueira-tillmann-e-da-outras-providencias?q=associa%E7%E3o','_blank')"
-                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
                     <i class="bi bi-box-arrow-up-right"></i> Abrir
                   </button>
                 </div>
@@ -1244,7 +1376,7 @@ $buscaEndereco = trim(
                     <small class="text-muted">Documento de identificação</small>
                   </div>
                   <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('cartaoCNPJ')"
-                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
                     <i class="bi bi-eye"></i> Visualizar
                   </button>
                 </div>
@@ -1263,7 +1395,7 @@ $buscaEndereco = trim(
                     <small class="text-muted">Documento contábil</small>
                   </div>
                   <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('balanco_patrimonial')"
-                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
                     <i class="bi bi-eye"></i> Visualizar
                   </button>
                 </div>
@@ -1274,7 +1406,7 @@ $buscaEndereco = trim(
                     <small class="text-muted">Demonstração do Resultado do Exercício</small>
                   </div>
                   <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('dre')"
-                    style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
                     <i class="bi bi-eye"></i> Visualizar
                   </button>
                 </div>
@@ -1287,55 +1419,61 @@ $buscaEndereco = trim(
 
     <!-- Projetos -->
     <div id="projetos" class="section">
+      <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px;">Projetos</h1>
       <section class="container my-5">
         <div class="text-center mb-4">
           <h2 class="fw-bold text-uppercase text-primary">Apoie Nossos Projetos</h2>
           <button class="btn btn-outline-warning mt-2 px-4 rounded-pill fw-semibold">Lei de Incentivo</button>
+          <hr>
         </div>
+        <?php if (empty($projetos)): ?>
+          <p class="text-muted text-center">Nenhum projeto cadastrado.</p>
+        <?php else: ?>
+          <?php foreach ($projetos as $i => $p): 
+            $id = (int)$p['id'];
+            $nome = $p['nome'] ?? '';
+            $descricao = $p['descricao'] ?? '';
 
-        <!-- Projeto 1 -->
-        <div class="row align-items-center mb-5">
-          <div class="col-md-5 text-center">
-            <div class="img-wrapper border-blue">
-              <img src="/assets/images/Borboleta.png" alt="Projeto 1">
-            </div>
-          </div>
-          <div class="col-md-7">
-            <h4 class="fw-bold text-uppercase text-primary">Projeto Borboleta</h4>
-            <p>
-              O projeto <strong>"Nas Mãos de Quem Ama"</strong> nasceu com o propósito de oferecer mais segurança e acolhimento aos pequenos pacientes da UTI Neonatal e Pediátrica do Hospital Nossa Senhora da Conceição.
-              A iniciativa busca humanizar o ambiente hospitalar e proporcionar um espaço mais aconchegante para bebês e famílias.
-            </p>
-            <div class="d-flex gap-3 mt-3">
-              <button class="btn btn-outline-warning rounded-pill"><i class="bi bi-chat-dots"></i> Entre em Contato</button>
-              <button class="btn btn-outline-warning rounded-pill"><i class="bi bi-heart"></i> Nossos Apoiadores</button>
-            </div>
-          </div>
-        </div>
-        <hr>
+            // imagem (fallback)
+            $img = $p['logo'] ?? '';
+            $imgSrc = !empty($img)
+              ? '/oscs/src/' . ltrim($img, '/')
+              : '/assets/images/projeto_placeholder.png';
 
-        <!-- Projeto 2 -->
-        <div class="row align-items-center flex-md-row-reverse mt-5">
-          <div class="col-md-5 text-center">
-            <div class="img-wrapper border-yellow">
-              <img src="/assets/images/Casulo.jpg" alt="Projeto 2">
+            // links (ajuste pro seu cenário)
+            $linkProjeto = "/oscs/src/projeto.php?osc={$osc}&projeto={$id}";
+
+            // alterna layout (imagem esquerda/direita)
+            $invert = ($i % 2 === 1) ? 'flex-md-row-reverse' : '';
+          ?>
+            <div class="row align-items-center g-4 mb-5 <?= $invert ?>">
+              <div class="col-md-5 text-center">
+                <div class="proj-media">
+                  <img src="<?= h($imgSrc) ?>" alt="<?= h($nome) ?>" class="proj-img">
+                </div>
+              </div>
+
+              <div class="col-md-7">
+                <h4 class="proj-title"><?= h($nome) ?></h4>
+                <p class="proj-desc"><?= nl2br(h($descricao)) ?></p>
+
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                  <a class="btn btn-outline-warning rounded-pill" href="<?= h($linkProjeto) ?>">
+                    <i class="bi bi-arrow-right-circle"></i> Ver detalhes
+                  </a>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="col-md-7">
-            <h4 class="fw-bold text-uppercase text-primary">Projeto Casulo</h4>
-            <p>
-              O projeto <strong>"Criança Presente"</strong> tem como objetivo promover o desenvolvimento cognitivo e emocional de crianças em fase escolar.
-              Por meio de atividades lúdicas e oficinas criativas, a iniciativa busca fortalecer vínculos, estimular a imaginação e favorecer o aprendizado.
-            </p>
-            <div class="d-flex gap-3 mt-3">
-              <button class="btn btn-outline-warning rounded-pill"><i class="bi bi-chat-dots"></i> Entre em Contato</button>
-              <button class="btn btn-outline-warning rounded-pill"><i class="bi bi-heart"></i> Nossos Apoiadores</button>
-            </div>
-          </div>
-        </div>
+
+            <?php if ($i < count($projetos) - 1): ?>
+              <hr class="proj-hr">
+            <?php endif; ?>
+          <?php endforeach; ?>
+        <?php endif; ?>
       </section>
     </div>
-
+    
+    <!-- Contato -->
     <div id="contato" class="section">
     <section class="container my-5">
       <h2 class="text-center section-title mb-5">Fale Conosco</h2>
@@ -1479,10 +1617,15 @@ $buscaEndereco = trim(
   <script>
     const pdfs = <?= json_encode($pdfs, JSON_UNESCAPED_SLASHES) ?>;
     const documentos = <?= json_encode($docsPorSubtipo, JSON_UNESCAPED_SLASHES) ?>;
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // estado (pra re-render no resize)
+    let _pdfDoc = null;
+    let _pdfUrlAtual = null;
+    let _renderEmAndamento = false;
 
     function visualizar(subtipo) {
-
       if (documentos[subtipo] && documentos[subtipo].length > 1) {
         abrirLista(subtipo);
       } else if (pdfs[subtipo]) {
@@ -1491,42 +1634,92 @@ $buscaEndereco = trim(
         alert("Documento não disponível.");
       }
     }
-    // Configuração do PDF.js
+
+    // ========= helpers =========
+
+    function abrirModal() {
+      document.getElementById("pdfModal").style.display = "flex";
+    }
+
+    function limparCanvas() {
+      const canvas = document.getElementById("pdfViewer");
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Calcula scale pra caber no modal (largura disponível)
+    function calcularScaleParaCaber(page) {
+      const canvasContainer =
+        document.querySelector("#pdfModal .modal-content") || document.getElementById("pdfModal");
+
+      // fallback: usa viewport do window se não achar container
+      const larguraDisponivel = canvasContainer
+        ? Math.max(320, canvasContainer.clientWidth - 40) // folga interna
+        : Math.max(320, window.innerWidth - 80);
+
+      const viewportBase = page.getViewport({ scale: 1 });
+      return larguraDisponivel / viewportBase.width;
+    }
+
+    async function renderizarPrimeiraPagina(url) {
+      if (_renderEmAndamento) return; // evita render duplicado
+      _renderEmAndamento = true;
+
+      try {
+        const pdf = await pdfjsLib.getDocument(url).promise;
+        _pdfDoc = pdf;
+
+        const page = await pdf.getPage(1);
+
+        const scale = calcularScaleParaCaber(page);
+        const viewport = page.getViewport({ scale });
+
+        const canvas = document.getElementById("pdfViewer");
+        const context = canvas.getContext("2d");
+
+        // IMPORTANTE: tamanho real do bitmap do canvas (pra não distorcer)
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+
+        // visual responsivo (não estoura)
+        canvas.style.width = "100%";
+        canvas.style.height = "auto";
+        canvas.style.display = "block";
+        canvas.style.margin = "0 auto";
+
+        await page.render({ canvasContext: context, viewport }).promise;
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao carregar PDF.");
+      } finally {
+        _renderEmAndamento = false;
+      }
+    }
+
+    // ========= fluxo atual (mantido) =========
+
     function abrirPDF(tipo) {
       document.getElementById('listaDocumentos').style.display = 'none';
       document.getElementById('pdfViewer').style.display = 'block';
       document.getElementById('downloadLink').style.display = 'inline-block';
-      const pdfUrl = pdfs[tipo];  
-      
+
+      const pdfUrl = pdfs[tipo];
+
       if (!pdfUrl) {
-          console.error("Tipo de PDF inválido:", tipo);
-          alert("Documento não disponível.");
-          return;
+        console.error("Tipo de PDF inválido:", tipo);
+        alert("Documento não disponível.");
+        return;
       }
 
-      // Abre o modal
-      document.getElementById("pdfModal").style.display = "flex";
-
-      // Link de download
+      _pdfUrlAtual = pdfUrl;
       document.getElementById('downloadLink').href = pdfUrl;
 
-      // Renderização do PDF
-      pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
-          pdf.getPage(1).then(page => {
-              const viewport = page.getViewport({ scale: 1.4 });
-              const canvas = document.getElementById("pdfViewer");
-              const context = canvas.getContext("2d");
+      abrirModal();
+      limparCanvas();
 
-              canvas.width = viewport.width;
-              canvas.height = viewport.height;
-
-              page.render({
-                  canvasContext: context,
-                  viewport: viewport
-              });
-          });
-      });
-    } 
+      // Renderização ajustada ao modal
+      renderizarPrimeiraPagina(pdfUrl);
+    }
 
     function abrirLista(tipo) {
       const lista = documentos[tipo];
@@ -1542,7 +1735,7 @@ $buscaEndereco = trim(
 
       document.getElementById('pdfViewer').style.display = 'none';
       document.getElementById('downloadLink').style.display = 'none';
-      
+
       lista.forEach(doc => {
         const item = document.createElement('div');
         item.className = 'doc-item';
@@ -1561,10 +1754,10 @@ $buscaEndereco = trim(
             </a>
           </div>
         `;
-
         container.appendChild(item);
       });
-      document.getElementById("pdfModal").style.display = "flex";
+
+      abrirModal();
     }
 
     function abrirPDFPorCaminho(caminho) {
@@ -1572,40 +1765,57 @@ $buscaEndereco = trim(
       document.getElementById('pdfViewer').style.display = 'block';
       document.getElementById('downloadLink').style.display = 'inline-block';
 
+      _pdfUrlAtual = caminho;
       document.getElementById('downloadLink').href = caminho;
-      document.getElementById("pdfModal").style.display = "flex";
 
-      const canvas = document.getElementById("pdfViewer");
-      const context = canvas.getContext("2d");
-      context.clearRect(0, 0, canvas.width, canvas.height);
+      abrirModal();
+      limparCanvas();
 
-      pdfjsLib.getDocument(caminho).promise
-        .then(pdf => pdf.getPage(1))
-        .then(page => {
-          const viewport = page.getViewport({ scale: 1.4 });
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-
-          page.render({ canvasContext: context, viewport });
-        });
+      // Renderização ajustada ao modal
+      renderizarPrimeiraPagina(caminho);
     }
 
     function fecharPDF() {
-        document.getElementById("pdfModal").style.display = "none";
+      document.getElementById("pdfModal").style.display = "none";
+      _pdfDoc = null;
+      _pdfUrlAtual = null;
+      limparCanvas();
     }
+
+    // ========= responsivo: ao redimensionar, re-render =========
+    window.addEventListener("resize", () => {
+      // se o modal estiver aberto e tem pdf carregado, re-renderiza
+      const modal = document.getElementById("pdfModal");
+      if (modal && modal.style.display === "flex" && _pdfUrlAtual) {
+        // Debounce simples
+        clearTimeout(window.__pdfResizeTimer);
+        window.__pdfResizeTimer = setTimeout(() => {
+          limparCanvas();
+          renderizarPrimeiraPagina(_pdfUrlAtual);
+        }, 150);
+      }
+    });
   </script>
 
-  <div id="pdfModal" class="modal" style="display:none;">
-      <div class="modal-content" style="padding:20px; background:white; max-width:90%; margin:auto;">
-          <span class="close" onclick="fecharPDF()" style="float:right; cursor:pointer;">&times;</span>
-          <div id="listaDocumentos" style="display:none;"></div>
-          <canvas id="pdfViewer" style="width:100%;"></canvas>
 
-          <!-- Botão de download -->
-          <a id="downloadLink" class="btn btn-success btn-sm" download>
-              Baixar PDF
-          </a>
+  <div id="pdfModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <strong>Documento</strong>
+        <button class="close-btn" type="button" onclick="fecharPDF()" aria-label="Fechar">&times;</button>
       </div>
+
+      <div class="modal-body">
+        <div id="listaDocumentos" style="display:none;"></div>
+        <canvas id="pdfViewer"></canvas>
+      </div>
+
+      <div class="modal-footer">
+        <a id="downloadLink" class="btn btn-success btn-sm" download style="display:none;">
+          Baixar PDF
+        </a>
+      </div>
+    </div>
   </div>
 
 </body>
