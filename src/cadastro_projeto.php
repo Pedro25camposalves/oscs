@@ -1470,7 +1470,7 @@ try {
             const info = document.createElement('div');
             info.innerHTML = `
               <div style="font-weight:600">${escapeHtml(linha)}</div>
-              ${d.ano_referencia ? `<div class="small">Ano: ${escapeHtml(d.ano_referencia)}</div>` : ''}
+              ${d.ano_referencia ? `<div class="small" style="font-weight:bold">Ano: ${escapeHtml(d.ano_referencia)}</div>` : ''}
               ${d.link ? `<div class="small">Link: ${escapeHtml(d.link)}</div>` : ''}
               <div class="small">Arquivo: ${escapeHtml(d.file?.name || '—')}</div>
             `;

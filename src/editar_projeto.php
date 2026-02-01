@@ -580,7 +580,7 @@ try {
     <!-- SEÇÃO 4 -->
 <div style="margin-top:16px" class="card card-collapse" data-collapse-id="docs">
     <div class="card-head" data-collapse-head>
-        <h2>Documentos do Projeto</h2>
+        <h2>Documentos</h2>
         <button type="button" class="card-toggle" data-collapse-btn>
             <span class="label">Abrir</span>
             <span class="chev">▾</span>
@@ -768,7 +768,25 @@ try {
         </div>
       </div>
 
-      <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+      
+      <div class="divider"></div>
+      <h4 style="margin: 0;" >Contrato</h4>
+      <div class="grid cols-3" style="margin-top: 0px;">
+        <div>
+          <label for="contratoDataInicio">Data início (*)</label>
+          <input id="contratoDataInicio" type="date" />
+        </div>
+        <div>
+          <label for="contratoDataFim">Data fim</label>
+          <input id="contratoDataFim" type="date" />
+        </div>
+        <div>
+          <label for="contratoSalario">Remuneração</label>
+          <input id="contratoSalario" type="text" inputmode="decimal" placeholder="Ex: 1500,00" />
+        </div>
+      </div>
+
+<div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
         <button class="btn btn-ghost" id="closeEnvolvidoProjetoModal" type="button">Cancelar</button>
         <button class="btn btn-primary" id="addEnvolvidoProjetoBtn" type="button">Adicionar</button>
       </div>
@@ -813,7 +831,25 @@ try {
         </div>
       </div>
 
-      <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+      
+      <div class="divider"></div>
+      <h4 style="margin: 0;" >Contrato</h4>
+      <div class="grid cols-3" style="margin-top: 0px;">
+        <div>
+          <label for="novoContratoDataInicio">Data início (*)</label>
+          <input id="novoContratoDataInicio" type="date" required/>
+        </div>
+        <div>
+          <label for="novoContratoDataFim">Data fim</label>
+          <input id="novoContratoDataFim" type="date" />
+        </div>
+        <div>
+          <label for="novoContratoSalario">Remuneração</label>
+          <input id="novoContratoSalario" type="text" inputmode="decimal" placeholder="Ex: 1500,00" />
+        </div>
+      </div>
+
+<div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
         <button class="btn btn-ghost" id="closeEnvolvidoProjetoModal2" type="button">Cancelar</button>
         <button class="btn btn-primary" id="addNovoEnvolvidoProjetoBtn" type="button">Adicionar</button>
       </div>
@@ -859,6 +895,21 @@ try {
                 </div>
             </div>
         </div>
+        <div class="grid cols-3" style="margin-top:10px;">
+            <div>
+                <label for="envContratoDataInicio">Data início (*)</label>
+                <input id="envContratoDataInicio" type="date" />
+            </div>
+            <div>
+                <label for="envContratoDataFim">Data fim</label>
+                <input id="envContratoDataFim" type="date" />
+            </div>
+            <div>
+                <label for="envContratoSalario">Remuneração</label>
+                <input id="envContratoSalario" type="text" inputmode="decimal" placeholder="Ex: 1500,00" />
+            </div>
+        </div>
+
 
         <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
             <button class="btn btn-ghost" id="closeEnvolvidoModal" type="button">Cancelar</button>
@@ -1034,6 +1085,16 @@ try {
     function onlyDigits(v) {
       return String(v ?? '').replace(/\D+/g, '');
     }
+
+    function normalizeMoneyBR(v){
+      // "1.234,56" -> "1234.56"
+      v = (v || '').trim();
+      if (!v) return '';
+      v = v.replace(/\./g, '').replace(',', '.');
+      v = v.replace(/[^0-9.]/g, '');
+      return v;
+    }
+
 
     function fileNameFromUrl(url) {
       if (!url) return '';
@@ -1247,6 +1308,13 @@ try {
     const selectEnvolvidoOscProjeto = qs('#selectEnvolvidoOscProjeto');
     const previewEnvolvidoSelecionadoProjeto = qs('#previewEnvolvidoSelecionadoProjeto');
     const envolvidoOscInfoProjeto = qs('#envolvidoOscInfoProjeto');
+    const contratoDataInicio = qs('#contratoDataInicio');
+    const contratoDataFim    = qs('#contratoDataFim');
+    const contratoSalario    = qs('#contratoSalario');
+
+    const novoContratoDataInicio = qs('#novoContratoDataInicio');
+    const novoContratoDataFim    = qs('#novoContratoDataFim');
+    const novoContratoSalario    = qs('#novoContratoSalario');
     const funcaoNoProjetoProjeto = qs('#funcaoNoProjetoProjeto');
 
     const closeEnvolvidoProjetoModal  = qs('#closeEnvolvidoProjetoModal');
@@ -1390,6 +1458,15 @@ try {
           return;
         }
 
+                const cIni = (contratoDataInicio?.value || '').trim();
+        const cFim = (contratoDataFim?.value || '').trim();
+        const cSal = normalizeMoneyBR(contratoSalario?.value || '');
+
+        if (cIni && cFim && cFim < cIni) {
+          alert('No contrato, a data fim não pode ser menor que a data início.');
+          return;
+        }
+
         envolvidos.push({
           tipo: 'existente',
           envolvidoId: Number(e.id),
@@ -1400,6 +1477,9 @@ try {
           telefone: e.telefone || '',
           email: e.email || '',
           funcao: funcaoProj,
+          contrato_data_inicio: cIni,
+          contrato_data_fim: cFim,
+          contrato_salario: cSal,
           ui_status: '',
           ui_deleted: false
         });
@@ -1425,7 +1505,16 @@ try {
           return;
         }
 
-        envolvidos.push({
+                const cIni = (novoContratoDataInicio?.value || '').trim();
+        const cFim = (novoContratoDataFim?.value || '').trim();
+        const cSal = normalizeMoneyBR(novoContratoSalario?.value || '');
+
+        if (cIni && cFim && cFim < cIni) {
+          alert('No contrato, a data fim não pode ser menor que a data início.');
+          return;
+        }
+
+envolvidos.push({
           tipo: 'novo',
           envolvidoId: null,
           fotoUrl: null,
@@ -1435,6 +1524,9 @@ try {
           telefone,
           email,
           funcao,
+          contrato_data_inicio: cIni,
+          contrato_data_fim: cFim,
+          contrato_salario: cSal,
           ui_status: 'Novo',
           ui_deleted: false
         });
@@ -2426,6 +2518,9 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
     const closeEnvolvidoModal = qs('#closeEnvolvidoModal');
     const addEnvolvidoBtn     = qs('#addEnvolvidoBtn');
     const envFoto = qs('#envFoto');
+    const envContratoDataInicio = qs('#envContratoDataInicio');
+    const envContratoDataFim    = qs('#envContratoDataFim');
+    const envContratoSalario    = qs('#envContratoSalario');
     envFoto.addEventListener('change', renderEnvFotoCard);
 
     openEnvolvidoModal.addEventListener('click', (ev) => {
@@ -2476,6 +2571,11 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
         qs('#envTelefone').value = e.telefone || '';
         qs('#envEmail').value = e.email || '';
         qs('#envFuncaoNovo').value = e.funcao || '';
+
+        // contrato (vínculo no projeto)
+        if (envContratoDataInicio) envContratoDataInicio.value = e.contrato_data_inicio || e.data_inicio || '';
+        if (envContratoDataFim)    envContratoDataFim.value    = e.contrato_data_fim || e.data_fim || '';
+        if (envContratoSalario)    envContratoSalario.value    = e.contrato_salario || e.salario || '';
         
         envFotoExistingUrl = e.fotoUrl || null;
         envFotoOriginalUrl = e.fotoUrl || null;
@@ -2496,6 +2596,16 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
         const telefone = qs('#envTelefone').value.trim();
         const email    = qs('#envEmail').value.trim();
         const funcao   = qs('#envFuncaoNovo').value.trim(); 
+
+        // contrato (datas opcionais; se preencher fim, não pode ser menor que início)
+        const cIni = (envContratoDataInicio?.value || '').trim();
+        const cFim = (envContratoDataFim?.value || '').trim();
+        const cSal = normalizeMoneyBR(envContratoSalario?.value || '');
+
+        if (cFim && cIni && cFim < cIni) {
+            alert('No contrato, a data fim não pode ser menor que a data início.');
+            return;
+        }
         
         if (!nome || !funcao) {
             alert('Preencha pelo menos o Nome e a Função do envolvido!');
@@ -2514,6 +2624,9 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
               telefone: (alvo.telefone || '').trim(),
               email: (alvo.email || '').trim(),
               funcao: (alvo.funcao || '').trim(),
+              contrato_data_inicio: (alvo.contrato_data_inicio || alvo.data_inicio || '').trim(),
+              contrato_data_fim: (alvo.contrato_data_fim || alvo.data_fim || '').trim(),
+              contrato_salario: (alvo.contrato_salario || alvo.salario || '').trim(),
               removerFoto: !!alvo.removerFoto,
               fotoUrl: (alvo.fotoUrl || '').trim(),
               fotoPreview: (alvo.fotoPreview || '').trim(),
@@ -2530,6 +2643,9 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
               telefone: (telefone || '').trim(),
               email: (email || '').trim(),
               funcao: (funcao || '').trim(),
+              contrato_data_inicio: (cIni || '').trim(),
+              contrato_data_fim: (cFim || '').trim(),
+              contrato_salario: (cSal || '').trim(),
               removerFoto: afterRemover,
               fotoUrl: (afterFotoUrl || '').trim(),
               fotoPreview: (afterFotoPreview || '').trim(),
@@ -2551,6 +2667,9 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
                 telefone: alvo.telefone,
                 email: alvo.email,
                 funcao: alvo.funcao,
+                contrato_data_inicio: alvo.contrato_data_inicio || alvo.data_inicio || '',
+                contrato_data_fim: alvo.contrato_data_fim || alvo.data_fim || '',
+                contrato_salario: alvo.contrato_salario || alvo.salario || '',
                 fotoUrl: alvo.fotoUrl,
                 fotoPreview: alvo.fotoPreview,
                 fotoFile: alvo.fotoFile,
@@ -2562,6 +2681,9 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
             alvo.telefone = telefone;
             alvo.email = email;
             alvo.funcao = funcao; 
+            alvo.contrato_data_inicio = cIni;
+            alvo.contrato_data_fim = cFim;
+            alvo.contrato_salario = cSal;
             if (fotoFile) {
               alvo.fotoFile = fotoFile;
               alvo.fotoPreview = fotoPreview;
@@ -2602,6 +2724,9 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
             telefone,
             email,
             funcao,
+            contrato_data_inicio: cIni,
+            contrato_data_fim: cFim,
+            contrato_salario: cSal,
             ui_status: 'Novo',
             ui_deleted: false
         }); 
@@ -2624,10 +2749,15 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
 
         const funcaoLabel = FUNCAO_LABELS[e.funcao] || e.funcao;
 
+        const contratoResumo = (e.contrato_data_inicio || e.contrato_data_fim || e.contrato_salario)
+          ? `<div class="small">Contrato: ${escapeHtml(e.contrato_data_inicio || '—')} → ${escapeHtml(e.contrato_data_fim || '—')} • R$ ${escapeHtml(e.contrato_salario || '—')}</div>`
+          : '';
+
         const info = document.createElement('div');
         info.innerHTML = `
           <div style="font-weight:600">${escapeHtml(e.nome)}</div>
           <div class="small">${escapeHtml(funcaoLabel)}</div>
+          ${contratoResumo}
         `;
 
         // ===== STATUS =====
@@ -3152,6 +3282,10 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
               telefone: d.telefone || '',
               email: d.email || '',
               funcao,
+              // contrato (carregado do backend)
+              contrato_data_inicio: d.contrato_data_inicio || '',
+              contrato_data_fim: d.contrato_data_fim || '',
+              contrato_salario: (d.contrato_salario ?? '') === null ? '' : String(d.contrato_salario ?? ''),
               ui_deleted: false
             });
           });

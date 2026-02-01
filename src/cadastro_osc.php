@@ -1977,9 +1977,6 @@ require 'autenticacao.php';
                     body: fd,
                 });
 
-                const text = await response.text();
-                console.log("Resposta bruta do servidor:", text);
-
                 let result;
                 try {
                     result = JSON.parse(text);
