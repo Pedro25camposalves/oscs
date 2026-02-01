@@ -444,7 +444,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
     <div class="tabs-top" id="tabsTop">
       <a class="tab-btn" href="editar_osc.php"><span class="dot"></span>OSC</a>
       <a class="tab-btn" href="projetos_osc.php"><span class="dot"></span>Projetos</a>
-      <a class="tab-btn" href="eventos_osc.php"><span class="dot"></span>Eventos</a>
+      <a class="tab-btn" href="eventos_projeto.php?id=<?= $projetoId ?>"><span class="dot"></span>Eventos</a>
       <a class="tab-btn is-active" href="cadastro_evento.php"><span class="dot"></span>Novo Evento</a>
     </div>
 

@@ -73,7 +73,7 @@ try {
             e.data_inicio,
             e.data_fim,
             e.status
-        FROM evento e
+        FROM evento_oficina e
         WHERE e.projeto_id = ?
         ORDER BY e.data_inicio ASC, e.id DESC
     ";
@@ -560,7 +560,7 @@ try {
     <div class="tabs-top" id="tabsTop">
         <a class="tab-btn" href="editar_osc.php"><span class="dot"></span>OSC</a>
         <a class="tab-btn" href="projetos_osc.php"><span class="dot"></span>Projetos</a>
-        <a class="tab-btn is-active" href="projetos_osc.php"><span class="dot"></span>Eventos</a>
+        <a class="tab-btn is-active" href="eventos_projeto.php?id=<?= $projetoId ?>"><span class="dot"></span>Eventos</a>
     </div>
 
     <div class="card">
