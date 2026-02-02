@@ -1249,14 +1249,12 @@ const TIPOS_POR_CATEGORIA_OSC = {
         { value: 'PLANO_TRABALHO',        label: 'Plano de Trabalho' },
         { value: 'PLANILHA_ORCAMENTARIA', label: 'Planilha Orçamentária' },
         { value: 'TERMO_COLABORACAO',     label: 'Termo de Colaboração' },
-        { value: 'OUTRO',                 label: 'Outro' },
     ],
     ESPECIFICOS: [
         { value: 'APOSTILAMENTO', label: 'Termo de Apostilamento' },
         { value: 'CND',           label: 'Certidão Negativa de Débito (CND)' },
         { value: 'DECRETO',       label: 'Decreto/Portaria' },
         { value: 'APTIDAO',       label: 'Aptidão para Receber Recursos' },
-        { value: 'OUTRO',         label: 'Outro' },
     ],
     CONTABIL: [
         { value: 'BALANCO_PATRIMONIAL', label: 'Balanço Patrimonial' },
