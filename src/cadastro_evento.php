@@ -485,7 +485,7 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
 
       <!-- SEÇÃO 1 -->
       <div class="card">
-        <h2>Informações do evento/oficina</h2>
+        <h2>Informações</h2>
         <div class="divider"></div>
         <div class="grid cols-2">
           <div>

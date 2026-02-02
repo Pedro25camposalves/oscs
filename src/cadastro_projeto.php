@@ -292,7 +292,7 @@ try {
 
         <!-- SEÇÃO 1: INFORMAÇÕES DO PROJETO -->
         <div class="card">
-            <h2>Informações do projeto</h2>
+            <h2>Informações</h2>
             <div class="divider"></div>
             <div class="grid cols-2">
                 <div>
@@ -1553,9 +1553,33 @@ try {
           alert('Informe o link do documento oficial.');
           return;
         }
-        subtipoDb = 'DECRETO';
+
+        // Permite múltiplos decretos/portarias sem "hash":
+        // cada item vira um registro próprio usando um subtipo sequencial
+        // (DECRETO, DECRETO_2, DECRETO_3...), mas o rótulo exibido continua o mesmo.
+        const linkNorm = link.toLowerCase().replace(/\s+/g, '');
+
+        const jaExisteMesmoLink = docsProjeto.some(d =>
+          (d.tipo === 'DECRETO') && ((d.link || '').toLowerCase().replace(/\s+/g, '') === linkNorm)
+        );
+        if (jaExisteMesmoLink) {
+          alert('Este mesmo link já foi adicionado.');
+          return;
+        }
+
+        // Descobre o próximo número disponível (evita repetir mesmo se remover do meio)
+        let maxN = 0;
+        docsProjeto.forEach(d => {
+          if (d.tipo !== 'DECRETO') return;
+          if (d.subtipo === 'DECRETO') { maxN = Math.max(maxN, 1); return; }
+          const m = /^DECRETO_([0-9]+)$/.exec(String(d.subtipo || ''));
+          if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
+        });
+
+        const nextN = maxN + 1;
+        subtipoDb = (nextN === 1) ? 'DECRETO' : `DECRETO_${nextN}`;
       }
-      else if (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE') {
+else if (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE') {
         if (!ano || !/^\d{4}$/.test(ano)) {
           alert('Informe um ano de referência válido (4 dígitos, ex: 2024).');
           return;
@@ -1804,15 +1828,20 @@ try {
             .slice(0, 15);
     }
 
-    document.getElementById("novoEnvTelefone").addEventListener("input", function () {
+    const telNovo = document.getElementById("envTelefone") || document.getElementById("novoEnvTelefone");
+    if (telNovo) {
+      telNovo.addEventListener("input", function () {
         mascaraTelefone(this);
-    });
+      });
+    }
 
-    document.getElementById("projTelefone").addEventListener("input", function () {
+    const telProj = document.getElementById("projTelefone");
+    if (telProj) {
+      telProj.addEventListener("input", function () {
         mascaraTelefone(this);
-    });
-
-    // init
+      });
+    }
+// init
     updateProjetoPreviews();
     renderEnvolvidosProjeto();
     renderDocsProjeto();
