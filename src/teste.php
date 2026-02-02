@@ -117,6 +117,16 @@ while ($row = $resProj->fetch_assoc()) {
   $projetos[] = $row;
 }
 
+$stmtEndereco = $conn->prepare("SELECT endereco.*, endereco_osc.* FROM endereco LEFT JOIN endereco_osc ON endereco_osc.endereco_id = endereco.id WHERE endereco_osc.osc_id = ? AND endereco_osc.principal = 1;");
+$stmtEndereco->bind_param("i", $osc);
+$stmtEndereco->execute();
+$resultEndereco = $stmtEndereco->get_result();
+
+if ($rowEndereco = $resultEndereco->fetch_assoc()) {
+} else {
+    echo "Nenhum registro encontrado";
+}
+
 $stmt = $conn->prepare("SELECT osc.*, template_web.*, cores.*, imovel.*, endereco.* FROM osc
 LEFT JOIN template_web ON template_web.osc_id = osc.id 
 LEFT JOIN cores ON cores.id_cores = osc.id 
@@ -127,7 +137,6 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($row = $result->fetch_assoc()) {
-    //echo $row["id"] . " - " . $row["nome"] . " - " . $row["cnpj"] . "<br>";
 } else {
     echo "Nenhum registro encontrado";
 }
@@ -154,6 +163,7 @@ $historia = $row["historia"];
 // TRANSPARENCIA
 // --------------------------
 $nome_fantasia = $row["nome_fantasia"];
+$razao = $row["razao_social"];
 $sigla = $row["sigla"];
 $situacao_cad = $row["situacao_cadastral"];
 $situacao_imo = $row["situacao"];
@@ -161,6 +171,7 @@ $ano_cadastro = $row["ano_cnpj"];
 $ano_fundacao = $row["ano_fundacao"];
 $responsavel = $row["responsavel"];
 $oq_faz = $row["oque_faz"];
+$cnpj = $row["cnpj"];
 // --------------------------
 // INFORMAÇÕES GERAIS
 // --------------------------
@@ -168,11 +179,11 @@ $logo_nobg = $row["logo_simples"];
 $banner1 = $row["banner1"];
 $banner2 = $row["banner2"];
 $banner3 = $row["banner3"];
-$logradouro = $row['logradouro'];
-$numero = $row['numero'];
-$cidade = $row['cidade'];
-$cep = $row['cep'];
-$endereco =  "$logradouro - $numero<br>{$row['bairro']}, $cidade<br><strong>CEP: </strong>$cep";
+$logradouro = $rowEndereco['logradouro'];
+$numero = $rowEndereco['numero'];
+$cidade = $rowEndereco['cidade'];
+$cep = $rowEndereco['cep'];
+$endereco =  "$logradouro - $numero<br>{$rowEndereco['bairro']}, $cidade<br><strong>CEP: </strong>$cep";
 $email = $row["email"];
 $tel = $row["telefone"];
 
@@ -806,6 +817,18 @@ $buscaEndereco = trim(
       overflow: auto;
     }
 
+    .card-img-top {
+      width: 100%;
+      height: 280px;        /* ALTURA FIXA (ajuste se quiser) */
+      object-fit: cover;   /* corta sem distorcer */
+      object-position: center;
+    }
+
+    @media (max-width: 576px) {
+      .card-img-top {
+        height: 200px;
+      }
+    }
   </style>
 
   <script>
@@ -1004,7 +1027,7 @@ $buscaEndereco = trim(
         <div class="hero-overlay"></div>
       </section>
       <div class="simple-divider" style="color: white;">
-        Transformando comunidades com ações que fazem a diferença.
+        <?php echo $label_banner ?>
       </div>
 
       <main class="container my-5">
@@ -1110,10 +1133,9 @@ $buscaEndereco = trim(
     <div id="sobre" class="section">
       <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px;">Sobre Nós</h1>
       <div class="container my-5">
-        <p style="overflow-wrap: anywhere;"> <?php echo $historia; ?> </p>
         <section id="equipe" class="my-5">
           <div class="container">
-            <h2 class="text-center mb-4">Nossa Equipe</h2>
+            <h2 class="text-left mb-4">Nossa Equipe</h2>
 
             <div class="row justify-content-center">
               
@@ -1142,39 +1164,14 @@ $buscaEndereco = trim(
               <?php endforeach; ?>
             </div>
           </div>
-          
-          <?php if (empty($atividades)): ?>
-            <p class="text-muted">Nenhuma atividade econômica cadastrada.</p>
-          <?php endif; ?>
-          <?php foreach ($atividades as $atividade): ?>
-            <div class="card shadow-sm border-0 my-3">
-              <div class="card-body bg-light">
-                <div class="d-flex justify-content-between align-items-start">
-                  <h6 class="fw-bold mb-3">Atividade Econômica (CNAE):</h6>
-                  <i class="bi bi-database fs-4 text-primary"></i>
-                </div>
-                <p class="text-muted mb-3">
-                  <?= htmlspecialchars($atividade['cnae']) ?>
-                </p>
-                <hr>
-                <div class="row mb-3">
-                  <div class="col-md-6">
-                    <p class="fw-semibold mb-1">Área de Atuação:</p>
-                    <p class="text-muted">
-                      <?= htmlspecialchars($atividade['area_atuacao']) ?>
-                    </p>
-                  </div>
-                  <div class="col-md-6">
-                    <p class="fw-semibold mb-1">Subárea:</p>
-                    <p class="text-muted">
-                      <?= htmlspecialchars($atividade['subarea']) ?>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          <?php endforeach; ?>
         </section>
+        <div class="info-block" style="grid-column: 1 / -1; overflow-wrap: anywhere;">
+          <h2 class="text-left mb-4">O que a OSC faz</h2>
+          <span><?php echo $oq_faz; ?></span>
+        </div>
+        <br><br><br>
+        <h2 class="text-left mb-4">Nossa História</h2>
+        <p style="overflow-wrap: anywhere;"> <?php echo $historia; ?> </p>
       </div>
     </div>
 
@@ -1187,43 +1184,78 @@ $buscaEndereco = trim(
         <div class="osc-detalhes">
           <div class="tsec">
             <h3><strong>Nome fantasia: </strong><?php echo $nome_fantasia; ?></h3>
+            <h5><strong>Razão Social: </strong><?php echo $razao; ?></h5>
             <div class="info-grid">
               <div class="info-block">
-                <strong><i class="bi bi-database"></i> Sigla OSC:</strong>
-                <span><?php echo $sigla; ?></span>
+                <strong><i class="bi bi-person-vcard"></i> CNPJ:</strong>
+                <span><?php echo $cnpj; ?></span>
               </div>
               <div class="info-block">
                 <strong><i class="bi bi-person"></i> Situação cadastral:</strong>
                 <span><?php echo $situacao_cad; ?></span>
               </div>
             </div>
-            <hr>
             <div class="info-grid">
-              <div class="info-block">
-                <strong><i class="bi bi-house"></i> Situação do imóvel:</strong>
-                <span><?php echo $situacao_imo; ?></span>
-              </div>
               <div class="info-block">
                 <strong><i class="bi bi-calendar"></i> Ano de cadastro de CNPJ:</strong>
                 <span><?php echo $ano_cadastro; ?></span>
               </div>
               <div class="info-block">
-                <strong><i class="bi bi-building"></i> Ano de fundação:</strong>
-                <span><?php echo $ano_fundacao; ?></span>
-              </div>
-              <div class="info-block">
                 <strong><i class="bi bi-person"></i> Responsável legal:</strong>
                 <span><?php echo $responsavel; ?></span>
               </div>
+            </div>
+            <div class="info-grid">
+              <div class="info-block">
+                <strong><i class="bi bi-database"></i> Sigla:</strong>
+                <span><?php echo $sigla; ?></span>
+              </div>
+              <div class="info-block">
+                <strong><i class="bi bi-building"></i> Ano de fundação:</strong>
+                <span><?php echo $ano_fundacao; ?></span>
+              </div>
+            </div>
+            <div class="info-grid">
               <div class="info-block">
                 <strong><i class="bi bi-envelope-at"></i> E-mail:</strong>
                 <span><?php echo $email; ?></span>
               </div>
-              <div class="info-block" style="grid-column: 1 / -1; overflow-wrap: anywhere;">
-                <strong><i class="bi bi-info-circle"></i> O que a OSC faz:</strong>
-                <span><?php echo $oq_faz; ?></span>
+              <div class="info-block">
+                <strong><i class="bi bi-house"></i> Situação do imóvel:</strong>
+                <span><?php echo $situacao_imo; ?></span>
               </div>
             </div>
+            <?php if (empty($atividades)): ?>
+              <p class="text-muted">Nenhuma atividade econômica cadastrada.</p>
+            <?php endif; ?>
+            <?php foreach ($atividades as $atividade): ?>
+              <div class="card shadow-sm border-0 my-3">
+                <div class="card-body bg-light">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <h6 class="fw-bold mb-3">Atividade Econômica (CNAE):</h6>
+                    <i class="bi bi-database fs-4 text-primary"></i>
+                  </div>
+                  <p class="text-muted mb-3">
+                    <?= htmlspecialchars($atividade['cnae']) ?>
+                  </p>
+                  <hr>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <p class="fw-semibold mb-1">Área de Atuação:</p>
+                      <p class="text-muted">
+                        <?= htmlspecialchars($atividade['area_atuacao']) ?>
+                      </p>
+                    </div>
+                    <div class="col-md-6">
+                      <p class="fw-semibold mb-1">Subárea:</p>
+                      <p class="text-muted">
+                        <?= htmlspecialchars($atividade['subarea']) ?>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <?php endforeach; ?>
             <hr>
             <div class="tbox">
               <h3 class="tsec-title">
