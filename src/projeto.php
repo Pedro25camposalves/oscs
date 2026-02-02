@@ -137,6 +137,22 @@ $stmtFotos->bind_param("i", $projeto);
 $stmtFotos->execute();
 $fotosProjeto = $stmtFotos->get_result()->fetch_all(MYSQLI_ASSOC);
 
+$stmtEndereco = $conn->prepare("SELECT endereco.*, endereco_projeto.* FROM endereco LEFT JOIN endereco_projeto ON endereco_projeto.endereco_id = endereco.id WHERE endereco_projeto.projeto_id = ? AND endereco_projeto.principal = 1;");
+$stmtEndereco->bind_param("i", $projeto);
+$stmtEndereco->execute();
+$resultEndereco = $stmtEndereco->get_result();
+
+if ($rowEndereco = $resultEndereco->fetch_assoc()) {
+} else {
+    echo "Nenhum registro encontrado";
+}
+
+$logradouro = $rowEndereco['logradouro'];
+$numero = $rowEndereco['numero'];
+$cidade = $rowEndereco['cidade'];
+$bairro = $rowEndereco['bairro'];
+$cep = $rowEndereco['cep'];
+
 //conculta para visual
 $stmt = $conn->prepare("SELECT osc.*, template_web.*, cores.* FROM osc
 LEFT JOIN template_web ON template_web.osc_id = osc.id LEFT JOIN cores ON cores.osc_id = osc.id WHERE osc.id = ?;");
@@ -167,10 +183,7 @@ $depoimento = $proj["depoimento"] ?? '';
 $dataInicioProjeto = $proj["data_inicio"] ?? null;
 $dataFimProjeto = $proj["data_fim"] ?? null;
 $statusProjeto = $proj["status"] ?? '';
-
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -793,6 +806,28 @@ $statusProjeto = $proj["status"] ?? '';
                             <?php endif; ?>
                             </div>
                         <?php endif; ?>
+                        <?php if (!empty($logradouro) || !empty($cidade)): ?>
+                        <div class="mb-4">
+                            <h5 class="mb-2">Local de Execução</h5>
+
+                            <p class="text-muted mb-1">
+                                <i class="bi bi-geo-alt"></i>
+                                <?= h($logradouro) ?>
+                                <?= $numero ? ', ' . h($numero) : '' ?>
+                            </p>
+
+                            <p class="text-muted mb-1">
+                                <?= h($bairro) ?><?= $bairro && $cidade ? ' - ' : '' ?><?= h($cidade) ?>
+                            </p>
+
+                            <?php if (!empty($cep)): ?>
+                            <p class="text-muted mb-0">
+                                <strong>CEP:</strong> <?= h($cep) ?>
+                            </p>
+                            <?php endif; ?>
+                        </div>
+                        <?php endif; ?>
+
                         <!-- ENVOLVIDOS (exceto participante) -->
                         <div class="row g-4 mt-3">
                             <h5 class="mb-2">Equipe</h5>
