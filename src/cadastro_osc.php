@@ -523,7 +523,7 @@ require 'autenticacao.php';
                 <div class="grid cols-2">
                     <!-- LADO ESQUERDO -->
                     <div>
-                        <h2>Informações da OSC</h2>
+                        <h2>Informações</h2>
                         <div class="divider"></div>
                         <div class="grid">
                             <div>
@@ -1977,11 +1977,13 @@ require 'autenticacao.php';
                     body: fd,
                 });
 
+                const text = await response.text();
+
                 let result;
                 try {
                     result = JSON.parse(text);
                 } catch (e) {
-                    console.error("Erro ao parsear JSON:", e);
+                    console.error("Erro ao parsear JSON:", e, "\nResposta bruta:", text);
                     alert("Resposta do servidor não é JSON válido. Veja o console.");
                     return;
                 }

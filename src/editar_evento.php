@@ -598,8 +598,8 @@ $payload = [
   <div class="tabs-top" id="tabsTop">
       <a class="tab-btn" href="editar_osc.php"><span class="dot"></span>OSC</a>
       <a class="tab-btn" href="projetos_osc.php"><span class="dot"></span>Projetos</a>
-      <a class="tab-btn" href="editar_projeto.php?id=<?= (int)$projetoId ?>"><span class="dot"></span>Editar Projeto</a>
-      <a class="tab-btn is-active" href="#"><span class="dot"></span>Editar Evento/Oficina</a>
+      <a class="tab-btn" href="eventos_projeto.php?id=<?= $projetoId ?>"><span class="dot"></span>Eventos</a>
+      <a class="tab-btn is-active" href="#"><span class="dot"></span>Editar Evento</a>
   </div>
 
   <form id="evtForm" onsubmit="event.preventDefault();saveEventoOficina()">
@@ -610,7 +610,7 @@ $payload = [
     <!-- SEÇÃO 1 -->
     <div class="card card-collapse is-open" data-collapse-id="info-evento">
       <div class="card-head" data-collapse-head>
-        <h2>Informações do Evento/Oficina</h2>
+        <h2>Informações</h2>
         <button type="button" class="card-toggle" data-collapse-btn>
           <span class="label">Fechar</span>
           <span class="chev">▾</span>

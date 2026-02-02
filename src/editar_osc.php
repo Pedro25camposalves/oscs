@@ -399,7 +399,7 @@ if (!$oscIdVinculada) {
     <!-- SEÇÃO 1: INFORMAÇÕES BÁSICAS -->
     <div class="card card-collapse is-open" data-collapse-id="info-osc">
       <div class="card-head" data-collapse-head>
-        <h2>Informações da OSC</h2>
+        <h2>Informações</h2>
 
         <button type="button" class="card-toggle" data-collapse-btn>
           <span class="label">Fechar</span>
