@@ -362,6 +362,19 @@ $payload = [
           grid-column: 1 / -1;
         }
 
+        /* Endereços do Evento/Oficina (mantém padrão do Projeto) */
+        #enderecosList{
+          display:flex;
+          flex-direction:column;
+          gap:12px;
+        }
+        #enderecosList .imovel-card{
+          width:100%;
+          max-width:100%;
+          grid-column: 1 / -1;
+        }
+
+
         footer { display: flex; justify-content: space-between; gap: 12px }
         .btn {
             padding: 10px 14px;
@@ -864,74 +877,63 @@ $payload = [
 
 <!-- MODAL ENDEREÇOS -->
 <div id="modalEnderecoBackdrop" class="modal-backdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar endereço">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Endereço ao Evento/Oficina">
     <h3 id="endModalTitle">Adicionar Endereço</h3>
+
+    <div class="grid" style="margin-top:10px;">
+      <div>
+        <label for="endSelect">Utilizar endereço já cadastrado (opcional)</label>
+        <select id="endSelect">
+          <option value="">Selecione...</option>
+        </select>
+      </div>
+    </div>
+
     <div class="divider"></div>
 
-    <div class="grid cols-2" style="margin-top:10px; align-items:end">
-      <div>
-        <label>Tipo de cadastro</label>
-        <div style="display:flex; gap:14px; margin-top:6px">
-          <label style="display:flex; gap:8px; align-items:center; margin:0; cursor:pointer">
-            <input type="radio" name="endModo" id="endModoExistente" checked />
-            <span class="small">Existente</span>
-          </label>
-          <label style="display:flex; gap:8px; align-items:center; margin:0; cursor:pointer">
-            <input type="radio" name="endModo" id="endModoNovo" />
-            <span class="small">Novo</span>
-          </label>
-        </div>
-      </div>
-      <div style="display:flex; align-items:flex-end; gap:8px">
-        <label style="display:flex; gap:8px; align-items:center; margin:0; cursor:pointer">
-          <input id="endPrincipal" type="checkbox" />
-          <span class="small">Endereço principal</span>
-        </label>
-      </div>
-    </div>
-
-    <div id="endBoxExistente" style="margin-top:10px">
-      <label for="endSelect">Endereço existente (*)</label>
-      <select id="endSelect">
-        <option value="">Selecione...</option>
-      </select>
-      <div class="small muted" style="margin-top:6px">Mostra endereços do projeto e de outros eventos/oficinas do mesmo projeto.</div>
-    </div>
-
-    <div style="margin-top:10px" class="grid cols-2">
-      <div style="grid-column:1 / -1;">
+    <div class="grid cols-2" style="margin-top:10px;">
+      <div style="grid-column:1/-1;">
         <label for="endDescricao">Descrição</label>
         <input id="endDescricao" type="text" placeholder="Ex: Sede, Ponto de apoio..." />
       </div>
       <div>
-        <label for="endCep">CEP (*)</label>
+        <label for="endCep">CEP</label>
         <input id="endCep" type="text" inputmode="numeric" />
       </div>
+
       <div>
-        <label for="endCidade">Cidade (*)</label>
+        <label for="endCidade">Cidade</label>
         <input id="endCidade" type="text" />
       </div>
       <div>
-        <label for="endLogradouro">Logradouro (*)</label>
+        <label for="endLogradouro">Logradouro</label>
         <input id="endLogradouro" type="text" />
       </div>
+
       <div>
-        <label for="endBairro">Bairro (*)</label>
+        <label for="endBairro">Bairro</label>
         <input id="endBairro" type="text" />
       </div>
       <div>
-        <label for="endNumero">Número (*)</label>
-        <input id="endNumero" type="text" inputmode="numeric" />
+        <label for="endNumero">Número</label>
+        <input id="endNumero" type="text" />
       </div>
       <div>
         <label for="endComplemento">Complemento</label>
         <input id="endComplemento" type="text" />
       </div>
+
+      <div style="grid-column:1 / -1; margin-top:4px;">
+        <label class="label-inline">
+          <input type="checkbox" id="endPrincipal" />
+          <span class="small">Endereço principal</span>
+        </label>
+      </div>
     </div>
 
     <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
       <button class="btn btn-ghost" id="closeEnderecoModal" type="button">Cancelar</button>
-      <button class="btn btn-primary" id="saveEnderecoBtn" type="button">Salvar</button>
+      <button class="btn btn-primary" id="saveEnderecoBtn" type="button">Adicionar</button>
     </div>
   </div>
 </div>
@@ -1225,8 +1227,7 @@ $payload = [
     if (!list) return;
     list.innerHTML = '';
 
-    const ativos = enderecos.filter(e => !e.ui_deleted);
-    if (!ativos.length) {
+    if (!enderecos.length){
       const empty = document.createElement('div');
       empty.className = 'small muted';
       empty.textContent = 'Nenhum endereço vinculado ainda.';
@@ -1234,63 +1235,137 @@ $payload = [
       return;
     }
 
-    ativos.forEach((e) => {
+    enderecos.forEach((e, i) => {
       const c = document.createElement('div');
-      c.className = 'envolvido-card';
-
-      const img = document.createElement('img');
-      img.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
+      c.className = 'envolvido-card imovel-card';
 
       const info = document.createElement('div');
+      const desc = (e.descricao || '').trim();
+
+      const numeroComp = [e.numero, e.complemento]
+        .map(v => (v ?? '').toString().trim())
+        .filter(Boolean)
+        .join(' ');
+
+      const endereco = [e.cep, e.cidade, e.logradouro, numeroComp, e.bairro]
+        .map(v => (v ?? '').toString().trim())
+        .filter(Boolean)
+        .join(', ');
+
       info.innerHTML = `
-        <div style="font-weight:600">${escapeHtml(e.descricao || 'Endereço')}</div>
-        <div class="small">${escapeHtml(resumoEndereco(e))}</div>
+        <div class="small"><b>${escapeHtml(desc || '-')}</b></div>
+        <div class="small"><b>Endereço:</b> ${escapeHtml(endereco || '-')}</div>
       `;
 
+      // ===== STATUS =====
+      let statusTxt = e.ui_status || '';
+      const temId = !!(e.enderecoId || e.id || e.endereco_id);
+
+      if (!statusTxt && !temId) statusTxt = 'Novo';
+      if (e.ui_deleted || statusTxt === 'Deletado') statusTxt = 'Deletado';
+
+      let statusPillEl = null;
+      if (statusTxt) {
+        statusPillEl = document.createElement('span');
+        const cls = (statusTxt === 'Novo') ? 'on' : 'off';
+        statusPillEl.className = 'status-pill ' + cls;
+        statusPillEl.textContent = statusTxt;
+      }
+
+      // ===== PILL PRINCIPAL =====
+      let principalPillEl = null;
+      if (Number(e.principal) === 1 || e.principal === true) {
+        principalPillEl = document.createElement('span');
+        principalPillEl.className = 'pill-principal';
+        principalPillEl.textContent = 'Principal';
+      }
+
+      // ===== EDIT =====
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.className = 'btn';
+      edit.textContent = '✎';
+      edit.style.padding = '6px 8px';
+
+      edit.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        abrirEdicaoEndereco(i);
+      });
+
+      if (e.ui_deleted || e.ui_status === 'Deletado') {
+        edit.disabled = true;
+        edit.title = 'Restaure para editar';
+        edit.style.opacity = '0.60';
+        edit.style.cursor = 'not-allowed';
+      }
+
+      // ===== REMOVE / UNDO =====
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'btn';
+      remove.style.padding = '6px 8px';
+
+      const isEditado  = (e.ui_status === 'Editado');
+      const isDeletado = (e.ui_deleted || e.ui_status === 'Deletado');
+      const isNovo     = (!temId || e.ui_status === 'Novo');
+
+      remove.textContent = (isEditado || isDeletado) ? '↩' : '✕';
+      remove.title = isEditado
+        ? 'Desfazer edição'
+        : (isDeletado ? 'Restaurar' : (isNovo ? 'Remover' : 'Deletar'));
+
+      remove.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        // 1) EDITADO
+        if (e.ui_status === 'Editado') {
+          if (e.ui_edit_original) {
+            Object.assign(e, e.ui_edit_original);
+          }
+          delete e.ui_edit_original;
+          delete e.ui_status;
+          renderEnderecos();
+          return;
+        }
+
+        // 2) NOVO (inclui vínculo "existente" recém-adicionado com ui_status Novo)
+        if (isNovo) {
+          enderecos.splice(i, 1);
+          renderEnderecos();
+          return;
+        }
+
+        // 3) DELETADO -> RESTAURA
+        if (isDeletado) {
+          e.ui_deleted = false;
+          e.ui_status = e.ui_status_prev || '';
+          delete e.ui_status_prev;
+          if (!e.ui_status) delete e.ui_status;
+          renderEnderecos();
+          return;
+        }
+
+        // 4) NORMAL -> MARCA DELETADO
+        e.ui_deleted = true;
+        e.ui_status_prev = e.ui_status || '';
+        e.ui_status = 'Deletado';
+        renderEnderecos();
+      });
+
+      // ===== ACTIONS =====
       const actions = document.createElement('div');
       actions.style.marginLeft = 'auto';
       actions.style.display = 'flex';
       actions.style.alignItems = 'center';
       actions.style.gap = '8px';
 
-      if (e.principal) {
-        const pill = document.createElement('span');
-        pill.className = 'status-pill on';
-        pill.textContent = 'Principal';
-        actions.appendChild(pill);
-      }
-
-      const edit = document.createElement('button');
-      edit.type = 'button';
-      edit.className = 'btn';
-      edit.textContent = '✎';
-      edit.style.padding = '6px 8px';
-      edit.title = 'Editar';
-      edit.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        abrirModalEnderecoEditar(e);
-      });
-
-      const del = document.createElement('button');
-      del.type = 'button';
-      del.className = 'btn';
-      del.textContent = '✕';
-      del.style.padding = '6px 8px';
-      del.title = 'Remover';
-      del.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        if (e.tipo === 'novo') {
-          const idx = enderecos.indexOf(e);
-          if (idx >= 0) enderecos.splice(idx, 1);
-        } else {
-          e.ui_deleted = true;
-        }
-        renderEnderecos();
-      });
-
+      if (principalPillEl) actions.appendChild(principalPillEl);
+      if (statusPillEl) actions.appendChild(statusPillEl);
       actions.appendChild(edit);
-      actions.appendChild(del);
-      c.appendChild(img);
+      actions.appendChild(remove);
+
       c.appendChild(info);
       c.appendChild(actions);
       list.appendChild(c);
@@ -1499,146 +1574,351 @@ $payload = [
     renderEnvolvidos();
   });
 
-  // ====== MODAL ENDEREÇOS =====
+  
+  // ====== MODAL ENDEREÇOS (padrão do cadastro_projeto) =====
   const modalEnd = qs('#modalEnderecoBackdrop');
   const openEnd  = qs('#openEnderecoModal');
   const closeEnd = qs('#closeEnderecoModal');
   const saveEnd  = qs('#saveEnderecoBtn');
-  const endModoExistente = qs('#endModoExistente');
-  const endModoNovo      = qs('#endModoNovo');
-  const endBoxExistente  = qs('#endBoxExistente');
+
+  const endSelect = qs('#endSelect');
+  const endDescricao = qs('#endDescricao');
+  const endCep = qs('#endCep');
+  const endCidade = qs('#endCidade');
+  const endLogradouro = qs('#endLogradouro');
+  const endBairro = qs('#endBairro');
+  const endNumero = qs('#endNumero');
+  const endComplemento = qs('#endComplemento');
+  const endPrincipal = qs('#endPrincipal');
+
   let endEditRef = null;
+  let endEditIdx = null;
 
-  function setEndModo(){
-    const isNovo = !!endModoNovo?.checked;
-    if (endBoxExistente) endBoxExistente.style.display = isNovo ? 'none' : 'block';
-    if (qs('#endSelect')) qs('#endSelect').disabled = isNovo;
+  function digitsOnly(s){
+    return String(s || '').replace(/\D/g, '');
   }
-  if (endModoExistente) endModoExistente.addEventListener('change', setEndModo);
-  if (endModoNovo)      endModoNovo.addEventListener('change', setEndModo);
 
-  function preencherCamposEndereco(r){
-    qs('#endDescricao').value   = r?.descricao || '';
-    qs('#endCep').value         = r?.cep || '';
-    qs('#endCidade').value      = r?.cidade || '';
-    qs('#endLogradouro').value  = r?.logradouro || '';
-    qs('#endBairro').value      = r?.bairro || '';
-    qs('#endNumero').value      = r?.numero || '';
-    qs('#endComplemento').value = r?.complemento || '';
+  function setCamposEnderecoDisabled(disabled){
+    [
+      endDescricao,
+      endCep,
+      endCidade,
+      endLogradouro,
+      endBairro,
+      endNumero,
+      endComplemento
+    ].forEach(el => { if (el) el.disabled = !!disabled; });
+  }
+
+  function labelEndereco(e){
+    const p = [];
+    if (e?.descricao) p.push(e.descricao);
+    const rua = [e?.logradouro, e?.numero].filter(Boolean).join(', ');
+    const bairro = e?.bairro ? ` - ${e.bairro}` : '';
+    const cidade = e?.cidade ? ` • ${e.cidade}` : '';
+    const cep = e?.cep ? ` • CEP ${e.cep}` : '';
+    const core = [rua + bairro, cidade, cep].filter(Boolean).join('');
+    if (core.trim()) p.push(core.trim());
+    return p.join(' — ') || `Endereço #${e?.id || ''}`.trim();
+  }
+
+  function preencherSelectEnderecos(){
+    if (!endSelect) return;
+    endSelect.innerHTML = `<option value="">Selecione...</option>`;
+    enderecosDisponiveis.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.id;
+      opt.textContent = labelEndereco(e);
+      endSelect.appendChild(opt);
+    });
+  }
+
+  function getEnderecoById(id){
+    return enderecosDisponiveis.find(x => String(x.id) === String(id)) || null;
+  }
+
+  function limparCamposEndereco(){
+    if (endDescricao) endDescricao.value = '';
+    if (endCep) endCep.value = '';
+    if (endCidade) endCidade.value = '';
+    if (endLogradouro) endLogradouro.value = '';
+    if (endBairro) endBairro.value = '';
+    if (endNumero) endNumero.value = '';
+    if (endComplemento) endComplemento.value = '';
+  }
+
+  function preencherCamposComEndereco(e){
+    if (!e) return;
+    if (endDescricao) endDescricao.value = e.descricao || '';
+    if (endCep) endCep.value = e.cep || '';
+    if (endCidade) endCidade.value = e.cidade || '';
+    if (endLogradouro) endLogradouro.value = e.logradouro || '';
+    if (endBairro) endBairro.value = e.bairro || '';
+    if (endNumero) endNumero.value = e.numero || '';
+    if (endComplemento) endComplemento.value = e.complemento || '';
   }
 
   function limparModalEndereco(){
-    qs('#endModalTitle').textContent = 'Adicionar Endereço';
-    qs('#endSelect').value = '';
-    preencherCamposEndereco(null);
-    qs('#endPrincipal').checked = false;
-    endModoExistente.checked = true;
-    endModoNovo.checked = false;
+    const title = qs('#endModalTitle');
+    if (title) title.textContent = 'Adicionar Endereço';
+    if (saveEnd) saveEnd.textContent = 'Adicionar';
     endEditRef = null;
-    setEndModo();
+
+    preencherSelectEnderecos();
+    if (endSelect) endSelect.value = '';
+
+    limparCamposEndereco();
+    setCamposEnderecoDisabled(false);
+
+    if (endPrincipal) endPrincipal.checked = false;
+    if (endSelect) endSelect.disabled = false;
   }
 
   function abrirModalEnderecoAdicionar(){
     limparModalEndereco();
-    modalEnd.style.display = 'flex';
+    const title = qs('#endModalTitle');
+    if (title) title.textContent = 'Adicionar Endereço';
+    if (saveEnd) saveEnd.textContent = 'Adicionar';
+    endEditRef = null;
+    endEditIdx = null;
+    if (modalEnd) modalEnd.style.display = 'flex';
+  }
+
+  function abrirEdicaoEndereco(idx){
+    const item = enderecos[idx];
+    if (!item) return;
+    if (item.ui_deleted || item.ui_status === 'Deletado') {
+      alert('Restaure o endereço antes de editar.');
+      return;
+    }
+    abrirModalEnderecoEditar(item);
   }
 
   function abrirModalEnderecoEditar(item){
     limparModalEndereco();
-    qs('#endModalTitle').textContent = 'Editar Endereço';
-    qs('#endPrincipal').checked = !!item.principal;
-    endEditRef = item;
+    const title = qs('#endModalTitle');
+    if (title) title.textContent = 'Editar Endereço';
+    if (saveEnd) saveEnd.textContent = 'Salvar';
+    endEditRef = item || null;
+    endEditIdx = endEditRef ? enderecos.indexOf(endEditRef) : null;
 
-    if (item.tipo === 'existente') {
-      endModoExistente.checked = true;
-      endModoNovo.checked = false;
-      setEndModo();
-      qs('#endSelect').value = String(item.enderecoId || '');
-      qs('#endSelect').disabled = true;
+    if (endPrincipal) endPrincipal.checked = !!item?.principal;
+
+    // existente: seleciona e trava campos
+    if (item?.enderecoId){
+      if (endSelect){
+        endSelect.value = String(item.enderecoId);
+        endSelect.disabled = true; // mantém vínculo durante edição
+      }
+      const ref = getEnderecoById(item.enderecoId);
+      if (ref) preencherCamposComEndereco(ref);
+      setCamposEnderecoDisabled(true);
     } else {
-      endModoExistente.checked = false;
-      endModoNovo.checked = true;
-      setEndModo();
-      qs('#endSelect').disabled = true;
+      // novo: carrega valores e deixa editar
+      if (endSelect){
+        endSelect.value = '';
+        endSelect.disabled = false;
+      }
+      preencherCamposComEndereco(item);
+      setCamposEnderecoDisabled(false);
     }
-    preencherCamposEndereco(item);
-    modalEnd.style.display = 'flex';
+
+    if (modalEnd) modalEnd.style.display = 'flex';
   }
 
   if (openEnd) openEnd.addEventListener('click', (ev) => { ev.preventDefault(); abrirModalEnderecoAdicionar(); });
-  if (closeEnd) closeEnd.addEventListener('click', (ev) => { ev.preventDefault(); modalEnd.style.display='none'; });
+  if (closeEnd) closeEnd.addEventListener('click', (ev) => { ev.preventDefault(); if (modalEnd) modalEnd.style.display='none'; });
   if (modalEnd) modalEnd.addEventListener('click', (e) => { if (e.target === modalEnd) modalEnd.style.display='none'; });
 
-  // ao selecionar endereço existente, preenche campos para permitir ajuste
-  const endSelect = qs('#endSelect');
-  if (endSelect) {
+  // Selecionou um endereço existente -> preenche e bloqueia (igual no cadastro_projeto)
+  if (endSelect){
     endSelect.addEventListener('change', () => {
       const id = endSelect.value;
-      if (!id) return preencherCamposEndereco(null);
-      const ref = enderecosDisponiveis.find(x => String(x.id) === String(id));
-      if (ref) preencherCamposEndereco(ref);
+
+      if (!id){
+        limparCamposEndereco();
+        setCamposEnderecoDisabled(false);
+        return;
+      }
+
+      const ref = getEnderecoById(id);
+      if (!ref) return;
+
+      preencherCamposComEndereco(ref);
+      setCamposEnderecoDisabled(true);
     });
   }
 
   if (saveEnd) saveEnd.addEventListener('click', (ev) => {
     ev.preventDefault();
 
-    const principal = !!qs('#endPrincipal').checked;
-    const isNovo = !!endModoNovo?.checked;
+    const principalMarcado = !!(endPrincipal && endPrincipal.checked);
 
-    let enderecoId = null;
-    if (!isNovo) {
-      const sid = qs('#endSelect').value;
-      if (!sid) return alert('Selecione um endereço existente.');
-      enderecoId = Number(sid);
+    const id = endSelect ? endSelect.value : '';
+    const isExistente = !!id;
+
+    let obj = null;
+
+    if (isExistente) {
+      // Se já está na lista como deletado, restaura ao invés de duplicar
+      const deletado = enderecos.find(e => e.ui_deleted && e.enderecoId && String(e.enderecoId) === String(id));
+      if (deletado) {
+        if (principalMarcado) {
+          enderecos.forEach(x => {
+            if (x !== deletado && !x.ui_deleted && x.ui_status !== 'Deletado' && (Number(x.principal) === 1 || x.principal === true)) {
+              const temIdX = !!(x.enderecoId || x.id || x.endereco_id);
+              if (temIdX && x.ui_status !== 'Novo') {
+                if (!x.ui_edit_original) x.ui_edit_original = { ...x };
+                x.ui_status = 'Editado';
+              }
+              x.principal = false;
+            }
+          });
+        }
+
+        deletado.ui_deleted = false;
+        deletado.principal = principalMarcado;
+        deletado.ui_status = deletado.ui_status_prev || deletado.ui_status || '';
+        delete deletado.ui_status_prev;
+        if (!deletado.ui_status) delete deletado.ui_status;
+
+        if (modalEnd) modalEnd.style.display = 'none';
+        renderEnderecos();
+        return;
+      }
+
+      // evita duplicar (ativos)
+      const ja = enderecos.some(e => !e.ui_deleted && e.enderecoId && String(e.enderecoId) === String(id) && e !== endEditRef);
+      if (ja) return alert('Esse endereço já está vinculado ao evento.');
+
+      const ref = getEnderecoById(id);
+      if (!ref) return alert('Endereço inválido.');
+
+      obj = {
+        tipo: 'existente',
+        enderecoId: Number(ref.id),
+        descricao: ref.descricao || '',
+        cep: ref.cep || '',
+        cidade: ref.cidade || '',
+        logradouro: ref.logradouro || '',
+        bairro: ref.bairro || '',
+        numero: ref.numero || '',
+        complemento: ref.complemento || '',
+        principal: principalMarcado,
+        ui_deleted: false,
+      };
+    } else {
+      obj = {
+        tipo: 'novo',
+        enderecoId: null,
+        descricao: (endDescricao?.value || '').trim(),
+        cep: digitsOnly((endCep?.value || '').trim()).slice(0,8),
+        cidade: (endCidade?.value || '').trim(),
+        logradouro: (endLogradouro?.value || '').trim(),
+        bairro: (endBairro?.value || '').trim(),
+        numero: (endNumero?.value || '').trim(),
+        complemento: (endComplemento?.value || '').trim(),
+        principal: principalMarcado,
+        ui_deleted: false,
+      };
+
+      // valida mínima (igual cadastro_projeto)
+      if (!obj.cidade || !obj.logradouro){
+        return alert('Para cadastrar um novo endereço, preencha pelo menos Cidade e Logradouro.');
+      }
     }
 
-    const obj = {
-      tipo: isNovo ? 'novo' : 'existente',
-      enderecoId,
-      descricao: (qs('#endDescricao').value || '').trim(),
-      cep: (qs('#endCep').value || '').trim(),
-      cidade: (qs('#endCidade').value || '').trim(),
-      logradouro: (qs('#endLogradouro').value || '').trim(),
-      bairro: (qs('#endBairro').value || '').trim(),
-      numero: (qs('#endNumero').value || '').trim(),
-      complemento: (qs('#endComplemento').value || '').trim(),
-      principal,
-      ui_deleted: false,
+    const pick = (x) => ({
+      tipo: String(x?.tipo || ''),
+      enderecoId: x?.enderecoId ? Number(x.enderecoId) : null,
+      descricao: String(x?.descricao || ''),
+      cep: String(x?.cep || ''),
+      cidade: String(x?.cidade || ''),
+      logradouro: String(x?.logradouro || ''),
+      bairro: String(x?.bairro || ''),
+      numero: String(x?.numero || ''),
+      complemento: String(x?.complemento || ''),
+      principal: !!(x?.principal),
+    });
+
+    const desmarcarPrincipais = (skip) => {
+      enderecos.forEach((x) => {
+        if (skip && x === skip) return;
+        if (x.ui_deleted || x.ui_status === 'Deletado') return;
+        if (Number(x.principal) === 1 || x.principal === true) {
+          const temIdX = !!(x.enderecoId || x.id || x.endereco_id);
+          if (temIdX && x.ui_status !== 'Novo') {
+            if (!x.ui_edit_original) x.ui_edit_original = { ...x };
+            x.ui_status = 'Editado';
+          }
+          x.principal = false;
+        }
+      });
     };
 
-    // valida mínimos
-    if (!obj.cep || !obj.cidade || !obj.logradouro || !obj.bairro || !obj.numero) {
-      return alert('Preencha CEP, Cidade, Logradouro, Bairro e Número.');
-    }
-
-    // se editando
+    // ===== EDIÇÃO =====
     if (endEditRef) {
-      Object.assign(endEditRef, obj);
-      qs('#endSelect').disabled = false;
-      modalEnd.style.display='none';
-      // garante apenas 1 principal
-      if (obj.principal) {
-        enderecos.forEach(e => { if (e !== endEditRef) e.principal = false; });
+      const alvo = endEditRef;
+
+      if (alvo.ui_deleted || alvo.ui_status === 'Deletado') {
+        return alert('Restaure o endereço antes de editar.');
       }
+
+      const temId = !!(alvo.enderecoId || alvo.id || alvo.endereco_id);
+      const before = pick(alvo);
+      const after  = pick(obj);
+
+      const vaiVirarPrincipal = principalMarcado && !(Number(alvo.principal) === 1 || alvo.principal === true);
+      const temOutroPrincipal = vaiVirarPrincipal && enderecos.some(x =>
+        x !== alvo && !x.ui_deleted && x.ui_status !== 'Deletado' && (Number(x.principal) === 1 || x.principal === true)
+      );
+
+      const mudou = (JSON.stringify(before) !== JSON.stringify(after)) || temOutroPrincipal;
+
+      if (!mudou) {
+        endEditRef = null;
+        endEditIdx = null;
+        if (modalEnd) modalEnd.style.display = 'none';
+        return;
+      }
+
+      // Se vai virar principal, desmarca o principal anterior (e marca como Editado se necessário)
+      if (vaiVirarPrincipal) {
+        desmarcarPrincipais(alvo);
+      }
+
+      // guarda original só quando há mudança real
+      if (temId && !alvo.ui_edit_original) {
+        alvo.ui_edit_original = { ...alvo };
+      }
+
+      Object.assign(alvo, obj);
+      alvo.ui_deleted = false;
+
+      if (temId) alvo.ui_status = 'Editado';
+      else alvo.ui_status = alvo.ui_status || 'Novo';
+
+      endEditRef = null;
+      endEditIdx = null;
+
+      if (modalEnd) modalEnd.style.display = 'none';
       renderEnderecos();
       return;
     }
 
-    // impede duplicar mesmo endereço existente
-    if (!isNovo) {
-      const ja = enderecos.some(e => !e.ui_deleted && e.tipo==='existente' && String(e.enderecoId) === String(enderecoId));
-      if (ja) return alert('Esse endereço já está vinculado ao evento.');
+    // ===== INCLUSÃO =====
+    if (principalMarcado) {
+      desmarcarPrincipais(null);
     }
 
-    if (obj.principal) {
-      enderecos.forEach(e => e.principal = false);
-    }
+    // Vínculo novo (mesmo com enderecoId) precisa ser tratável como "Novo"
+    obj.ui_status = obj.ui_status || 'Novo';
+
     enderecos.push(obj);
-    qs('#endSelect').disabled = false;
-    modalEnd.style.display='none';
+    if (modalEnd) modalEnd.style.display = 'none';
     renderEnderecos();
   });
+
 
   // ====== GALERIA (reusa seu ajax_galeria_projeto.php) ======
   async function loadGaleria(){
