@@ -18,5 +18,3 @@ $conn = mysqli_connect($host, $user, $pass, $name);
 if (!$conn) {
     die("Erro na conexão: " . mysqli_connect_error());
 }
-
-?>

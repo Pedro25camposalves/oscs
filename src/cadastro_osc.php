@@ -1,4 +1,6 @@
 <?php
+$TIPOS_PERMITIDOS = ['OSC_TECH_ADMIN']; 
+$RESPOSTA_JSON    = false;              
 require 'autenticacao.php';
 ?>
 
@@ -9,6 +11,7 @@ require 'autenticacao.php';
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Admin — Cadastro de OSC</title>
+
     <style>
         :root {
             --bg: #f7f7f8;
@@ -89,6 +92,8 @@ require 'autenticacao.php';
         }
 
         input[type="text"],
+        input[type="email"],
+        input[type="password"],
         input[type="color"],
         input[type="file"],
         textarea,
@@ -97,7 +102,7 @@ require 'autenticacao.php';
             padding: 8px 10px;
             border-radius: 8px;
             border: 1px solid #e6e6e9;
-            font-size: 14px
+            font-size: 14px;
         }
 
         textarea {
@@ -243,43 +248,201 @@ require 'autenticacao.php';
             border-radius: 8px;
             font-size: 12px
         }
+
+        .header-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tabs-top{
+            display:flex;
+            gap:10px;
+            margin: 0 0 16px 0;
+        }
+
+        .tab-btn{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            padding:10px 14px;
+            border-radius:999px;
+            border:1px solid #ddd;
+            background:#fff;
+            color:#333;
+            text-decoration:none;
+            font-weight:600;
+            font-size:13px;
+            box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
+        }
+
+        .tab-btn:hover{ background:#f6f6f7; }
+
+        .tab-btn .dot{
+            width:10px;
+            height:10px;
+            border-radius:999px;
+            background:#cfcfd6;
+        }
+
+        .tab-btn.is-active{
+            border-color: rgba(108, 92, 231, .35);
+            background: rgba(108, 92, 231, .08);
+        }
+
+        .tab-btn.is-active .dot{
+            background: var(--qua);
+        }
+
+        .logout-link {
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid #ddd;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            background: #fff;
+            color: #444;
+            cursor: pointer;
+        }
+
+        .logout-link:hover {
+            background: #f0f0f0;
+        }
+
+        .senha-ok {
+            color: #0a6;
+            font-weight: 600;
+        }
+
+        .senha-erro {
+            color: #c00;
+            font-weight: 600;
+        }
+        .chips-list{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+            margin-top:12px;
+        }
+        .chip{
+            background:#fafafa;
+            padding:8px;
+            border-radius:8px;
+            display:flex;
+            gap:10px;
+            align-items:center;
+            border:1px solid #f0f0f0;
+        }
+        .pill-principal{
+          display:inline-block;
+          padding:2px 8px;
+          border-radius:999px;
+          background:#e8f5e9;
+          border:1px solid #b2dfdb;
+          font-size:12px;
+          font-weight:700;
+          color:#055;
+        }
     </style>
 </head>
 
 <body>
     <header>
         <h1>Painel de Controle — Cadastro de OSC</h1>
-        <div class="muted">Administração</div>
+        <div class="header-right">
+            <div class="muted">
+                <?php if (!empty($_SESSION['nome'])): ?>
+                    Olá, <?= htmlspecialchars($_SESSION['nome']) ?>
+                <?php else: ?>
+                    Administração
+                <?php endif; ?>
+            </div>
+
+            <a href="logout.php" class="logout-link">Sair</a>
+        </div>
     </header>
 
     <main>
+        <?php $activePage = basename($_SERVER['PHP_SELF']); ?>
+
+        <!-- TABS DE NAVEGAÇÃO (abaixo do header) -->
+        <div class="tabs-top" id="tabsTop">
+            <a class="tab-btn <?= ($activePage === 'oscs_cadastradas.php') ? 'is-active' : '' ?>" href="oscs_cadastradas.php"><span class="dot"></span>OSCs</a>
+            <a class="tab-btn <?= ($activePage === 'cadastro_osc.php') ? 'is-active' : '' ?>" href="cadastro_osc.php"><span class="dot"></span>Nova OSC</a>
+            <a class="tab-btn" href="config_osc.php"><span class="dot"></span>Configurações da OSC</a>
+        </div>
         
         <form id="oscForm" onsubmit="event.preventDefault();saveData()">
-            <!-- SEÇÃO 1 -->
-            <div style="margin-top:16px" class="card">  
+            
+            <!-- SEÇÃO 6: USUÁRIO RESPONSÁVEL PELA OSC -->
+            <div style="margin-top:1px" class="card">
+                <h2>Usuário responsável</h2>
+                <div class="divider"></div>
+                <div>
+                    <div>
+                        <label for="usuarioNome">Nome (*)</label>
+                        <input id="usuarioNome" type="text" required />
+                    </div>
+                    <div style="margin-top: 5px">
+                        <label for="usuarioEmail">E-mail de acesso (*)</label>
+                        <input id="usuarioEmail" type="email" required />
+                    </div>
+                </div>
+                <div id="emailMsg" class="small"></div>
+                <div class="row" style="margin-top:10px">
+                    <div style="flex:1">
+                        <label for="usuarioSenha">Senha do usuário (*)</label>
+                        <input id="usuarioSenha" type="password" minlength="6" required />
+                    </div>
+                    <div style="flex:1">
+                        <label for="usuarioSenhaConf">Confirmar senha (*)</label>
+                        <input id="usuarioSenhaConf" type="password" minlength="6" required />
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top:8px; text-align:center">
+                    <label class="label-inline">
+                        <input type="checkbox" id="toggleSenha" />
+                        <span class="small">Exibir senha</span>
+                    </label>
+                    <div id="senhaMsg" class="small"></div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO 1: TEMPLATE DA OSC -->
+            <div style="margin-top:16px" class="card">
                 <div class="grid cols-2">
                     <!-- LADO ESQUERDO -->
                     <div>
-                        <h2>Exibição do site</h2>
+                        <h2>Exibição no site</h2>
+                        <div class="divider"></div>
                         <div class="grid">
                             <div class="row">
-                               <div style="flex:1">
-                                    <label for="bgColor">Cor de fundo (*)</label>
-                                   <input id="bgColor" type="color" value="#f7f7f8" required />
-                                </div>
                                 <div style="flex:1">
-                                    <label for="secColor">Cor secundária (*)</label>
-                                    <input id="secColor" type="color" value="#0a6" required />
+                                    <label for="bgColor">Cor de fundo (*)</label>
+                                    <input id="bgColor" type="color" value="#f7f7f8" required />
                                 </div>
                             </div>
                             <div class="row">
                                 <div style="flex:1">
+                                    <label for="secColor">Cor secundária (*)</label>
+                                    <input id="secColor" type="color" value="#00aa66" required />
+                                </div>
+                                <div style="flex:1">
                                     <label for="terColor">Cor terciária (*)</label>
                                     <input id="terColor" type="color" value="#ff8a65" required />
                                 </div>
+                            </div>
+                            <div class="row">
                                 <div style="flex:1">
                                     <label for="quaColor">Cor quaternária (*)</label>
                                     <input id="quaColor" type="color" value="#6c5ce7" required />
+                                </div>
+                                <div style="flex:1">
+                                    <label for="fonColor">Cor da fonte (*)</label>
+                                    <input id="fonColor" type="color" value="#000000" required />
                                 </div>
                             </div>
                             <div>
@@ -310,11 +473,10 @@ require 'autenticacao.php';
                     </div>
 
                     <!-- LADO DIREITO -->
-                    <div> 
+                    <div>
                         <h2 class="section-title">Visualização</h2>
+                        <div class="divider"></div>
                         <div class="card">
-                            <div class="small">Previews automáticos das imagens e cores selecionadas</div>
-                            <div class="divider"></div>
                             <div id="previewArea">
                                 <div class="row" style="align-items:center">
                                     <div>
@@ -345,6 +507,9 @@ require 'autenticacao.php';
                                         <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Qua<br>
                                             <div id="swQua">&nbsp;</div>
                                         </div>
+                                        <div style="padding:8px; border-radius:8px; min-width:80px; text-align:center">Fonte<br>
+                                            <div id="swFon">&nbsp;</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -352,13 +517,14 @@ require 'autenticacao.php';
                     </div>
                 </div>
             </div>
-            
-            <!-- SEÇÃO 2 -->
+
+            <!-- SEÇÃO 2: INFORMAÇÕES BASICAS DA OSC -->
             <div style="margin-top:16px" class="card">
                 <div class="grid cols-2">
                     <!-- LADO ESQUERDO -->
                     <div>
-                        <h2>Informações da OSC</h2>
+                        <h2>Informações</h2>
+                        <div class="divider"></div>
                         <div class="grid">
                             <div>
                                 <label for="nomeOsc">Nome (*)</label>
@@ -369,28 +535,28 @@ require 'autenticacao.php';
                                 <input id="sigla" type="text" required />
                             </div>
                             <div>
-                                <label for="anoFundacao">Ano de fundação</label>
-                                <input id="anoFundacao" inputmode="numeric" type="text" />
+                                <label for="anoFundacao">Ano de fundação (*)</label>
+                                <input id="anoFundacao" inputmode="numeric" type="text" required />
                             </div>
                             <div>
-                                <label for="instagram">Instagram</label>
-                                <input id="instagram" type="text" />
+                                <label for="instagram">Instagram (*)</label>
+                                <input id="instagram" type="text" required />
                             </div>
                             <div>
-                                <label for="historia">História</label>
-                                <textarea id="historia" placeholder="Conte a história da OSC"></textarea>
+                                <label for="historia">História (*)</label>
+                                <textarea id="historia" class="historia" placeholder="Conte a história da OSC" required></textarea>
                             </div>
                             <div>
-                                <label for="missao">Missão</label>
-                                <textarea id="missao" placeholder="Descreva a missão da OSC"></textarea>
+                                <label for="missao">Missão (*)</label>
+                                <textarea id="missao" placeholder="Descreva a missão da OSC" required></textarea>
                             </div>
                             <div>
-                                <label for="visao">Visão</label>
-                                <textarea id="visao" placeholder="Descreva a visão da OSC"></textarea>
+                                <label for="visao">Visão (*)</label>
+                                <textarea id="visao" placeholder="Descreva a visão da OSC" required></textarea>
                             </div>
                             <div>
-                                <label for="valores">Valores</label>
-                                <textarea id="valores" placeholder="Descreva os valores da OSC"></textarea>
+                                <label for="valores">Valores (*)</label>
+                                <textarea id="valores" placeholder="Descreva os valores da OSC" required></textarea>
                             </div>
                         </div>
                     </div>
@@ -399,109 +565,105 @@ require 'autenticacao.php';
                     <div>
                         <div style="margin-top:14px" class="card">
                             <h2>Envolvidos (*)</h2>
-                            <div class="small">Clique em "Adicionar" para incluir as pessoas envolvidas com a OSC.</div>
                             <div class="envolvidos-list" id="listaEnvolvidos"></div>
                             <div style="margin-top:10px">
-                                <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">Adicionar</button>
+                                <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">+ Adicionar</button>
                             </div>
-                        </div>                
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- SEÇÃO 3 -->
+            <!-- SEÇÃO 3: INFORMAÇÕES JURÍDICAS DA OSC -->
             <div style="margin-top:16px" class="card">
                 <h2>Transparência</h2>
+                <div class="divider"></div>
                 <div class="grid cols-3">
                     <div>
                         <label for="CNPJ">CNPJ (*)</label>
                         <input id="CNPJ" inputmode="numeric" type="text" required />
                     </div>
                     <div>
-                        <label for="razaoSocial">Razão Social</label>
-                        <input id="razaoSocial" type="text" />
+                        <label for="razaoSocial">Razão Social (*)</label>
+                        <input id="razaoSocial" type="text" required />
                     </div>
                     <div>
-                        <label for="nomeFantasia">Nome fantasia</label>
-                        <input id="nomeFantasia" type="text" />
+                        <label for="nomeFantasia">Nome fantasia (*)</label>
+                        <input id="nomeFantasia" type="text" required />
                     </div>
                     <div>
-                        <label for="anoCNPJ">Ano de cadastro do CNPJ</label>
-                        <input id="anoCNPJ" inputmode="numeric" type="text" />
+                        <label for="anoCNPJ">Ano de cadastro do CNPJ (*)</label>
+                        <input id="anoCNPJ" inputmode="numeric" type="text" required />
                     </div>
                     <div>
-                        <label for="responsavelLegal">Responsável legal</label>
-                        <input id="responsavelLegal" type="text" />
+                        <label for="responsavelLegal">Responsável legal (*)</label>
+                        <input id="responsavelLegal" type="text" required />
                     </div>
                     <div>
-                        <label for="situacaoCadastral">Situação cadastral</label>
-                        <input id="situacaoCadastral" type="text" />
+                        <label for="situacaoCadastral">Situação cadastral (*)</label>
+                        <input id="situacaoCadastral" type="text" required />
                     </div>
                     <div>
-                        <label for="telefone">Telefone</label>
-                        <input id="telefone" inputmode="numeric" type="text" />
+                        <label for="telefone">Telefone (*)</label>
+                        <input id="telefone" inputmode="numeric" type="text" required />
                     </div>
                     <div>
-                        <label for="email">E-mail</label>
-                        <input id="email" type="text" />
-                    </div>
-                    <div>
-                        <label for="status">Status</label>
-                        <input id="status" type="text" />
+                        <label for="email">E-mail (*)</label>
+                        <input id="email" type="text" required />
                     </div>
                 </div>
                 <div style="margin-top: 10px;">
-                    <label for="oQueFaz">O que a OSC faz?</label>
-                    <textarea id="oQueFaz" placeholder="Descreva a finalidade da OSC"></textarea>
+                    <label for="oQueFaz">O que a OSC faz? (*)</label>
+                    <textarea id="oQueFaz" placeholder="Descreva a finalidade da OSC" required></textarea>
                 </div>
             </div>
 
-            <!-- SEÇÃO 4 -->
+            <!-- SEÇÃO 4: IMÓVEIS DA OSC (MÚLTIPLOS) -->
             <div style="margin-top:16px" class="card">
-                <h2>Imóvel</h2>
-                <div class="grid cols-3">
-                    <div>
-                        <label for="situacaoImovel">Situação do imóvel</label>
-                        <input id="situacaoImovel" type="text" />
-                    </div>
-                    <div>
-                        <label for="cep">CEP (*)</label>
-                        <input id="cep" inputmode="numeric" type="text" required/>
-                    </div>
-                    <div>
-                        <label for="cidade">Cidade</label>
-                        <input id="cidade" type="text" />
-                    </div>
-                    <div>
-                        <label for="bairro">Bairro</label>
-                        <input id="bairro" type="text" />
-                    </div>
-                    <div>
-                        <label for="logradouro">Logradouro</label>
-                        <input id="logradouro" type="text" />
-                    </div>
-                    <div>
-                        <label for="numero">Numero</label>
-                        <input id="numero" inputmode="numeric" type="text" />
-                    </div>
+                <h2>Imóveis</h2>
+                <div class="divider"></div>
+                            
+                <!-- Lista de imóveis cadastrados -->
+                <div class="chips-list" id="listaImoveisOsc"></div>
+                            
+                <div style="margin-top:10px">
+                    <button type="button" class="btn btn-ghost" id="openImovelOscModal">+ Adicionar</button>
                 </div>
             </div>
-            
-            <!-- SEÇÃO 5 -->
+
+            <!-- SEÇÃO 5: ÁREAS DE ATUAÇÃO DA OSC -->
             <div style="margin-top:16px" class="card">
-                <h2>Área e Subárea de Atuação</h2>
-                <div class="small">
-                    Clique em "Adicionar" para incluir as atividades econômicas, áreas e subáreas de atuação.
-                </div>
+                <h2>Área e Subárea de Atuação (CNAE)</h2>
+                <div class="divider"></div>
                 <!-- Lista de atividades -->
                 <div class="envolvidos-list" id="atividadesList"></div>
                 <div style="margin-top:10px">
-                    <button type="button" class="btn btn-ghost" id="openAtividadeModal">
-                        Adicionar
-                    </button>
+                    <button type="button" class="btn btn-ghost" id="openAtividadeModal">+ Adicionar</button>
                 </div>
             </div>
 
+            <!-- ====================================================================== -->
+            <!-- DOCUMENTOS — INÍCIO DA SEÇÃO (HTML) -->
+            <!-- Tudo que pertence à sessão de Documentos da OSC está agrupado aqui -->
+            <!-- ====================================================================== -->
+            <!-- SEÇÃO 7: DOCUMENTOS DA OSC (nova lógica, igual à dos projetos) -->
+            <div style="margin-top:16px" class="card">
+                <h2>Documentos</h2>
+                <div class="small"><b>Formatos permitidos:</b> .pdf .doc .docx .xls .xlsx .odt .ods .csv .txt .rtf</div>
+                <div class="divider"></div>
+
+                <!-- Lista de documentos adicionados -->
+                <div class="envolvidos-list" id="docsOscList"></div>
+
+                <div style="margin-top:10px">
+                    <button type="button" class="btn btn-ghost" id="openDocOscModal">+ Adicionar</button>
+                </div>
+            </div>
+
+
+            <!-- ====================================================================== -->
+            <!-- DOCUMENTOS — FIM DA SEÇÃO (HTML) -->
+            <!-- ====================================================================== -->
             <!-- BOTÕES -->
             <div style="margin-top:16px" class="card">
                 <footer>
@@ -512,47 +674,30 @@ require 'autenticacao.php';
                     </div>
                 </footer>
             </div>
-        </form>        
-
-        <!-- EXIBIÇÃO DO JSON PARA TESTE -->
-        <div style="margin-top:16px" class="card">
-            <h2>JSON DO CADASTRO</h2>
-            <div class="divider"></div>
-            <pre id="jsonOut" class="json-out">{}</pre>
-            <div style="margin-top:8px; display:flex; gap:8px">
-                <a id="downloadLink" style="display:none" class="btn btn-ghost">Baixar JSON</a>
-            </div>
-        </div>
+        </form>
 
     </main>
 
-    <!-- MODAL DOS ENVOLVIDOS -->
+    <!-- MODAL DOS ENVOLVIDOS (apenas "novo envolvido") -->
     <div id="modalBackdrop" class="modal-backdrop">
         <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Envolvido">
             <h3>Adicionar Envolvido</h3>
+            <div class="divider"></div>
 
-            <!-- Modo de seleção: novo ou existente -->
-            <div class="row" style="margin-top:8px; margin-bottom:8px">
-                <label class="label-inline">
-                    <input type="radio" name="envModo" value="novo" checked />
-                    Novo envolvido
-                </label>
-                <label class="label-inline">
-                    <input type="radio" name="envModo" value="existente" />
-                    Usar envolvido existente
-                </label>
-            </div>
-
-            <!-- Container: NOVO ENVOLVIDO -->
-            <div id="envNovoContainer">
+            <!-- Novo Envolvido (sempre) -->
+            <div id="envNovoContainer" style="margin-top:8px">
                 <div class="grid">
                     <div>
-                        <label for="envFoto">Foto</label>
-                        <input id="envFoto" type="file" accept="image/*" />
+                      <div class="small">Visualização</div>
+                      <div class="images-preview" id="previewNovoEnvolvido"></div>
+                    </div>
+                    <div>
+                        <label for="novoEnvFoto">Foto</label>
+                        <input id="novoEnvFoto" type="file" accept="image/*" />
                     </div>
                     <div>
                         <label for="envNome">Nome (*)</label>
-                        <input id="envNome" type="text" required/>
+                        <input id="envNome" type="text" required />
                     </div>
                     <div>
                         <label for="envTelefone">Telefone</label>
@@ -563,32 +708,78 @@ require 'autenticacao.php';
                         <input id="envEmail" type="text" />
                     </div>
                     <div>
-                        <label for="envFuncao">Função (*)</label>
-                        <input id="envFuncaoNovo" type="text" required/>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Container: ENVOLVIDO EXISTENTE -->
-            <div id="envExistenteContainer" style="display:none; margin-top:8px">
-                <div class="grid">
-                    <div>
-                        <label for="envAtorExistente">Envolvido já cadastrado</label>
-                        <select id="envAtorExistente">
-                            <option value="">Selecione um envolvido...</option>
+                        <label for="envFuncaoNovo">Função (*)</label>
+                        <select id="envFuncaoNovo" required>
+                            <option value="">Selecione...</option>
+                            <option value="DIRETOR">Diretor(a)</option>
+                            <option value="COORDENADOR">Coordenador(a)</option>
+                            <option value="FINANCEIRO">Financeiro</option>
+                            <option value="MARKETING">Marketing</option>
+                            <option value="RH">Recursos Humanos (RH)</option>
+                            <option value="PARTICIPANTE">Participante</option>
                         </select>
-                    </div>
-                    <div>
-                        <label for="envFuncao">Função nesta OSC (*)</label>
-                        <input id="envFuncaoExistente" type="text" required/>
                     </div>
                 </div>
             </div>
 
             <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
-                <button class="btn btn-ghost" id="closeEnvolvidoModal">Cancelar</button>
-                <button class="btn btn-primary" id="addEnvolvidoBtn">Adicionar</button>
+                <button class="btn btn-ghost" id="closeEnvolvidoModal" type="button">Cancelar</button>
+                <button class="btn btn-primary" id="addEnvolvidoBtn" type="button">Adicionar</button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL IMÓVEIS DA OSC -->
+    <div id="modalImovelOscBackdrop" class="modal-backdrop">
+        <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Imóvel da OSC">
+            <h3>Adicionar Imóvel</h3>
+            <div class="divider"></div>
+            <div class="grid cols-2" style="margin-top:10px;">
+                <div style="grid-column:1 / -1;">
+                    <label for="imovelDescricao">Descrição</label>
+                    <input id="imovelDescricao" type="text" placeholder="Ex: Sede, Ponto de apoio..." />
+                </div>
+                <div style="grid-column:1 / -1;">
+                    <label for="imovelSituacao">Situação do imóvel (*)</label>
+                    <input id="imovelSituacao" type="text" placeholder="Ex: Próprio, Alugado, Cedido..." />
+                </div>
+                <div>
+                    <label for="imovelCep">CEP (*)</label>
+                    <input id="imovelCep" type="text" inputmode="numeric" />
+                </div>
+                <div>
+                    <label for="imovelCidade">Cidade (*)</label>
+                    <input id="imovelCidade" type="text" />
+                </div>
+                <div>
+                    <label for="imovelLogradouro">Logradouro (*)</label>
+                    <input id="imovelLogradouro" type="text" />
+                </div>
+                <div>
+                    <label for="imovelBairro">Bairro (*)</label>
+                    <input id="imovelBairro" type="text" />
+                </div>
+                <div>
+                    <label for="imovelNumero">Número (*)</label>
+                    <input id="imovelNumero" type="text" inputmode="numeric" />
+                </div>
+                <div>
+                    <label for="imovelComplemento">Complemento</label>
+                    <input id="imovelComplemento" type="text" />
+                </div>
+                <div style="grid-column:1 / -1; margin-top:4px;">
+                    <label class="label-inline">
+                        <input type="checkbox" id="imovelPrincipal" />
+                        <span class="small">Endereço principal</span>
+                    </label>
+                </div>
+            </div>
+
+            <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+                <button class="btn btn-ghost" id="closeImovelOscModal" type="button">Cancelar</button>
+                <button class="btn btn-primary" id="addImovelOscBtn" type="button">Adicionar</button>
+            </div>
+
         </div>
     </div>
 
@@ -596,6 +787,7 @@ require 'autenticacao.php';
     <div id="modalAtividadeBackdrop" class="modal-backdrop">
         <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Atividade">
             <h3>Adicionar Atividade</h3>
+            <div class="divider"></div>
             <div style="margin-top:8px" class="grid">
                 <div>
                     <label for="atvCnae">Atividade econômica (CNAE)</label>
@@ -617,9 +809,90 @@ require 'autenticacao.php';
         </div>
     </div>
 
+
+    <!-- ====================================================================== -->
+    <!-- DOCUMENTOS — INÍCIO DOS MODAIS (HTML) -->
+    <!-- ====================================================================== -->
+    <!-- MODAL DOCUMENTOS OSC (mesma lógica do projeto) -->
+    <div id="modalDocOscBackdrop" class="modal-backdrop">
+        <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Documento da OSC">
+            <h3>Adicionar Documento</h3>
+            <div class="divider"></div>
+                    
+            <div class="grid" style="margin-top:10px;">
+                <!-- CATEGORIA -->
+                <div>
+                    <label for="docCategoria">Categoria (*)</label>
+                    <select id="docCategoria">
+                        <option value="">Selecione...</option>
+                        <option value="INSTITUCIONAL">Institucionais</option>
+                        <option value="CERTIDAO">Certidões</option>
+                        <option value="CONTABIL">Contábeis</option>
+                    </select>
+                </div>
+                    
+                <!-- TIPO -->
+                <div id="docTipoGroup" style="display:none;">
+                    <label for="docTipo">Tipo (*)</label>
+                    <select id="docTipo">
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                    
+                <!-- SUBTIPO (CND) -->
+                <div id="docSubtipoGroup" style="display:none;">
+                    <label for="docSubtipo">Subtipo (*)</label>
+                    <select id="docSubtipo">
+                        <option value="">Selecione...</option>
+                        <option value="FEDERAL">Federal</option>
+                        <option value="ESTADUAL">Estadual</option>
+                        <option value="MUNICIPAL">Municipal</option>
+                    </select>
+                </div>
+                    
+                <!-- DESCRIÇÃO (OUTROS) -->
+                <div id="docDescricaoGroup" style="display:none;">
+                    <label for="docDescricao">Descrição (*)</label>
+                    <input id="docDescricao" type="text" />
+                </div>
+                    
+                <!-- LINK (se quiser reaproveitar para DECRETO futuramente) -->
+                <div id="docLinkGroup" style="display:none;">
+                    <label for="docLink">Link (*)</label>
+                    <input id="docLink" type="text" />
+                </div>
+                    
+                <!-- ANO DE REFERÊNCIA (Balanço/DRE) -->
+                <div id="docAnoRefGroup" style="display:none;">
+                    <label for="docAnoRef">Ano de referência (*)</label>
+                    <input id="docAnoRef" type="text" inputmode="numeric" />
+                </div>
+                    
+                <!-- ARQUIVO -->
+                <div>
+                    <label for="docArquivo">Arquivo (*)</label>
+                    <input id="docArquivo" type="file"
+                           accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.csv,.txt,.rtf" />
+                </div>
+            </div>
+                    
+            <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+                <button class="btn btn-ghost" id="closeDocOscModal" type="button">Cancelar</button>
+                <button class="btn btn-primary" id="addDocOscBtn" type="button">Adicionar</button>
+            </div>
+        </div>
+    </div>
+    <!-- ====================================================================== -->
+    <!-- DOCUMENTOS — FIM DOS MODAIS (HTML) -->
+    <!-- ====================================================================== -->
+
     <script>
         const qs = s => document.querySelector(s);
         const qsa = s => document.querySelectorAll(s);
+
+        function onlyDigits(str) {
+            return (str || '').replace(/\D+/g, '');
+        }
 
         const logoSimples = qs('#logoSimples');
         const logoCompleta = qs('#logoCompleta');
@@ -635,15 +908,304 @@ require 'autenticacao.php';
         const secColor = qs('#secColor');
         const terColor = qs('#terColor');
         const quaColor = qs('#quaColor');
+        const fonColor = qs('#fonColor');
 
         const swBg = qs('#swBg');
         const swSec = qs('#swSec');
         const swTer = qs('#swTer');
         const swQua = qs('#swQua');
+        const swFon = qs('#swFon');
+
+        // Campos do usuário responsável
+        const usuarioNome = qs('#usuarioNome');
+        const usuarioEmail = qs('#usuarioEmail');
+        const usuarioSenha = qs('#usuarioSenha');
+        const usuarioSenhaConf = qs('#usuarioSenhaConf');
+        const toggleSenha = qs('#toggleSenha');
+        const senhaMsg = qs('#senhaMsg');
+        const emailMsg = qs('#emailMsg');
+
+        // Toggle de exibição das senhas
+        if (toggleSenha) {
+            toggleSenha.addEventListener('change', () => {
+                const tipo = toggleSenha.checked ? 'text' : 'password';
+                if (usuarioSenha) usuarioSenha.type = tipo;
+                if (usuarioSenhaConf) usuarioSenhaConf.type = tipo;
+            });
+        }
+
+
+        // ============================================================================
+        // DOCUMENTOS — ESTADO PRINCIPAL
+        // (lista em memória usada para montar a seção e enviar para o backend)
+        // ============================================================================
+        // Documentos da OSC
+        const docsOsc = []; // cada item: {categoria, tipo, subtipo, ...}
 
         const envolvidos = [];
-        let atoresCache = [];
         const atividades = [];
+
+        // Imóveis da OSC (cada item: {descricao, situacao, cep, cidade, logradouro, bairro, numero, complemento})
+        const imoveisOsc = [];
+
+        // ====== IMÓVEIS DA OSC ======
+        const listaImoveisOsc          = qs('#listaImoveisOsc');
+        const modalImovelOscBackdrop   = qs('#modalImovelOscBackdrop');
+        const openImovelOscModal       = qs('#openImovelOscModal');
+        const closeImovelOscModal      = qs('#closeImovelOscModal');
+        const addImovelOscBtn          = qs('#addImovelOscBtn');
+
+        const imovelDescricao   = qs('#imovelDescricao');
+        const imovelSituacao    = qs('#imovelSituacao');
+        const imovelCep         = qs('#imovelCep');
+        const imovelCidade      = qs('#imovelCidade');
+        const imovelLogradouro  = qs('#imovelLogradouro');
+        const imovelBairro      = qs('#imovelBairro');
+        const imovelNumero      = qs('#imovelNumero');
+        const imovelComplemento = qs('#imovelComplemento');
+        const imovelPrincipal   = qs('#imovelPrincipal');
+
+        function limparCamposImovel() {
+            if (!imovelDescricao) return;
+
+            imovelDescricao.value   = '';
+            imovelSituacao.value    = '';
+            imovelCep.value         = '';
+            imovelCidade.value      = '';
+            imovelLogradouro.value  = '';
+            imovelBairro.value      = '';
+            imovelNumero.value      = '';
+            imovelComplemento.value = '';
+            if (imovelPrincipal) {
+                imovelPrincipal.checked = false;
+            }
+        }
+
+        function renderImoveisOsc() {
+            if (!listaImoveisOsc) return;
+            listaImoveisOsc.innerHTML = '';
+
+            imoveisOsc.forEach((imo, i) => {
+                const c = document.createElement('div');
+                c.className = 'chip';
+
+                const info = document.createElement('div');
+
+                c.style.alignItems = 'flex-start';
+                                
+                const desc = (imo.descricao || '').trim();
+                const sit  = (imo.situacao || '').trim();
+
+                                const rua  = [imo.logradouro, imo.numero].filter(Boolean).join(', ');
+                const comp = imo.complemento ? ` ${imo.complemento}` : '';
+                const bairro = imo.bairro ? ` - ${imo.bairro}` : '';
+                const cidade = imo.cidade ? ` • ${imo.cidade}` : '';
+                const cep = imo.cep ? ` • CEP ${imo.cep}` : '';
+                const endereco = (rua ? (rua + comp + bairro) : '').trim() + cidade + cep;
+
+                info.innerHTML = `
+                  <div class="small"><b>${escapeHtml(desc || '-')}</b></div>
+                  <div class="small"><b>Situação:</b> ${escapeHtml(sit || '-')}</div>
+                  <div class="small"><b>Endereço:</b> ${escapeHtml(endereco || '-')}</div>
+                `;
+
+                const remove = document.createElement('button');
+                remove.className = 'btn';
+                remove.textContent = '✕';
+                remove.style.padding = '6px 8px';
+                remove.style.marginLeft = '8px';
+                remove.addEventListener('click', () => {
+                    imoveisOsc.splice(i, 1);
+                    renderImoveisOsc();
+                });
+
+                const actions = document.createElement('div');
+                actions.style.marginLeft = 'auto';
+                actions.style.display = 'flex';
+                actions.style.alignItems = 'center';
+                actions.style.gap = '8px';
+                                
+                if (imo.principal) {
+                  const pill = document.createElement('span');
+                  pill.className = 'pill-principal';
+                  pill.textContent = 'Principal';
+                  actions.appendChild(pill);
+                }
+                                
+                actions.appendChild(remove);
+                                
+                c.appendChild(info);
+                c.appendChild(actions);
+                listaImoveisOsc.appendChild(c);
+            });
+        }
+
+        if (openImovelOscModal) {
+            openImovelOscModal.addEventListener('click', () => {
+                limparCamposImovel();
+                modalImovelOscBackdrop.style.display = 'flex';
+            });
+        }
+
+        if (closeImovelOscModal) {
+            closeImovelOscModal.addEventListener('click', () => {
+                modalImovelOscBackdrop.style.display = 'none';
+            });
+        }
+
+        if (modalImovelOscBackdrop) {
+            modalImovelOscBackdrop.addEventListener('click', (e) => {
+                if (e.target === modalImovelOscBackdrop) {
+                    modalImovelOscBackdrop.style.display = 'none';
+                }
+            });
+        }
+
+        if (addImovelOscBtn) {
+            addImovelOscBtn.addEventListener('click', () => {
+                const descricao   = (imovelDescricao.value   || '').trim();
+                const situacao    = (imovelSituacao.value    || '').trim();
+                const cep         = onlyDigits(imovelCep.value || '').slice(0, 8);
+                const cidade      = (imovelCidade.value      || '').trim();
+                const logradouro  = (imovelLogradouro.value  || '').trim();
+                const bairro      = (imovelBairro.value      || '').trim();
+                const numero      = (imovelNumero.value      || '').trim();
+                const complemento = (imovelComplemento.value || '').trim();
+                const principal   = !!(imovelPrincipal && imovelPrincipal.checked);
+
+                if (!situacao || !cep || !cidade || !logradouro || !bairro || !numero) {
+                    alert(
+                        'Preencha todos os campos do imóvel antes de adicionar:' +
+                        '\n- Situação' +
+                        '\n- CEP' +
+                        '\n- Cidade' +
+                        '\n- Logradouro' +
+                        '\n- Bairro' +
+                        '\n- Número'
+                    );
+                    return;
+                }
+
+                const novo = {
+                    descricao,
+                    situacao,
+                    cep,
+                    cidade,
+                    logradouro,
+                    bairro,
+                    numero,
+                    complemento,
+                    principal
+                };
+
+                // Se este imóvel foi marcado como principal, desmarca os outros
+                if (novo.principal) {
+                    imoveisOsc.forEach(i => { i.principal = false; });
+                }
+
+                imoveisOsc.push(novo);
+                renderImoveisOsc();
+                modalImovelOscBackdrop.style.display = 'none';
+            });
+        }
+
+        function validarSenhaLive() {
+            const s1 = usuarioSenha.value || '';
+            const s2 = usuarioSenhaConf.value || '';
+                        
+            senhaMsg.textContent = '';
+            senhaMsg.classList.remove('senha-ok', 'senha-erro');
+                        
+            if (!s1 && !s2) return;
+                        
+            if (s1 && s1.length < 6) {
+                senhaMsg.textContent = '✖ A senha deve ter no mínimo 6 caracteres.';
+                senhaMsg.classList.add('senha-erro');
+                return;
+            }
+                        
+            if (s2 && s1 !== s2) {
+                senhaMsg.textContent = '✖ As senhas não coincidem.';
+                senhaMsg.classList.add('senha-erro');
+                return;
+            }
+                        
+            if (s1.length >= 6 && s2 && s1 === s2) {
+                senhaMsg.textContent = '✔ Tudo certo!';
+                senhaMsg.classList.add('senha-ok');
+            }
+        }
+
+        async function verificarEmailAdmin() {
+            const email = usuarioEmail ? usuarioEmail.value.trim() : '';
+            if (emailMsg) {
+                emailMsg.textContent = '';
+            }
+
+            if (!email) {
+                if (emailMsg) emailMsg.textContent = 'Preencha o e-mail do administrador.';
+                return {
+                    ok: false,
+                    motivo: 'Preencha o e-mail do administrador.'
+                };
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                if (emailMsg) emailMsg.textContent = 'E-mail inválido.';
+                return {
+                    ok: false,
+                    motivo: 'E-mail inválido.'
+                };
+            }
+
+            try {
+                const resp = await fetch('ajax_verificar_email_usuario.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        email
+                    })
+                });
+
+                const result = await resp.json();
+
+                if (!result.success) {
+                    console.error('Erro na verificação de e-mail:', result.error);
+                    if (emailMsg) emailMsg.textContent = 'Erro ao verificar e-mail. Tente novamente.';
+                    return {
+                        ok: false,
+                        motivo: 'Erro na verificação.'
+                    };
+                }
+
+                if (result.exists) {
+                    if (emailMsg) emailMsg.textContent = 'Este e-mail já está cadastrado para outro usuário.';
+                    return {
+                        ok: false,
+                        motivo: 'E-mail já cadastrado.'
+                    };
+                }
+
+                if (emailMsg) emailMsg.textContent = 'E-mail disponível.';
+                return {
+                    ok: true
+                };
+
+            } catch (e) {
+                console.error('Falha na requisição de verificação de e-mail:', e);
+                if (emailMsg) emailMsg.textContent = 'Erro ao verificar e-mail.';
+                return {
+                    ok: false,
+                    motivo: 'Erro na verificação.'
+                };
+            }
+        }
+
+        usuarioSenha.addEventListener('input', validarSenhaLive);
+        usuarioSenhaConf.addEventListener('input', validarSenhaLive);
 
         function readFileAsDataURL(file) {
             return new Promise((res, rej) => {
@@ -677,7 +1239,7 @@ require 'autenticacao.php';
                 const img = document.createElement('img');
                 img.src = src;
                 previewLogoCompleta.appendChild(img)
-            }
+            };
             [b1, b2, b3].forEach(async (b) => {
                 if (b) {
                     const src = await readFileAsDataURL(b);
@@ -691,176 +1253,117 @@ require 'autenticacao.php';
             swSec.style.background = secColor.value;
             swTer.style.background = terColor.value;
             swQua.style.background = quaColor.value;
+            swFon.style.background = fonColor.value;
 
-            // apply page palette live
             document.documentElement.style.setProperty('--bg', bgColor.value);
             document.documentElement.style.setProperty('--sec', secColor.value);
             document.documentElement.style.setProperty('--ter', terColor.value);
             document.documentElement.style.setProperty('--qua', quaColor.value);
+            document.documentElement.style.setProperty('--fon', fonColor.value);
         }
 
         [logoSimples, logoCompleta, banner1, banner2, banner3].forEach(el => el.addEventListener('change', updatePreviews));
-        [bgColor, secColor, terColor, quaColor].forEach(el => el.addEventListener('input', updatePreviews));
+        [bgColor, secColor, terColor, quaColor, fonColor].forEach(el => el.addEventListener('input', updatePreviews));
 
-        // modal logic
+        // MODAL ENVOLVIDOS 
         const modalBackdrop = qs('#modalBackdrop');
         const openEnvolvidoModal = qs('#openEnvolvidoModal');
         const closeEnvolvidoModal = qs('#closeEnvolvidoModal');
         const addEnvolvidoBtn = qs('#addEnvolvidoBtn');
+        const novoEnvFoto = qs('#novoEnvFoto');
+        const previewNovoEnvolvido = qs('#previewNovoEnvolvido');
 
-        // modo de seleção novo/existente
-        const envModoRadios         = qsa('input[name="envModo"]');
-        const envNovoContainer      = qs('#envNovoContainer');
-        const envExistenteContainer = qs('#envExistenteContainer');
-        const envAtorExistente      = qs('#envAtorExistente');
+        async function updatePreviewNovoEnvolvido(){
+            previewNovoEnvolvido.innerHTML = '';
+            const f = novoEnvFoto.files?.[0] || null;
+            if (!f) return;
+
+            const src = await readFileAsDataURL(f);
+            const img = document.createElement('img');
+            img.src = src;
+            previewNovoEnvolvido.appendChild(img);
+        }
+
+        if (novoEnvFoto) {
+            novoEnvFoto.addEventListener('change', updatePreviewNovoEnvolvido);
+        }
 
         openEnvolvidoModal.addEventListener('click', () => {
             modalBackdrop.style.display = 'flex';
-        
-            envModoRadios.forEach(r => r.checked = (r.value === 'novo'));
-            envNovoContainer.style.display = 'block';
-            envExistenteContainer.style.display = 'none';
-        
-            qs('#envFoto').value = '';
+
+            const fotoInput = qs('#novoEnvFoto');
+            if (fotoInput) fotoInput.value = '';
+
             qs('#envNome').value = '';
             qs('#envTelefone').value = '';
             qs('#envEmail').value = '';
             const funcaoNovoInput = qs('#envFuncaoNovo');
-            const funcaoExistenteInput = qs('#envFuncaoExistente');
             if (funcaoNovoInput) funcaoNovoInput.value = '';
-            if (funcaoExistenteInput) funcaoExistenteInput.value = '';
-            envAtorExistente.value = '';
-        
-            loadAtoresList();
-        });
 
-        envModoRadios.forEach(r => {
-            r.addEventListener('change', () => {
-                const modoSelecionado = [...envModoRadios].find(x => x.checked)?.value || 'novo';
-            
-                if (modoSelecionado === 'existente') {
-                    envNovoContainer.style.display = 'none';
-                    envExistenteContainer.style.display = 'block';
-                    loadAtoresList(); // garante lista atualizada
-                } else {
-                    envNovoContainer.style.display = 'block';
-                    envExistenteContainer.style.display = 'none';
-                }
-            });
+            if (previewNovoEnvolvido) previewNovoEnvolvido.innerHTML = '';
         });
 
         closeEnvolvidoModal.addEventListener('click', () => {
-            modalBackdrop.style.display = 'none'
+            modalBackdrop.style.display = 'none';
+            if (previewNovoEnvolvido) previewNovoEnvolvido.innerHTML = '';
         });
 
         modalBackdrop.addEventListener('click', (e) => {
-            if (e.target === modalBackdrop) modalBackdrop.style.display = 'none'
+            if (e.target === modalBackdrop) modalBackdrop.style.display = 'none';
         });
 
-        // Carrega lista de atores existentes para o <select> do modal
-        async function loadAtoresList() {
-            try {
-                const resp = await fetch('ajax_listar_atores.php');
-                const result = await resp.json();
-            
-                envAtorExistente.innerHTML = '<option value="">Selecione um envolvido...</option>';
-                atoresCache = [];
-            
-                if (result.success && Array.isArray(result.data)) {
-                    atoresCache = result.data;
-                    result.data.forEach(a => {
-                        const opt = document.createElement('option');
-                        opt.value = a.id;
-                        const labelEmail = a.email ? ` - ${a.email}` : '';
-                        opt.textContent = `${a.nome}${labelEmail}`;
-                        envAtorExistente.appendChild(opt);
-                    });
-                } else {
-                    console.error(result.error || 'Falha ao listar atores');
-                }
-            } catch (e) {
-                console.error('Erro ao carregar lista de atores:', e);
-                alert('Erro ao carregar lista de envolvidos existentes.');
-            }
-        }
-
-        // ADICIONAR ENVOLVIDO
+        // ADICIONAR ENVOLVIDO 
         async function addEnvolvido() {
-            const modo = [...envModoRadios].find(r => r.checked)?.value || 'novo';
-        
-            if (modo === 'existente') {
-                const atorId = parseInt(envAtorExistente.value, 10);
-                const funcao = qs('#envFuncaoExistente').value.trim();
-            
-                if (!atorId || !funcao) {
-                    alert('Selecione um envolvido existente e informe a função.');
-                    return;
-                }
-            
-                const ator = atoresCache.find(a => a.id === atorId);
-                if (!ator) {
-                    alert('Envolvido não encontrado na lista.');
-                    return;
-                }
-            
-                const envolvido = {
-                    tipo: 'existente',
-                    atorId,
-                    nome: ator.nome || '',
-                    telefone: ator.telefone || '',
-                    email: ator.email || '',
-                    funcao,
-                    fotoPreview: ator.foto || null,  // se tiver caminho da foto
-                    fotoFile: null                   // sem upload novo
-                };
-            
-                envolvidos.push(envolvido);
-            
-            } else {
-                // modo: novo
-                const fotoFile = qs('#envFoto').files[0] || null;
-                const nome     = qs('#envNome').value.trim();
-                const telefone = qs('#envTelefone').value.trim();
-                const email    = qs('#envEmail').value.trim();
-                const funcao   = qs('#envFuncaoNovo').value.trim();
-            
-                if (!nome || !funcao) {
-                    alert('Preencha pelo menos o Nome e a Função do envolvido!');
-                    return;
-                }
-            
-                const fotoPreview = fotoFile ? await readFileAsDataURL(fotoFile) : null;
-            
-                const envolvido = {
-                    tipo: 'novo',
-                    atorId: null,
-                    fotoPreview,
-                    fotoFile,
-                    nome,
-                    telefone,
-                    email,
-                    funcao
-                };
-            
-                envolvidos.push(envolvido);
+            const fotoFile = qs('#novoEnvFoto').files[0] || null;
+            const nome = qs('#envNome').value.trim();
+            const telefone = qs('#envTelefone').value.trim();
+            const email = qs('#envEmail').value.trim();
+            const funcao = qs('#envFuncaoNovo').value.trim();
+
+            if (!nome || !funcao) {
+                alert('Preencha pelo menos o Nome e a Função do envolvido!');
+                return;
             }
-        
+
+            const fotoPreview = fotoFile ? await readFileAsDataURL(fotoFile) : null;
+
+            const envolvido = {
+                tipo: 'novo',
+                atorId: null,
+                fotoPreview,
+                fotoFile,
+                nome,
+                telefone,
+                email,
+                funcao
+            };
+
+            envolvidos.push(envolvido);
             renderEnvolvidos();
-        
-            // Reseta campos do modal
-            qs('#envFoto').value = '';
+
+            const fotoInput = qs('#novoEnvFoto');
+            if (fotoInput) fotoInput.value = '';
             qs('#envNome').value = '';
             qs('#envTelefone').value = '';
             qs('#envEmail').value = '';
             const funcaoNovoInput = qs('#envFuncaoNovo');
-            const funcaoExistenteInput = qs('#envFuncaoExistente');
             if (funcaoNovoInput) funcaoNovoInput.value = '';
-            if (funcaoExistenteInput) funcaoExistenteInput.value = '';
-            envAtorExistente.value = '';
-        
+
+            if (previewNovoEnvolvido) previewNovoEnvolvido.innerHTML = '';
+
             modalBackdrop.style.display = 'none';
         }
+
         addEnvolvidoBtn.addEventListener('click', addEnvolvido);
+
+        const FUNCAO_LABELS = {
+            DIRETOR: 'Diretor(a)',
+            COORDENADOR: 'Coordenador(a)',
+            FINANCEIRO: 'Financeiro',
+            MARKETING: 'Marketing',
+            RH: 'Recursos Humanos (RH)',
+            PARTICIPANTE: 'Participante'
+        };
 
         function renderEnvolvidos() {
             const list = qs('#listaEnvolvidos');
@@ -869,16 +1372,18 @@ require 'autenticacao.php';
             envolvidos.forEach((e, i) => {
                 const c = document.createElement('div');
                 c.className = 'envolvido-card';
-            
+
                 const img = document.createElement('img');
                 img.src = e.fotoPreview || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
+
+                const funcaoLabel = FUNCAO_LABELS[e.funcao] || e.funcao;
 
                 const info = document.createElement('div');
                 info.innerHTML = `
                     <div style="font-weight:600">${escapeHtml(e.nome)}</div>
-                    <div class="small">${escapeHtml(e.funcao)}</div>
+                    <div class="small">${escapeHtml(funcaoLabel)}</div>
                 `;
-            
+
                 const remove = document.createElement('button');
                 remove.className = 'btn';
                 remove.textContent = '✕';
@@ -888,7 +1393,7 @@ require 'autenticacao.php';
                     envolvidos.splice(i, 1);
                     renderEnvolvidos();
                 });
-            
+
                 c.appendChild(img);
                 c.appendChild(info);
                 c.appendChild(remove);
@@ -901,61 +1406,63 @@ require 'autenticacao.php';
         const openAtividadeModal = qs('#openAtividadeModal');
         const closeAtividadeModal = qs('#closeAtividadeModal');
         const addAtividadeBtn = qs('#addAtividadeBtn');
-            
+
         openAtividadeModal.addEventListener('click', () => {
             modalAtividadeBackdrop.style.display = 'flex';
         });
-        
+
         closeAtividadeModal.addEventListener('click', () => {
             modalAtividadeBackdrop.style.display = 'none';
         });
-        
+
         modalAtividadeBackdrop.addEventListener('click', (e) => {
             if (e.target === modalAtividadeBackdrop) modalAtividadeBackdrop.style.display = 'none';
         });
-        
+
         function limparCamposAtividade() {
             qs('#atvCnae').value = '';
             qs('#atvArea').value = '';
             qs('#atvSubarea').value = '';
         }
-        
-        // ADICIONAR ATIVIDADE
+
         function addAtividade() {
             const cnae = qs('#atvCnae').value.trim();
             const area = qs('#atvArea').value.trim();
             const subarea = qs('#atvSubarea').value.trim();
-        
+
             if (!cnae || !area) {
                 alert('Preencha pelo menos CNAE e Área de atuação');
                 return;
             }
-        
-            const atv = { cnae, area, subarea };
+
+            const atv = {
+                cnae,
+                area,
+                subarea
+            };
             atividades.push(atv);
             renderAtividades();
             limparCamposAtividade();
             modalAtividadeBackdrop.style.display = 'none';
         }
-        
+
         addAtividadeBtn.addEventListener('click', addAtividade);
-        
-        // RENDERIZA A LISTA DE ATIVIDADES
+
         function renderAtividades() {
             const list = qs('#atividadesList');
             list.innerHTML = '';
-        
+
             atividades.forEach((a, i) => {
                 const c = document.createElement('div');
-                c.className = 'envolvido-card'; // reaproveitando o estilo
-            
+                c.className = 'envolvido-card';
+
                 const info = document.createElement('div');
                 info.innerHTML = `
                     <div style="font-weight:600">CNAE: ${escapeHtml(a.cnae)}</div>
                     <div class="small">Área: ${escapeHtml(a.area)}</div>
                     ${a.subarea ? `<div class="small">Subárea: ${escapeHtml(a.subarea)}</div>` : ''}
                 `;
-            
+
                 const remove = document.createElement('button');
                 remove.className = 'btn';
                 remove.textContent = '✕';
@@ -965,7 +1472,7 @@ require 'autenticacao.php';
                     atividades.splice(i, 1);
                     renderAtividades();
                 });
-            
+
                 c.appendChild(info);
                 c.appendChild(remove);
                 list.appendChild(c);
@@ -983,174 +1490,642 @@ require 'autenticacao.php';
             })
         }
 
-    // REALIZA O CADASTRO (ao clicar no botão 'CADASTRAR OSC')
-    async function saveData() {
-        // validações mínimas
-        if (!logoSimples.files[0] || !logoCompleta.files[0] || !banner1.files[0]) {
-            alert("Logo simples, logo completa e banner principal são obrigatórios.");
-            return;
-        }
 
-        // Monta um FormData em vez de JSON
-        const fd = new FormData();
-
-        // Cores (usando sintaxe cores[bg] pra virar $_POST['cores']['bg'] no PHP)
-        fd.append('cores[bg]',  bgColor.value);
-        fd.append('cores[sec]', secColor.value);
-        fd.append('cores[ter]', terColor.value);
-        fd.append('cores[qua]', quaColor.value);
-
-        // Dados "simples" da OSC
-        fd.append('nomeOsc',          qs("#nomeOsc").value);
-        fd.append('historia',         qs("#historia").value);
-        fd.append('missao',           qs("#missao").value);
-        fd.append('visao',            qs("#visao").value);
-        fd.append('valores',          qs("#valores").value);
-
-        fd.append('razaoSocial',      qs("#razaoSocial").value);
-        fd.append('nomeFantasia',     qs("#nomeFantasia").value);
-        fd.append('sigla',            qs("#sigla").value);
-        fd.append('situacaoCadastral',qs("#situacaoCadastral").value);
-        fd.append('anoCNPJ',          qs("#anoCNPJ").value);
-        fd.append('anoFundacao',      qs("#anoFundacao").value);
-        fd.append('responsavelLegal', qs("#responsavelLegal").value);
-        fd.append('email',            qs("#email").value);
-        fd.append('oQueFaz',          qs("#oQueFaz").value);
-        fd.append('cnpj',             qs("#CNPJ").value);
-        fd.append('telefone',         qs("#telefone").value);
-        fd.append('instagram',        qs("#instagram").value);
-        fd.append('status',           qs("#status").value);
-
-        // Imóvel
-        fd.append('situacaoImovel',   qs("#situacaoImovel").value);
-        fd.append('cep',              qs("#cep").value);
-        fd.append('cidade',           qs("#cidade").value);
-        fd.append('bairro',           qs("#bairro").value);
-        fd.append('logradouro',       qs("#logradouro").value);
-        fd.append('numero',           qs("#numero").value);
-
-        // Texto do banner
-        fd.append('labelBanner', qs("#labelBanner").value);
-
-        // Monta array de envolvidos para envio
-        const envolvidosParaEnvio = envolvidos.map(e => ({
-            tipo: e.tipo || 'novo',       // 'novo' ou 'existente'
-            ator_id: e.atorId || null,   // id do ator se já existir
-            nome: e.nome,
-            telefone: e.telefone,
-            email: e.email,
-            funcao: e.funcao
-        }));
-
-        fd.append('envolvidos', JSON.stringify(envolvidosParaEnvio));
-        fd.append('atividades', JSON.stringify(atividades));
-
-        // Arquivos de foto de cada envolvido, em campos próprios
-        envolvidos.forEach((e, i) => {
-            if (e.fotoFile) {
-                fd.append(`fotoEnvolvido_${i}`, e.fotoFile);
-            }
-        });
-
-        // Arquivos — aqui vai o binário mesmo
-        if (logoSimples.files[0])  fd.append('logoSimples',  logoSimples.files[0]);
-        if (logoCompleta.files[0]) fd.append('logoCompleta', logoCompleta.files[0]);
-        if (banner1.files[0])      fd.append('banner1',      banner1.files[0]);
-        if (banner2.files[0])      fd.append('banner2',      banner2.files[0]);
-        if (banner3.files[0])      fd.append('banner3',      banner3.files[0]);
-
-        // Opcional: montar um JSON só pra exibir no <pre> (sem os arquivos)
-        const previewData = {
-            nomeOsc: qs("#nomeOsc").value,
-            historia: qs("#historia").value,
-            missao: qs("#missao").value,
-            visao: qs("#visao").value,
-            valores: qs("#valores").value,
-            razaoSocial: qs("#razaoSocial").value,
-            nomeFantasia: qs("#nomeFantasia").value,
-            sigla: qs("#sigla").value,
-            situacaoCadastral: qs("#situacaoCadastral").value,
-            anoCNPJ: qs("#anoCNPJ").value,
-            anoFundacao: qs("#anoFundacao").value,
-            responsavelLegal: qs("#responsavelLegal").value,
-            email: qs("#email").value,
-            oQueFaz: qs("#oQueFaz").value,
-            cnpj: qs("#CNPJ").value,
-            telefone: qs("#telefone").value,
-            instagram: qs("#instagram").value,
-            status: qs("#status").value,
-            situacaoImovel: qs("#situacaoImovel").value,
-            cep: qs("#cep").value,
-            cidade: qs("#cidade").value,
-            bairro: qs("#bairro").value,
-            logradouro: qs("#logradouro").value,
-            numero: qs("#numero").value,
-            cores: {
-                bg: bgColor.value,
-                sec: secColor.value,
-                ter: terColor.value,
-                qua: quaColor.value,
-            },
-            labelBanner: qs("#labelBanner").value,
-            envolvidos: envolvidosParaEnvio,
-            atividades,
+        // ============================================================================
+        // DOCUMENTOS — ELEMENTOS, MAPAS, RENDER E AÇÕES
+        // ============================================================================
+        const docsOscList            = qs('#docsOscList');
+        const modalDocOscBackdrop    = qs('#modalDocOscBackdrop');
+        const openDocOscModal        = qs('#openDocOscModal');
+        const closeDocOscModal       = qs('#closeDocOscModal');
+        const addDocOscBtn           = qs('#addDocOscBtn');
+                        
+        const docCategoria      = qs('#docCategoria');
+        const docTipoGroup      = qs('#docTipoGroup');
+        const docTipo           = qs('#docTipo');
+        const docSubtipoGroup   = qs('#docSubtipoGroup');
+        const docSubtipo        = qs('#docSubtipo');
+        const docDescricaoGroup = qs('#docDescricaoGroup');
+        const docDescricao      = qs('#docDescricao');
+        const docAnoRefGroup    = qs('#docAnoRefGroup');
+        const docAnoRef         = qs('#docAnoRef');
+        const docArquivo        = qs('#docArquivo');
+        const docLinkGroup      = qs('#docLinkGroup');
+        const docLink           = qs('#docLink');
+                        
+        // Mapeamento Categoria
+        const TIPOS_POR_CATEGORIA_OSC = {
+            INSTITUCIONAL: [
+                { value: 'ESTATUTO',            label: 'Estatuto' },
+                { value: 'ATA',                 label: 'Ata' },
+                { value: 'OUTRO_INSTITUCIONAL', label: 'Outro' },
+            ],
+            CERTIDAO: [
+                { value: 'CND',         label: 'Certidão Negativa de Débito (CND)' },
+                { value: 'FGTS',        label: 'FGTS' },
+                { value: 'TRABALHISTA', label: 'Trabalhista' },
+                { value: 'CARTAO_CNPJ', label: 'Cartão CNPJ' },
+            ],
+            CONTABIL: [
+                { value: 'BALANCO_PATRIMONIAL', label: 'Balanço Patrimonial' },
+                { value: 'DRE',                 label: 'Demonstração de Resultados (DRE)' },
+                { value: 'OUTRO',               label: 'Outro' },
+            ],
+        };
+                        
+        const LABEL_CATEGORIA_OSC = {
+            INSTITUCIONAL: 'Institucionais',
+            CERTIDAO:      'Certidões',
+            CONTABIL:      'Contábeis',
         };
 
-        const jsonPreview = JSON.stringify(previewData, null, 2);
-        qs("#jsonOut").textContent = jsonPreview;
+        const ORDEM_CATEGORIAS_OSC = [
+            { key: 'INSTITUCIONAL', numero: 1 },
+            { key: 'CERTIDAO',      numero: 2 },
+            { key: 'CONTABIL',      numero: 3 },
+        ];
+                        
+        function resetDocOscCampos() {
+            docCategoria.value = '';
+                        
+            docTipo.innerHTML = '<option value="">Selecione...</option>';
+            docTipoGroup.style.display = 'none';
+                        
+            docSubtipo.value = '';
+            docSubtipoGroup.style.display = 'none';
+                        
+            docDescricao.value = '';
+            docDescricaoGroup.style.display = 'none';
+                        
+            docLink.value = '';
+            docLinkGroup.style.display = 'none';
+                        
+            docAnoRef.value = '';
+            docAnoRefGroup.style.display = 'none';
+                        
+            docArquivo.value = '';
+        }
+                        
+        docCategoria.addEventListener('change', () => {
+            const cat = docCategoria.value;
+                        
+            docTipo.innerHTML = '<option value="">Selecione...</option>';
+            docTipoGroup.style.display = 'none';
+                        
+            docSubtipo.value = '';
+            docSubtipoGroup.style.display = 'none';
+                        
+            docDescricao.value = '';
+            docDescricaoGroup.style.display = 'none';
+                        
+            docLink.value = '';
+            docLinkGroup.style.display = 'none';
+                        
+            docAnoRef.value = '';
+            docAnoRefGroup.style.display = 'none';
+                        
+            if (!cat || !TIPOS_POR_CATEGORIA_OSC[cat]) {
+                return;
+            }
+                        
+            TIPOS_POR_CATEGORIA_OSC[cat].forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.value;
+                opt.textContent = t.label;
+                docTipo.appendChild(opt);
+            });
+                        
+            docTipoGroup.style.display = 'block';
+        });
+                        
+        docTipo.addEventListener('change', () => {
+            const tipo = docTipo.value;
+                        
+            docSubtipo.value = '';
+            docSubtipoGroup.style.display = 'none';
+                        
+            docDescricao.value = '';
+            docDescricaoGroup.style.display = 'none';
+                        
+            docLink.value = '';
+            docLinkGroup.style.display = 'none';
+                        
+            docAnoRef.value = '';
+            docAnoRefGroup.style.display = 'none';
+                        
+            if (!tipo) return;
+                        
+            if (tipo === 'CND') {
+                docSubtipoGroup.style.display = 'block';
+            } else if (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE') {
+                docAnoRefGroup.style.display = 'block';
+            } else if (tipo === 'OUTRO' || tipo === 'OUTRO_INSTITUCIONAL') {
+                docDescricaoGroup.style.display = 'block';
+            }
+        });
+                        
+        function renderDocsOsc() {
+            if (!docsOscList) return;
+            docsOscList.innerHTML = '';
 
-        const blob = new Blob([jsonPreview], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const dl = qs("#downloadLink");
-        dl.style.display = "inline-block";
-        dl.href = url;
-        dl.download = (qs("#nomeOsc").value || "osc") + ".json";
+            ORDEM_CATEGORIAS_OSC.forEach(({ key, numero }) => {
+                const docsCat = docsOsc.filter(d => d.categoria === key);
+
+                const sec = document.createElement('div');
+                sec.style.width = '100%';
+
+                const titulo = document.createElement('div');
+                titulo.className = 'section-title';
+                titulo.style.marginTop = '8px';
+                titulo.textContent = `${numero}. ${LABEL_CATEGORIA_OSC[key] || key}`;
+                sec.appendChild(titulo);
+
+                if (!docsCat.length) {
+                    const vazio = document.createElement('div');
+                    vazio.className = 'small';
+                    vazio.textContent = 'Nenhum documento cadastrado!';
+                    vazio.style.marginBottom = '4px';
+                    sec.appendChild(vazio);
+                } else {
+                    docsCat.forEach(d => {
+                        const c = document.createElement('div');
+                        c.className = 'envolvido-card';
+
+                        let linha = d.tipo_label || d.tipo || '';
+                        if (d.tipo === 'CND' && d.subtipo_label) {
+                            linha += ' — ' + d.subtipo_label;
+                        } else if ((d.tipo === 'OUTRO' || d.tipo === 'OUTRO_INSTITUCIONAL') && d.descricao) {
+                            linha += ' — ' + d.descricao;
+                        }
+
+                        const info = document.createElement('div');
+                        info.innerHTML = `
+                            <div style="font-weight:600">
+                                ${escapeHtml(linha)}
+                            </div>
+                            ${d.ano_referencia ? `<div class="small" style="font-weight:bold">Ano: ${escapeHtml(d.ano_referencia)}</div>` : ''}
+                            ${d.link ? `<div class="small">Link: ${escapeHtml(d.link)}</div>` : ''}
+                            <div class="small">Arquivo: ${escapeHtml(d.file?.name || '—')}</div>
+                        `;
+
+                        const remove = document.createElement('button');
+                        remove.className = 'btn';
+                        remove.textContent = '✕';
+                        remove.style.padding = '6px 8px';
+                        remove.style.marginLeft = 'auto';
+                        remove.addEventListener('click', () => {
+                            const idxGlobal = docsOsc.indexOf(d);
+                            if (idxGlobal !== -1) {
+                                docsOsc.splice(idxGlobal, 1);
+                                renderDocsOsc();
+                            }
+                        });
+
+                        c.appendChild(info);
+                        c.appendChild(remove);
+                        sec.appendChild(c);
+                    });
+                }
+
+                docsOscList.appendChild(sec);
+            });
+        }
+                        
+        if (openDocOscModal) {
+            openDocOscModal.addEventListener('click', () => {
+                resetDocOscCampos();
+                modalDocOscBackdrop.style.display = 'flex';
+            });
+        }
+                        
+        if (closeDocOscModal) {
+            closeDocOscModal.addEventListener('click', () => {
+                modalDocOscBackdrop.style.display = 'none';
+            });
+        }
+                        
+        if (modalDocOscBackdrop) {
+            modalDocOscBackdrop.addEventListener('click', (e) => {
+                if (e.target === modalDocOscBackdrop) {
+                    modalDocOscBackdrop.style.display = 'none';
+                }
+            });
+        }
+                        
+        // Adicionar documento à lista
+        if (addDocOscBtn) {
+            addDocOscBtn.addEventListener('click', () => {
+                const cat = docCategoria.value;
+                const tipo = docTipo.value;
+                const tipoLabel = docTipo.options[docTipo.selectedIndex]?.text || '';
+                        
+                if (!cat) {
+                    alert('Selecione a categoria.');
+                    return;
+                }
+                if (!tipo) {
+                    alert('Selecione o tipo.');
+                    return;
+                }
+                        
+                let subtipoDb    = '';
+                let subtipoLabel = '';
+                let descricao    = docDescricao.value.trim();
+                let ano          = docAnoRef.value.trim();
+                let link         = docLink.value.trim();
+                        
+                if (tipo === 'CND') {
+                    const sub = docSubtipo.value;
+                    if (!sub) {
+                        alert('Selecione o subtipo (Federal, Estadual ou Municipal).');
+                        return;
+                    }
+                    subtipoDb    = 'CND_' + sub; // CND_FEDERAL, CND_ESTADUAL, CND_MUNICIPAL
+                    subtipoLabel = docSubtipo.options[docSubtipo.selectedIndex]?.text || '';
+                } else if (tipo === 'BALANCO_PATRIMONIAL' || tipo === 'DRE') {
+                    if (!ano || !/^\d{4}$/.test(ano)) {
+                        alert('Informe um ano de referência válido (4 dígitos, ex: 2024).');
+                        return;
+                    }
+                    subtipoDb = tipo;
+                } else if (tipo === 'OUTRO' || tipo === 'OUTRO_INSTITUCIONAL') {
+                    if (!descricao) {
+                        alert('Descreva o documento no campo Descrição.');
+                        return;
+                    }
+                    subtipoDb = tipo;
+                } else {
+                    subtipoDb = tipo;
+                }
+
+                const permiteMultiplos = (
+                    tipo === 'BALANCO_PATRIMONIAL' ||
+                    tipo === 'DRE' ||
+                    tipo === 'OUTRO' ||
+                    tipo === 'OUTRO_INSTITUCIONAL'
+                );
+                        
+                if (!permiteMultiplos) {
+                    const jaExiste = docsOsc.some(d =>
+                        d.categoria === cat &&
+                        d.tipo === tipo &&
+                        d.subtipo === subtipoDb
+                    );
+                        
+                    if (jaExiste) {
+                        alert(
+                            'Já existe um documento cadastrado para esta [Categoria > Tipo/Subtipo].\n' +
+                            'Remova o documento existente para adicionar outro.'
+                        );
+                        return;
+                    }
+                }
+                        
+                const file = docArquivo.files?.[0] || null;
+                if (!file) {
+                    alert('Selecione o arquivo do documento.');
+                    return;
+                }
+                        
+                docsOsc.push({
+                    categoria:      cat,
+                    tipo,
+                    tipo_label:     tipoLabel,
+                    subtipo:        subtipoDb,
+                    subtipo_label:  subtipoLabel,
+                    descricao,
+                    ano_referencia: ano || '',
+                    link,
+                    file
+                });
+                        
+                renderDocsOsc();
+                modalDocOscBackdrop.style.display = 'none';
+            });
+        }
+
+
+        // ============================================================================
+        // DOCUMENTOS — UPLOAD
+        // ============================================================================
+    async function enviarDocumentoOsc(oscId, docCfg) {
+        const fd = new FormData();
+        fd.append('id_osc', String(oscId));
+        fd.append('categoria', docCfg.categoria);
+        fd.append('subtipo',   docCfg.subtipo);
+        fd.append('tipo',      docCfg.tipo);
+
+        if (docCfg.ano_referencia) {
+            fd.append('ano_referencia', docCfg.ano_referencia);
+        }
+
+        if ((docCfg.tipo === 'OUTRO' || docCfg.tipo === 'OUTRO_INSTITUCIONAL') && docCfg.descricao) {
+            fd.append('descricao', docCfg.descricao);
+        }
+
+        if (docCfg.tipo === 'DECRETO' && docCfg.link) {
+            fd.append('link', docCfg.link);
+        }
+
+        if (docCfg.file) {
+            fd.append('arquivo', docCfg.file);
+        }
 
         try {
-            const response = await fetch("ajax_criar_osc.php", {
-                method: "POST",
-                body: fd,
+            const resp = await fetch('ajax_upload_documento.php', {
+                method: 'POST',
+                body: fd
             });
 
-            const text = await response.text();
-            console.log("Resposta bruta do servidor:", text);
-
-            let result;
+            const text = await resp.text();
+            let data;
             try {
-                result = JSON.parse(text);
-            } catch (e) {
-                console.error("Erro ao parsear JSON:", e);
-                alert("Resposta do servidor não é JSON válido. Veja o console.");
+                data = JSON.parse(text);
+            } catch {
+                console.error('Resposta inválida ao enviar documento da OSC:', text);
+                return `(${docCfg.categoria}/${docCfg.subtipo}) resposta inválida do servidor.`;
+            }
+
+            if (data.status !== 'ok') {
+                return `(${docCfg.categoria}/${docCfg.subtipo}) ${data.mensagem || 'erro ao enviar documento.'}`;
+            }
+
+            return null;
+        } catch (e) {
+            console.error('Erro ao enviar documento da OSC:', e);
+            return `(${docCfg.categoria}/${docCfg.subtipo}) erro de comunicação com o servidor.`;
+        }
+    }
+
+        async function saveData() {
+            if (!logoSimples.files[0] || !logoCompleta.files[0] || !banner1.files[0]) {
+                alert("Logo simples, logo completa e banner principal são obrigatórios.");
                 return;
             }
 
+            const s1 = usuarioSenha.value.trim();
+            const s2 = usuarioSenhaConf.value.trim();
+
+            if (!s1 || !s2) {
+                alert('Preencha a senha e a confirmação de senha do administrador da OSC.');
+                usuarioSenha.focus();
+                return;
+            }
+
+            if (s1.length < 6) {
+                alert('A senha deve ter no mínimo 6 caracteres.');
+                usuarioSenha.focus();
+                return;
+            }
+
+            if (s1 !== s2) {
+                alert('As senhas não coincidem. Corrija antes de continuar.');
+                usuarioSenhaConf.focus();
+                return;
+            }
+
+            const nomeAdmin = usuarioNome.value.trim();
+            const emailAdmin = usuarioEmail.value.trim();
+
+            if (!nomeAdmin || !emailAdmin) {
+                alert('Preencha nome e e-mail do administrador da OSC.');
+                usuarioNome.focus();
+                return;
+            }
+
+            const resultadoEmail = await verificarEmailAdmin();
+
+            if (!resultadoEmail.ok) {
+                alert(resultadoEmail.motivo || 'Erro ao verificar e-mail do administrador.');
+                return;
+            }
+
+            if (!imoveisOsc.length) {
+                alert('Cadastre pelo menos um imóvel da OSC antes de salvar.');
+                return;
+            }
+
+            const temPrincipal = imoveisOsc.some(i => i.principal);
+
+            if (!temPrincipal) {
+                alert('Selecione pelo menos um imóvel como endereço principal da OSC.');
+                return;
+            }
+
+            const fd = new FormData();
+
+            fd.append('cores[bg]', bgColor.value);
+            fd.append('cores[sec]', secColor.value);
+            fd.append('cores[ter]', terColor.value);
+            fd.append('cores[qua]', quaColor.value);
+            fd.append('cores[fon]', fonColor.value);
+
+            fd.append('nomeOsc', qs("#nomeOsc").value);
+            fd.append('historia', qs("#historia").value);
+            fd.append('missao', qs("#missao").value);
+            fd.append('visao', qs("#visao").value);
+            fd.append('valores', qs("#valores").value);
+
+            fd.append('razaoSocial', qs("#razaoSocial").value);
+            fd.append('nomeFantasia', qs("#nomeFantasia").value);
+            fd.append('sigla', qs("#sigla").value);
+            fd.append('situacaoCadastral', qs("#situacaoCadastral").value);
+            fd.append('anoCNPJ', qs("#anoCNPJ").value);
+            fd.append('anoFundacao', qs("#anoFundacao").value);
+            fd.append('responsavelLegal', qs("#responsavelLegal").value);
+            fd.append('email', qs("#email").value);
+            fd.append('oQueFaz', qs("#oQueFaz").value);
+            fd.append('cnpj', qs("#CNPJ").value);
+            fd.append('telefone', qs("#telefone").value);
+            fd.append('instagram', qs("#instagram").value);
+
+            fd.append('usuario_nome', usuarioNome.value);
+            fd.append('usuario_email', usuarioEmail.value);
+            fd.append('usuario_senha', usuarioSenha.value);
+
+            fd.append('imoveis', JSON.stringify(imoveisOsc));
+
+            fd.append('labelBanner', qs("#labelBanner").value);
+
+            const envolvidosParaEnvio = envolvidos.map(e => ({
+                tipo: e.tipo || 'novo',
+                envolvido_id: e.envolvidoId || null,
+                nome: e.nome,
+                telefone: e.telefone,
+                email: e.email,
+                funcao: e.funcao
+            }));
+
+            fd.append('envolvidos', JSON.stringify(envolvidosParaEnvio));
+            fd.append('atividades', JSON.stringify(atividades));
+
+            envolvidos.forEach((e, i) => {
+                if (e.fotoFile) {
+                    fd.append(`fotoEnvolvido_${i}`, e.fotoFile);
+                }
+            });
+
+            if (logoSimples.files[0]) fd.append('logoSimples', logoSimples.files[0]);
+            if (logoCompleta.files[0]) fd.append('logoCompleta', logoCompleta.files[0]);
+            if (banner1.files[0]) fd.append('banner1', banner1.files[0]);
+            if (banner2.files[0]) fd.append('banner2', banner2.files[0]);
+            if (banner3.files[0]) fd.append('banner3', banner3.files[0]);
+
+            try {
+                const response = await fetch("ajax_criar_osc.php", {
+                    method: "POST",
+                    body: fd,
+                });
+
+                const text = await response.text();
+
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (e) {
+                    console.error("Erro ao parsear JSON:", e, "\nResposta bruta:", text);
+                    alert("Resposta do servidor não é JSON válido. Veja o console.");
+                    return;
+                }
+
             if (result.success) {
-                alert("OSC criada com sucesso! ID: " + result.osc_id);
-                resetForm(); // limpa o formulário após finalizar o cadastro
+                const oscId = result.osc_id;
+
+
+                // ====================================================================
+                // DOCUMENTOS — ENVIO (após criar a OSC)
+                // ====================================================================
+                let errosDocs = [];
+
+                try {
+                    for (const d of docsOsc) {
+                        const err = await enviarDocumentoOsc(oscId, d);
+                        if (err) errosDocs.push(err);
+                    }
+                } catch (e) {
+                    console.error('Falha geral ao enviar documentos da OSC:', e);
+                    errosDocs.push('Falha inesperada ao enviar alguns documentos.');
+                }
+
+
+                // ====================================================================
+                // DOCUMENTOS — FIM DO ENVIO
+                // ====================================================================
+                if (errosDocs.length === 0) {
+                    alert("OSC criada com sucesso! Todos os documentos foram enviados.");
+                } else {
+                    alert(
+                        "OSC criada com sucesso, mas alguns documentos não foram enviados:\n\n" +
+                        errosDocs.map(e => "- " + e).join("\n")
+                    );
+                }
+
+                resetForm();
+
             } else {
                 alert("Erro ao criar OSC: " + (result.error || "desconhecido"));
             }
 
-        } catch (error) {
-            console.error("❌ Erro ao enviar dados:", error);
-            alert("Erro ao enviar dados ao servidor.");
-        }
-    }
-
-        function resetForm() {
-            if (confirm('Limpar todos os campos?')) {
-                document.getElementById('oscForm').reset();
-                envolvidos.length = 0;
-                atividades.length = 0;
-                renderEnvolvidos();
-                renderAtividades();
-                updatePreviews();
-                qs('#jsonOut').textContent = '{}';
-                qs('#downloadLink').style.display = 'none';
+            } catch (error) {
+                console.error("❌ Erro ao enviar dados:", error);
+                alert("Erro ao enviar dados ao servidor.");
             }
         }
 
+        function resetForm() {
+            if (!confirm('Limpar todos os campos?')) {
+                return;
+            }
+
+            const form = document.getElementById('oscForm');
+            form.reset();
+
+            envolvidos.length = 0;
+            atividades.length = 0;
+
+            // ========================================================================
+            // DOCUMENTOS — RESET (limpar lista em memória + re-render)
+            // ========================================================================
+            docsOsc.length = 0;
+            imoveisOsc.length = 0;
+
+            renderEnvolvidos();
+            renderAtividades();
+            renderDocsOsc();
+            // ========================================================================
+            // DOCUMENTOS — FIM DO RESET
+            // ========================================================================
+
+            renderImoveisOsc();
+
+            updatePreviews();
+
+            const usuarioSenha = qs('#usuarioSenha');
+            const usuarioSenhaConf = qs('#usuarioSenhaConf');
+            const toggleSenha = qs('#toggleSenha');
+
+            const senhaMsgEl = document.getElementById('senhaMsg');
+            if (senhaMsgEl) {
+                senhaMsgEl.textContent = '';
+                senhaMsgEl.className = 'small';
+            }
+
+            const emailMsgEl = document.getElementById('emailMsg');
+            if (emailMsgEl) {
+                emailMsgEl.textContent = '';
+                emailMsgEl.className = 'small';
+            }
+
+            if (toggleSenha) {
+                toggleSenha.checked = false;
+            }
+
+            setTimeout(() => {
+                if (usuarioSenha) {
+                    usuarioSenha.type = 'password';
+                }
+                if (usuarioSenhaConf) {
+                    usuarioSenhaConf.type = 'password';
+                }
+            }, 0);
+        }
+
+    function mascaraCNPJ(cnpj) {
+    cnpj.value = cnpj.value
+        .replace(/\D/g, "")
+        .replace(/^(\d{2})(\d)/, "$1.$2")
+        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+        .replace(/\.(\d{3})(\d)/, ".$1/$2")
+        .replace(/(\d{4})(\d)/, "$1-$2")
+        .slice(0, 18);
+}
+
+    function mascaraTelefone(tel) {
+        tel.value = tel.value
+            .replace(/\D/g, "")
+            .replace(/^(\d{2})(\d)/, "($1) $2")
+            .replace(/(\d{4,5})(\d{4})$/, "$1-$2")
+            .slice(0, 15);
+    }
+
+    document.getElementById("CNPJ").addEventListener("input", function () {
+        mascaraCNPJ(this);
+    });
+
+    document.getElementById("telefone").addEventListener("input", function () {
+        mascaraTelefone(this);
+    });
+
+    document.getElementById("envTelefone").addEventListener("input", function () {
+        mascaraTelefone(this);
+    });
+
         updatePreviews();
+
+        // ========================================================================
+        // DOCUMENTOS — RENDER INICIAL
+        // ========================================================================
+        renderDocsOsc();
     </script>
 </body>
 

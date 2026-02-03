@@ -8,14 +8,135 @@ if (!$osc || !is_numeric($osc)) {
     exit;
 }
 
-$stmt = $conn->prepare("SELECT osc.*, template_web.*, cores.* FROM osc
-LEFT JOIN template_web ON template_web.osc_id = osc.id LEFT JOIN cores ON cores.id_cores = osc.id WHERE osc.id = ?;");
-$stmt->bind_param("i", $osc); 
+$stmtDocs = $conn->prepare("SELECT subtipo, documento, ano_referencia FROM documento WHERE osc_id = ?");
+$stmtDocs->bind_param("i", $osc);
+$stmtDocs->execute();
+$result = $stmtDocs->get_result();
+$documentos = [];
+while ($rowDoc = $result->fetch_assoc()) {
+    $documentos[] = $rowDoc;
+}
+
+$docsPorSubtipo = [];
+foreach ($documentos as $doc) {
+    $subtipo = strtolower($doc['subtipo']);
+
+    $docsPorSubtipo[$subtipo][] = [
+        'caminho' => '/oscs/src/' . ltrim($doc['documento'], '/'),
+        'nome'    => basename($doc['documento']),
+        'ano'     => $doc['ano_referencia']
+    ];
+}
+
+$pdfs = [];
+foreach ($docsPorSubtipo as $subtipo => $lista) {
+    if (count($lista) === 1) {
+        $pdfs[$subtipo] = $lista[0]['caminho'];
+    }
+}
+
+$stmtEnvolvidos = $conn->prepare("
+    SELECT nome, funcao, foto
+    FROM envolvido_osc
+    WHERE osc_id = ?
+      AND funcao <> 'PARTICIPANTE'
+");
+$stmtEnvolvidos->bind_param("i", $osc);
+$stmtEnvolvidos->execute();
+
+$resultEnvolvidos = $stmtEnvolvidos->get_result();
+
+$envolvidos = [];
+while ($row = $resultEnvolvidos->fetch_assoc()) {
+    $envolvidos[] = $row;
+}
+
+$funcoesLabel = [
+    'DIRETOR'     => 'Diretor(a)',
+    'COORDENADOR' => 'Coordenador(a)',
+    'FINANCEIRO'  => 'Financeiro',
+    'MARKETING'   => 'Comunicação e Marketing',
+    'RH'          => 'Recursos Humanos'
+];
+
+$stmtAtividades = $conn->prepare("
+    SELECT cnae, area_atuacao, subarea
+    FROM osc_atividade
+    WHERE osc_id = ?
+");
+$stmtAtividades->bind_param("i", $osc);
+$stmtAtividades->execute();
+
+$resultAtividades = $stmtAtividades->get_result();
+
+$atividades = [];
+while ($row = $resultAtividades->fetch_assoc()) {
+    $atividades[] = $row;
+}
+
+//consulta para trazer os eventos do banco de dados
+
+  $stmtNoticia = $conn->prepare("
+      SELECT evento_oficina.id, evento_oficina.nome, evento_oficina.img_capa, evento_oficina.data_inicio, projeto.osc_id, evento_oficina.projeto_id
+      FROM evento_oficina
+      LEFT JOIN projeto ON projeto.id = evento_oficina.projeto_id
+      WHERE projeto.osc_id = ?  
+      ORDER BY evento_oficina.id DESC
+      LIMIT 4");
+  $stmtNoticia->bind_param("i", $osc);
+  $stmtNoticia->execute();
+  $resultNoticia = $stmtNoticia->get_result();
+
+  $noticias = [];
+  while ($row = $resultNoticia->fetch_assoc()) {
+      $noticias[] = $row;
+  }
+  function h($s) {
+    return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8');
+  }
+
+  function dataBR($data) {
+      if (!$data) return '';
+      $ts = strtotime($data);
+      return $ts ? date('d/m/Y', $ts) : $data;
+  }
+
+// ==== PROJETOS DA OSC ====
+$stmtProj = $conn->prepare("
+  SELECT id, nome, descricao, logo, status
+  FROM projeto
+  WHERE osc_id = ?
+  ORDER BY id DESC
+");
+$stmtProj->bind_param("i", $osc);
+$stmtProj->execute();
+
+$resProj = $stmtProj->get_result();
+$projetos = [];
+while ($row = $resProj->fetch_assoc()) {
+  $projetos[] = $row;
+}
+
+$stmtEndereco = $conn->prepare("SELECT endereco.*, endereco_osc.* FROM endereco LEFT JOIN endereco_osc ON endereco_osc.endereco_id = endereco.id WHERE endereco_osc.osc_id = ? AND endereco_osc.principal = 1;");
+$stmtEndereco->bind_param("i", $osc);
+$stmtEndereco->execute();
+$resultEndereco = $stmtEndereco->get_result();
+
+if ($rowEndereco = $resultEndereco->fetch_assoc()) {
+} else {
+    echo "Nenhum registro encontrado";
+}
+
+$stmt = $conn->prepare("SELECT osc.*, template_web.*, cores.*, imovel.*, endereco.* FROM osc
+LEFT JOIN template_web ON template_web.osc_id = osc.id 
+LEFT JOIN cores ON cores.id_cores = osc.id 
+LEFT JOIN imovel ON imovel.osc_id = osc.id 
+LEFT JOIN endereco ON endereco.id = imovel.endereco_id WHERE osc.id = ?;");
+$stmt->bind_param("i", $osc);
 $stmt->execute();
 $result = $stmt->get_result();
 
 if ($row = $result->fetch_assoc()) {
-    echo $row["id"] . " - " . $row["nome"] . " - " . $row["cnpj"] . "<br>";
 } else {
     echo "Nenhum registro encontrado";
 }
@@ -26,8 +147,7 @@ $cor1 = $row["cor1"];
 $cor2 = $row["cor2"];
 $cor3 = $row["cor3"];
 $cor4 = $row["cor4"];
-$cor_font = '#4B2E23';
-$background = '#f6dfcbff';
+$cor_font = $row["cor5"];
 // --------------------------
 // INICIO
 // --------------------------
@@ -38,31 +158,45 @@ $valores = $row["valores"];
 // --------------------------
 // SOBRE
 // --------------------------
-$cnae = $row["cnae"];
 $historia = $row["historia"];
-$area_atuacao1 = $row["area_atuacao"];
-$subarea1 = $row["subarea"];
-$area_atuacao2 = "Cultura e recreação";
-$subarea2 = "Não Informado";
 // --------------------------
 // TRANSPARENCIA
 // --------------------------
 $nome_fantasia = $row["nome_fantasia"];
-$sigla = "ASSOCEST";
+$razao = $row["razao_social"];
+$sigla = $row["sigla"];
 $situacao_cad = $row["situacao_cadastral"];
-$situacao_imo = "Não informado";
+$situacao_imo = $row["situacao"];
 $ano_cadastro = $row["ano_cnpj"];
 $ano_fundacao = $row["ano_fundacao"];
-$responsavel = "Não informado";
+$responsavel = $row["responsavel"];
 $oq_faz = $row["oque_faz"];
+$cnpj = $row["cnpj"];
 // --------------------------
 // INFORMAÇÕES GERAIS
 // --------------------------
 $logo_nobg = $row["logo_simples"];
-$endereco =  "AVENIDA TEREZA ANSELMO MASSARI <br> PARQUE BRASIL, Jacareí - SP<br> <strong>CEP:</strong> 12328-430";
+$banner1 = $row["banner1"];
+$banner2 = $row["banner2"];
+$banner3 = $row["banner3"];
+$logradouro = $rowEndereco['logradouro'];
+$numero = $rowEndereco['numero'];
+$cidade = $rowEndereco['cidade'];
+$cep = $rowEndereco['cep'];
+$endereco =  "$logradouro - $numero<br>{$rowEndereco['bairro']}, $cidade<br><strong>CEP: </strong>$cep";
 $email = $row["email"];
 $tel = $row["telefone"];
 
+//varíavel para localização no mapa
+$buscaEndereco = "$logradouro, $numero, $cidade, $cep";
+$buscaEndereco = trim(
+    implode(', ', array_filter([
+        $logradouro ?? null,
+        $numero ?? null,
+        $cidade ?? null,
+        $cep ?? null
+    ]))
+);
 ?>
 
 <!DOCTYPE html>
@@ -71,17 +205,21 @@ $tel = $row["telefone"];
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Assocest</title>
+  <title><?php echo $sigla ?></title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="shortcut icon" href="./assets/oscTech/favicon.ico" type="image/x-icon">
   <link href="https://fonts.googleapis.com/css2?family=Comic+Relief:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <style>
     /* ===========================================================
    1️⃣ RESET / GLOBAL
     =========================================================== */
+    html, body {
+      height: 100%;
+    }
     body {
       /* font-family: "Comic Relief", system-ui; font-weight: 400; */
       font-family: 'Poppins', sans-serif;
@@ -90,6 +228,8 @@ $tel = $row["telefone"];
       padding: 0;
       background: <?php echo $cor1; ?>;
       color: <?php echo $cor_font; ?>;
+      display: flex;
+      flex-direction: column;
     }
 
     footer {
@@ -97,7 +237,7 @@ $tel = $row["telefone"];
       border-top: 1px solid #ddd;
       padding: 15px;
       text-align: center;
-      color: #666;
+      color: <?php echo $cor5; ?>;
       margin-top: 50px;
     }
 
@@ -106,7 +246,7 @@ $tel = $row["telefone"];
     }
 
     .text-primary {
-      color: #f28b00 !important;
+      color: <?php echo $cor_font; ?> !important;
       /* apenas uma definição */
     }
 
@@ -139,16 +279,111 @@ $tel = $row["telefone"];
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
     }
 
+    #acontecimentos .card-news {
+      display: flex;
+      min-width: 0;
+    }
+
+    #acontecimentos .news-card {
+      width: 100%;
+      border-radius: 18px;
+      overflow: hidden;
+      background: <?php echo $background; ?>;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      border: 1px solid rgba(0,0,0,0.06);
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    #acontecimentos .news-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 35px rgba(0,0,0,0.12);
+    }
+
+    #acontecimentos .news-media {
+      position: relative;
+      height: 190px;
+    }
+
+    #acontecimentos .news-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform: scale(1);
+      transition: transform .35s ease;
+    }
+
+    #acontecimentos .news-card:hover .news-media img {
+      transform: scale(1.06);
+    }
+
+    /* overlay leve pra dar contraste com a data */
+    #acontecimentos .news-media::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.45), rgba(0,0,0,0));
+      pointer-events: none;
+    }
+
+    #acontecimentos .news-date {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.92);
+      color: #222;
+      backdrop-filter: blur(6px);
+    }
+
+    #acontecimentos .news-body {
+      padding: 16px 16px 18px;
+    }
+
+    #acontecimentos .news-title {
+      margin: 0;
+      font-weight: 600;
+      line-height: 1.25;
+      color: <?php echo $cor_font; ?>;
+    }
+    
+
+    /* deixa o título ficar com “cara de link” no hover */
+    #acontecimentos .news-card:hover .news-title {
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+    #acontecimentos .news-link {
+      display: block;
+      height: 100%;
+      text-decoration: none;
+      color: inherit;
+      width: 100%;
+    }
+
+    #acontecimentos .news-link:focus-visible {
+      outline: 3px solid #f28b00;
+      outline-offset: 4px;
+      border-radius: 18px;
+    }
+
     /* ===========================================================
    6️⃣ BOTÕES
     =========================================================== */
     .btn-outline-warning {
-      color: #f28b00;
-      border-color: #f28b00;
+      color: <?php echo $cor_font; ?>;
+      border-color: <?php echo $cor_font; ?>;
+      --bs-btn-hover-border-color: <?php echo $cor2; ?>;
     }
 
     .btn-outline-warning:hover {
-      background-color: #f28b00;
+      background-color: <?php echo $cor3; ?>;
       color: #fff;
     }
 
@@ -297,6 +532,302 @@ $tel = $row["telefone"];
       display: block;
       font-weight: 600;
       margin-bottom: 5px;
+    }
+
+    /* ===== LISTA DE DOCUMENTOS NO MODAL ===== */
+    #listaDocumentos {
+      margin-top: 20px;
+    }
+
+    .doc-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .doc-item:hover {
+      background-color: #eef2f5;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    .doc-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .doc-info i {
+      font-size: 20px;
+      color: #0d6efd; /* azul bootstrap */
+    }
+
+    .doc-nome {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      cursor: pointer;
+    }
+
+    .doc-nome:hover {
+      text-decoration: underline;
+    }
+
+    .doc-actions a {
+      color: #198754; /* verde bootstrap */
+      font-size: 18px;
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .doc-actions a:hover {
+      color: #146c43;
+      transform: scale(1.15);
+    }
+
+    .doc-ano {
+      margin-left: 6px;
+      font-size: 13px;
+      color: #6c757d;
+      font-weight: 400;
+    }
+
+    @media (max-width: 768px) {
+      section.container-fluid.p-0 img.img-fluid {
+      display: block;
+      margin: 0 auto;
+      }
+    }
+
+    #transparencia .tsec{
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    #transparencia .tbox{
+      background: #fff;
+      border-radius: 12px;
+      padding: 22px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    #transparencia .tsec-title{
+      color: <?php echo $cor_font; ?>;
+      border-bottom: 2px solid <?php echo $cor2; ?>;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+
+    #transparencia .tinfo{
+      border-left: 4px solid <?php echo $cor2; ?>;
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    #transparencia .tinfo strong{
+      min-width: 180px;
+    }
+
+    #transparencia .tdoc-item{
+      border-left: 4px solid <?php echo $cor2; ?>;
+      transition: background-color .2s ease, transform .2s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+    }
+
+    #transparencia .tdoc-item:hover{
+      background-color: #f8f9fa;
+      transform: translateX(4px);
+    }
+
+    #transparencia .tdoc-left h6{
+      margin: 0 0 2px;
+      font-weight: 700;
+    }
+
+    #transparencia .tdoc-left small{
+      display: block;
+    }
+
+    #transparencia .tdoc-btn{
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* mobile: empilha botão abaixo */
+    @media (max-width: 576px){
+      #transparencia .tdoc-item{
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      #transparencia .tdoc-btn{
+        width: 100%;
+        justify-content: center;
+      }
+      #transparencia .tinfo{
+        flex-direction: column;
+      }
+      #transparencia .tinfo strong{
+        min-width: 0;
+      }
+    }
+
+    /* ===== Projetos (visual clean) ===== */
+    .proj-title{
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      letter-spacing: .5px;
+    }
+
+    .proj-desc{
+      opacity: .92;
+      line-height: 1.6;
+      margin-bottom: 0;
+      white-space: normal;         /* garante quebra normal */
+      overflow-wrap: anywhere;     /* quebra mesmo sem espaços */
+      word-break: break-word; 
+    }
+
+    .proj-media{
+      width: min(340px, 100%);
+      aspect-ratio: 1 / 1;
+      margin: 0 auto;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #fff;
+      border: 6px solid <?php echo $cor2; ?>; /* se quiser ligar à paleta */
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      display: grid;
+      place-items: center;
+    }
+
+    .proj-img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* ou contain, dependendo do logo */
+    }
+
+    .proj-hr{
+      border: none;
+      height: 2px;
+      background: rgba(0,0,0,0.08);
+      margin: 28px 0 40px;
+    }
+
+    #pdfModal.modal {
+      position: fixed;
+      inset: 0;   
+      width: 100vw;
+      height: 100vh;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      background: rgba(0,0,0,.55);
+      z-index: 9999;
+      box-sizing: border-box;
+    }
+    
+    /* caixa do modal */
+    #pdfModal .modal-content {
+      width: min(920px, 100%);
+      max-height: calc(100vh - 24px);
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px;
+      margin: 0;
+      box-shadow: 0 18px 60px rgba(0,0,0,.25);
+      overflow: auto;
+      box-sizing: border-box;
+      display: flex;
+      position: relative;
+    }
+
+    /* header fixo */
+    #pdfModal .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    /* área rolável do conteúdo */
+    #pdfModal .modal-body {
+      padding: 12px 14px;
+      overflow: auto;             /* scroll interno */
+      flex: 1;
+    }
+
+    /* footer fixo */
+    #pdfModal .modal-footer {
+      padding: 12px 14px;
+      border-top: 1px solid #e9ecef;  
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* canvas centralizado */
+    #pdfViewer {
+      width: 100% !important;
+      height: auto !important;
+      display: block;
+      margin: 10px auto 0;
+    }
+
+    /* botão de fechar */
+    #pdfModal .close-btn {
+      position: sticky;         
+      top: 0;
+      float: right;
+      background: transparent;
+      font-size: 28px;
+      line-height: 1;
+      padding: 6px 10px;
+      cursor: pointer;
+      border-radius: 10px;
+      z-index: 2;
+    }
+
+    /* mobile: ocupa quase tudo */
+    @media (max-width: 576px) {
+      #pdfModal .modal-content {
+        width: 100%;
+        max-height: 92vh;
+      }
+    }
+    #listaDocumentos{
+      max-height: 60vh;
+      overflow: auto;
+    }
+
+    .card-img-top {
+      width: 100%;
+      height: 280px;        /* ALTURA FIXA (ajuste se quiser) */
+      object-fit: cover;   /* corta sem distorcer */
+      object-position: center;
+    }
+
+    @media (max-width: 576px) {
+      .card-img-top {
+        height: 200px;
+      }
     }
   </style>
 
@@ -458,7 +989,6 @@ $tel = $row["telefone"];
       console.log(tons);
     })
 
-    // → ["#DC8E52", "#E3A976", "#E9C49A"
   </script>
 </head>
 
@@ -467,11 +997,7 @@ $tel = $row["telefone"];
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-light shadow-sm sticky-top" style="background-color: <?php echo $cor1; ?>;">
     <div class="container">
-      <img src="<?php echo $logo_nobg; ?>" class="img-fluid" style="max-width: 80px;" alt="Logo ASSOCEST">
-      <!-- <div style="margin-left: 8px;">
-        <h7><strong>ASSOCEST</strong></h7>
-      </div> -->
-
+      <img src="<?php echo $logo_nobg; ?>" class="img-fluid" style="max-width: 80px;" alt="Logo <?php echo $sigla?>">
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -481,417 +1007,578 @@ $tel = $row["telefone"];
           <li class="nav-item"><a class="nav-link" href="#" data-section="sobre">Quem Somos</a></li>
           <li class="nav-item"><a class="nav-link" href="#" data-section="transparencia">Transparência</a></li>
           <li class="nav-item"><a class="nav-link" href="#" data-section="projetos">Projetos</a></li>
-          <li class="nav-item"><a class="nav-link" href="#" data-section="projetos">Contato</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-section="contato">Contato</a></li>
         </ul>
       </div>
     </div>
   </nav>
-
-  <!-- Conteúdo -->
-  <!-- Home -->
-  <div id="home" class="section active">
-    <section class="hero">
-      <div class="carousel" id="carousel">
-        <div class="carousel-inner">
-          <img src="/assets/images/banner-1.png" alt="Banner 1" class="img-hero active">
-          <img src="/assets/images/inst-5.webp" alt="Banner 2" class="img-hero">
-          <img src="/assets/images/inst-6.webp" alt="Banner 3" class="img-hero">
-        </div>
-      </div>
-      <div class="hero-overlay"></div>
-    </section>
-    <div class="simple-divider" style="color: white;">
-      Transformando comunidades com ações que fazem a diferença.
-    </div>
-
-    <main class="container my-5">
-      <section id="acontecimentos" class="my-5">
-        <div class="container">
-          <h2 class="text-center section-title mb-5"><strong>Últimas Notícias</strong></h2>
-          <div class="row">
-            <!-- Coluna esquerda: cards -->
-            <div class="col-lg-8">
-              <div class="row g-4">
-                <!-- Card 1 -->
-                <div class="col-md-6 card-news">
-                  <div class="card border-0 shadow-sm h-100">
-                    <img src="/assets/images/inst-5.webp" class="card-img-top" alt="Evento 1">
-                    <div class="card-body">
-                      <h6 class="card-title fw-semibold">Primeira Graduação de Karatê Promovida</h6>
-                      <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 15/04/2025</p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Card 2 -->
-                <div class="col-md-6 card-news">
-                  <div class="card border-0 shadow-sm h-100">
-                    <img src="/assets/images/inst-6.webp" class="card-img-top" alt="Evento 2">
-                    <div class="card-body">
-                      <h6 class="card-title fw-semibold">O Dentista chegou!</h6>
-                      <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 20/02/2025</p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Card 3 -->
-                <div class="col-md-6 card-news">
-                  <div class="card border-0 shadow-sm h-100">
-                    <img src="/assets/images/inst-7.webp" class="card-img-top" alt="Evento 3">
-                    <div class="card-body">
-                      <h6 class="card-title fw-semibold">Celebrando os 26 anos de Promovida</h6>
-                      <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 20/08/2024</p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Card 4 -->
-                <div class="col-md-6 card-news">
-                  <div class="card border-0 shadow-sm h-100">
-                    <img src="/assets/images/inst-8.webp" class="card-img-top" alt="Evento 4">
-                    <div class="card-body">
-                      <h6 class="card-title fw-semibold">Evento Solidário</h6>
-                      <p class="text-muted mb-0"><i class="bi bi-calendar3"></i> 15/01/2024</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Coluna direita: ações -->
-            <div class="col-lg-4 mt-4 mt-lg-0">
-              <div class="help-box text-center text-white">
-                <div id="help-section">
-                  <div class="help-header py-3 fw-bold">
-                    COMO VOCÊ PODE AJUDAR?
-                  </div>
-                  <div class="help-option py-4">
-                    <i class="bi bi-heart-fill fs-2"></i>
-                    <h5 class="mt-2">DOAÇÕES</h5>
-                  </div>
-                  <div class="help-option py-4">
-                    <i class="bi bi-people-fill fs-2"></i>
-                    <h5 class="mt-2">COLABORADORES</h5>
-                  </div>
-                  <div class="help-option py-4">
-                    <i class="bi bi-cart-fill fs-2"></i>
-                    <h5 class="mt-2">BAZAR</h5>
-                  </div>
-                </div>
-              </div>
-            </div>
+  <main class="flex-fill">
+    <!-- Conteúdo -->
+    <!-- Home -->
+    <div id="home" class="section active">
+      <section class="hero">
+        <div class="carousel" id="carousel">
+          <div class="carousel-inner">
+            <img src="<?php echo $banner1; ?>" alt="Banner 1" class="img-hero active">
+            <img src="<?php echo $banner2; ?>" alt="Banner 2" class="img-hero">
+            <img src="<?php echo $banner3; ?>" alt="Banner 3" class="img-hero">
           </div>
         </div>
+        <div class="hero-overlay"></div>
       </section>
-    </main>
-
-    <section class="container-fluid p-0" style="background-color: #fff;">
-      <div class="container">
-        <div class="row align-items-center">
-          <!-- Coluna da imagem -->
-          <div class="col-md-6 mb-4 mb-md-0">
-            <img src="<?php echo $logo_nobg; ?>" class="img-fluid" alt="Imagem Institucional">
-          </div>
-
-          <!-- Coluna do texto -->
-          <div class="col-md-6" style="margin-bottom: 40px;">
-            <h2 class="text-center mb-4" style="margin: 30px;">Missão, Visão e Valores</h2>
-
-            <div class="card mb-3 shadow-sm card-mvv">
-              <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
-                <i class="bi bi-bullseye text-warning fs-2 mb-2"></i>
-                <h5 class="fw-bold">Missão</h5>
-                <p><?php echo $missao ?></p>
-              </div>
-            </div>
-
-            <div class="card mb-3 shadow-sm card-mvv">
-              <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
-                <i class="bi bi-eye text-success fs-2 mb-2"></i>
-                <h5 class="fw-bold">Visão</h5>
-                <p><?php echo $visao ?></p>
-              </div>
-            </div>
-
-            <div class="card mb-3 shadow-sm card-mvv">
-              <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
-                <i class="bi bi-heart-fill text-danger fs-2 mb-2"></i>
-                <h5 class="fw-bold">Valores</h5>
-                <p><?php echo $valores ?></p>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="simple-divider" style="color: white;">
+        <?php echo $label_banner ?>
       </div>
-    </section>
 
-    <section class="local">
-      <h2>Venha nos conhecer!</h2>
-      <div class="local-container">
-        <div class="info">
-          <h3>Endereço:</h3>
-          <p> <?php echo $endereco; ?> </p>
-          <hr>
-          <p>📞 <?php echo $tel ?></p>
-          <p>✉️ <?php echo $email ?></p>
-        </div>
-        <div class="map">
-          <!-- Coloca aqui o iframe ou div do Leaflet -->
-          <div id="map"></div>
-        </div>
-      </div>
-    </section>
-  </div>
-  </div>
-
-  <!-- Sobre -->
-  <div id="sobre" class="section">
-    <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px;">Sobre Nós</h1>
-    <div class="container my-5">
-      <p> <?php echo $historia; ?> </p>
-      <ul>
-        <li><strong>Missão: </strong><?php echo $missao; ?></li>
-      </ul>
-      <section id="equipe" class="my-5">
-        <div class="container">
-          <h2 class="text-center mb-4">Nossa Equipe</h2>
-
-          <div class="row justify-content-center">
-            <!-- Card 1 -->
-            <div class="col-md-3 col-sm-6 mb-4">
-              <div class="card border-0 shadow-sm text-center h-100">
-                <img src="/assets/images/usuario.jpg" class="card-img-top rounded-top" alt="Foto da pessoa">
-                <div class="card-body">
-                  <h5 class="card-title mb-1">Ana Souza</h5>
-                  <p class="card-text text-muted">Coordenadora de Projetos</p>
+      <main class="container my-5">
+        <section id="acontecimentos" class="my-5">
+          <div class="container">
+            <h2 class="text-center section-title mb-5"><strong>Últimas Notícias</strong></h2>
+            <div class="row g-4 justify-content-center">
+              <?php if (empty($noticias)): ?>
+                <div class="col-12">
+                  <p class="text-center text-muted mb-0">Nenhuma notícia cadastrada ainda.</p>
                 </div>
-              </div>
-            </div>
-
-            <!-- Card 2 -->
-            <div class="col-md-3 col-sm-6 mb-4">
-              <div class="card border-0 shadow-sm text-center h-100">
-                <img src="/assets/images/usuario.jpg" class="card-img-top rounded-top" alt="Foto da pessoa">
-                <div class="card-body">
-                  <h5 class="card-title mb-1">Bruno Lima</h5>
-                  <p class="card-text text-muted">Analista Financeiro</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Card 3 -->
-            <div class="col-md-3 col-sm-6 mb-4">
-              <div class="card border-0 shadow-sm text-center h-100">
-                <img src="/assets/images/usuario.jpg" class="card-img-top rounded-top" alt="Foto da pessoa">
-                <div class="card-body">
-                  <h5 class="card-title mb-1">Carla Mendes</h5>
-                  <p class="card-text text-muted">Comunicação e Marketing</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <section id="apoiadores" class="section">
-          <h2 class="section-title">Nossos Apoiadores</h2>
-          <div class="carousel-logos">
-            <div class="carousel-track">
-              <div class="carousel-item"><img src="logo1.png" alt="Empresa 1"></div>
-              <div class="carousel-item"><img src="logo2.png" alt="Empresa 2"></div>
-              <div class="carousel-item"><img src="logo3.png" alt="Empresa 3"></div>
-              <div class="carousel-item"><img src="logo4.png" alt="Empresa 4"></div>
-              <div class="carousel-item"><img src="logo5.png" alt="Empresa 5"></div>
-              <!-- Repete para criar efeito infinito -->
-              <div class="carousel-item"><img src="logo1.png" alt="Empresa 1"></div>
-              <div class="carousel-item"><img src="logo2.png" alt="Empresa 2"></div>
+              <?php else: ?>
+                <?php foreach ($noticias as $n): 
+                  $projetoId = (int)$n['projeto_id']; 
+                  $titulo = $n['nome'] ?? '';
+                  $img = $n['img_capa'] ?? '';
+                  $imgSrc = $img ?: 'alt="Evento 4';
+                  $data = dataBR($n['data_evento'] ?? null);
+                  // Link do evento pelo ID
+                  $link = "/oscs/src/projeto.php?osc={$osc}&projeto={$projetoId}";
+                ?>
+                  <div class="col-12 col-md-6 col-xl-3 card-news">
+                    <a href="<?= h($link) ?>" class="news-link">
+                      <article class="news-card h-100">
+                        <div class="news-media">
+                          <img src="<?= h($imgSrc) ?>" alt="<?= h($titulo) ?>">
+                          <?php if ($data): ?>
+                            <span class="news-date"><i class="bi bi-calendar3"></i> <?= h($data) ?></span>
+                          <?php endif; ?>
+                        </div>
+                        <div class="news-body">
+                          <h6 class="news-title"><?= h($titulo) ?></h6>
+                        </div>
+                      </article>
+                    </a>
+                  </div>
+                <?php endforeach; ?>
+              <?php endif; ?>
             </div>
           </div>
         </section>
+      </main>
 
-        <div class="card shadow-sm border-0 my-3">
-          <div class="card-body bg-light">
-            <div class="d-flex justify-content-between align-items-start">
-              <h6 class="fw-bold mb-3">Atividade Econômica (CNAE):</h6>
-              <i class="bi bi-database fs-4 text-primary"></i>
+      <section class="container-fluid p-0" style="background-color: #fff;">
+        <div class="container">
+          <div class="row align-items-center">
+            <!-- Coluna da imagem -->
+            <div class="col-md-6 mb-4 mb-md-0">
+              <img src="<?php echo $logo_nobg; ?>" class="img-fluid" alt="Imagem Institucional">
             </div>
-            <p class="text-muted mb-3"><?php echo $cnae; ?></p>
-            <hr>
 
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <p class="fw-semibold mb-1">Área de Atuação:</p>
-                <p class="text-muted"><?php echo $area_atuacao1; ?></p>
+            <!-- Coluna do texto -->
+            <div class="col-md-6" style="margin-bottom: 40px;">
+              <h2 class="text-center mb-4" style="margin: 30px;">Missão, Visão e Valores</h2>
+
+              <div class="card mb-3 shadow-sm card-mvv">
+                <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
+                  <i class="bi bi-bullseye text-warning fs-2 mb-2"></i>
+                  <h5 class="fw-bold">Missão</h5>
+                  <p><?php echo $missao ?></p>
+                </div>
               </div>
-              <div class="col-md-6">
-                <p class="fw-semibold mb-1">Subárea:</p>
-                <p class="text-muted"><?php echo $subarea1; ?></p>
+
+              <div class="card mb-3 shadow-sm card-mvv">
+                <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
+                  <i class="bi bi-eye text-success fs-2 mb-2"></i>
+                  <h5 class="fw-bold">Visão</h5>
+                  <p><?php echo $visao ?></p>
+                </div>
               </div>
-            </div>
-            <hr>
-            <div class="row">
-              <div class="col-md-6">
-                <p class="fw-semibold mb-1">Área de Atuação:</p>
-                <p class="text-muted"><?php echo $area_atuacao2; ?></p>
-              </div>
-              <div class="col-md-6">
-                <p class="fw-semibold mb-1">Subárea:</p>
-                <p class="text-muted"><?php echo $subarea2; ?></p>
+
+              <div class="card mb-3 shadow-sm card-mvv">
+                <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
+                  <i class="bi bi-heart-fill text-danger fs-2 mb-2"></i>
+                  <h5 class="fw-bold">Valores</h5>
+                  <p><?php echo $valores ?></p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      <section class="local">
+        <h2>Venha nos conhecer!</h2>
+        <div class="local-container">
+          <div class="info">
+            <h3>Endereço:</h3>
+            <p> <?php echo $endereco; ?> </p>
+            <hr>
+            <p>📞 <?php echo $tel ?></p>
+            <p>✉️ <?php echo $email ?></p>
+          </div>
+          <div class="map">
+            <div id="map"></div>
+          </div>
+        </div>
+      </section>
     </div>
-  </div>
-
-  <!-- Transparência -->
-  <div id="transparencia" class="section">
-    <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px;">Transparência</h1>
-
-    <div class="row mt-4">
-      <div class="col-md-4">
-        <div class="card shadow-sm">
-          <div class="card-body text-center">
-            <h5 class="card-title">Recursos Recebidos</h5>  
-            <p class="display-6 text-success">R$ 250.000</p>
-            <p class="text-muted">em 2024</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card shadow-sm">
-          <div class="card-body text-center">
-            <h5 class="card-title">Projetos Ativos</h5>
-            <p class="display-6 text-primary">6</p>
-            <p class="text-muted">em andamento</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card shadow-sm">
-          <div class="card-body text-center">
-            <h5 class="card-title">Beneficiados</h5>
-            <p class="display-6 text-warning">+1.200</p>
-            <p class="text-muted">pessoas alcançadas</p>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <hr>
-    <div class="container my-5">
-      <div class="osc-detalhes">
-        <h3><strong>Nome fantasia: </strong><?php echo $nome_fantasia; ?></h3>
-        <div class="info-grid">
-          <div class="info-block">
-            <strong><i class="bi bi-database"></i> Sigla OSC:</strong>
-            <span><?php echo $sigla; ?></span>
+    <!-- Sobre -->
+    <div id="sobre" class="section">
+      <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px;">Sobre Nós</h1>
+      <div class="container my-5">
+        <section id="equipe" class="my-5">
+          <div class="container">
+            <h2 class="text-left mb-4">Nossa Equipe</h2>
+
+            <div class="row justify-content-center">
+              
+              <?php if (empty($envolvidos)): ?>
+                <p class="text-muted text-center">Nenhum envolvido cadastrado.</p>
+              <?php endif; ?>
+              <?php foreach ($envolvidos as $env): ?>
+                <div class="col-md-3 col-sm-6 mb-4">
+                  <div class="card border-0 shadow-sm text-center h-100">
+                    <img 
+                      src="<?= !empty($env['foto']) ? '/oscs/src/' . ltrim($env['foto'], '/') : '/oscs/src/assets/imagens/usuario_default.png' ?>" 
+                      class="card-img-top rounded-top"
+                      alt="Foto de <?= htmlspecialchars($env['nome']) ?>"
+                    >
+                    <div class="card-body">
+                      <h5 class="card-title mb-1">
+                        <?= htmlspecialchars($env['nome']) ?>
+                      </h5>
+
+                      <p class="card-text text-muted">
+                        <?= $funcoesLabel[$env['funcao']] ?? $env['funcao'] ?>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            </div>
           </div>
-          <div class="info-block">
-            <strong><i class="bi bi-person"></i> Situação cadastral:</strong>
-            <span><?php echo $situacao_cad; ?></span>
-          </div>
+        </section>
+        <div class="info-block" style="grid-column: 1 / -1; overflow-wrap: anywhere;">
+          <h2 class="text-left mb-4">O que a OSC faz</h2>
+          <span><?php echo $oq_faz; ?></span>
         </div>
-
-        <hr>
-
-        <div class="map-card">
-          <div class="endereco">
-            <strong>Endereço:</strong>
-            <p><?php echo $endereco ?></p>
-            <p><i class="bi bi-telephone"></i><?php echo $tel ?></p>
-            <p><i class="bi bi-envelope"></i><?php echo $email ?></p>
-          </div>
-
-          <iframe
-            src="https://www.openstreetmap.org/export/embed.html?bbox=-35.386%2C-8.583%2C-35.381%2C-8.578&layer=mapnik&marker=-8.581%2C-35.384"
-            title="Mapa Gameleira">
-          </iframe>
-        </div>
-
-        <div class="info-grid">
-          <div class="info-block">
-            <strong><i class="bi bi-house"></i> Situação do imóvel:</strong>
-            <span><?php echo $situacao_imo; ?></span>
-          </div>
-          <div class="info-block">
-            <strong><i class="bi bi-calendar"></i> Ano de cadastro de CNPJ:</strong>
-            <span><?php echo $ano_cadastro; ?></span>
-          </div>
-          <div class="info-block">
-            <strong><i class="bi bi-building"></i> Ano de fundação:</strong>
-            <span><?php echo $ano_fundacao; ?></span>
-          </div>
-          <div class="info-block">
-            <strong><i class="bi bi-person"></i> Responsável legal:</strong>
-            <span><?php echo $responsavel; ?></span>
-          </div>
-          <div class="info-block">
-            <strong><i class="bi bi-envelope-at"></i> E-mail:</strong>
-            <span><?php echo $email; ?></span>
-          </div>
-          <div class="info-block" style="grid-column: 1 / -1;">
-            <strong><i class="bi bi-info-circle"></i> O que a OSC faz:</strong>
-            <span><?php echo $oq_faz; ?></span>
-          </div>
-        </div>
+        <br><br><br>
+        <h2 class="text-left mb-4">Nossa História</h2>
+        <p style="overflow-wrap: anywhere;"> <?php echo $historia; ?> </p>
       </div>
     </div>
-  </div>
 
-  <!-- Projetos -->
-  <div id="projetos" class="section">
-    <section class="container my-5">
-      <div class="text-center mb-4">
-        <h2 class="fw-bold text-uppercase text-primary">Apoie Nossos Projetos</h2>
-        <button class="btn btn-outline-warning mt-2 px-4 rounded-pill fw-semibold">Lei de Incentivo</button>
-      </div>
+    <!-- Transparência -->
+    <div id="transparencia" class="section">
+      <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px;">Transparência</h1>
 
-      <!-- Projeto 1 -->
-      <div class="row align-items-center mb-5">
-        <div class="col-md-5 text-center">
-          <div class="img-wrapper border-blue">
-            <img src="/assets/images/Borboleta.png" alt="Projeto 1">
-          </div>
-        </div>
-        <div class="col-md-7">
-          <h4 class="fw-bold text-uppercase text-primary">Projeto Borboleta</h4>
-          <p>
-            O projeto <strong>"Nas Mãos de Quem Ama"</strong> nasceu com o propósito de oferecer mais segurança e acolhimento aos pequenos pacientes da UTI Neonatal e Pediátrica do Hospital Nossa Senhora da Conceição.
-            A iniciativa busca humanizar o ambiente hospitalar e proporcionar um espaço mais aconchegante para bebês e famílias.
-          </p>
-          <div class="d-flex gap-3 mt-3">
-            <button class="btn btn-outline-warning rounded-pill"><i class="bi bi-chat-dots"></i> Entre em Contato</button>
-            <button class="btn btn-outline-warning rounded-pill"><i class="bi bi-heart"></i> Nossos Apoiadores</button>
-          </div>
-        </div>
-      </div>
       <hr>
+      <div class="container my-5">
+        <div class="osc-detalhes">
+          <div class="tsec">
+            <h3><strong>Nome fantasia: </strong><?php echo $nome_fantasia; ?></h3>
+            <h5><strong>Razão Social: </strong><?php echo $razao; ?></h5>
+            <div class="info-grid">
+              <div class="info-block">
+                <strong><i class="bi bi-person-vcard"></i> CNPJ:</strong>
+                <span><?php echo $cnpj; ?></span>
+              </div>
+              <div class="info-block">
+                <strong><i class="bi bi-person"></i> Situação cadastral:</strong>
+                <span><?php echo $situacao_cad; ?></span>
+              </div>
+            </div>
+            <div class="info-grid">
+              <div class="info-block">
+                <strong><i class="bi bi-calendar"></i> Ano de cadastro de CNPJ:</strong>
+                <span><?php echo $ano_cadastro; ?></span>
+              </div>
+              <div class="info-block">
+                <strong><i class="bi bi-person"></i> Responsável legal:</strong>
+                <span><?php echo $responsavel; ?></span>
+              </div>
+            </div>
+            <div class="info-grid">
+              <div class="info-block">
+                <strong><i class="bi bi-database"></i> Sigla:</strong>
+                <span><?php echo $sigla; ?></span>
+              </div>
+              <div class="info-block">
+                <strong><i class="bi bi-building"></i> Ano de fundação:</strong>
+                <span><?php echo $ano_fundacao; ?></span>
+              </div>
+            </div>
+            <div class="info-grid">
+              <div class="info-block">
+                <strong><i class="bi bi-envelope-at"></i> E-mail:</strong>
+                <span><?php echo $email; ?></span>
+              </div>
+              <div class="info-block">
+                <strong><i class="bi bi-house"></i> Situação do imóvel:</strong>
+                <span><?php echo $situacao_imo; ?></span>
+              </div>
+            </div>
+            <?php if (empty($atividades)): ?>
+              <p class="text-muted">Nenhuma atividade econômica cadastrada.</p>
+            <?php endif; ?>
+            <?php foreach ($atividades as $atividade): ?>
+              <div class="card shadow-sm border-0 my-3">
+                <div class="card-body bg-light">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <h6 class="fw-bold mb-3">Atividade Econômica (CNAE):</h6>
+                    <i class="bi bi-database fs-4 text-primary"></i>
+                  </div>
+                  <p class="text-muted mb-3">
+                    <?= htmlspecialchars($atividade['cnae']) ?>
+                  </p>
+                  <hr>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <p class="fw-semibold mb-1">Área de Atuação:</p>
+                      <p class="text-muted">
+                        <?= htmlspecialchars($atividade['area_atuacao']) ?>
+                      </p>
+                    </div>
+                    <div class="col-md-6">
+                      <p class="fw-semibold mb-1">Subárea:</p>
+                      <p class="text-muted">
+                        <?= htmlspecialchars($atividade['subarea']) ?>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <?php endforeach; ?>
+            <hr>
+            <div class="tbox">
+              <h3 class="tsec-title">
+                <i class="bi bi-file-earmark-text me-2"></i>Documentos Institucionais
+              </h3>
 
-      <!-- Projeto 2 -->
-      <div class="row align-items-center flex-md-row-reverse mt-5">
-        <div class="col-md-5 text-center">
-          <div class="img-wrapper border-yellow">
-            <img src="/assets/images/Casulo.jpg" alt="Projeto 2">
-          </div>
-        </div>
-        <div class="col-md-7">
-          <h4 class="fw-bold text-uppercase text-primary">Projeto Casulo</h4>
-          <p>
-            O projeto <strong>"Criança Presente"</strong> tem como objetivo promover o desenvolvimento cognitivo e emocional de crianças em fase escolar.
-            Por meio de atividades lúdicas e oficinas criativas, a iniciativa busca fortalecer vínculos, estimular a imaginação e favorecer o aprendizado.
-          </p>
-          <div class="d-flex gap-3 mt-3">
-            <button class="btn btn-outline-warning rounded-pill"><i class="bi bi-chat-dots"></i> Entre em Contato</button>
-            <button class="btn btn-outline-warning rounded-pill"><i class="bi bi-heart"></i> Nossos Apoiadores</button>
+              <div class="list-group">
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">Estatuto</h6>
+                    <small class="text-muted">Documento institucional da OSC</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn"
+                    onclick="visualizar('estatuto')"
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">Ata</h6>
+                    <small class="text-muted">Ata de constituição e registros</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn"
+                    onclick="visualizar('ata')"
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- 2 div Certidões -->
+            
+            <div class="tbox">
+              <h3 class="tsec-title">
+                <i class="bi bi-file-earmark-check me-2"></i>Certidões (CNDs)
+              </h3>
+
+              <div class="list-group">
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">CND Federal</h6>
+                    <small class="text-muted">Certidão negativa federal</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('cnd_federal')"
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">CND Estadual</h6>
+                    <small class="text-muted">Certidão negativa estadual</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('cnd_estadual')"
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">CND Municipal</h6>
+                    <small class="text-muted">Certidão negativa municipal</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('cnd_municipal')"
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">FGTS</h6>
+                    <small class="text-muted">Regularidade do FGTS</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('fgts')"
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">Trabalhista</h6>
+                    <small class="text-muted">Certidão negativa trabalhista</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('trabalhista')"
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- 3 div Utilidade Pública -->
+            <div class="tbox">
+              <h3 class="tsec-title">
+                <i class="bi bi-award me-2"></i>Utilidade Pública
+              </h3>
+
+              <div class="list-group">
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">Lei de Utilidade Pública Federal</h6>
+                    <small class="text-muted">Link externo</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn"
+                    onclick="window.open('https://www2.camara.leg.br/legin/fed/lei/1930-1939/lei-91-28-agosto-1935-398006-normaatualizada-pl.html','_blank')"
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
+                    <i class="bi bi-box-arrow-up-right"></i> Abrir
+                  </button>
+                </div>
+
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">Lei de Utilidade Pública Estadual</h6>
+                    <small class="text-muted">Link externo</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn"
+                    onclick="window.open('https://www.almg.gov.br/atividade-parlamentar/leis/legislacao-mineira/lei/texto/print.html?tipo=LEI&num=12972&ano=1998&comp=&cons=','_blank')"
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
+                    <i class="bi bi-box-arrow-up-right"></i> Abrir
+                  </button>
+                </div>
+
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">Lei de Utilidade Pública Municipal</h6>
+                    <small class="text-muted">Link externo</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn"
+                    onclick="window.open('https://leismunicipais.com.br/a/mg/p/paracatu/lei-ordinaria/2025/403/4021/lei-ordinaria-n-4021-2025-autoriza-o-poder-executivo-a-majorar-a-destinacao-de-recursos-para-a-associacao-esther-siqueira-tillmann-e-da-outras-providencias?q=associa%E7%E3o','_blank')"
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
+                    <i class="bi bi-box-arrow-up-right"></i> Abrir
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- 4 div Utilidade Pública -->
+            <div class="tbox">
+              <h3 class="tsec-title">
+                <i class="bi bi-person-vcard me-2"></i>Cadastro e Identificação
+              </h3>
+              <div class="list-group">
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">Cartão CNPJ</h6>
+                    <small class="text-muted">Documento de identificação</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('cartaoCNPJ')"
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- 4 div Documentos Contábeis -->
+            <div class="tbox">
+              <h3 class="tsec-title">
+                <i class="bi bi-calculator me-2"></i>Documentos Contábeis
+              </h3>
+
+              <div class="list-group">
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">Balanço Patrimonial</h6>
+                    <small class="text-muted">Documento contábil</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('balanco_patrimonial')"
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+
+                <div class="list-group-item tdoc-item">
+                  <div class="tdoc-left">
+                    <h6 class="mb-1">DRE</h6>
+                    <small class="text-muted">Demonstração do Resultado do Exercício</small>
+                  </div>
+                  <button class="btn btn-primary btn-sm tdoc-btn" onclick="visualizar('dre')"
+                    style="background-color: <?php echo $cor2; ?>; border-color: <?php echo $cor2; ?>;">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </section>
-  </div>
+    </div>
 
+    <!-- Projetos -->
+    <div id="projetos" class="section">
+      <h1 class="mb-3" style="background-color: <?php echo $cor2; ?>;padding: 23px 23px 23px 310px;">Projetos</h1>
+      <section class="container my-5">
+        <div class="text-center mb-4">
+          <h2 class="fw-bold text-uppercase text-primary">Apoie Nossos Projetos</h2>
+          <button class="btn btn-outline-warning mt-2 px-4 rounded-pill fw-semibold">Lei de Incentivo</button>
+          <hr>
+        </div>
+        <?php if (empty($projetos)): ?>
+          <p class="text-muted text-center">Nenhum projeto cadastrado.</p>
+        <?php else: ?>
+          <?php foreach ($projetos as $i => $p): 
+            $id = (int)$p['id'];
+            $nome = $p['nome'] ?? '';
+            $descricao = $p['descricao'] ?? '';
+
+            // imagem (fallback)
+            $img = $p['logo'] ?? '';
+            $imgSrc = !empty($img)
+              ? '/oscs/src/' . ltrim($img, '/')
+              : '/assets/images/projeto_placeholder.png';
+
+            // links (ajuste pro seu cenário)
+            $linkProjeto = "/oscs/src/projeto.php?osc={$osc}&projeto={$id}";
+
+            // alterna layout (imagem esquerda/direita)
+            $invert = ($i % 2 === 1) ? 'flex-md-row-reverse' : '';
+          ?>
+            <div class="row align-items-center g-4 mb-5 <?= $invert ?>">
+              <div class="col-md-5 text-center">
+                <div class="proj-media">
+                  <img src="<?= h($imgSrc) ?>" alt="<?= h($nome) ?>" class="proj-img">
+                </div>
+              </div>
+
+              <div class="col-md-7">
+                <h4 class="proj-title"><?= h($nome) ?></h4>
+                <p class="proj-desc"><?= nl2br(h($descricao)) ?></p>
+
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                  <a class="btn btn-outline-warning rounded-pill" href="<?= h($linkProjeto) ?>">
+                    <i class="bi bi-arrow-right-circle"></i> Ver detalhes
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <?php if ($i < count($projetos) - 1): ?>
+              <hr class="proj-hr">
+            <?php endif; ?>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </section>
+    </div>
+    
+    <!-- Contato -->
+    <div id="contato" class="section">
+    <section class="container my-5">
+      <h2 class="text-center section-title mb-5">Fale Conosco</h2>
+
+      <div class="row g-4">
+        
+        <!-- Coluna esquerda: informações -->
+        <div class="col-md-5">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+              <h5 class="fw-bold mb-3">Informações de Contato</h5>
+
+              <p><i class="bi bi-geo-alt-fill"></i> <?php echo $endereco; ?></p>
+              <p><i class="bi bi-telephone-fill"></i> <?php echo $tel; ?></p>
+              <p><i class="bi bi-envelope-fill"></i> <?php echo $email; ?></p>
+
+              <hr>
+
+              <p class="text-muted">
+                Entre em contato conosco para tirar dúvidas, propor parcerias
+                ou saber mais sobre nossos projetos.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coluna direita: formulário -->
+        <div class="col-md-7">
+          <div class="card shadow-sm border-0">
+            <div class="card-body">
+              <h5 class="fw-bold mb-3">Envie sua mensagem</h5>
+
+              <form id="formContato">
+                <input type="hidden" name="osc_id" value="<?php echo $osc; ?>">
+
+                <div class="mb-3">
+                  <label class="form-label">Nome</label>
+                  <input type="text" name="nome" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">E-mail</label>
+                  <input type="email" name="email" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Assunto</label>
+                  <input type="text" name="assunto" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Mensagem</label>
+                  <textarea name="mensagem" class="form-control" rows="4" required></textarea>
+                </div>
+
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
+                  Enviar Mensagem
+                </button>
+
+                <div id="retornoContato" class="mt-3"></div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div> 
+    </section>
+    </div>
+  </main>
   <footer style="background-color: <?php echo $cor3; ?>;">
-    <p>© 2025 OSC Exemplo - Todos os direitos reservados.</p>
+    <p>© 2025 OSCTECH - Todos os direitos reservados.</p>
   </footer>
 
   <script>
@@ -927,21 +1614,241 @@ $tel = $row["telefone"];
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 
   <script>
+    const buscaEndereco = <?= json_encode($buscaEndereco) ?>;
     // Inicializa o mapa
-    var map = L.map('map').setView([-23.305, -45.965], 13); // Coordenadas de Jacareí-SP
+    var map = L.map('map').setView([-17.2219, -46.8754], 13);
 
     // Adiciona o tile layer (mapa base)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Adiciona marcador
-    L.marker([-23.305, -45.965]).addTo(map)
-      .bindPopup('OSC Assocest<br>Jacareí - SP')
-      .openPopup();
+    fetch(`geocode.php?q=${encodeURIComponent(buscaEndereco)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.length > 0) {
+                const lat = parseFloat(data[0].lat);
+                const lon = parseFloat(data[0].lon);
+
+                map.setView([lat, lon], 16);
+
+                L.marker([lat, lon]).addTo(map)
+                    .bindPopup(buscaEndereco)
+                    .openPopup();
+            } else {
+                console.warn('Endereço não encontrado no mapa');
+            }
+        })
+        .catch(err => console.error('Erro ao buscar localização:', err));
   </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    const pdfs = <?= json_encode($pdfs, JSON_UNESCAPED_SLASHES) ?>;
+    const documentos = <?= json_encode($docsPorSubtipo, JSON_UNESCAPED_SLASHES) ?>;
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // estado (pra re-render no resize)
+    let _pdfDoc = null;
+    let _pdfUrlAtual = null;
+    let _renderEmAndamento = false;
+
+    function visualizar(subtipo) {
+      if (documentos[subtipo] && documentos[subtipo].length > 1) {
+        abrirLista(subtipo);
+      } else if (pdfs[subtipo]) {
+        abrirPDF(subtipo);
+      } else {
+        alert("Documento não disponível.");
+      }
+    }
+
+    // ========= helpers =========
+
+    function abrirModal() {
+      document.getElementById("pdfModal").style.display = "flex";
+    }
+
+    function limparCanvas() {
+      const canvas = document.getElementById("pdfViewer");
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Calcula scale pra caber no modal (largura disponível)
+    function calcularScaleParaCaber(page) {
+      const canvasContainer =
+        document.querySelector("#pdfModal .modal-content") || document.getElementById("pdfModal");
+
+      // fallback: usa viewport do window se não achar container
+      const larguraDisponivel = canvasContainer
+        ? Math.max(320, canvasContainer.clientWidth - 40) // folga interna
+        : Math.max(320, window.innerWidth - 80);
+
+      const viewportBase = page.getViewport({ scale: 1 });
+      return larguraDisponivel / viewportBase.width;
+    }
+
+    async function renderizarPrimeiraPagina(url) {
+      if (_renderEmAndamento) return; // evita render duplicado
+      _renderEmAndamento = true;
+
+      try {
+        const pdf = await pdfjsLib.getDocument(url).promise;
+        _pdfDoc = pdf;
+
+        const page = await pdf.getPage(1);
+
+        const scale = calcularScaleParaCaber(page);
+        const viewport = page.getViewport({ scale });
+
+        const canvas = document.getElementById("pdfViewer");
+        const context = canvas.getContext("2d");
+
+        // IMPORTANTE: tamanho real do bitmap do canvas (pra não distorcer)
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+
+        // visual responsivo (não estoura)
+        canvas.style.width = "100%";
+        canvas.style.height = "auto";
+        canvas.style.display = "block";
+        canvas.style.margin = "0 auto";
+
+        await page.render({ canvasContext: context, viewport }).promise;
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao carregar PDF.");
+      } finally {
+        _renderEmAndamento = false;
+      }
+    }
+
+    // ========= fluxo atual (mantido) =========
+
+    function abrirPDF(tipo) {
+      document.getElementById('listaDocumentos').style.display = 'none';
+      document.getElementById('pdfViewer').style.display = 'block';
+      document.getElementById('downloadLink').style.display = 'inline-block';
+
+      const pdfUrl = pdfs[tipo];
+
+      if (!pdfUrl) {
+        console.error("Tipo de PDF inválido:", tipo);
+        alert("Documento não disponível.");
+        return;
+      }
+
+      _pdfUrlAtual = pdfUrl;
+      document.getElementById('downloadLink').href = pdfUrl;
+
+      abrirModal();
+      limparCanvas();
+
+      // Renderização ajustada ao modal
+      renderizarPrimeiraPagina(pdfUrl);
+    }
+
+    function abrirLista(tipo) {
+      const lista = documentos[tipo];
+
+      if (!lista || lista.length === 0) {
+        alert("Nenhum documento disponível.");
+        return;
+      }
+
+      const container = document.getElementById('listaDocumentos');
+      container.innerHTML = '';
+      container.style.display = 'block';
+
+      document.getElementById('pdfViewer').style.display = 'none';
+      document.getElementById('downloadLink').style.display = 'none';
+
+      lista.forEach(doc => {
+        const item = document.createElement('div');
+        item.className = 'doc-item';
+
+        item.innerHTML = `
+          <div class="doc-info">
+            <i class="bi bi-file-earmark-pdf-fill"></i>
+            <span class="doc-nome" onclick="abrirPDFPorCaminho('${doc.caminho}')">
+              ${doc.nome}
+              <small class="doc-ano">(${doc.ano})</small>
+            </span>
+          </div>
+          <div class="doc-actions">
+            <a href="${doc.caminho}" download title="Baixar documento">
+              <i class="bi bi-download"></i>
+            </a>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+
+      abrirModal();
+    }
+
+    function abrirPDFPorCaminho(caminho) {
+      document.getElementById('listaDocumentos').style.display = 'none';
+      document.getElementById('pdfViewer').style.display = 'block';
+      document.getElementById('downloadLink').style.display = 'inline-block';
+
+      _pdfUrlAtual = caminho;
+      document.getElementById('downloadLink').href = caminho;
+
+      abrirModal();
+      limparCanvas();
+
+      // Renderização ajustada ao modal
+      renderizarPrimeiraPagina(caminho);
+    }
+
+    function fecharPDF() {
+      document.getElementById("pdfModal").style.display = "none";
+      _pdfDoc = null;
+      _pdfUrlAtual = null;
+      limparCanvas();
+    }
+
+    // ========= responsivo: ao redimensionar, re-render =========
+    window.addEventListener("resize", () => {
+      // se o modal estiver aberto e tem pdf carregado, re-renderiza
+      const modal = document.getElementById("pdfModal");
+      if (modal && modal.style.display === "flex" && _pdfUrlAtual) {
+        // Debounce simples
+        clearTimeout(window.__pdfResizeTimer);
+        window.__pdfResizeTimer = setTimeout(() => {
+          limparCanvas();
+          renderizarPrimeiraPagina(_pdfUrlAtual);
+        }, 150);
+      }
+    });
+  </script>
+
+
+  <div id="pdfModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <strong>Documento</strong>
+        <button class="close-btn" type="button" onclick="fecharPDF()" aria-label="Fechar">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div id="listaDocumentos" style="display:none;"></div>
+        <canvas id="pdfViewer"></canvas>
+      </div>
+
+      <div class="modal-footer">
+        <a id="downloadLink" class="btn btn-success btn-sm" download style="display:none;">
+          Baixar PDF
+        </a>
+      </div>
+    </div>
+  </div>
 
 </body>
 

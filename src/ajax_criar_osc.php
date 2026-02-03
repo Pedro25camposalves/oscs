@@ -1,295 +1,426 @@
 <?php
-    include 'conexao.php';
+$TIPOS_PERMITIDOS = ['OSC_TECH_ADMIN']; // só OscTech admin pode criar OSC
+$RESPOSTA_JSON    = true;               // endpoint retorna JSON
+require 'autenticacao.php';
 
-    // Cria a estrutura de diretórios da OSC:
-    function criarDiretoriosOsc(int $oscId): bool
-    {
-        $baseDir = __DIR__ . '/assets/oscs';
+include 'conexao.php';
 
-        if (!is_dir($baseDir) && !mkdir($baseDir, 0777, true)) {
-            return false;
-        }
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-        // Raiz da OSC
-        $oscRoot = $baseDir . '/osc-' . $oscId;
 
-        // Pastas que precisam existir para cada OSC
-        $dirs = [
-            $oscRoot,
-            $oscRoot . '/documentos',
-            $oscRoot . '/imagens',
-            $oscRoot . '/projetos',
-        ];
+function criarDiretoriosOsc(int $oscId): bool
+{
+    $baseDir = __DIR__ . '/assets/oscs';
 
-        foreach ($dirs as $dir) {
-            if (!is_dir($dir) && !mkdir($dir, 0777, true)) {
-                return false;
-            }
-        }
-
-        return true;
+    if (!is_dir($baseDir) && !mkdir($baseDir, 0777, true)) {
+        return false;
     }
 
-    // Move um arquivo de $_FILES para a pasta da OSC
-    function moverArquivo(string $fieldName, string $imgDir, string $imgRelBase): ?string
-    {
-        if (
-            !isset($_FILES[$fieldName]) ||
-            $_FILES[$fieldName]['error'] !== UPLOAD_ERR_OK
-        ) {
-            return null;
+    $oscRoot = $baseDir . '/osc-' . $oscId;
+
+    $dirs = [
+        $oscRoot,
+        $oscRoot . '/documentos',
+        $oscRoot . '/imagens',
+        $oscRoot . '/projetos',
+        $oscRoot . '/envolvidos',
+    ];
+
+    foreach ($dirs as $dir) {
+        if (!is_dir($dir) && !mkdir($dir, 0777, true)) {
+            return false;
         }
+    }
 
-        $originalName = basename($_FILES[$fieldName]['name']);
-        $ext = pathinfo($originalName, PATHINFO_EXTENSION);
-        $ext = $ext ? ('.' . $ext) : '';
+    return true;
+}
 
-        $fileName = uniqid($fieldName . '_', true) . $ext;
-
-        if (!is_dir($imgDir) && !mkdir($imgDir, 0777, true)) {
-            return null;
-        }
-
-        $destFull = $imgDir . $fileName;
-
-        if (move_uploaded_file($_FILES[$fieldName]['tmp_name'], $destFull)) {
-            return $imgRelBase . $fileName; // caminho relativo para gravar no banco
-        }
-
+function moverArquivo(string $fieldName, string $imgDir, string $imgRelBase): ?string
+{
+    if (
+        !isset($_FILES[$fieldName]) ||
+        $_FILES[$fieldName]['error'] !== UPLOAD_ERR_OK
+    ) {
         return null;
     }
 
-    // --- Lê os campos vindos via POST ---
-    $nomeOsc           = mysqli_real_escape_string($conn, $_POST['nomeOsc']             ?? '');
-    $email             = mysqli_real_escape_string($conn, $_POST['email']               ?? '');
-    $razaoSocial       = mysqli_real_escape_string($conn, $_POST['razaoSocial']         ?? '');
-    $nomeFantasia      = mysqli_real_escape_string($conn, $_POST['nomeFantasia']        ?? '');
-    $sigla             = mysqli_real_escape_string($conn, $_POST['sigla']               ?? '');
-    $situacaoCadastral = mysqli_real_escape_string($conn, $_POST['situacaoCadastral']   ?? '');
-    $anoCNPJ           = mysqli_real_escape_string($conn, $_POST['anoCNPJ']             ?? '');
-    $anoFundacao       = mysqli_real_escape_string($conn, $_POST['anoFundacao']         ?? '');
-    $responsavel       = mysqli_real_escape_string($conn, $_POST['responsavelLegal']    ?? '');
-    $missao            = mysqli_real_escape_string($conn, $_POST['missao']              ?? '');
-    $visao             = mysqli_real_escape_string($conn, $_POST['visao']               ?? '');
-    $valores           = mysqli_real_escape_string($conn, $_POST['valores']             ?? '');
-    $historia          = mysqli_real_escape_string($conn, $_POST['historia']            ?? '');
-    $oQueFaz           = mysqli_real_escape_string($conn, $_POST['oQueFaz']             ?? '');
-    $cnpj              = mysqli_real_escape_string($conn, $_POST['cnpj']                ?? '');
-    $telefone          = mysqli_real_escape_string($conn, $_POST['telefone']            ?? '');
-    $instagram         = mysqli_real_escape_string($conn, $_POST['instagram']           ?? '');
-    $status            = mysqli_real_escape_string($conn, $_POST['status']              ?? '');
+    $originalName = basename($_FILES[$fieldName]['name']);
+    $ext = pathinfo($originalName, PATHINFO_EXTENSION);
+    $ext = $ext ? ('.' . $ext) : '';
 
-    $sql_osc = "
-        INSERT INTO osc (
-            nome, razao_social, cnpj, telefone, email, nome_fantasia, sigla, situacao_cadastral,
-            ano_cnpj, ano_fundacao, responsavel, missao, visao, valores, instagram, status, historia, oque_faz
-        ) VALUES (
-            '$nomeOsc', '$razaoSocial', '$cnpj', '$telefone', '$email', '$nomeFantasia', '$sigla', '$situacaoCadastral',
-            '$anoCNPJ', '$anoFundacao', '$responsavel', '$missao', '$visao', '$valores', '$instagram', '$status', '$historia', '$oQueFaz'
-        )";
+    $fileName = uniqid($fieldName . '_', true) . $ext;
 
-    if (!mysqli_query($conn, $sql_osc)) {
-        echo json_encode(['success' => false, 'error' => 'Erro ao salvar OSC: ' . mysqli_error($conn)]);
-        exit;
+    if (!is_dir($imgDir) && !mkdir($imgDir, 0777, true)) {
+        return null;
     }
 
-    $osc_id = (int) mysqli_insert_id($conn);
+    $destFull = rtrim($imgDir, '/') . '/' . $fileName;
 
-    // Cria os diretórios da OSC
-    if (!criarDiretoriosOsc($osc_id)) {
+    if (move_uploaded_file($_FILES[$fieldName]['tmp_name'], $destFull)) {
+        return rtrim($imgRelBase, '/') . '/' . $fileName;
+    }
+
+    return null;
+}
+
+// --- Lê os campos vindos via POST ---
+$nomeOsc           = mysqli_real_escape_string($conn, $_POST['nomeOsc']             ?? '');
+$email             = mysqli_real_escape_string($conn, $_POST['email']               ?? '');
+$razaoSocial       = mysqli_real_escape_string($conn, $_POST['razaoSocial']         ?? '');
+$nomeFantasia      = mysqli_real_escape_string($conn, $_POST['nomeFantasia']        ?? '');
+$sigla             = mysqli_real_escape_string($conn, $_POST['sigla']               ?? '');
+$situacaoCadastral = mysqli_real_escape_string($conn, $_POST['situacaoCadastral']   ?? '');
+$anoCNPJ           = mysqli_real_escape_string($conn, $_POST['anoCNPJ']             ?? '');
+$anoFundacao       = mysqli_real_escape_string($conn, $_POST['anoFundacao']         ?? '');
+$responsavel       = mysqli_real_escape_string($conn, $_POST['responsavelLegal']    ?? '');
+$missao            = mysqli_real_escape_string($conn, $_POST['missao']              ?? '');
+$visao             = mysqli_real_escape_string($conn, $_POST['visao']               ?? '');
+$valores           = mysqli_real_escape_string($conn, $_POST['valores']             ?? '');
+$historia          = mysqli_real_escape_string($conn, $_POST['historia']            ?? '');
+$oQueFaz           = mysqli_real_escape_string($conn, $_POST['oQueFaz']             ?? '');
+$cnpj              = mysqli_real_escape_string($conn, $_POST['cnpj']                ?? '');
+$telefone          = mysqli_real_escape_string($conn, $_POST['telefone']            ?? '');
+$instagram         = mysqli_real_escape_string($conn, $_POST['instagram']           ?? '');
+
+// --- Insere a nova OSC ---
+$sql_osc = "
+    INSERT INTO osc (
+        nome, razao_social, cnpj, telefone, email, nome_fantasia, sigla, situacao_cadastral,
+        ano_cnpj, ano_fundacao, responsavel, missao, visao, valores, instagram, historia, oque_faz
+    ) VALUES (
+        '$nomeOsc', '$razaoSocial', '$cnpj', '$telefone', '$email', '$nomeFantasia', '$sigla', '$situacaoCadastral',
+        '$anoCNPJ', '$anoFundacao', '$responsavel', '$missao', '$visao', '$valores', '$instagram', '$historia', '$oQueFaz'
+    )";
+
+if (!mysqli_query($conn, $sql_osc)) {
+    echo json_encode(['success' => false, 'error' => 'Erro ao salvar OSC: ' . mysqli_error($conn)]);
+    exit;
+}
+
+$osc_id = (int) mysqli_insert_id($conn);
+
+if (!criarDiretoriosOsc($osc_id)) {
+    echo json_encode([
+        'success' => false,
+        'error'   => 'OSC criada no banco, mas falha ao criar diretórios no servidor!'
+    ]);
+    exit;
+}
+
+$baseOscDir = __DIR__ . '/assets/oscs/osc-' . $osc_id;
+$imgDir     = $baseOscDir . '/imagens/';
+$imgRelBase = 'assets/oscs/osc-' . $osc_id . '/imagens/';
+
+// --- Captura as atividades da OSC ---
+$atividadesJson = $_POST['atividades'] ?? '[]';
+$atividades = json_decode($atividadesJson, true);
+if (!is_array($atividades)) {
+    $atividades = [];
+}
+
+$atividades_ids = [];
+
+foreach ($atividades as $atv) {
+    $cnae    = mysqli_real_escape_string($conn, $atv['cnae']    ?? '');
+    $area    = mysqli_real_escape_string($conn, $atv['area']    ?? '');
+    $subarea = mysqli_real_escape_string($conn, $atv['subarea'] ?? '');
+
+    if ($cnae === '' && $area === '') {
+        continue;
+    }
+
+    $sql_atividade = "
+        INSERT INTO osc_atividade (osc_id, cnae, area_atuacao, subarea)
+        VALUES ('$osc_id', '$cnae', '$area', '$subarea')
+    ";
+
+    if (!mysqli_query($conn, $sql_atividade)) {
         echo json_encode([
             'success' => false,
-            'error' => 'OSC criada no banco, mas falha ao criar diretórios no servidor!'
+            'error'   => 'Erro ao salvar as atividade da OSC: ' . mysqli_error($conn)
         ]);
         exit;
     }
 
-    $baseOscDir   = __DIR__ . '/assets/oscs/osc-' . $osc_id;
-    $imgDir       = $baseOscDir . '/imagens/';
-    $imgRelBase   = 'assets/oscs/osc-' . $osc_id . '/imagens/';
+    $atividadeId = (int) mysqli_insert_id($conn);
+    $atividades_ids[] = $atividadeId;
+}
 
-    // --- Salva as ATIVIDADES da OSC (CNAE / Área / Subárea) ---
-    $atividadesJson = $_POST['atividades'] ?? '[]';
-    $atividades = json_decode($atividadesJson, true);
-    if (!is_array($atividades)) {
-        $atividades = [];
+// --- Captura o usuário responsável pela OSC (OSC_MASTER) ---
+$usuarioNome  = mysqli_real_escape_string($conn, $_POST['usuario_nome']  ?? '');
+$usuarioEmail = mysqli_real_escape_string($conn, $_POST['usuario_email'] ?? '');
+$usuarioSenha = $_POST['usuario_senha'] ?? '';
+$usuarioId    = null;
+
+if ($usuarioNome !== '' && $usuarioEmail !== '' && $usuarioSenha !== '') {
+    $senhaHash = password_hash($usuarioSenha, PASSWORD_DEFAULT);
+
+    // Insere o usuário da OSC
+    $sqlUsuario = "
+        INSERT INTO usuario (nome, email, senha, tipo, osc_id, ativo)
+        VALUES ('$usuarioNome', '$usuarioEmail', '$senhaHash', 'OSC_MASTER', '$osc_id', 1)
+    ";
+
+    if (!mysqli_query($conn, $sqlUsuario)) {
+        echo json_encode([
+            'success' => false,
+            'error'   => 'Erro ao criar usuário da OSC: ' . mysqli_error($conn)
+        ]);
+        exit;
     }
 
-    foreach ($atividades as $atv) {
-        $cnae    = mysqli_real_escape_string($conn, $atv['cnae']   ?? '');
-        $area    = mysqli_real_escape_string($conn, $atv['area']   ?? '');
-        $subarea = mysqli_real_escape_string($conn, $atv['subarea'] ?? '');
+    $usuarioId = (int) mysqli_insert_id($conn);
+}
 
-        if ($cnae === '' && $area === '') {
-            continue;
-        }
+// --- Captura os dados dos envolvidos ---
+$envolvidosJson = $_POST['envolvidos'] ?? '[]';
+$envolvidos = json_decode($envolvidosJson, true);
 
-        $sql_atividade = "
-            INSERT INTO osc_atividade (osc_id, cnae, area_atuacao, subarea)
-            VALUES ('$osc_id', '$cnae', '$area', '$subarea')
-        ";
+if (!is_array($envolvidos)) {
+    $envolvidos = [];
+}
 
-        if (!mysqli_query($conn, $sql_atividade)) {
-            echo json_encode(['success' => false, 'error' => 'Erro ao salvar as atividade da OSC: ' . mysqli_error($conn)]);
-            exit;
-        }
+$envolvidos_ids = [];
+
+$envolvidosRootDir     = $baseOscDir . '/envolvidos/';
+$envolvidosRootRelBase = 'assets/oscs/osc-' . $osc_id . '/envolvidos/';
+
+$funcoesValidas = ['DIRETOR','COORDENADOR','FINANCEIRO','MARKETING','RH', 'PARTICIPANTE'];
+
+// --- Salva os dados de cada envolvido ---
+foreach ($envolvidos as $idx => $envolvido) {
+    $nome      = mysqli_real_escape_string($conn, $envolvido['nome']      ?? '');
+    $telefone  = mysqli_real_escape_string($conn, $envolvido['telefone']  ?? '');
+    $emailEnv  = mysqli_real_escape_string($conn, $envolvido['email']     ?? '');
+
+    $funcaoRaw = strtoupper(trim($envolvido['funcao'] ?? ''));
+
+    if ($nome === '' && $funcaoRaw === '') {
+        continue;
     }
 
-    // --- Salva os dados dos envolvidos (atores da OSC) ---
-    $envolvidosJson = $_POST['envolvidos'] ?? '[]';
-    $envolvidos = json_decode($envolvidosJson, true);
-
-    if (!is_array($envolvidos)) {
-        $envolvidos = [];
+    if (!in_array($funcaoRaw, $funcoesValidas, true)) {
+        echo json_encode([
+            'success' => false,
+            'error'   => 'Função de envolvido inválida.'
+        ]);
+        exit;
     }
 
-    $atores_ids = [];
-    $atores_osc_ids = [];
+    $funcao = mysqli_real_escape_string($conn, $funcaoRaw);
 
-    foreach ($envolvidos as $idx => $envolvido) {
-        $tipo            = $envolvido['tipo']    ?? 'novo';
-        $atorIdExistente = isset($envolvido['ator_id']) ? (int)$envolvido['ator_id'] : 0;
+    $sql_envolvido = "
+        INSERT INTO envolvido_osc (osc_id, foto, nome, telefone, email, funcao)
+        VALUES ('$osc_id', NULL, '$nome', '$telefone', '$emailEnv', '$funcao')
+    ";
 
-        $nome     = mysqli_real_escape_string($conn, $envolvido['nome']     ?? '');
-        $telefone = mysqli_real_escape_string($conn, $envolvido['telefone'] ?? '');
-        $email    = mysqli_real_escape_string($conn, $envolvido['email']    ?? '');
-        $funcao   = mysqli_real_escape_string($conn, $envolvido['funcao']   ?? '');
+    if (!mysqli_query($conn, $sql_envolvido)) {
+        echo json_encode([
+            'success' => false,
+            'error'   => 'Erro ao salvar envolvido_osc (envolvido): ' . mysqli_error($conn)
+        ]);
+        exit;
+    }
 
-        // Decide se usamos ator existente ou criamos um novo
-        if ($atorIdExistente > 0 && $tipo === 'existente') {
-            // Somente vincula este ator à OSC
-            $ator_id = $atorIdExistente;
+    $envolvidoId = (int) mysqli_insert_id($conn);
+    $envolvidos_ids[] = $envolvidoId;
 
-        } else {
-            // Cria um novo ator
-            if ($nome === '' && $funcao === '') {
-                continue;
-            }
+    $envolvidoBaseDir = $envolvidosRootDir . 'envolvido-' . $envolvidoId . '/';
+    $envolvidoDocsDir = $envolvidoBaseDir . 'documentos/';
+    $envolvidoImgDir  = $envolvidoBaseDir . 'imagens/';
 
-            $sql_ator = "
-                INSERT INTO ator (nome, telefone, email)
-                VALUES ('$nome', '$telefone', '$email')
-            ";
+    $dirsEnvolvido = [
+        $envolvidoBaseDir,
+        $envolvidoDocsDir,
+        $envolvidoImgDir,
+    ];
 
-            if (!mysqli_query($conn, $sql_ator)) {
-                echo json_encode([
-                    'success' => false,
-                    'error'   => 'Erro ao salvar o ator: ' . mysqli_error($conn)
-                ]);
-                exit;
-            }
-
-            $ator_id = (int) mysqli_insert_id($conn);
-            $atores_ids[] = $ator_id;
-
-            // Cria o diretório próprio do ator no servidor
-            $atorDir     = __DIR__ . '/assets/atores/ator-' . $ator_id . '/';
-            $atorRelBase = 'assets/atores/ator-' . $ator_id . '/';
-
-            $fieldNameFoto = 'fotoEnvolvido_' . $idx;
-            $caminhoFotoRel = moverArquivo($fieldNameFoto, $atorDir, $atorRelBase);
-
-            if ($caminhoFotoRel !== null) {
-                $caminhoFotoRelSql = mysqli_real_escape_string($conn, $caminhoFotoRel);
-                $sql_update_foto = "
-                    UPDATE ator
-                       SET foto = '$caminhoFotoRelSql'
-                     WHERE id = '$ator_id'
-                ";
-                mysqli_query($conn, $sql_update_foto);
-            }
-        }
-
-        // Em ambos os casos (novo ou existente), cria o vínculo com a OSC
-        $sql_ator_osc = "
-            INSERT INTO ator_osc (ator_id, osc_id, funcao)
-            VALUES ('$ator_id', '$osc_id', '$funcao')
-        ";
-
-        if (!mysqli_query($conn, $sql_ator_osc)) {
+    foreach ($dirsEnvolvido as $dir) {
+        if (!is_dir($dir) && !mkdir($dir, 0777, true)) {
             echo json_encode([
                 'success' => false,
-                'error'   => 'Erro ao salvar a relação ator_osc: ' . mysqli_error($conn)
+                'error'   => 'Erro ao criar diretórios do envolvido no servidor.'
             ]);
             exit;
         }
-
-        $ator_osc_id = mysqli_insert_id($conn);
-        $atores_osc_ids[] = $ator_osc_id;
     }
 
-    // --- Salva os dados do imóvel da OSC ---
-    $situacaoImovel = mysqli_real_escape_string($conn, $_POST['situacaoImovel'] ?? '');
-    $cep            = mysqli_real_escape_string($conn, $_POST['cep']            ?? '');
-    $cidade         = mysqli_real_escape_string($conn, $_POST['cidade']         ?? '');
-    $bairro         = mysqli_real_escape_string($conn, $_POST['bairro']         ?? '');
-    $logradouro     = mysqli_real_escape_string($conn, $_POST['logradouro']     ?? '');
-    $numero         = mysqli_real_escape_string($conn, $_POST['numero']         ?? '');
+    $fieldNameFoto       = 'fotoEnvolvido_' . $idx;
+    $envolvidoImgRelBase = $envolvidosRootRelBase . 'envolvido-' . $envolvidoId . '/imagens/';
 
+    $caminhoFotoRel = moverArquivo($fieldNameFoto, $envolvidoImgDir, $envolvidoImgRelBase);
+
+    if ($caminhoFotoRel !== null) {
+        $fotoSql = mysqli_real_escape_string($conn, $caminhoFotoRel);
+        $sql_update_foto = "
+            UPDATE envolvido_osc
+               SET foto = '$fotoSql'
+             WHERE id = '$envolvidoId'
+        ";
+        mysqli_query($conn, $sql_update_foto);
+    }
+}
+
+// --- Salva os imóveis da OSC / endereços (múltiplos) ---
+$imoveisJson = $_POST['imoveis'] ?? '[]';
+$imoveis = json_decode($imoveisJson, true);
+if (!is_array($imoveis)) {
+    $imoveis = [];
+}
+
+$imoveis_ids = [];
+
+$jaTemPrincipal = false;
+
+foreach ($imoveis as $imo) {
+    $situacaoImovel = mysqli_real_escape_string($conn, $imo['situacao']    ?? '');
+    $descricao      = mysqli_real_escape_string($conn, $imo['descricao']   ?? 'Imóvel da OSC');
+    $cep            = mysqli_real_escape_string($conn, $imo['cep']         ?? '');
+    $cidade         = mysqli_real_escape_string($conn, $imo['cidade']      ?? '');
+    $bairro         = mysqli_real_escape_string($conn, $imo['bairro']      ?? '');
+    $logradouro     = mysqli_real_escape_string($conn, $imo['logradouro']  ?? '');
+    $numero         = mysqli_real_escape_string($conn, $imo['numero']      ?? '');
+    $complemento    = mysqli_real_escape_string($conn, $imo['complemento'] ?? '');
+
+    // Novo: flag principal vinda do front
+    $principal = !empty($imo['principal']) ? 1 : 0;
+
+    // Garante no backend que só exista um principal por OSC
+    if ($principal === 1) {
+        if ($jaTemPrincipal) {
+            // Se já tinha, este vira não-principal
+            $principal = 0;
+        } else {
+            $jaTemPrincipal = true;
+        }
+    }
+
+    // Se tudo estiver vazio, ignora
+    if (
+        $descricao === '' &&
+        $situacaoImovel === '' &&
+        $cep === '' &&
+        $cidade === '' &&
+        $bairro === '' &&
+        $logradouro === '' &&
+        $numero === '' &&
+        $complemento === ''
+    ) {
+        continue;
+    }
+
+    // Cria o endereço
+    $sql_endereco = "
+        INSERT INTO endereco (
+            descricao, cep, cidade, logradouro, bairro, numero, complemento
+        ) VALUES (
+            '$descricao', '$cep', '$cidade', '$logradouro', '$bairro', '$numero', '$complemento'
+        )";
+
+    if (!mysqli_query($conn, $sql_endereco)) {
+        echo json_encode([
+            'success' => false,
+            'error'   => 'Erro ao salvar Endereco: ' . mysqli_error($conn)
+        ]);
+        exit;
+    }
+
+    $endereco_id = (int) mysqli_insert_id($conn);
+
+    // Vincula o imóvel à OSC e ao endereço (tabela IMOVEL que você já usava)
     $sql_imovel = "
         INSERT INTO imovel (
-            osc_id, cep, cidade, logradouro, bairro, numero, situacao
+            osc_id, endereco_id, situacao
         ) VALUES (
-            '$osc_id', '$cep', '$cidade', '$logradouro', '$bairro', '$numero', '$situacaoImovel'
+            '$osc_id', '$endereco_id', '$situacaoImovel'
         )";
 
     if (!mysqli_query($conn, $sql_imovel)) {
-        echo json_encode(['success' => false, 'error' => 'Erro ao salvar Imovel: ' . mysqli_error($conn)]);
+        echo json_encode([
+            'success' => false,
+            'error'   => 'Erro ao salvar Imovel: ' . mysqli_error($conn)
+        ]);
         exit;
     }
 
-    $imovel_id = mysqli_insert_id($conn);
+    $imovel_id = (int) mysqli_insert_id($conn);
+    $imoveis_ids[] = $imovel_id;
 
-    // --- Salva as cores na tabela `cores` ---
-    $cores = $_POST['cores'] ?? [];
-    $cor1  = mysqli_real_escape_string($conn, $cores['bg']  ?? '');
-    $cor2  = mysqli_real_escape_string($conn, $cores['sec'] ?? '');
-    $cor3  = mysqli_real_escape_string($conn, $cores['ter'] ?? '');
-    $cor4  = mysqli_real_escape_string($conn, $cores['qua'] ?? '');
-
-    $sql_cores = "
-        INSERT INTO cores (osc_id, cor1, cor2, cor3, cor4)
-        VALUES ('$osc_id', '$cor1', '$cor2', '$cor3', '$cor4')
-    ";
-
-    if (!mysqli_query($conn, $sql_cores)) {
-        echo json_encode(['success' => false, 'error' => 'Erro ao salvar cores: ' . mysqli_error($conn)]);
-        exit;
-    }
-
-    $cores_id = mysqli_insert_id($conn);
-
-    // --- Salva o template visual (logos e banners) ---
-    $logoSimples  = moverArquivo('logoSimples',  $imgDir, $imgRelBase);
-    $logoCompleta = moverArquivo('logoCompleta', $imgDir, $imgRelBase);
-    $banner1      = moverArquivo('banner1',      $imgDir, $imgRelBase);
-    $banner2      = moverArquivo('banner2',      $imgDir, $imgRelBase);
-    $banner3      = moverArquivo('banner3',      $imgDir, $imgRelBase);
-
-    $labelBanner  = mysqli_real_escape_string($conn, $_POST['labelBanner'] ?? '');
-
-    $sql_template = "
-        INSERT INTO template_web (
-            osc_id, descricao, cores_id, logo_simples, logo_completa, banner1, banner2, banner3, label_banner
+    // NOVO: vincula também na tabela endereco_osc
+    $sql_enderecoOsc = "
+        INSERT INTO endereco_osc (
+            osc_id, endereco_id, situacao, principal
         ) VALUES (
-            '$osc_id', 'Template Padrão', '$cores_id',
-            '$logoSimples', '$logoCompleta', '$banner1', '$banner2', '$banner3', '$labelBanner'
+            '$osc_id', '$endereco_id', '$situacaoImovel', '$principal'
         )";
 
-    if (!mysqli_query($conn, $sql_template)) {
-        echo json_encode(['success' => false, 'error' => 'Erro ao salvar template: ' . mysqli_error($conn)]);
+    if (!mysqli_query($conn, $sql_enderecoOsc)) {
+        echo json_encode([
+            'success' => false,
+            'error'   => 'Erro ao salvar Endereco_OSC: ' . mysqli_error($conn)
+        ]);
         exit;
     }
+}
 
-    // --- Retorno completo dos cadastros ---
-    echo json_encode([
-        'success'       => true,
-        'template_id'   => mysqli_insert_id($conn),
-        'cores_id'      => $cores_id,
-        'osc_id'        => $osc_id,
-        'imovel_id'     => $imovel_id,
-        'atores_ids'    => $atores_ids,
-        'atores_osc_ids'=> $atores_osc_ids
-    ]);
+// --- Salva as cores da OSC ---
+$cores = $_POST['cores'] ?? [];
+$cor1  = mysqli_real_escape_string($conn, $cores['bg']  ?? '');
+$cor2  = mysqli_real_escape_string($conn, $cores['sec'] ?? '');
+$cor3  = mysqli_real_escape_string($conn, $cores['ter'] ?? '');
+$cor4  = mysqli_real_escape_string($conn, $cores['qua'] ?? '');
+$cor5  = mysqli_real_escape_string($conn, $cores['fon'] ?? '');
 
-    mysqli_close($conn);
+// --- Insere as cores ---
+$sql_cores = "
+    INSERT INTO cores (osc_id, cor1, cor2, cor3, cor4, cor5)
+    VALUES ('$osc_id', '$cor1', '$cor2', '$cor3', '$cor4', '$cor5')
+";
+
+if (!mysqli_query($conn, $sql_cores)) {
+    echo json_encode(['success' => false, 'error' => 'Erro ao salvar cores: ' . mysqli_error($conn)]);
+    exit;
+}
+
+$cores_id = mysqli_insert_id($conn);
+
+// --- Salva o template visual (logos e banners) ---
+$logoSimples  = moverArquivo('logoSimples',  $imgDir, $imgRelBase);
+$logoCompleta = moverArquivo('logoCompleta', $imgDir, $imgRelBase);
+$banner1      = moverArquivo('banner1',      $imgDir, $imgRelBase);
+$banner2      = moverArquivo('banner2',      $imgDir, $imgRelBase);
+$banner3      = moverArquivo('banner3',      $imgDir, $imgRelBase);
+
+$labelBanner  = mysqli_real_escape_string($conn, $_POST['labelBanner'] ?? '');
+
+$sql_template = "
+    INSERT INTO template_web (
+        osc_id, descricao, cores_id, logo_simples, logo_completa, banner1, banner2, banner3, label_banner
+    ) VALUES (
+        '$osc_id', 'Template Padrão', '$cores_id',
+        '$logoSimples', '$logoCompleta', '$banner1', '$banner2', '$banner3', '$labelBanner'
+    )";
+
+if (!mysqli_query($conn, $sql_template)) {
+    echo json_encode(['success' => false, 'error' => 'Erro ao salvar template: ' . mysqli_error($conn)]);
+    exit;
+}
+
+$template_id = mysqli_insert_id($conn);
+
+// --- Retorno completo dos cadastros ---
+echo json_encode([
+    'success'        => true,
+    'osc_id'         => $osc_id,
+    'usuario_id'     => $usuarioId,
+    'cores_id'       => $cores_id,
+    'template_id'    => $template_id,
+    'imovel_id'      => isset($imoveis_ids[0]) ? $imoveis_ids[0] : null,
+    'imoveis_ids'    => $imoveis_ids,
+    'envolvidos_ids' => $envolvidos_ids,
+    'atividades_ids' => $atividades_ids,
+]);
+
+mysqli_close($conn);
