@@ -487,7 +487,16 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       <div class="card">
         <h2>Informações</h2>
         <div class="divider"></div>
-        <div class="grid cols-2">
+        <div class="grid cols-2" style="margin-top:10px;">
+          <div>
+            <label for="projTipo">Tipo (*)</label>
+            <select id="projTipo" required>
+              <option value="EVENTO">Evento</option>
+              <option value="OFICINA">Oficina</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid cols-2" style="margin-top:10px;">
           <div>
             <label for="projNome">Nome (*)</label>
             <input id="projNome" type="text" required />
@@ -500,17 +509,6 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
               <option value="ENCERRADO">Finalizado</option>
             </select>
           </div>
-        </div>
-
-        <div class="grid cols-2" style="margin-top:10px;">
-          <div>
-            <label for="projTipo">Tipo (*)</label>
-            <select id="projTipo" required>
-              <option value="EVENTO">Evento</option>
-              <option value="OFICINA">Oficina</option>
-            </select>
-          </div>
-
         </div>
 
         <div class="grid cols-2" style="margin-top:10px;">

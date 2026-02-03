@@ -98,8 +98,8 @@ function save_one_uploaded_image(string $tmp, string $destDirFs, string $destUrl
 try {
     mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        json_fail('Método inválido. Use POST.', 405);
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $_SERVER['REQUEST_METHOD'] !== 'GET') {
+        json_fail('Método inválido. Use GET ou POST.', 405);
     }
 
     $usuarioId = $_SESSION['id'] ?? $_SESSION['usuario_id'] ?? null;
@@ -113,10 +113,18 @@ try {
     $oscId = (int)($u['osc_id'] ?? 0);
     if ($oscId <= 0) json_fail('Usuário não possui OSC vinculada.', 403);
 
-    $action   = trim((string)($_POST['action'] ?? ''));
-    $projetoId = (int)($_POST['projeto_id'] ?? 0);
-    if ($projetoId <= 0) json_fail('Projeto inválido.');
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        // compatível com chamadas via fetch GET (ex.: editar_evento.php)
+        $action    = 'list';
+        $projetoId = (int)($_GET['projeto_id'] ?? 0);
+        $eventoId  = (int)($_GET['evento_oficina_id'] ?? 0);
+    } else {
+        $action    = trim((string)($_POST['action'] ?? ''));
+        $projetoId = (int)($_POST['projeto_id'] ?? 0);
+        $eventoId  = (int)($_POST['evento_oficina_id'] ?? 0);
+    }
 
+    if ($projetoId <= 0) json_fail('Projeto inválido.');
     // valida projeto pertence à OSC (segurança)
     $stP = $conn->prepare("SELECT id FROM projeto WHERE id = ? AND osc_id = ? LIMIT 1");
     $stP->bind_param("ii", $projetoId, $oscId);
@@ -124,8 +132,8 @@ try {
     $pOk = $stP->get_result()->fetch_assoc();
     if (!$pOk) json_fail('Projeto não encontrado para esta OSC.', 403);
 
-    $eventoIdRaw = trim((string)($_POST['evento_oficina_id'] ?? ''));
-    $eventoId = ($eventoIdRaw !== '') ? (int)$eventoIdRaw : 0;
+    // eventoId já foi lido acima (GET ou POST)
+    $eventoId = (int)($eventoId ?? 0);
 
     if ($eventoId > 0) {
         // valida evento pertence ao projeto

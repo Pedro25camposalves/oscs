@@ -610,7 +610,7 @@ $payload = [
     <!-- SEÇÃO 1 -->
     <div class="card card-collapse is-open" data-collapse-id="info-evento">
       <div class="card-head" data-collapse-head>
-        <h2>Informações</h2>
+        <h2 id="infoTitulo">Informações</h2>
         <button type="button" class="card-toggle" data-collapse-btn>
           <span class="label">Fechar</span>
           <span class="chev">▾</span>
@@ -633,19 +633,9 @@ $payload = [
               </select>
           </div>
         </div>
+        <input type="hidden" id="evtTipo" />
 
-        <div class="grid cols-2" style="margin-top:10px;">
-          <div>
-            <label for="evtTipo">Tipo (*)</label>
-            <select id="evtTipo" required>
-                <option value="">Selecione...</option>
-                <option value="EVENTO">Evento</option>
-                <option value="OFICINA">Oficina</option>
-              </select>
-          </div>
-        </div>
-
-        <input type="hidden" id="evtPai" />
+<input type="hidden" id="evtPai" />
 
         <div class="grid cols-2" style="margin-top:10px;">
           <div>
@@ -1071,6 +1061,12 @@ $payload = [
   function bootForm(){
     qs('#evtStatus').value = (evento.status || 'PENDENTE');
     qs('#evtTipo').value = (evento.tipo || '');
+    // Título da seção (não editável): "Informações do Evento/Oficina"
+    const t = String(evento.tipo || '').toUpperCase();
+    const h = document.getElementById('infoTitulo');
+    if (h) {
+      h.textContent = (t === 'OFICINA') ? 'Informações da Oficina' : (t === 'EVENTO') ? 'Informações do Evento' : 'Informações';
+    }
     qs('#evtPai').value = (evento.pai_id ? String(evento.pai_id) : '');
     qs('#evtNome').value = (evento.nome || '');
     qs('#evtDataInicio').value = (evento.data_inicio || '');

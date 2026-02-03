@@ -302,8 +302,8 @@ try {
                 <div>
                     <label for="projStatus">Status (*)</label>
                     <select id="projStatus" required>
-                        <option value="PENDENTE">Pendente</option>
-                        <option value="PLANEJAMENTO">Planejamento</option>
+                        <option value="PENDENTE">A iniciar</option>
+                        <option value="PLANEJAMENTO">Em andamento</option>
                         <option value="EXECUCAO">Execução</option>
                         <option value="ENCERRADO">Encerrado</option>
                     </select>

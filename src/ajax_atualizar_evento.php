@@ -26,10 +26,10 @@ function is_valid_date(?string $d): bool {
 }
 
 function fs_path_from_url(string $url): string {
-    // Converte "assets/..." em caminho absoluto no servidor
-    $root = rtrim($_SERVER['DOCUMENT_ROOT'] ?? '', '/');
-    $url  = ltrim($url, '/');
-    return $root . '/' . $url;
+    $root = realpath(__DIR__);
+    $rel  = ltrim($url, '/');
+    $rel  = str_replace('/', DIRECTORY_SEPARATOR, $rel);
+    return $root . DIRECTORY_SEPARATOR . $rel;
 }
 
 function ensure_dir(string $dir): void {
