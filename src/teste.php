@@ -185,6 +185,7 @@ $cidade = $rowEndereco['cidade'];
 $cep = $rowEndereco['cep'];
 $endereco =  "$logradouro - $numero<br>{$rowEndereco['bairro']}, $cidade<br><strong>CEP: </strong>$cep";
 $email = $row["email"];
+$instagram = $row["instagram"];
 $tel = $row["telefone"];
 
 //varíavel para localização no mapa
@@ -316,7 +317,7 @@ $buscaEndereco = trim(
    4️⃣ CARDS / CONTEÚDO
     =========================================================== */
     .card-body {
-      background: <?php echo $background ?>;
+      background: #FFFFFF;
       border-radius: 6px;
     }
 
@@ -345,7 +346,7 @@ $buscaEndereco = trim(
       width: 100%;
       border-radius: 18px;
       overflow: hidden;
-      background: <?php echo $background; ?>;
+      background: <?php echo $cor1; ?>;
       box-shadow: 0 10px 25px rgba(0,0,0,0.08);
       border: 1px solid rgba(0,0,0,0.06);
       transition: transform .2s ease, box-shadow .2s ease;
@@ -374,7 +375,6 @@ $buscaEndereco = trim(
       transform: scale(1.06);
     }
 
-    /* overlay leve pra dar contraste com a data */
     #acontecimentos .news-media::after {
       content: "";
       position: absolute;
@@ -410,8 +410,6 @@ $buscaEndereco = trim(
       color: <?php echo $cor_font; ?>;
     }
     
-
-    /* deixa o título ficar com “cara de link” no hover */
     #acontecimentos .news-card:hover .news-title {
       text-decoration: underline;
       text-underline-offset: 4px;
@@ -480,7 +478,7 @@ $buscaEndereco = trim(
 
     .section-title {
       text-align: center;
-      font-size: 1.8rem;
+      font-size: 2.4rem;
       margin-bottom: 20px;
     }
 
@@ -725,7 +723,7 @@ $buscaEndereco = trim(
       gap: 8px;
     }
 
-    /* mobile: empilha botão abaixo */
+    
     @media (max-width: 576px){
       #transparencia .tdoc-item{
         flex-direction: column;
@@ -743,7 +741,7 @@ $buscaEndereco = trim(
       }
     }
 
-    /* ===== Projetos (visual clean) ===== */
+  
     .proj-title{
       font-weight: 800;
       text-transform: uppercase;
@@ -755,8 +753,8 @@ $buscaEndereco = trim(
       opacity: .92;
       line-height: 1.6;
       margin-bottom: 0;
-      white-space: normal;         /* garante quebra normal */
-      overflow-wrap: anywhere;     /* quebra mesmo sem espaços */
+      white-space: normal;       
+      overflow-wrap: anywhere;     
       word-break: break-word; 
     }
 
@@ -767,7 +765,7 @@ $buscaEndereco = trim(
       border-radius: 999px;
       overflow: hidden;
       background: #fff;
-      border: 6px solid <?php echo $cor2; ?>; /* se quiser ligar à paleta */
+      border: 6px solid <?php echo $cor2; ?>; 
       box-shadow: 0 10px 25px rgba(0,0,0,0.08);
       display: grid;
       place-items: center;
@@ -776,7 +774,7 @@ $buscaEndereco = trim(
     .proj-img{
       width: 100%;
       height: 100%;
-      object-fit: cover; /* ou contain, dependendo do logo */
+      object-fit: cover; 
     }
 
     .proj-hr{
@@ -800,7 +798,7 @@ $buscaEndereco = trim(
       box-sizing: border-box;
     }
     
-    /* caixa do modal */
+    
     #pdfModal .modal-content {
       width: min(920px, 100%);
       max-height: calc(100vh - 24px);
@@ -815,7 +813,7 @@ $buscaEndereco = trim(
       position: relative;
     }
 
-    /* header fixo */
+    
     #pdfModal .modal-header {
       display: flex;
       align-items: center;
@@ -824,14 +822,14 @@ $buscaEndereco = trim(
       border-bottom: 1px solid #e9ecef;
     }
 
-    /* área rolável do conteúdo */
+   
     #pdfModal .modal-body {
       padding: 12px 14px;
-      overflow: auto;             /* scroll interno */
+      overflow: auto;             
       flex: 1;
     }
 
-    /* footer fixo */
+    
     #pdfModal .modal-footer {
       padding: 12px 14px;
       border-top: 1px solid #e9ecef;  
@@ -840,7 +838,7 @@ $buscaEndereco = trim(
       gap: 10px;
     }
 
-    /* canvas centralizado */
+  
     #pdfViewer {
       width: 100% !important;
       height: auto !important;
@@ -848,7 +846,7 @@ $buscaEndereco = trim(
       margin: 10px auto 0;
     }
 
-    /* botão de fechar */
+    
     #pdfModal .close-btn {
       position: sticky;         
       top: 0;
@@ -861,8 +859,7 @@ $buscaEndereco = trim(
       border-radius: 10px;
       z-index: 2;
     }
-
-    /* mobile: ocupa quase tudo */
+    
     @media (max-width: 576px) {
       #pdfModal .modal-content {
         width: 100%;
@@ -876,8 +873,8 @@ $buscaEndereco = trim(
 
     .card-img-top {
       width: 100%;
-      height: 280px;        /* ALTURA FIXA (ajuste se quiser) */
-      object-fit: cover;   /* corta sem distorcer */
+      height: 280px;        
+      object-fit: cover;   
       object-position: center;
     }
 
@@ -886,6 +883,29 @@ $buscaEndereco = trim(
         height: 200px;
       }
     }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1rem;
+      margin-bottom: 15px;
+    }
+
+    .contact-item i {
+      font-size: 1.2rem;
+      color: <?php echo $cor3; ?>;
+    }
+
+    .contact-item a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .contact-item a:hover {
+      text-decoration: underline;
+    }
+
   </style>
 
   <script>
@@ -1190,12 +1210,15 @@ $buscaEndereco = trim(
     <div id="sobre" class="section">
       <h1 class="mb-3-main">Sobre Nós</h1>
       <div class="container my-5">
+        <h2 class="text-center section-title mb-5">Sobre Nós</h2>
+        <div class="info-block" style="grid-column: 1 / -1; overflow-wrap: anywhere;">
+          <h2 class="text-left mb-4">O que a OSC faz</h2>
+          <span><?php echo $oq_faz; ?></span>
+        </div>
         <section id="equipe" class="my-5">
           <div class="container">
             <h2 class="text-left mb-4">Nossa Equipe</h2>
-
             <div class="row justify-content-center">
-              
               <?php if (empty($envolvidos)): ?>
                 <p class="text-muted text-center">Nenhum envolvido cadastrado.</p>
               <?php endif; ?>
@@ -1222,11 +1245,7 @@ $buscaEndereco = trim(
             </div>
           </div>
         </section>
-        <div class="info-block" style="grid-column: 1 / -1; overflow-wrap: anywhere;">
-          <h2 class="text-left mb-4">O que a OSC faz</h2>
-          <span><?php echo $oq_faz; ?></span>
-        </div>
-        <br><br><br>
+        <br>
         <h2 class="text-left mb-4">Nossa História</h2>
         <p style="overflow-wrap: anywhere;"> <?php echo $historia; ?> </p>
       </div>
@@ -1238,6 +1257,7 @@ $buscaEndereco = trim(
 
       <hr>
       <div class="container my-5">
+        <h2 class="text-center section-title mb-5">Transparência</h2>
         <div class="osc-detalhes">
           <div class="tsec">
             <h3><strong>Nome fantasia: </strong><?php echo $nome_fantasia; ?></h3>
@@ -1282,12 +1302,13 @@ $buscaEndereco = trim(
                 <span><?php echo $situacao_imo; ?></span>
               </div>
             </div>
+            <br>
             <?php if (empty($atividades)): ?>
               <p class="text-muted">Nenhuma atividade econômica cadastrada.</p>
             <?php endif; ?>
             <?php foreach ($atividades as $atividade): ?>
               <div class="card shadow-sm border-0 my-3">
-                <div class="card-body bg-light">
+                <div class="card-body">
                   <div class="d-flex justify-content-between align-items-start">
                     <h6 class="fw-bold mb-3">Atividade Econômica (CNAE):</h6>
                     <i class="bi bi-database fs-4 text-primary"></i>
@@ -1510,10 +1531,8 @@ $buscaEndereco = trim(
     <div id="projetos" class="section">
       <h1 class="mb-3-main">Projetos</h1>
       <section class="container my-5">
+        <h2 class="text-center section-title mb-5">Projetos</h2>
         <div class="text-center mb-4">
-          <h2 class="fw-bold text-uppercase text-primary">Apoie Nossos Projetos</h2>
-          <button class="btn btn-outline-warning mt-2 px-4 rounded-pill fw-semibold">Lei de Incentivo</button>
-          <hr>
         </div>
         <?php if (empty($projetos)): ?>
           <p class="text-muted text-center">Nenhum projeto cadastrado.</p>
@@ -1564,74 +1583,55 @@ $buscaEndereco = trim(
     
     <!-- Contato -->
     <div id="contato" class="section">
-    <section class="container my-5">
-      <h2 class="text-center section-title mb-5">Fale Conosco</h2>
+      <section class="container my-5">
+        <h2 class="text-center section-title mb-5">Fale Conosco</h2>
 
-      <div class="row g-4">
-        
-        <!-- Coluna esquerda: informações -->
-        <div class="col-md-5">
-          <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-              <h5 class="fw-bold mb-3">Informações de Contato</h5>
+        <div class="row justify-content-center">
+          <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm border-0">
+              <div class="card-body p-4">
 
-              <p><i class="bi bi-geo-alt-fill"></i> <?php echo $endereco; ?></p>
-              <p><i class="bi bi-telephone-fill"></i> <?php echo $tel; ?></p>
-              <p><i class="bi bi-envelope-fill"></i> <?php echo $email; ?></p>
+                <h5 class="fw-bold mb-4 text-center">
+                  Informações de Contato
+                </h5>
 
-              <hr>
+                <div class="contact-item">
+                  <i class="bi bi-geo-alt-fill"></i>
+                  <span><?php echo $endereco; ?></span>
+                </div>
 
-              <p class="text-muted">
-                Entre em contato conosco para tirar dúvidas, propor parcerias
-                ou saber mais sobre nossos projetos.
-              </p>
+                <div class="contact-item">
+                  <i class="bi bi-telephone-fill"></i>
+                  <a href="tel:<?php echo preg_replace('/\D/', '', $tel); ?>">
+                    <?php echo $tel; ?>
+                  </a>
+                </div>
+
+                <div class="contact-item">
+                  <i class="bi bi-envelope-fill"></i>
+                  <a href="mailto:<?php echo $email; ?>">
+                    <?php echo $email; ?>
+                  </a>
+                </div>
+                <div class="contact-item">
+                  <i class="bi bi-instagram"></i>
+                  <a 
+                    href="https://www.instagram.com/<?php echo ltrim($instagram, '@'); ?>" 
+                    target="_blank"
+                    rel="noopener noreferrer">
+                    <?php echo $instagram; ?>
+                  </a>
+                </div>
+                <hr class="my-4">
+                <p class="text-muted text-center mb-0">
+                  Entre em contato conosco para tirar dúvidas, propor parcerias
+                  ou saber mais sobre nossos projetos.
+                </p>
+              </div>
             </div>
           </div>
         </div>
-
-        <!-- Coluna direita: formulário -->
-        <div class="col-md-7">
-          <div class="card shadow-sm border-0">
-            <div class="card-body">
-              <h5 class="fw-bold mb-3">Envie sua mensagem</h5>
-
-              <form id="formContato">
-                <input type="hidden" name="osc_id" value="<?php echo $osc; ?>">
-
-                <div class="mb-3">
-                  <label class="form-label">Nome</label>
-                  <input type="text" name="nome" class="form-control" required>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label">E-mail</label>
-                  <input type="email" name="email" class="form-control" required>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label">Assunto</label>
-                  <input type="text" name="assunto" class="form-control">
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label">Mensagem</label>
-                  <textarea name="mensagem" class="form-control" rows="4" required></textarea>
-                </div>
-
-                <button
-                  type="submit"
-                  class="btn btn-primary"
-                  style="background-color: <?php echo $cor3; ?>; border-color: <?php echo $cor3; ?>;">
-                  Enviar Mensagem
-                </button>
-
-                <div id="retornoContato" class="mt-3"></div>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div> 
-    </section>
+      </section>
     </div>
   </main>
   <footer style="background-color: <?php echo $cor3; ?>;">
