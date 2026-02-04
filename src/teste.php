@@ -223,12 +223,12 @@ $buscaEndereco = trim(
     }
     body {
       /* font-family: "Comic Relief", system-ui; font-weight: 400; */
-      font-family: 'Poppins', sans-serif;
+      /*font-family: 'Poppins', sans-serif;*/
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       font-weight: 400;
       margin: 0;
       padding: 0;
       background: <?php echo $cor1; ?>;
-      color: <?php echo $cor_font; ?>;
       display: flex;
       flex-direction: column;
     }
@@ -238,8 +238,14 @@ $buscaEndereco = trim(
       border-top: 1px solid #ddd;
       padding: 15px;
       text-align: center;
-      color: <?php echo $cor5; ?>;
+      color: <?php echo $cor1; ?>;
       margin-top: 50px;
+    }
+
+    .mb-3-main {
+      color: <?php echo $cor1; ?> !important;
+      background-color: <?php echo $cor3; ?>;
+      padding: 23px 23px 23px 310px;
     }
 
     hr {
@@ -253,8 +259,59 @@ $buscaEndereco = trim(
 
     .nav-link {
       font-size: 1.2rem;
-      color: black;
+      font-size: 18px;
+      color: <?php echo $cor1; ?>;
+    
     }
+
+    .btn {
+        color: #ffffff !important;
+        background-color: <?php echo $cor2; ?> !important;
+        border: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease !important;
+        filter: brightness(1) !important; /* Garante brilho normal */
+    }
+
+    /* Estado de Hover (Passar o mouse) e Active (No momento do clique) */
+    .btn:hover,
+    .btn:active {
+        filter: brightness(0.85) !important; /* Escurece apenas enquanto interage */
+        background-color: <?php echo $cor2; ?> !important;
+        color: #ffffff !important;
+    }
+
+    /* Estado de Focus (O que estava deixando escuro após o clique) */
+    .btn:focus {
+        filter: brightness(1) !important; /* Volta o brilho para o normal */
+        outline: none !important;
+        box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.1) !important; /* Apenas uma sombra suave de foco */
+    }
+
+    .nav-tabs-custom .nav-link {
+            color: <?php echo $cor_fonte; ?>;
+            font-weight: 500;
+            border: none;
+            /*border-bottom: 3px solid transparent;*/
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 0.75rem 1.5rem;
+        }
+        
+        .nav-tabs-custom .nav-link:hover {
+            
+            /*border-bottom-color: #cce5ff;*/
+            filter: brightness(0.9) !important;
+        }
+        
+        .nav-tabs-custom .nav-link.active {
+            filter: brightness(0.7) !important;
+            border-bottom-color: <?php echo $cor1; ?>;
+            background-color: transparent;
+            color: <?php echo $cor1; ?>;
+        }
 
     /* ===========================================================
    4️⃣ CARDS / CONTEÚDO
@@ -1015,7 +1072,7 @@ $buscaEndereco = trim(
 <body>
 
   <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-light shadow-sm sticky-top" style="background-color: <?php echo $cor1; ?>;">
+  <nav class="navbar navbar-expand-lg navbar-light shadow-sm sticky-top" style="background-color: <?php echo $cor2; ?>;">
     <div class="container">
       <img src="<?php echo $logo_nobg; ?>" class="img-fluid" style="max-width: 80px;" alt="Logo <?php echo $sigla?>">
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -1023,11 +1080,11 @@ $buscaEndereco = trim(
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" href="#" data-section="home">Início</a></li>
-          <li class="nav-item"><a class="nav-link" href="#" data-section="sobre">Quem Somos</a></li>
-          <li class="nav-item"><a class="nav-link" href="#" data-section="transparencia">Transparência</a></li>
-          <li class="nav-item"><a class="nav-link" href="#" data-section="projetos">Projetos</a></li>
-          <li class="nav-item"><a class="nav-link" href="#" data-section="contato">Contato</a></li>
+          <li class="nav-tabs-custom"><a class="nav-link" href="#" data-section="home"><i class="bi bi-house me-2"></i>Início</a></li>
+          <li class="nav-tabs-custom"><a class="nav-link" href="#" data-section="sobre"><i class="bi bi-file-text me-2"></i>Quem Somos</a></li>
+          <li class="nav-tabs-custom"><a class="nav-link" href="#" data-section="transparencia"><i class="bi bi-eye me-2"></i>Transparência</a></li>
+          <li class="nav-tabs-custom"><a class="nav-link" href="#" data-section="projetos"><i class="bi bi-calendar-check me-2"></i></i>Projetos</a></li>
+          <li class="nav-tabs-custom"><a class="nav-link" href="#" data-section="contato"><i class="bi bi-envelope-at me-2"></i></i>Contato</a></li>
         </ul>
       </div>
     </div>
@@ -1103,7 +1160,7 @@ $buscaEndereco = trim(
             <div class="col-md-6" style="margin-bottom: 40px;">
               <h2 class="text-center mb-4" style="margin: 30px;">Missão, Visão e Valores</h2>
 
-              <div class="card mb-3 shadow-sm card-mvv">
+              <div class="card-principal">
                 <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
                   <i class="bi bi-bullseye text-warning fs-2 mb-2"></i>
                   <h5 class="fw-bold">Missão</h5>
@@ -1111,7 +1168,7 @@ $buscaEndereco = trim(
                 </div>
               </div>
 
-              <div class="card mb-3 shadow-sm card-mvv">
+              <div class="card-principal">
                 <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
                   <i class="bi bi-eye text-success fs-2 mb-2"></i>
                   <h5 class="fw-bold">Visão</h5>
@@ -1119,7 +1176,7 @@ $buscaEndereco = trim(
                 </div>
               </div>
 
-              <div class="card mb-3 shadow-sm card-mvv">
+              <div class="card-principal">
                 <div class="card-body text-center bg-light" style="background: <?php echo $cor1; ?> !important;">
                   <i class="bi bi-heart-fill text-danger fs-2 mb-2"></i>
                   <h5 class="fw-bold">Valores</h5>
@@ -1151,6 +1208,7 @@ $buscaEndereco = trim(
 
     <!-- Sobre -->
     <div id="sobre" class="section">
+      <h1 class="mb-3-main">Sobre Nós</h1>
       <div class="container my-5">
         <h2 class="text-center section-title mb-5">Sobre Nós</h2>
         <div class="info-block" style="grid-column: 1 / -1; overflow-wrap: anywhere;">
@@ -1195,6 +1253,9 @@ $buscaEndereco = trim(
 
     <!-- Transparência -->
     <div id="transparencia" class="section">
+      <h1 class="mb-3-main">Transparência</h1>
+
+      <hr>
       <div class="container my-5">
         <h2 class="text-center section-title mb-5">Transparência</h2>
         <div class="osc-detalhes">
@@ -1468,6 +1529,7 @@ $buscaEndereco = trim(
 
     <!-- Projetos -->
     <div id="projetos" class="section">
+      <h1 class="mb-3-main">Projetos</h1>
       <section class="container my-5">
         <h2 class="text-center section-title mb-5">Projetos</h2>
         <div class="text-center mb-4">

@@ -137,7 +137,7 @@ $stmtFotos->bind_param("i", $projeto);
 $stmtFotos->execute();
 $fotosProjeto = $stmtFotos->get_result()->fetch_all(MYSQLI_ASSOC);
 
-$stmtEndereco = $conn->prepare("SELECT endereco.*, endereco_projeto.* FROM endereco LEFT JOIN endereco_projeto ON endereco_projeto.endereco_id = endereco.id WHERE endereco_projeto.projeto_id = ? AND endereco_projeto.principal = 1;");
+$stmtEndereco = $conn->prepare("SELECT endereco.*, endereco_projeto.* FROM endereco LEFT JOIN endereco_projeto ON endereco_projeto.endereco_id = endereco.id WHERE endereco_projeto.projeto_id = ? AND endereco_projeto.principal = 0;");
 $stmtEndereco->bind_param("i", $projeto);
 $stmtEndereco->execute();
 $resultEndereco = $stmtEndereco->get_result();
@@ -190,6 +190,7 @@ $statusProjeto = $proj["status"] ?? '';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="./assets/oscTech/favicon.ico" type="image/x-icon">
     <title><?php echo $nome ?></title>
     
     <!-- Bootstrap 5 CSS -->
@@ -212,8 +213,20 @@ $statusProjeto = $proj["status"] ?? '';
             flex: 1 0 auto;
         }
 
+
+        .mb-0 {
+            color: <?php echo $cor1; ?>;
+        }
+
+     
+
         footer {
-            flex-shrink: 0;
+            background-color: <?php echo $cor3; ?>;
+            border-top: 1px solid #ddd;
+            padding: 15px;
+            text-align: center;
+            color: <?php echo $cor1; ?>;
+            margin-top: 50px;
         }
         
         .btn {
@@ -227,39 +240,46 @@ $statusProjeto = $proj["status"] ?? '';
         }
 
         .btn:hover,
-        .btn:focus,
         .btn:active {
-            filter: brightness(0.6) !important;
+            filter: brightness(0.7) !important;
             background-color: <?php echo $cor2; ?> !important;
-            color: #ffffff !important;
+            color: <?php echo $cor1; ?>;
+        }
+
+        /* Regra separada para Focus (Quando foi clicado/selecionado) */
+        .btn:focus {
+            /* Removemos o filter brightness para não ficar escuro preso */
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.2); /* Opcional: borda suave para indicar foco */
+            outline: none;
         }
 
         /* Navbar de abas */
         .nav-tabs-custom {
-            background-color: <?php echo $cor2; ?>;
             padding: 1rem 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 2rem;
+            font-size: 18px;
+
         }
         
         .nav-tabs-custom .nav-link {
-            color: <?php echo $cor1; ?>;
             font-weight: 500;
             border: none;
-            border-bottom: 3px solid transparent;
+            color: <?php echo $cor1; ?> !important;
             transition: all 0.3s ease;
             cursor: pointer;
             padding: 0.75rem 1.5rem;
         }
         
         .nav-tabs-custom .nav-link:hover {
-            color: <?php echo $cor_fonte; ?>;
-            border-bottom-color: #cce5ff;
+            color: <?php echo $cor1; ?>;
+            /*border-bottom-color: #cce5ff;*/
         }
         
         .nav-tabs-custom .nav-link.active {
-            color: <?php echo $cor_fonte; ?>;
-            border-bottom-color: <?php echo $cor2; ?>;
+            animation: fadeIn 0.5s ease;
+
+            
+            border-bottom-color: <?php echo $cor1; ?>;
             background-color: transparent;
         }
         
@@ -387,6 +407,7 @@ $statusProjeto = $proj["status"] ?? '';
             border-bottom: 2px solid <?php echo $cor2; ?>;
             padding-bottom: 0.5rem;
             margin-bottom: 1.5rem;
+            padding: 60px 23px 23px 23px;
         }
         
         /* Responsividade */
@@ -648,44 +669,29 @@ $statusProjeto = $proj["status"] ?? '';
             <h1 class="mb-0"><?php echo $nome ?></h1>
             <p class="mb-0 mt-2">Acompanhamento e Transparência de Projetos Sociais</p>
         </div>
-
+        
+        <!-- Navegação por Abas -->
+        <nav class="nav-tabs-custom">
+            <div class="container">
+                <ul class="nav nav-tabs border-0">
+                    <li class="nav-item"><a class="nav-link active" onclick="showTab('oficinas')"><i class="bi bi-calendar-event me-2"></i>Oficinas e Eventos</a></li>
+                    <li class="nav-item"><a class="nav-link" onclick="showTab('descricao')"><i class="bi bi-file-text me-2"></i>Sobre o Projeto</a></li>
+                    <li class="nav-item"><a class="nav-link" onclick="showTab('transparencia')"><i class="bi bi-eye me-2"></i>Transparência</a></li>
+                    <li class="nav-item"><a class="nav-link" onclick="showTab('galeria')"><i class="bi bi-images me-2"></i>Galeria</a></li>
+                </ul>
+            </div> 
+        </nav>
     </div>
 </header>
     
-    <!-- Navegação por Abas -->
-    <nav class="nav-tabs-custom">
-        <div class="container">
-            <ul class="nav nav-tabs border-0">
-                <li class="nav-item">
-                    <a class="nav-link active" onclick="showTab('oficinas')">
-                        <i class="bi bi-calendar-event me-2"></i>Oficinas e Eventos
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" onclick="showTab('descricao')">
-                        <i class="bi bi-file-text me-2"></i>Sobre o Projeto
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" onclick="showTab('transparencia')">
-                        <i class="bi bi-eye me-2"></i>Transparência
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" onclick="showTab('galeria')">
-                        <i class="bi bi-images me-2"></i>Galeria
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </nav>
+   
     
     <!-- Conteúdo Principal -->
     <main class="container pb-5">
         
         <!-- ABA: OFICINAS -->
-        <section id="oficinas" class="content-section active">
-            <h2 class="mb-4">Oficinas</h2>
+        <section id="oficinas"  class="content-section active">
+            <h2 class="section-title">Oficinas</h2>
             <?php if (empty($oficinas)): ?>
                 <div class="alert alert-light border">Nenhuma oficina cadastrada para este projeto.</div>
             <?php else: ?>
@@ -715,7 +721,7 @@ $statusProjeto = $proj["status"] ?? '';
 
             <hr class="my-5">
 
-            <h2 class="mb-4">Eventos</h2>
+            <h2 class="section-title">Eventos</h2>
             <?php if (empty($eventos)): ?>
                 <div class="alert alert-light border">Nenhum evento cadastrado para este projeto.</div>
             <?php else: ?>
@@ -748,8 +754,9 @@ $statusProjeto = $proj["status"] ?? '';
         
         <!-- ABA: DESCRIÇÃO -->
         <section id="descricao" class="content-section">
-            <div class="transparency-section">
                 <h2 class="section-title">Descrição do Projeto</h2>
+
+        <div class="transparency-section">
 
                 <div class="container my-4">
                     <div class="row g-4 align-items-start">
@@ -895,7 +902,7 @@ $statusProjeto = $proj["status"] ?? '';
         
         <!-- ABA: TRANSPARÊNCIA -->
         <section id="transparencia" class="content-section">
-            <h2 class="mb-4">Transparência e Documentação</h2>
+            <h2 class="section-title">Transparência e Documentação</h2>
             
             <!-- A. Documentos de Início / Execução -->
             <div class="transparency-section">
@@ -1103,7 +1110,7 @@ $statusProjeto = $proj["status"] ?? '';
         </section>
 
         <section id="galeria" class="content-section">
-            <h2 class="mb-4">Galeria</h2>
+            <h2 class="section-title">Galeria</h2>
 
             <?php if (empty($fotosProjeto ?? [])): ?>
                 <div class="alert alert-light border">Nenhuma foto cadastrada para este projeto.</div>
@@ -1130,7 +1137,7 @@ $statusProjeto = $proj["status"] ?? '';
     </main>
     
     <!-- Footer -->
-    <footer class="bg-dark text-white py-4 mt-5">
+    <footer class="footer">
         <div class="container text-center">
             <p class="mb-0">&copy; 2025 OSCTECH - Todos os direitos reservados.</p>
         </div>
