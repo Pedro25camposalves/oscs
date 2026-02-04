@@ -192,9 +192,13 @@ $cnpj = $row["cnpj"];
 // INFORMAÇÕES GERAIS
 // --------------------------
 $logo_nobg = $row["logo_simples"];
+
 $banner1 = $row["banner1"];
 $banner2 = $row["banner2"];
 $banner3 = $row["banner3"];
+$banners = array_filter([$banner1, $banner2, $banner3]);
+$quantidadeBanners = count($banners);
+
 $logradouro = $rowEndereco['logradouro'];
 $numero = $rowEndereco['numero'];
 $cidade = $rowEndereco['cidade'];
@@ -965,22 +969,30 @@ $buscaEndereco = trim(
         resetTimer();
       }
 
-      // controles anteriores/próximo
-      const prevBtn = document.createElement('button');
-      prevBtn.className = 'carousel-control prev';
-      prevBtn.setAttribute('aria-label', 'Anterior');
-      prevBtn.innerHTML = '&#x2039;';
-      prevBtn.addEventListener('click', () => {
-        prev();
-      });
+      const imagens = document.querySelectorAll('.carousel-inner img');
 
-      const nextBtn = document.createElement('button');
-      nextBtn.className = 'carousel-control next';
-      nextBtn.setAttribute('aria-label', 'Próximo');
-      nextBtn.innerHTML = '&#x203A;';
-      nextBtn.addEventListener('click', () => {
-        next();
-      });
+      // só cria controles se fizer sentido
+      if (imagens.length > 1) {
+
+          // botão anterior
+          const prevBtn = document.createElement('button');
+          prevBtn.className = 'carousel-control prev';
+          prevBtn.setAttribute('aria-label', 'Anterior');
+          prevBtn.innerHTML = '&#x2039;';
+          prevBtn.addEventListener('click', prev);
+
+          // botão próximo
+          const nextBtn = document.createElement('button');
+          nextBtn.className = 'carousel-control next';
+          nextBtn.setAttribute('aria-label', 'Próximo');
+          nextBtn.innerHTML = '&#x203A;';
+          nextBtn.addEventListener('click', next);
+
+          const carousel = document.getElementById('carousel');
+          carousel.appendChild(prevBtn);
+          carousel.appendChild(nextBtn);
+      }
+
 
       if (carousel) {
         carousel.appendChild(prevBtn);
@@ -1097,9 +1109,9 @@ $buscaEndereco = trim(
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
           <li class="nav-tabs-custom"><a class="nav-link" href="#" data-section="home"><i class="bi bi-house me-2"></i>Início</a></li>
+          <li class="nav-tabs-custom"><a class="nav-link" href="#" data-section="projetos"><i class="bi bi-calendar-check me-2"></i></i>Projetos</a></li>
           <li class="nav-tabs-custom"><a class="nav-link" href="#" data-section="sobre"><i class="bi bi-file-text me-2"></i>Quem Somos</a></li>
           <li class="nav-tabs-custom"><a class="nav-link" href="#" data-section="transparencia"><i class="bi bi-eye me-2"></i>Transparência</a></li>
-          <li class="nav-tabs-custom"><a class="nav-link" href="#" data-section="projetos"><i class="bi bi-calendar-check me-2"></i></i>Projetos</a></li>
           <li class="nav-tabs-custom"><a class="nav-link" href="#" data-section="contato"><i class="bi bi-envelope-at me-2"></i></i>Contato</a></li>
         </ul>
       </div>
@@ -1110,15 +1122,16 @@ $buscaEndereco = trim(
     <!-- Home -->
     <div id="home" class="section active">
       <section class="hero">
-        <div class="carousel" id="carousel">
+        <div class="carousel" id="carousel" data-count="<?= $quantidadeBanners ?>">
           <div class="carousel-inner">
-            <img src="<?php echo $banner1; ?>" alt="Banner 1" class="img-hero active">
-            <img src="<?php echo $banner2; ?>" alt="Banner 2" class="img-hero">
-            <img src="<?php echo $banner3; ?>" alt="Banner 3" class="img-hero">
+            <?php foreach ($banners as $i => $banner): ?>
+              <img src="<?= $banner ?>" class="img-hero <?= $i === 0 ? 'active' : '' ?>">
+              <?php endforeach; ?>
+              </div>
           </div>
-        </div>
         <div class="hero-overlay"></div>
       </section>
+
       <div class="simple-divider" style="color: white;">
         <?php echo $label_banner ?>
       </div>
