@@ -25,6 +25,34 @@ if (!$oscIdVinculada) {
     exit('Este usuário não possui OSC vinculada. Contate o administrador do sistema.');
 }
 
+// Envolvidos da OSC (para inclusão no projeto - igual ao cadastro_projeto.php)
+$envolvidosOsc = [];
+try {
+    $st = $conn->prepare("SELECT id, nome, foto, funcao, telefone, email FROM envolvido_osc WHERE osc_id = ? ORDER BY nome");
+    $st->bind_param("i", $oscIdVinculada);
+    $st->execute();
+    $rs = $st->get_result();
+    while ($row = $rs->fetch_assoc()) {
+        // normaliza URL da foto, se existir
+        $foto = $row['foto'] ?? null;
+        if ($foto && strpos($foto, 'assets/') !== 0) {
+            // se vier apenas o nome do arquivo, deixe como está; o front tratará se necessário
+        }
+        $envolvidosOsc[] = [
+            'id'       => (int)$row['id'],
+            'nome'     => $row['nome'] ?? '',
+            'foto'     => $foto,
+            'funcao'   => $row['funcao'] ?? '',
+            'telefone' => $row['telefone'] ?? '',
+            'email'    => $row['email'] ?? '',
+        ];
+    }
+    $st->close();
+} catch (Throwable $e) {
+    $envolvidosOsc = [];
+}
+
+
 // Projeto que será editado (vem por ?id=...)
 $projetoId = (int)($_GET['id'] ?? 0);
 if ($projetoId <= 0) {
@@ -41,6 +69,28 @@ $stmt->close();
 if (!$ok) {
     http_response_code(404);
     exit('Projeto não encontrado ou não pertence à sua OSC.');
+}
+
+
+// Endereços disponíveis (endereços do projeto) — espelho do editar_evento.php
+$enderecosDisponiveis = [];
+try {
+    $st = $conn->prepare("
+        SELECT DISTINCT e.*
+        FROM endereco e
+        JOIN endereco_projeto ep ON ep.endereco_id = e.id
+        WHERE ep.projeto_id = ?
+        ORDER BY e.id DESC
+    ");
+    $st->bind_param("i", $projetoId);
+    $st->execute();
+    $rs = $st->get_result();
+    while ($row = $rs->fetch_assoc()) {
+        $enderecosDisponiveis[] = $row;
+    }
+    $st->close();
+} catch (Throwable $e) {
+    $enderecosDisponiveis = [];
 }
 
 ?>
@@ -162,18 +212,18 @@ if (!$ok) {
             object-fit: cover
         }
 
-        #imoveisList{
+        #enderecosList{
           display:flex;
           flex-direction:column;
           gap:12px;
         }
 
-        #imoveisList .imovel-card{
+        #enderecosList .imovel-card{
           width:100%;
           max-width:100%;
         }
 
-        #imoveisList .imovel-card{
+        #enderecosList .imovel-card{
           grid-column: 1 / -1;
         }
 
@@ -485,9 +535,9 @@ if (!$ok) {
 
       <div class="card-body" data-collapse-body>
           <div>
-            <div class="envolvidos-list" id="listaEnvolvidos"></div>
+            <div class="envolvidos-list" id="listaEnvolvidosProjeto"></div>
             <div style="margin-top:10px">
-              <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">+ Adicionar</button>
+              <button type="button" class="btn btn-ghost" id="openEnvolvidoProjetoModal">+ Adicionar</button>
             </div>
           </div>
         </div>
@@ -495,19 +545,18 @@ if (!$ok) {
     </div>
 
     <!-- SEÇÃO 3 -->
-    <div style="margin-top:16px" class="card card-collapse" data-collapse-id="imovel">
+    <div style="margin-top:16px" class="card card-collapse" data-collapse-id="enderecos">
       <div class="card-head" data-collapse-head>
-        <h2>Endereços de Execução</h2>
+        <h2>Endereços</h2>
         <button type="button" class="card-toggle" data-collapse-btn>
           <span class="label">Abrir</span>
           <span class="chev">▾</span>
         </button>
       </div>
-
       <div class="card-body" data-collapse-body>
-        <div class="envolvidos-list" id="imoveisList"></div>
+        <div class="envolvidos-list" id="enderecosList"></div>
         <div style="margin-top:10px">
-          <button type="button" class="btn btn-ghost" id="openImovelOscModal">+ Adicionar</button>
+          <button type="button" class="btn btn-ghost" id="openEnderecoModal">+ Adicionar</button>
         </div>
       </div>
     </div>
@@ -612,97 +661,200 @@ if (!$ok) {
 
 </main>
 
-<!-- MODAL DOS ENVOLVIDOS (igual ao cadastro) -->
-<div id="modalBackdrop" class="modal-backdrop">
-    <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Envolvido">
+<!-- MODAL ENVOLVIDO PROJETO -->
+    <div id="modalEnvolvidoProjetoBackdrop" class="modal-backdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Envolvido no Projeto">
         <h3>Adicionar Envolvido</h3>
+
+        <div class="row" style="margin-top:10px; justify-content:flex-start;">
+          <label style="display:flex; gap:8px; align-items:center; font-size:13px; color:var(--muted);">
+            <input type="radio" name="modoEnvolvido" value="existente" checked />Existente</label>
+
+          <label style="display:flex; gap:8px; align-items:center; font-size:13px; color:var(--muted);">
+            <input type="radio" name="modoEnvolvido" value="novo" />Novo</label>
+        </div>
+
         <div class="divider"></div>
-        <div id="envNovoContainer" style="margin-top:8px">
-            <div class="grid">
-                <div>
-                    <label style="margin-top: 10px;" for="envFoto">Foto</label>
-                    <div class="envolvidos-list" id="imgCard_envFoto"></div>
-                    <input id="envFoto" type="file" accept="image/*" />
-                </div>
-                <div>
-                    <label for="envNome">Nome (*)</label>
-                    <input id="envNome" type="text" required/>
-                </div>
-                <div>
-                    <label for="envTelefone">Telefone</label>
-                    <input id="envTelefone" inputmode="numeric" type="text" />
-                </div>
-                <div>
-                    <label for="envEmail">E-mail</label>
-                    <input id="envEmail" type="text" />
-                </div>
-                <div>
-                    <label for="envFuncaoNovo">Função (*)</label>
-                    <select id="envFuncaoNovo" required>
-                        <option value="">Selecione...</option>
-                        <option value="DIRETOR">Diretor(a)</option>
-                        <option value="COORDENADOR">Coordenador(a)</option>
-                        <option value="FINANCEIRO">Financeiro</option>
-                        <option value="MARKETING">Marketing</option>
-                        <option value="RH">Recursos Humanos (RH)</option>
-                        <option value="PARTICIPANTE">Participante</option>
-                    </select>
-                </div>
+
+        <!-- MODO: EXISTENTE -->
+        <div id="modoExistenteEnvolvido">
+          <div class="grid" style="margin-top:10px;">
+            <div>
+              <div class="small">Foto</div>
+              <div class="images-preview" id="previewEnvolvidoSelecionado"></div>
             </div>
+            <div>
+              <label for="selectEnvolvidoOsc">Envolvido na OSC (*)</label>
+              <select id="selectEnvolvidoOsc">
+                <option value="">Selecione...</option>
+              </select>
+              <div class="small" style="margin-top:6px;" id="envolvidoOscInfo"></div>
+            </div>
+
+            <div style="margin-bottom: 5px;">
+              <label for="funcaoNoProjeto">Função no projeto (*)</label>
+              <select id="funcaoNoProjeto">
+                <option value="">Selecione...</option>
+                <option value="DIRETOR">Diretor(a)</option>
+                <option value="COORDENADOR">Coordenador(a)</option>
+                <option value="FINANCEIRO">Financeiro</option>
+                <option value="MARKETING">Marketing</option>
+                <option value="RH">Recursos Humanos (RH)</option>
+                <option value="PARTICIPANTE">Participante</option>
+              </select>
+            </div>
+
+            <div class="divider"></div>
+            <h4 style="margin: 0;" >Contrato</h4>
+            <div class="grid cols-3" style="margin-top: 0px;">
+              <div>
+                <label for="contratoDataInicio">Data início </label>
+                <input id="contratoDataInicio" type="date" />
+              </div>
+              <div>
+                <label for="contratoDataFim">Data fim</label>
+                <input id="contratoDataFim" type="date" />
+              </div>
+              <div>
+                <label for="contratoSalario">Remuneração</label>
+                <input id="contratoSalario" type="text" inputmode="decimal" placeholder="Ex: 1500,00" />
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+            <button class="btn btn-ghost" id="closeEnvolvidoProjetoModal" type="button">Cancelar</button>
+            <button class="btn btn-primary" id="addEnvolvidoProjetoBtn" type="button">Adicionar</button>
+          </div>
         </div>
 
-        <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
-            <button class="btn btn-ghost" id="closeEnvolvidoModal" type="button">Cancelar</button>
-            <button class="btn btn-primary" id="addEnvolvidoBtn" type="button">Adicionar</button>
+        <!-- MODO: NOVO -->
+        <div id="modoNovoEnvolvido" style="display:none;">
+          <div class="grid" style="margin-top:10px;">
+            <div>
+              <div class="small">Visualização</div>
+              <div class="images-preview" id="previewNovoEnvolvido"></div>
+            </div>
+            <div>
+              <label for="novoEnvFoto">Foto</label>
+              <input id="novoEnvFoto" type="file" accept="image/*" />
+            </div>
+
+            <div>
+              <label for="envNome">Nome (*)</label>
+              <input id="envNome" type="text" required />
+            </div>
+
+            <div>
+              <label for="envTelefone">Telefone</label>
+              <input id="envTelefone" inputmode="numeric" type="text" />
+            </div>
+
+            <div>
+              <label for="envEmail">E-mail</label>
+              <input id="envEmail" type="text" />
+            </div>
+
+            <div style="margin-bottom: 5px;">
+              <label for="envFuncaoNovo">Função (*)</label>
+              <select id="envFuncaoNovo" required>
+                <option value="">Selecione...</option>
+                <option value="DIRETOR">Diretor(a)</option>
+                <option value="COORDENADOR">Coordenador(a)</option>
+                <option value="FINANCEIRO">Financeiro</option>
+                <option value="MARKETING">Marketing</option>
+                <option value="RH">Recursos Humanos (RH)</option>
+                <option value="PARTICIPANTE">Participante</option>
+              </select>
+            </div>
+
+            <div class="divider"></div>
+            <h4 style="margin: 0;" >Contrato</h4>
+            <div class="grid cols-3" style="margin-top: 0px;">
+              <div>
+                <label for="novoContratoDataInicio">Data início</label>
+                <input id="novoContratoDataInicio" type="date"/>
+              </div>
+              <div>
+                <label for="novoContratoDataFim">Data fim</label>
+                <input id="novoContratoDataFim" type="date" />
+              </div>
+              <div>
+                <label for="novoContratoSalario">Remuneração</label>
+                <input id="novoContratoSalario" type="text" inputmode="decimal" placeholder="Ex: 1500,00" />
+              </div>
+            </div>
+
+          </div>
+
+          <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+            <button class="btn btn-ghost" id="closeEnvolvidoProjetoModal2" type="button">Cancelar</button>
+            <button class="btn btn-primary" id="addNovoEnvolvidoProjetoBtn" type="button">Adicionar</button>
+          </div>
         </div>
+
+      </div>
     </div>
-</div>
 
-<!-- MODAL DOS IMÓVEIS -->
-<div id="modalImovelOscBackdrop" class="modal-backdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Imóvel">
-    <h3>Adicionar Imóvel</h3>
+    <!-- MODAL ENDEREÇOS -->
+<div id="modalEnderecoBackdrop" class="modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Endereço ao Evento/Oficina">
+    <h3 id="endModalTitle">Adicionar Endereço</h3>
+
+    <div class="grid" style="margin-top:10px;">
+      <div>
+        <label for="endSelect">Utilizar endereço existente (opcional)</label>
+        <select id="endSelect">
+          <option value="">Selecione...</option>
+        </select>
+      </div>
+    </div>
+
     <div class="divider"></div>
-      <div class="grid cols-2" style="margin-top:10px;">
-        <div style="grid-column:1 / -1;">
-            <label for="imovelDescricao">Descrição</label>
-            <input id="imovelDescricao" type="text" placeholder="Ex: Sede, Ponto de apoio..." />
-        </div>
-        <div>
-          <label for="imovelCep">CEP (*)</label>
-          <input id="imovelCep" inputmode="numeric" type="text" />
-        </div>
-        <div>
-          <label for="imovelCidade">Cidade (*)</label>
-          <input id="imovelCidade" type="text" />
-        </div>
-        <div>
-          <label for="imovelLogradouro">Logradouro (*)</label>
-          <input id="imovelLogradouro" type="text" />
-        </div>
-        <div>
-          <label for="imovelBairro">Bairro (*)</label>
-          <input id="imovelBairro" type="text" />
-        </div>
-        <div>
-          <label for="imovelNumero">Número (*)</label>
-          <input id="imovelNumero" inputmode="numeric" type="text" />
-        </div>
-        <div>
-          <label for="imovelComplemento">Complemento</label>
-          <input id="imovelComplemento" type="text" />
-        </div>
-        <div style="display:flex; align-items:flex-end; gap:8px">
-          <label style="display:flex; gap:8px; align-items:center; margin:0; cursor:pointer">
-            <input id="imovelPrincipal" type="checkbox" />
-            <span class="small">Endereço principal</span>
-          </label>
-        </div>
+
+    <div class="grid cols-2" style="margin-top:10px;">
+      <div style="grid-column:1/-1;">
+        <label for="endDescricao">Descrição</label>
+        <input id="endDescricao" type="text" placeholder="Ex: Sede, Ponto de apoio..." />
+      </div>
+      <div>
+        <label for="endCep">CEP</label>
+        <input id="endCep" type="text" inputmode="numeric" />
       </div>
 
+      <div>
+        <label for="endCidade">Cidade</label>
+        <input id="endCidade" type="text" />
+      </div>
+      <div>
+        <label for="endLogradouro">Logradouro</label>
+        <input id="endLogradouro" type="text" />
+      </div>
+
+      <div>
+        <label for="endBairro">Bairro</label>
+        <input id="endBairro" type="text" />
+      </div>
+      <div>
+        <label for="endNumero">Número</label>
+        <input id="endNumero" type="text" />
+      </div>
+      <div>
+        <label for="endComplemento">Complemento</label>
+        <input id="endComplemento" type="text" />
+      </div>
+
+      <div style="grid-column:1 / -1; margin-top:4px;">
+        <label class="label-inline">
+          <input type="checkbox" id="endPrincipal" />
+          <span class="small">Endereço principal</span>
+        </label>
+      </div>
+    </div>
+
     <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
-      <button type="button" class="btn btn-ghost" id="closeImovelOscModal">Cancelar</button>
-      <button type="button" class="btn btn-primary" id="addImovelOscBtn">Adicionar</button>
+      <button class="btn btn-ghost" id="closeEnderecoModal" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="saveEnderecoBtn" type="button">Adicionar</button>
     </div>
   </div>
 </div>
@@ -808,6 +960,9 @@ if (!$ok) {
 
 
 <script>
+
+    const ENVOLVIDOS_OSC = <?= json_encode($envolvidosOsc, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    const ENDERECOS_DISPONIVEIS = <?= json_encode($enderecosDisponiveis, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     const qs = s => document.querySelector(s);
     const qsa = s => document.querySelectorAll(s);
 
@@ -2014,193 +2169,352 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
 
 
 
-    // ===== MODAL ENVOLVIDOS =====
-    const modalBackdrop       = qs('#modalBackdrop');
-    const openEnvolvidoModal  = qs('#openEnvolvidoModal');
-    const closeEnvolvidoModal = qs('#closeEnvolvidoModal');
-    const addEnvolvidoBtn     = qs('#addEnvolvidoBtn');
-    const envFoto = qs('#envFoto');
-    envFoto.addEventListener('change', renderEnvFotoCard);
+    
+    // ===== MODAL ENVOLVIDO (igual ao cadastro_projeto.php) =====
+    const modalEnvolvidoProjetoBackdrop = qs('#modalEnvolvidoProjetoBackdrop');
+    const openEnvolvidoProjetoModal     = qs('#openEnvolvidoProjetoModal');
+    const closeEnvolvidoProjetoModal    = qs('#closeEnvolvidoProjetoModal');
+    const closeEnvolvidoProjetoModal2   = qs('#closeEnvolvidoProjetoModal2');
+    const addEnvolvidoProjetoBtn        = qs('#addEnvolvidoProjetoBtn');
 
-    openEnvolvidoModal.addEventListener('click', () => {
+    const selectEnvolvidoOsc            = qs('#selectEnvolvidoOsc');
+    const funcaoNoProjeto               = qs('#funcaoNoProjeto');
+    const previewEnvolvidoSelecionado   = qs('#previewEnvolvidoSelecionado');
+    const envolvidoOscInfo              = qs('#envolvidoOscInfo');
+
+    const contratoDataInicio            = qs('#contratoDataInicio');
+    const contratoDataFim               = qs('#contratoDataFim');
+    const contratoSalario               = qs('#contratoSalario');
+
+    const novoEnvFoto                   = qs('#novoEnvFoto');
+    const novoEnvNome                   = qs('#envNome');
+    const novoEnvTelefone               = qs('#envTelefone');
+    const novoEnvEmail                  = qs('#envEmail');
+    const novoEnvFuncaoProjeto          = qs('#envFuncaoNovo');
+    const previewNovoEnvolvido          = qs('#previewNovoEnvolvido');
+
+    const novoContratoDataInicio        = qs('#novoContratoDataInicio');
+    const novoContratoDataFim           = qs('#novoContratoDataFim');
+    const novoContratoSalario           = qs('#novoContratoSalario');
+
+    const addNovoEnvolvidoProjetoBtn    = qs('#addNovoEnvolvidoProjetoBtn');
+
+    const modoExistente                 = qs('#modoExistenteEnvolvido');
+    const modoNovo                      = qs('#modoNovoEnvolvido');
+    const radiosModo                    = document.querySelectorAll('input[name="modoEnvolvido"]');
+
+    function setModoEnvolvido(modo) {
+      if (modo === 'novo') {
+        modoExistente.style.display = 'none';
+        modoNovo.style.display = 'block';
+      } else {
+        modoExistente.style.display = 'block';
+        modoNovo.style.display = 'none';
+      }
+    }
+    radiosModo.forEach(r => r.addEventListener('change', () => setModoEnvolvido(r.value)));
+
+    function normalizeMoneyBR(v) {
+      v = (v || '').trim();
+      if (!v) return '';
+                
+      // deixa só dígitos e separadores
+      v = v.replace(/[^\d.,]/g, '');
+                
+      const lastComma = v.lastIndexOf(',');
+      const lastDot   = v.lastIndexOf('.');
+                
+      // escolhe o último separador como decimal
+      const decPos = Math.max(lastComma, lastDot);
+                
+      if (decPos === -1) {
+        // sem separador: só número inteiro
+        return v.replace(/[.,]/g, '');
+      }
+                
+      const intPart = v.slice(0, decPos).replace(/[.,]/g, '');
+      const decPart = v.slice(decPos + 1).replace(/[.,]/g, '');
+                
+      return decPart ? `${intPart}.${decPart}` : intPart;
+    }
+
+    function preencherSelectEnvolvidosOsc() {
+      if (!selectEnvolvidoOsc) return;
+      selectEnvolvidoOsc.innerHTML = `<option value="">Selecione...</option>`;
+      (ENVOLVIDOS_OSC || []).forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e.id;
+        opt.textContent = e.nome + (e.funcao ? ` (${e.funcao})` : '');
+        selectEnvolvidoOsc.appendChild(opt);
+      });
+    }
+
+    function getEnvolvidoOscById(id) {
+      id = Number(id || 0);
+      return (ENVOLVIDOS_OSC || []).find(x => Number(x.id) === id) || null;
+    }
+
+    function guessFotoUrl(foto) {
+      if (!foto) return null;
+      // Se já veio como URL/paths, usa como está
+      if (/^(https?:)?\/\//i.test(foto)) return foto;
+      if (foto.includes('assets/')) return foto;
+      // caso venha só o nome, tenta a mesma convenção do projeto (pasta de envolvidos da OSC)
+      const oscId = Number(qs('#oscId')?.value || 0);
+      if (oscId) return `assets/oscs/osc-${oscId}/envolvidos/imagens/${foto}`;
+      return foto;
+    }
+
+    function renderPreviewEnvolvidoSelecionado() {
+      if (!previewEnvolvidoSelecionado) return;
+      previewEnvolvidoSelecionado.innerHTML = '';
+
+      const e = getEnvolvidoOscById(selectEnvolvidoOsc.value);
+      if (!e) {
+        if (envolvidoOscInfo) envolvidoOscInfo.textContent = '';
+        return;
+      }
+
+      const fotoUrl = guessFotoUrl(e.foto);
+      if (fotoUrl) {
+        const img = document.createElement('img');
+        img.src = fotoUrl;
+        previewEnvolvidoSelecionado.appendChild(img);
+      }
+
+      const detalhes = [];
+      if (e.telefone) detalhes.push(`Telefone: ${e.telefone}`);
+      if (e.email) detalhes.push(`E-mail: ${e.email}`);
+      if (envolvidoOscInfo) envolvidoOscInfo.textContent = detalhes.join(' • ');
+    }
+
+    if (selectEnvolvidoOsc) selectEnvolvidoOsc.addEventListener('change', renderPreviewEnvolvidoSelecionado);
+
+    async function updatePreviewNovoEnvolvido() {
+      if (!previewNovoEnvolvido) return;
+      previewNovoEnvolvido.innerHTML = '';
+      const f = novoEnvFoto?.files?.[0] || null;
+      if (!f) return;
+
+      const src = await readFileAsDataURL(f);
+      const img = document.createElement('img');
+      img.src = src;
+      previewNovoEnvolvido.appendChild(img);
+    }
+    if (novoEnvFoto) novoEnvFoto.addEventListener('change', updatePreviewNovoEnvolvido);
+
+    function abrirModalEnvolvido(titulo = 'Adicionar Envolvido') {
+      preencherSelectEnvolvidosOsc();
+      qs('#modalEnvolvidoProjetoBackdrop h3').textContent = titulo;
+      if (addEnvolvidoProjetoBtn) addEnvolvidoProjetoBtn.textContent = 'Adicionar';
+      if (addNovoEnvolvidoProjetoBtn) addNovoEnvolvidoProjetoBtn.textContent = 'Adicionar';
+
+      // default: existente (como no cadastro)
+      const rExist = document.querySelector('input[name="modoEnvolvido"][value="existente"]');
+      if (rExist) rExist.checked = true;
+      setModoEnvolvido('existente');
+
+      // limpa existente
+      if (selectEnvolvidoOsc) selectEnvolvidoOsc.value = '';
+      if (funcaoNoProjeto) funcaoNoProjeto.value = '';
+      if (contratoDataInicio) contratoDataInicio.value = '';
+      if (contratoDataFim) contratoDataFim.value = '';
+      if (contratoSalario) contratoSalario.value = '';
+      renderPreviewEnvolvidoSelecionado();
+
+      // limpa novo
+      if (novoEnvFoto) novoEnvFoto.value = '';
+      if (novoEnvNome) novoEnvNome.value = '';
+      if (novoEnvTelefone) novoEnvTelefone.value = '';
+      if (novoEnvEmail) novoEnvEmail.value = '';
+      if (novoEnvFuncaoProjeto) novoEnvFuncaoProjeto.value = '';
+      if (novoContratoDataInicio) novoContratoDataInicio.value = '';
+      if (novoContratoDataFim) novoContratoDataFim.value = '';
+      if (novoContratoSalario) novoContratoSalario.value = '';
+      if (previewNovoEnvolvido) previewNovoEnvolvido.innerHTML = '';
+
+      const projInicio = qs('#projDataInicio')?.value || '';
+      if (projInicio) {
+        if (contratoDataInicio) contratoDataInicio.min = projInicio;
+        if (novoContratoDataInicio) novoContratoDataInicio.min = projInicio;
+      }
+
+      modalEnvolvidoProjetoBackdrop.style.display = 'flex';
+    }
+
+    function fecharModalEnvolvido() {
+      modalEnvolvidoProjetoBackdrop.style.display = 'none';
+      editEnvIndex = null;
+    }
+
+    if (openEnvolvidoProjetoModal) {
+      openEnvolvidoProjetoModal.addEventListener('click', () => {
         editEnvIndex = null;
-        addEnvolvidoBtn.textContent = 'Adicionar';
-        qs('.modal h3').textContent = 'Adicionar Envolvido';
+        abrirModalEnvolvido('Adicionar Envolvido');
+      });
+    }
+    if (closeEnvolvidoProjetoModal) closeEnvolvidoProjetoModal.addEventListener('click', fecharModalEnvolvido);
+    if (closeEnvolvidoProjetoModal2) closeEnvolvidoProjetoModal2.addEventListener('click', fecharModalEnvolvido);
 
-        modalBackdrop.style.display = 'flex';
-        qs('#envFoto').value = '';
-        qs('#envNome').value = '';
-        qs('#envTelefone').value = '';
-        qs('#envEmail').value = '';
-        qs('#envFuncaoNovo').value = '';
-        
-        envFotoExistingUrl = null;
-        envFotoPreviewUrl  = null;
-        envFotoFileCache   = null;
-
-        envFotoOriginalUrl = null;
-        envFotoRemover     = false;
-        renderEnvFotoCard();
-    });
-
-    closeEnvolvidoModal.addEventListener('click', () => {
-        modalBackdrop.style.display = 'none';
-    });
-
-    modalBackdrop.addEventListener('click', (e) => {
-        if (e.target === modalBackdrop) modalBackdrop.style.display = 'none';
-    });
-
+    // ===== EDIÇÃO (usa o mesmo modal) =====
     function abrirEdicaoEnvolvido(i) {
-        const e = envolvidos[i];
-        if (!e) return;   
-        editEnvIndex = i; 
+      const e = envolvidos[i];
+      if (!e) return;
+      editEnvIndex = i;
 
-        qs('.modal h3').textContent = 'Editar Envolvido';
-        addEnvolvidoBtn.textContent = 'Editar';   
-        modalBackdrop.style.display = 'flex'; 
+      preencherSelectEnvolvidosOsc();
+      qs('#modalEnvolvidoProjetoBackdrop h3').textContent = 'Editar Envolvido';
 
-        qs('#envFoto').value = '';
-        qs('#envNome').value = e.nome || '';
-        qs('#envTelefone').value = e.telefone || '';
-        qs('#envEmail').value = e.email || '';
-        qs('#envFuncaoNovo').value = e.funcao || '';
-        
-        envFotoExistingUrl = e.fotoUrl || null;
-        envFotoOriginalUrl = e.fotoUrl || null;
-        envFotoPreviewUrl  = e.fotoPreview || null;
-        envFotoFileCache   = e.fotoFile || null;
+      if (addEnvolvidoProjetoBtn) addEnvolvidoProjetoBtn.textContent = 'Editar';
+      if (addNovoEnvolvidoProjetoBtn) addNovoEnvolvidoProjetoBtn.textContent = 'Editar';
 
-        envFotoRemover = !!e.removerFoto;
-        renderEnvFotoCard();
+      if (e.tipo === 'existente') {
+        const rExist = document.querySelector('input[name="modoEnvolvido"][value="existente"]');
+        if (rExist) rExist.checked = true;
+        setModoEnvolvido('existente');
+
+        if (selectEnvolvidoOsc) selectEnvolvidoOsc.value = String(e.envolvidoId || '');
+        if (funcaoNoProjeto) funcaoNoProjeto.value = e.funcao || '';
+        if (contratoDataInicio) contratoDataInicio.value = e.contrato_data_inicio || e.data_inicio || '';
+        if (contratoDataFim) contratoDataFim.value = e.contrato_data_fim || e.data_fim || '';
+        if (contratoSalario) contratoSalario.value = e.contrato_salario || e.salario || '';
+        renderPreviewEnvolvidoSelecionado();
+      } else {
+        const rNovo = document.querySelector('input[name="modoEnvolvido"][value="novo"]');
+        if (rNovo) rNovo.checked = true;
+        setModoEnvolvido('novo');
+
+        if (novoEnvFoto) novoEnvFoto.value = '';
+        if (novoEnvNome) novoEnvNome.value = e.nome || '';
+        if (novoEnvTelefone) novoEnvTelefone.value = e.telefone || '';
+        if (novoEnvEmail) novoEnvEmail.value = e.email || '';
+        if (novoEnvFuncaoProjeto) novoEnvFuncaoProjeto.value = e.funcao || '';
+        if (novoContratoDataInicio) novoContratoDataInicio.value = e.contrato_data_inicio || e.data_inicio || '';
+        if (novoContratoDataFim) novoContratoDataFim.value = e.contrato_data_fim || e.data_fim || '';
+        if (novoContratoSalario) novoContratoSalario.value = e.contrato_salario || e.salario || '';
+
+        // preview: mantém a URL/preview já existente no objeto, se houver
+        if (previewNovoEnvolvido) {
+          previewNovoEnvolvido.innerHTML = '';
+          const src = e.fotoPreview || e.fotoUrl || null;
+          if (src) {
+            const img = document.createElement('img');
+            img.src = src;
+            previewNovoEnvolvido.appendChild(img);
+          }
+        }
+      }
+
+      modalEnvolvidoProjetoBackdrop.style.display = 'flex';
+    }
+
+    async function salvarEnvolvidoExistente() {
+      const envolvidoId = Number(selectEnvolvidoOsc.value || 0);
+      const funcao = (funcaoNoProjeto?.value || '').trim();
+      if (!envolvidoId || !funcao) {
+        alert('Selecione um envolvido e informe a função no projeto.');
+        return;
+      }
+
+      const base = getEnvolvidoOscById(envolvidoId);
+      if (!base) {
+        alert('Envolvido selecionado não encontrado.');
+        return;
+      }
+
+      const contrato_inicio = contratoDataInicio?.value || '';
+      const contrato_fim    = contratoDataFim?.value || '';
+      const salario         = normalizeMoneyBR(contratoSalario?.value || '');
+
+      const projInicio = qs('#projDataInicio')?.value || '';
+      if (projInicio && contrato_inicio && contrato_inicio < projInicio) {
+        alert('A data de início do contrato não pode ser menor que a data de início do projeto.');
+        return;
+      }
+
+      const novoObj = {
+        tipo: 'existente',
+        envolvidoId,
+        nome: base.nome || '',
+        telefone: base.telefone || '',
+        email: base.email || '',
+        funcao,
+        fotoUrl: guessFotoUrl(base.foto),
+        fotoPreview: null,
+        fotoFile: null,
+        contrato_data_inicio: contrato_inicio,
+        contrato_data_fim: contrato_fim,
+        contrato_salario: salario,
+        ui_status: (editEnvIndex != null ? 'Editado' : 'Novo'),
+        ui_deleted: false
+      };
+
+      if (editEnvIndex != null) envolvidos[editEnvIndex] = { ...(envolvidos[editEnvIndex] || {}), ...novoObj };
+      else envolvidos.push(novoObj);
+
+      renderEnvolvidos();
+      fecharModalEnvolvido();
+    }
+
+    async function salvarEnvolvidoNovo() {
+      const nome = (novoEnvNome?.value || '').trim();
+      const funcao = (novoEnvFuncaoProjeto?.value || '').trim();
+
+      if (!nome || !funcao) {
+        alert('Preencha o Nome e Função do envolvido.');
+        return;
+      }
+
+      const file = novoEnvFoto?.files?.[0] || null;
+
+      const contrato_inicio = novoContratoDataInicio?.value || '';
+      const contrato_fim    = novoContratoDataFim?.value || '';
+      const salario         = normalizeMoneyBR(novoContratoSalario?.value || '');
+
+      const projInicio = qs('#projDataInicio')?.value || '';
+      if (projInicio && contrato_inicio && contrato_inicio < projInicio) {
+        alert('A data de início do contrato não pode ser menor que a data de início do projeto.');
+        return;
+      }
+
+      const fotoPreview = file ? await readFileAsDataURL(file) : (envolvidos[editEnvIndex]?.fotoPreview || null);
+      const fotoUrlKeep = (!file ? (envolvidos[editEnvIndex]?.fotoUrl || null) : null);
+
+      const novoObj = {
+        tipo: 'novo',
+        envolvidoId: (envolvidos[editEnvIndex]?.envolvidoId || null),
+        nome,
+        telefone: (novoEnvTelefone?.value || null),
+        email: (novoEnvEmail?.value || null),
+        funcao,
+        fotoFile: file || (envolvidos[editEnvIndex]?.fotoFile || null),
+        fotoPreview: fotoPreview,
+        fotoUrl: fotoUrlKeep,
+        contrato_data_inicio: contrato_inicio,
+        contrato_data_fim: contrato_fim,
+        contrato_salario: salario,
+        ui_status: (editEnvIndex != null ? 'Editado' : 'Novo'),
+        ui_deleted: false
+      };
+
+      if (editEnvIndex != null) envolvidos[editEnvIndex] = { ...(envolvidos[editEnvIndex] || {}), ...novoObj };
+      else envolvidos.push(novoObj);
+
+      renderEnvolvidos();
+      fecharModalEnvolvido();
     }
 
     async function salvarEnvolvido() {
-        const fotoFileInput = qs('#envFoto').files[0] || null;
-        const fotoFile = fotoFileInput || envFotoFileCache || null;
-        const fotoPreview = fotoFileInput
-          ? await readFileAsDataURL(fotoFileInput)
-          : (envFotoPreviewUrl || null);
-        const nome     = qs('#envNome').value.trim();
-        const telefone = qs('#envTelefone').value.trim();
-        const email    = qs('#envEmail').value.trim();
-        const funcao   = qs('#envFuncaoNovo').value.trim(); 
-        
-        if (!nome || !funcao) {
-            alert('Preencha pelo menos o Nome e a Função do envolvido!');
-            return;
-        }   
-        
-        // EDITANDO UM EXISTENTE (ou um novo já adicionado)
-        if (editEnvIndex !== null) {
-            const alvo = envolvidos[editEnvIndex];
-            if (!alvo) return;
-            const temId = !!(alvo.envolvidoId);
-
-            // Só marca "Editado" se realmente mudou algo
-            const beforeState = {
-              nome: (alvo.nome || '').trim(),
-              telefone: (alvo.telefone || '').trim(),
-              email: (alvo.email || '').trim(),
-              funcao: (alvo.funcao || '').trim(),
-              removerFoto: !!alvo.removerFoto,
-              fotoUrl: (alvo.fotoUrl || '').trim(),
-              fotoPreview: (alvo.fotoPreview || '').trim(),
-              fotoFileSig: alvo.fotoFile ? `${alvo.fotoFile.name || ''}|${alvo.fotoFile.size || ''}` : '',
-            };
-
-            const afterRemover = !!envFotoRemover;
-            const afterFotoFile = afterRemover ? null : (fotoFile || null);
-            const afterFotoPreview = afterRemover ? '' : (fotoPreview || '');
-            const afterFotoUrl = afterRemover ? '' : ((envFotoExistingUrl || alvo.fotoUrl || ''));
-
-            const afterState = {
-              nome: (nome || '').trim(),
-              telefone: (telefone || '').trim(),
-              email: (email || '').trim(),
-              funcao: (funcao || '').trim(),
-              removerFoto: afterRemover,
-              fotoUrl: (afterFotoUrl || '').trim(),
-              fotoPreview: (afterFotoPreview || '').trim(),
-              fotoFileSig: afterFotoFile ? `${afterFotoFile.name || ''}|${afterFotoFile.size || ''}` : '',
-            };
-
-            const mudou = JSON.stringify(beforeState) !== JSON.stringify(afterState);
-            if (!mudou) {
-              // nada mudou -> não marca status nem mexe no estado
-              modalBackdrop.style.display = 'none';
-              envFotoRemover = false;
-              return;
-            }
-
-            // para desfazer edição (snapshot do estado atual, antes de aplicar a mudança)
-            if (temId && !alvo.ui_edit_original) {
-              alvo.ui_edit_original = {
-                nome: alvo.nome,
-                telefone: alvo.telefone,
-                email: alvo.email,
-                funcao: alvo.funcao,
-                fotoUrl: alvo.fotoUrl,
-                fotoPreview: alvo.fotoPreview,
-                fotoFile: alvo.fotoFile,
-                removerFoto: !!alvo.removerFoto
-              };
-            }
-
-            alvo.nome = nome;
-            alvo.telefone = telefone;
-            alvo.email = email;
-            alvo.funcao = funcao; 
-            if (fotoFile) {
-              alvo.fotoFile = fotoFile;
-              alvo.fotoPreview = fotoPreview;
-              alvo.removerFoto = false;
-            } else if (envFotoRemover) {
-              alvo.fotoFile = null;
-              alvo.fotoPreview = null;
-              alvo.fotoUrl = null;
-              alvo.removerFoto = true;
-            } else {
-              // manteve a foto atual (URL)
-              alvo.fotoFile = null;
-              alvo.fotoPreview = null;
-              alvo.fotoUrl = envFotoExistingUrl;
-              alvo.removerFoto = false;
-            }
-
-            if (temId) {
-              alvo.ui_status = 'Editado';
-            } else {
-              alvo.ui_status = alvo.ui_status || 'Novo';
-            }
-
-            renderEnvolvidos();
-            modalBackdrop.style.display = 'none';
-            envFotoRemover = false;
-            return;
-        }   
-        
-        // CRIANDO NOVO
-        envolvidos.push({
-            tipo: 'novo',
-            envolvidoId: null,
-            fotoUrl: null,
-            fotoPreview,
-            fotoFile,
-            nome,
-            telefone,
-            email,
-            funcao,
-            ui_status: 'Novo',
-            ui_deleted: false
-        }); 
-        renderEnvolvidos();
-        modalBackdrop.style.display = 'none';
+      const modo = document.querySelector('input[name="modoEnvolvido"]:checked')?.value || 'existente';
+      if (modo === 'novo') return salvarEnvolvidoNovo();
+      return salvarEnvolvidoExistente();
     }
-    addEnvolvidoBtn.addEventListener('click', salvarEnvolvido);
 
-    function renderEnvolvidos() {
-      const list = qs('#listaEnvolvidos');
+    if (addEnvolvidoProjetoBtn) addEnvolvidoProjetoBtn.addEventListener('click', salvarEnvolvido);
+    if (addNovoEnvolvidoProjetoBtn) addNovoEnvolvidoProjetoBtn.addEventListener('click', salvarEnvolvidoNovo);
+
+function renderEnvolvidos() {
+      const list = qs('#listaEnvolvidosProjeto');
       if (!list) return;
       list.innerHTML = '';
 
@@ -2326,13 +2640,83 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
     }
 
     // ===== IMÓVEIS (múltiplos) =====
-    const imoveisList            = qs('#imoveisList');
-    const modalImovelOscBackdrop = qs('#modalImovelOscBackdrop');
-    const openImovelOscModal     = qs('#openImovelOscModal');
-    const closeImovelOscModal    = qs('#closeImovelOscModal');
-    const addImovelOscBtn        = qs('#addImovelOscBtn');
+    const imoveisList            = qs('#enderecosList');
+    const modalImovelOscBackdrop = qs('#modalEnderecoBackdrop');
+    const openImovelOscModal     = qs('#openEnderecoModal');
+    const closeImovelOscModal    = qs('#closeEnderecoModal');
+    const addImovelOscBtn        = qs('#saveEnderecoBtn');
 
-    function enderecoLinha(i) {
+    
+    const endSelect = qs('#endSelect');
+
+    function setCamposEnderecoDisabled(disabled){
+      ['#endDescricao','#endCep','#endCidade','#endBairro','#endLogradouro','#endNumero','#endComplemento','#endPrincipal'].forEach(sel=>{
+        const el = qs(sel);
+        if (!el) return;
+        if (sel === '#endPrincipal') el.disabled = disabled;
+        else el.disabled = disabled;
+      });
+    }
+
+    function limparCamposEndereco(){
+      const setVal = (sel, v) => { const el = qs(sel); if (el) el.value = v; };
+      setVal('#endDescricao','');
+      setVal('#endCep','');
+      setVal('#endCidade','');
+      setVal('#endBairro','');
+      setVal('#endLogradouro','');
+      setVal('#endNumero','');
+      setVal('#endComplemento','');
+      const p = qs('#endPrincipal'); if (p) p.checked = false;
+    }
+
+    function getEnderecoDisponivelById(id){
+      const num = Number(id);
+      return (ENDERECOS_DISPONIVEIS || []).find(e => Number(e.id) === num) || null;
+    }
+
+    function preencherCamposComEndereco(ref){
+      const setVal = (sel, v) => { const el = qs(sel); if (el) el.value = (v ?? '').toString(); };
+      setVal('#endDescricao', ref.descricao || '');
+      setVal('#endCep', ref.cep || '');
+      setVal('#endCidade', ref.cidade || '');
+      setVal('#endBairro', ref.bairro || '');
+      setVal('#endLogradouro', ref.logradouro || '');
+      setVal('#endNumero', ref.numero || '');
+      setVal('#endComplemento', ref.complemento || '');
+      const p = qs('#endPrincipal'); if (p) p.checked = (Number(ref.principal) === 1 || ref.principal === true);
+    }
+
+    function popularSelectEnderecos(){
+      if (!endSelect) return;
+      // evita duplicar
+      if (endSelect.dataset.populated === '1') return;
+      (ENDERECOS_DISPONIVEIS || []).forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = String(r.id);
+        const label = `${(r.descricao || 'Endereço')} — ${(r.logradouro || '').trim()} ${(r.numero || '').trim()} — ${(r.cidade || '').trim()}`.replaceAll('  ',' ').trim();
+        opt.textContent = label;
+        endSelect.appendChild(opt);
+      });
+      endSelect.dataset.populated = '1';
+    }
+
+    // Selecionou um endereço existente -> preenche e bloqueia (igual no editar_evento)
+    if (endSelect){
+      endSelect.addEventListener('change', () => {
+        const id = endSelect.value;
+        if (!id){
+          limparCamposEndereco();
+          setCamposEnderecoDisabled(false);
+          return;
+        }
+        const ref = getEnderecoDisponivelById(id);
+        if (!ref) return;
+        preencherCamposComEndereco(ref);
+        setCamposEnderecoDisabled(true);
+      });
+    }
+function enderecoLinha(i) {
       const parts = [];
       const log = (i.logradouro || '').trim();
       const num = (i.numero || '').trim();
@@ -2353,17 +2737,21 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
 
     function abrirModalImovelAdicionar() {
       editImovelIndex = null;
-      qs('#imovelDescricao').value    = '';
-      qs('#imovelCep').value          = '';
-      qs('#imovelCidade').value       = '';
-      qs('#imovelBairro').value       = '';
-      qs('#imovelLogradouro').value   = '';
-      qs('#imovelNumero').value       = '';
-      qs('#imovelComplemento').value  = '';
-      qs('#imovelPrincipal').checked  = false;
+      
+      popularSelectEnderecos();
+      if (endSelect){ endSelect.value=''; }
+      setCamposEnderecoDisabled(false);
+qs('#endDescricao').value    = '';
+      qs('#endCep').value          = '';
+      qs('#endCidade').value       = '';
+      qs('#endBairro').value       = '';
+      qs('#endLogradouro').value   = '';
+      qs('#endNumero').value       = '';
+      qs('#endComplemento').value  = '';
+      qs('#endPrincipal').checked  = false;
 
       addImovelOscBtn.textContent = 'Adicionar';
-      qs('#modalImovelOscBackdrop .modal h3').textContent = 'Adicionar Imóvel';
+      qs('#modalEnderecoBackdrop .modal h3').textContent = 'Adicionar Imóvel';
       modalImovelOscBackdrop.style.display = 'flex';
     }
 
@@ -2379,18 +2767,18 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
 
       editImovelIndex = idx;
 
-      qs('#imovelDescricao').value   = m.descricao || '';
-      qs('#imovelCep').value         = m.cep || '';
-      qs('#imovelCidade').value      = m.cidade || '';
-      qs('#imovelBairro').value      = m.bairro || '';
-      qs('#imovelLogradouro').value  = m.logradouro || '';
-      qs('#imovelNumero').value      = m.numero || '';
-      qs('#imovelComplemento').value = m.complemento || '';
+      qs('#endDescricao').value   = m.descricao || '';
+      qs('#endCep').value         = m.cep || '';
+      qs('#endCidade').value      = m.cidade || '';
+      qs('#endBairro').value      = m.bairro || '';
+      qs('#endLogradouro').value  = m.logradouro || '';
+      qs('#endNumero').value      = m.numero || '';
+      qs('#endComplemento').value = m.complemento || '';
 
-      qs('#imovelPrincipal').checked = (Number(m.principal) === 1 || m.principal === true);
+      qs('#endPrincipal').checked = (Number(m.principal) === 1 || m.principal === true);
 
       addImovelOscBtn.textContent = 'Editar';
-      qs('#modalImovelOscBackdrop .modal h3').textContent = 'Editar Imóvel';
+      qs('#modalEnderecoBackdrop .modal h3').textContent = 'Editar Imóvel';
       modalImovelOscBackdrop.style.display = 'flex';
     }
 
@@ -2405,14 +2793,52 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
     });
 
     function salvarImovelDoModal() {
-      const descricao   = qs('#imovelDescricao').value.trim();
-      const cep         = qs('#imovelCep').value.trim();
-      const cidade      = qs('#imovelCidade').value.trim();
-      const bairro      = qs('#imovelBairro').value.trim();
-      const logradouro  = qs('#imovelLogradouro').value.trim();
-      const numero      = qs('#imovelNumero').value.trim();
-      const complemento = (qs('#imovelComplemento')?.value || '').trim();
-      const principal   = qs('#imovelPrincipal').checked;
+      // Se selecionou endereço existente, vincula sem exigir digitação
+      const selId = endSelect ? (endSelect.value || '') : '';
+      if (selId) {
+        const ref = getEnderecoDisponivelById(selId);
+        if (!ref) return;
+
+        // evita duplicar vínculo
+        const ja = imoveisOsc.some(e => Number(e.enderecoId) === Number(ref.id) && !(e.ui_deleted || e.ui_status === 'Deletado'));
+        if (ja) {
+          alert('Este endereço já está vinculado ao projeto.');
+          return;
+        }
+
+        const obj = {
+          enderecoId: Number(ref.id),
+          descricao: (ref.descricao || '').toString(),
+          cep: (ref.cep || '').toString(),
+          cidade: (ref.cidade || '').toString(),
+          bairro: (ref.bairro || '').toString(),
+          logradouro: (ref.logradouro || '').toString(),
+          numero: (ref.numero || '').toString(),
+          complemento: (ref.complemento || '').toString(),
+          principal: !!(qs('#endPrincipal')?.checked),
+          ui_deleted: false,
+          ui_status: 'Novo'
+        };
+
+        // garante principal único
+        if (obj.principal) {
+          imoveisOsc.forEach(x => { if (x && !(x.ui_deleted || x.ui_status === 'Deletado')) x.principal = false; });
+        }
+
+        imoveisOsc.push(obj);
+        fecharModalImovel();
+        renderImoveisOsc();
+        return;
+      }
+
+      const descricao   = qs('#endDescricao').value.trim();
+      const cep         = qs('#endCep').value.trim();
+      const cidade      = qs('#endCidade').value.trim();
+      const bairro      = qs('#endBairro').value.trim();
+      const logradouro  = qs('#endLogradouro').value.trim();
+      const numero      = qs('#endNumero').value.trim();
+      const complemento = (qs('#endComplemento')?.value || '').trim();
+      const principal   = qs('#endPrincipal').checked;
 
       if (!cep || !cidade || !logradouro || !bairro || !numero) {
         alert(
@@ -2534,7 +2960,7 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
     if (addImovelOscBtn) addImovelOscBtn.addEventListener('click', salvarImovelDoModal);
 
     function renderImoveisOsc(){
-      const list = qs('#imoveisList');
+      const list = qs('#enderecosList');
       if (!list) return;
       list.innerHTML = '';
 
@@ -2741,6 +3167,9 @@ if (hasNewFile || (!!envFotoExistingUrl && !isRemoved)) {
               telefone: d.telefone || '',
               email: d.email || '',
               funcao,
+              contrato_data_inicio: d.contrato_data_inicio ?? d.data_inicio ?? d.contrato_inicio ?? '',
+              contrato_data_fim:    d.contrato_data_fim    ?? d.data_fim    ?? d.contrato_fim    ?? '',
+              contrato_salario:     d.contrato_salario     ?? d.salario     ?? d.remuneracao     ?? '',
               ui_deleted: false
             });
           });

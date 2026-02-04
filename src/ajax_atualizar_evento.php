@@ -268,12 +268,10 @@ try {
             $nTel   = only_digits($e['telefone'] ?? '');
             $nEmail = trim((string)($e['email'] ?? ''));
             $fEv    = trim((string)($e['funcao_evento'] ?? ''));
-            $fProj  = trim((string)($e['funcao_projeto'] ?? 'PARTICIPANTE'));
+            $fProj  = 'PARTICIPANTE';
             $fotoKey= (string)($e['foto_key'] ?? '');
 
             if ($nNome === '' || $fEv === '') continue;
-            if ($fProj === '') $fProj = 'PARTICIPANTE';
-
             // foto (opcional)
             $fotoUrl = null;
             if ($fotoKey && isset($_FILES[$fotoKey])) {

@@ -23,55 +23,39 @@ $oscIdVinculada = (int)($res['osc_id'] ?? 0);
 // Projeto em edição
 $projetoId = (int)($_GET['projeto_id'] ?? 0);
 
-// Envolvidos da OSC (com contexto: OSC ou algum Projeto)
+// Envolvidos EXISTENTES: SOMENTE os vinculados ao projeto (igual na edição)
 $envolvidosProj = [];
 try {
-  if ($oscIdVinculada > 0) {
+  if ($oscIdVinculada > 0 && $projetoId > 0) {
     $st = $conn->prepare("
       SELECT
         eo.id,
         eo.nome,
         eo.foto,
-        eo.funcao AS funcao_osc,
-        (
-          SELECT CONCAT(p.nome, '|', ep.funcao)
-          FROM envolvido_projeto ep
-          JOIN projeto p ON p.id = ep.projeto_id
-          WHERE ep.envolvido_osc_id = eo.id
-            AND ep.ativo = 1
-            AND p.osc_id = ?
-          ORDER BY (ep.projeto_id = ?) DESC, p.nome ASC
-          LIMIT 1
-        ) AS proj_info
-      FROM envolvido_osc eo
-      WHERE eo.osc_id = ?
+        ep.funcao AS funcao_projeto,
+        p.nome AS projeto_nome
+      FROM envolvido_projeto ep
+      JOIN envolvido_osc eo ON eo.id = ep.envolvido_osc_id
+      JOIN projeto p ON p.id = ep.projeto_id
+      WHERE ep.projeto_id = ?
+        AND p.osc_id = ?
+        AND ep.ativo = 1
       ORDER BY eo.nome
     ");
-    $st->bind_param("iii", $oscIdVinculada, $projetoId, $oscIdVinculada);
+    $st->bind_param("ii", $projetoId, $oscIdVinculada);
     $st->execute();
+
     $rs = $st->get_result();
     while ($row = $rs->fetch_assoc()) {
-      $projInfo = (string)($row['proj_info'] ?? '');
-      $projNome = '';
-      $projFunc = '';
-      if ($projInfo !== '' && strpos($projInfo, '|') !== false) {
-        [$projNome, $projFunc] = explode('|', $projInfo, 2);
-      }
-
-      if ($projNome !== '') {
-        $label = $row['nome'] . ' - ' . $projNome . ' / ' . $projFunc;
-        $info  = $projNome . ' • ' . $projFunc;
-      } else {
-        $label = $row['nome'] . ' - OSC / ' . $row['funcao_osc'];
-        $info  = 'OSC • ' . $row['funcao_osc'];
-      }
+      $func = (string)($row['funcao_projeto'] ?? '');
+      $proj = (string)($row['projeto_nome'] ?? '');
 
       $envolvidosProj[] = [
-        'id'       => (int)$row['id'],
-        'nome'     => $row['nome'],
-        'foto'     => $row['foto'],
-        'label'    => $label,
-        'info'     => $info,
+        'id'    => (int)$row['id'],
+        'nome'  => $row['nome'],
+        'foto'  => $row['foto'],
+        'label' => $row['nome'] . ' - ' . $proj . ' / ' . $func,
+        'info'  => $proj . ' • ' . $func,
       ];
     }
   }
@@ -1357,9 +1341,9 @@ error_log("cadastro_evento.php chamado com projeto_id: " . var_export($projetoId
       fd.append('img_descricao', imgDescFile);
 
       const existentes = envolvidosEvento
-        .filter(e => e.tipo === 'existente')
+        .filter(x => x.tipo === 'existente')
         .map(e => ({
-          envolvido_proj_id: e.envolvido_proj_id,
+          envolvido_osc_id: e.envolvido_proj_id,  // <- ESSA é a chave que o PHP espera
           funcao: e.funcao_projeto
         }));
 

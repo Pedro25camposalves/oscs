@@ -74,21 +74,64 @@ if (!$eventoRow) {
 $projetoId    = (int)($eventoRow['projeto_id'] ?? 0);
 $projetoNome  = (string)($eventoRow['projeto_nome'] ?? '');
 
-// Envolvidos do PROJETO (para seleção no modal)
+// Nome da OSC (para labels de origem no modal)
+$oscNome = 'OSC';
+try {
+    $st = $conn->prepare("SELECT nome FROM osc WHERE id = ? LIMIT 1");
+    $st->bind_param("i", $oscIdVinculada);
+    $st->execute();
+    $res = $st->get_result()->fetch_assoc();
+    if (!empty($res['nome'])) $oscNome = (string)$res['nome'];
+    $st->close();
+} catch (Throwable $e) {
+    $oscNome = 'OSC';
+}
+
+// Envolvidos do PROJETO (para seleção no modal) — mesmo padrão do cadastro_evento
 $envolvidosProjeto = [];
 try {
-    $st = $conn->prepare("SELECT eo.id, eo.nome, eo.foto, eo.funcao, eo.telefone, eo.email
-                            FROM envolvido_osc eo
-                            JOIN envolvido_projeto ep ON ep.envolvido_osc_id = eo.id
-                           WHERE eo.osc_id = ? AND ep.projeto_id = ?
-                           ORDER BY eo.nome");
-    $st->bind_param("ii", $oscIdVinculada, $projetoId);
-    $st->execute();
-    $rs = $st->get_result();
-    while ($row = $rs->fetch_assoc()) {
-        $envolvidosProjeto[] = $row;
+    if ($projetoId > 0) {
+        $st = $conn->prepare("
+          SELECT eo.id, eo.nome, eo.foto, eo.telefone, eo.email,
+                 eo.funcao AS funcao_osc,
+                 ep.funcao AS funcao_projeto
+            FROM envolvido_projeto ep
+            JOIN envolvido_osc eo ON eo.id = ep.envolvido_osc_id
+            JOIN projeto p ON p.id = ep.projeto_id
+           WHERE ep.projeto_id = ? AND p.osc_id = ? AND ep.ativo = 1
+           ORDER BY eo.nome
+        ");
+        $st->bind_param("ii", $projetoId, $oscIdVinculada);
+        $st->execute();
+        $rs = $st->get_result();
+        while ($row = $rs->fetch_assoc()) {
+            $funcProj = trim((string)($row['funcao_projeto'] ?? ''));
+            $funcOsc  = trim((string)($row['funcao_osc'] ?? ''));
+
+            // Se não houver função no projeto, exibe como origem a OSC (com o cargo da OSC)
+            if ($funcProj !== '') {
+                $origNome = $projetoNome;
+                $origFunc = $funcProj;
+            } else {
+                $origNome = $oscNome;
+                $origFunc = $funcOsc;
+            }
+
+            $label = (string)$row['nome'] . ' - ' . $origNome . ' / ' . $origFunc;
+            $info  = $origNome . ' • ' . $origFunc;
+
+            $envolvidosProjeto[] = [
+                'id'       => (int)$row['id'],
+                'nome'     => (string)$row['nome'],
+                'foto'     => (string)($row['foto'] ?? ''),
+                'telefone' => (string)($row['telefone'] ?? ''),
+                'email'    => (string)($row['email'] ?? ''),
+                'label'    => $label,
+                'info'     => $info,
+            ];
+        }
+        $st->close();
     }
-    $st->close();
 } catch (Throwable $e) {
     $envolvidosProjeto = [];
 }
@@ -639,11 +682,10 @@ $payload = [
           <div>
             <label for="evtStatus">Status (*)</label>
             <select id="evtStatus" required>
-                <option value="PENDENTE">Pendente</option>
-                <option value="PLANEJAMENTO">Planejamento</option>
-                <option value="EXECUCAO">Execução</option>
-                <option value="ENCERRADO">Encerrado</option>
-              </select>
+              <option value="PENDENTE">A iniciar</option>
+              <option value="EXECUCAO">Em andamento</option>
+              <option value="ENCERRADO">Finalizado</option>
+            </select>
           </div>
         </div>
         <input type="hidden" id="evtTipo" />
@@ -709,28 +751,10 @@ $payload = [
       <div class="card-body" data-collapse-body>
         <div class="grid cols-2" style="margin-top:10px; align-items:end">
           <div style="grid-column:1 / -1;">
-            <label for="galeriaDestino">Vincular a</label>
-            <select id="galeriaDestino">
-              <option value="">Projeto (geral)</option>
-              <?php foreach ($eventosProjeto as $ev):
-                $evId   = (int)($ev['id'] ?? 0);
-                $evTipo = (string)($ev['tipo'] ?? '');
-                $evNome = (string)($ev['nome'] ?? '');
-                $evData = (string)($ev['data_inicio'] ?? '');
-                $label  = trim(($evTipo ? $evTipo . ': ' : '') . $evNome);
-                if ($evData) $label .= " — " . $evData;
-              ?>
-                <option value="<?= $evId ?>" <?= $evId === $eventoId ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
-              <?php endforeach; ?>
-            </select>
-            <div class="small muted" style="margin-top:6px">Envie imagens para o projeto (geral) ou para um evento/oficina específico.</div>
           </div>
         </div>
 
-        <div class="divider"></div>
-
         <div id="galeriaGrid" class="envolvidos-list">
-          <div class="small muted">Carregando galeria…</div>
         </div>
 
         <input type="file" id="galeriaFiles" accept="image/*" multiple style="display:none" />
@@ -798,82 +822,102 @@ $payload = [
 </main>
 
 <!-- MODAL ENVOLVIDOS DO EVENTO/OFICINA -->
-<div id="modalEnvolvidoBackdrop" class="modal-backdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar envolvido">
-    <h3 id="envModalTitle">Adicionar Envolvido</h3>
-    <div class="divider"></div>
+<div id="modalEnvolvidoEventoBackdrop" class="modal-backdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Adicionar Envolvido no Evento">
+        <h3 id="tituloModalEnvolvido">Adicionar Envolvido</h3>
 
-    <div class="grid cols-2" style="margin-top:10px; align-items:end">
-      <div>
-        <label>Tipo de cadastro</label>
-        <div style="display:flex; gap:14px; margin-top:6px">
-          <label style="display:flex; gap:8px; align-items:center; margin:0; cursor:pointer">
-            <input type="radio" name="envModo" id="envModoExistente" checked />
-            <span class="small">Existente (do projeto)</span>
+        <div id="wrapModoEnvolvido" class="row" style="margin-top:10px; justify-content:flex-start;">
+          <label style="display:flex; gap:8px; align-items:center; font-size:13px; color:var(--muted);">
+            <input type="radio" name="modoEnvolvido" value="existente" checked />Existente
           </label>
-          <label style="display:flex; gap:8px; align-items:center; margin:0; cursor:pointer">
-            <input type="radio" name="envModo" id="envModoNovo" />
-            <span class="small">Novo</span>
+
+          <label style="display:flex; gap:8px; align-items:center; font-size:13px; color:var(--muted);">
+            <input type="radio" name="modoEnvolvido" value="novo" />Novo
           </label>
         </div>
-      </div>
-      <div>
-        <label for="envFuncaoEvento">Função no evento (*)</label>
-        <input id="envFuncaoEvento" type="text" placeholder="Ex: Instrutor, Palestrante..." />
-      </div>
-    </div>
 
-    <div id="envBoxExistente" style="margin-top:10px">
-      <div class="grid cols-2">
-        <div style="grid-column:1 / -1;">
-          <label for="envSelect">Envolvido do projeto (*)</label>
-          <select id="envSelect">
-            <option value="">Selecione...</option>
-          </select>
-        </div>
-      </div>
-      <div class="small muted" style="margin-top:6px">Aqui você só “puxa” alguém que já está no projeto. Sem duplicar cadastro.</div>
-    </div>
+        <div class="divider"></div>
 
-    <div id="envBoxNovo" style="display:none; margin-top:10px">
-      <div class="grid cols-2">
-        <div style="grid-column:1 / -1;">
-          <label for="envNome">Nome (*)</label>
-          <input id="envNome" type="text" />
+        <!-- MODO: EXISTENTE -->
+        <div id="modoExistenteEnvolvido">
+          <div class="grid" style="margin-top:10px;">
+            <div>
+              <div class="small">Foto</div>
+              <div class="images-preview" id="previewEnvolvidoSelecionado"></div>
+            </div>
+            <div>
+              <label for="selectEnvolvidoProj">Envolvido (*)</label>
+              <select id="selectEnvolvidoProj">
+                <option value="">Selecione...</option>
+              </select>
+            </div>
+
+            <div style="margin-bottom: 5px;">
+              <label for="funcaoNoEvento">Função no evento (*)</label>
+              <select id="funcaoNoEvento">
+                <option value="">Selecione...</option>
+                <option value="DIRETOR">Diretor(a)</option>
+                <option value="COORDENADOR">Coordenador(a)</option>
+                <option value="FINANCEIRO">Financeiro</option>
+                <option value="MARKETING">Marketing</option>
+                <option value="RH">Recursos Humanos (RH)</option>
+                <option value="PARTICIPANTE">Participante</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+            <button class="btn btn-ghost" id="closeEnvolvidoEventoModal" type="button">Cancelar</button>
+            <button class="btn btn-primary" id="addEnvolvidoEventoBtn" type="button">Adicionar</button>
+          </div>
         </div>
-        <div>
-          <label for="envTelefone">Telefone</label>
-          <input id="envTelefone" type="text" inputmode="numeric" />
+
+        <!-- MODO: NOVO -->
+        <div id="modoNovoEnvolvido" style="display:none;">
+          <div class="grid">
+            <div>
+              <div class="small">Visualização</div>
+              <div class="images-preview" id="previewNovoEnvolvido"></div>
+            </div>
+            <div>
+              <label for="novoEnvFoto">Foto</label>
+              <input id="novoEnvFoto" type="file" accept="image/*" />
+            </div>
+            <div>
+              <label for="envNome">Nome (*)</label>
+              <input id="envNome" type="text" required />
+            </div>
+            <div>
+              <label for="envTelefone">Telefone</label>
+              <input id="envTelefone" inputmode="numeric" type="text" />
+            </div>
+            <div>
+              <label for="envEmail">E-mail</label>
+              <input id="envEmail" type="text" />
+            </div>
+            <div>
+              <label for="envFuncaoNovo">Função (*)</label>
+              <select id="envFuncaoNovo" required>
+                <option value="">Selecione...</option>
+                <option value="DIRETOR">Diretor(a)</option>
+                <option value="COORDENADOR">Coordenador(a)</option>
+                <option value="FINANCEIRO">Financeiro</option>
+                <option value="MARKETING">Marketing</option>
+                <option value="RH">Recursos Humanos (RH)</option>
+                <option value="PARTICIPANTE">Participante</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
+            <button class="btn btn-ghost" id="closeEnvolvidoEventoModal2" type="button">Cancelar</button>
+            <button class="btn btn-primary" id="addNovoEnvolvidoEventoBtn" type="button">Adicionar</button>
+          </div>
         </div>
-        <div>
-          <label for="envEmail">E-mail</label>
-          <input id="envEmail" type="text" />
-        </div>
-        <div style="grid-column:1 / -1;">
-          <label for="envFoto">Foto</label>
-          <input id="envFoto" type="file" accept="image/*" />
-        </div>
-        <div style="grid-column:1 / -1;">
-          <label for="envFuncaoProjeto">Função no projeto</label>
-          <select id="envFuncaoProjeto">
-            <option value="PARTICIPANTE">Participante</option>
-            <option value="DIRETOR">Diretor(a)</option>
-            <option value="COORDENADOR">Coordenador(a)</option>
-            <option value="FINANCEIRO">Financeiro</option>
-            <option value="MARKETING">Marketing</option>
-            <option value="RH">Recursos Humanos (RH)</option>
-          </select>
-          <div class="small muted" style="margin-top:6px">Esse campo é só para garantir o vínculo mestre do envolvido no projeto.</div>
-        </div>
+
       </div>
     </div>
-
-    <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px">
-      <button class="btn btn-ghost" id="closeEnvolvidoModal" type="button">Cancelar</button>
-      <button class="btn btn-primary" id="saveEnvolvidoBtn" type="button">Salvar</button>
-    </div>
-  </div>
-</div>
 
 <!-- MODAL ENDEREÇOS -->
 <div id="modalEnderecoBackdrop" class="modal-backdrop">
@@ -1061,7 +1105,8 @@ $payload = [
 
   // ====== POPULA CAMPOS ======
   function bootForm(){
-    qs('#evtStatus').value = (evento.status || 'PENDENTE');
+    const st = (evento.status || 'PENDENTE');
+    qs('#evtStatus').value = (st === 'PLANEJAMENTO') ? 'PENDENTE' : st;
     qs('#evtTipo').value = (evento.tipo || '');
     // Título da seção (não editável): "Informações do Evento/Oficina"
     const t = String(evento.tipo || '').toUpperCase();
@@ -1074,6 +1119,9 @@ $payload = [
     qs('#evtDataInicio').value = (evento.data_inicio || '');
     qs('#evtDataFim').value = (evento.data_fim || '');
     qs('#evtDescricao').value = (evento.descricao || '');
+
+    const wrapModoEnvolvido = qs('#wrapModoEnvolvido');
+    const tituloModalEnvolvido = qs('#tituloModalEnvolvido');
 
     // envolvidos do evento
     (Array.isArray(D.envolvidosEvento) ? D.envolvidosEvento : []).forEach(r => {
@@ -1112,12 +1160,12 @@ $payload = [
       envolvidosProjeto.forEach(r => {
         const opt = document.createElement('option');
         opt.value = String(r.id);
-        opt.textContent = (r.nome || '').trim();
+        opt.textContent = (r.label || r.nome || '').trim();
         selEnv.appendChild(opt);
       });
     }
 
-    const selEnd = qs('#endSelect');
+const selEnd = qs('#endSelect');
     if (selEnd) {
       enderecosDisponiveis.forEach(r => {
         const opt = document.createElement('option');
@@ -1140,68 +1188,167 @@ $payload = [
     if (!list) return;
     list.innerHTML = '';
 
-    const ativos = envolvidos.filter(e => !e.ui_deleted);
-    if (!ativos.length) {
+    // guarda o "estado inicial" (IDs existentes no primeiro render) para identificar novos vínculos de existentes
+    if (!renderEnvolvidos._initIds) {
+      const s = new Set();
+      envolvidos.forEach(x => {
+        if (x && x.tipo === 'existente' && x.envolvidoId != null) s.add(String(x.envolvidoId));
+      });
+      renderEnvolvidos._initIds = s;
+    }
+
+    if (!envolvidos.length) {
       const empty = document.createElement('div');
       empty.className = 'small muted';
-      empty.textContent = 'Nenhum envolvido vinculado ainda.';
       list.appendChild(empty);
       return;
     }
 
-    ativos.forEach((e, i) => {
+    envolvidos.forEach((e, i) => {
       const c = document.createElement('div');
       c.className = 'envolvido-card';
 
       const img = document.createElement('img');
       img.src = e.fotoPreview || e.fotoUrl || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23eee"/></svg>';
 
+      const FUNCAO_LABELS_LOCAL = {
+        DIRETOR: 'Diretor(a)',
+        COORDENADOR: 'Coordenador(a)',
+        FINANCEIRO: 'Financeiro',
+        MARKETING: 'Marketing',
+        RH: 'Recursos Humanos (RH)',
+        PARTICIPANTE: 'Participante',
+      };
+
+      const funcCode = (e.funcao_evento || e.funcao || e.funcao_projeto || '').trim();
+      const funcaoLabel = FUNCAO_LABELS_LOCAL[funcCode] || funcCode;
       const info = document.createElement('div');
       info.innerHTML = `
         <div style="font-weight:600">${escapeHtml(e.nome || '—')}</div>
-        <div class="small">${escapeHtml(e.funcao_evento || '')}</div>
+        <div class="small">${escapeHtml(funcaoLabel)}</div>
       `;
 
-      const actions = document.createElement('div');
-      actions.style.marginLeft = 'auto';
-      actions.style.display = 'flex';
-      actions.style.alignItems = 'center';
-      actions.style.gap = '8px';
+      // ===== STATUS (mesmo comportamento do editar_projeto) =====
+      const temId = !!(e.envolvidoId);
 
+      // detecta se houve edição (sem depender de outros pontos do código)
+      const changed = !!(e.ui_edit_original && (
+        String(e.funcao_evento || '') !== String(e.ui_edit_original.funcao_evento || '') ||
+        String(e.funcao_projeto || '') !== String(e.ui_edit_original.funcao_projeto || '') ||
+        String(e.nome || '') !== String(e.ui_edit_original.nome || '') ||
+        String(e.telefone || '') !== String(e.ui_edit_original.telefone || '') ||
+        String(e.email || '') !== String(e.ui_edit_original.email || '')
+      ));
+
+      let statusTxt = e.ui_status || '';
+      const initIds = renderEnvolvidos._initIds;
+
+      // "Novo" para: itens tipo novo OU vínculo de existente adicionado após o primeiro render
+      const novoVinculoExistente = (e.tipo === 'existente' && temId && initIds && !initIds.has(String(e.envolvidoId)));
+      if (!statusTxt && (e.tipo === 'novo' || !temId || novoVinculoExistente)) statusTxt = 'Novo';
+
+      // "Deletado" tem prioridade
+      if (e.ui_deleted || statusTxt === 'Deletado') statusTxt = 'Deletado';
+
+      // "Editado" quando há mudança real e não é novo nem deletado
+      if (!e.ui_deleted && statusTxt !== 'Novo' && statusTxt !== 'Deletado' && changed) statusTxt = 'Editado';
+
+      let statusPillEl = null;
+      if (statusTxt) {
+        statusPillEl = document.createElement('span');
+        const cls = (statusTxt === 'Novo') ? 'on' : 'off';
+        statusPillEl.className = 'status-pill ' + cls;
+        statusPillEl.textContent = statusTxt;
+      }
+
+      // ===== EDIT =====
       const edit = document.createElement('button');
       edit.type = 'button';
       edit.className = 'btn';
       edit.textContent = '✎';
       edit.style.padding = '6px 8px';
       edit.title = 'Editar';
+
       edit.addEventListener('click', (ev) => {
         ev.preventDefault();
+        ev.stopPropagation();
+
+        // guarda original para permitir desfazer (mesmo padrão de comportamento)
+        if (!e.ui_edit_original) e.ui_edit_original = { ...e };
+
         abrirModalEnvolvidoEditar(i, e);
       });
 
-      const del = document.createElement('button');
-      del.type = 'button';
-      del.className = 'btn';
-      del.textContent = '✕';
-      del.style.padding = '6px 8px';
-      del.title = 'Remover';
-      del.addEventListener('click', (ev) => {
+      if (e.ui_deleted || statusTxt === 'Deletado') {
+        edit.disabled = true;
+        edit.title = 'Restaure para editar';
+        edit.style.opacity = '0.60';
+        edit.style.cursor = 'not-allowed';
+      }
+
+      // ===== REMOVE / UNDO =====
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'btn';
+      remove.style.padding = '6px 8px';
+
+      const isEditado  = (statusTxt === 'Editado');
+      const isDeletado = (e.ui_deleted || statusTxt === 'Deletado');
+      const isNovo     = (statusTxt === 'Novo' || e.tipo === 'novo');
+
+      remove.textContent = (isEditado || isDeletado) ? '↩' : '✕';
+      remove.title = isEditado
+        ? 'Desfazer edição'
+        : (isDeletado ? 'Restaurar' : (isNovo ? 'Remover' : 'Deletar'));
+
+      remove.addEventListener('click', (ev) => {
         ev.preventDefault();
-        // remove imediatamente da lista (sem estado "deletado" pra não confundir)
-        const idxReal = envolvidos.indexOf(e);
-        if (idxReal >= 0) {
-          if (e.tipo === 'novo') {
-            envFotoFiles.delete(idxReal);
-            envolvidos.splice(idxReal, 1);
-          } else {
-            e.ui_deleted = true;
-          }
+        ev.stopPropagation();
+
+        // 1) EDITADO
+        if (isEditado) {
+          if (e.ui_edit_original) Object.assign(e, e.ui_edit_original);
+          delete e.ui_edit_original;
+          if (e.ui_status === 'Editado') delete e.ui_status;
+          renderEnvolvidos();
+          return;
         }
+
+        // 2) NOVO
+        if (isNovo) {
+          envFotoFiles.delete(i);
+          envolvidos.splice(i, 1);
+          renderEnvolvidos();
+          return;
+        }
+
+        // 3) DELETADO
+        if (isDeletado) {
+          e.ui_deleted = false;
+          e.ui_status = e.ui_status_prev || '';
+          delete e.ui_status_prev;
+          if (!e.ui_status) delete e.ui_status;
+          renderEnvolvidos();
+          return;
+        }
+
+        // 4) NORMAL -> MARCA DELETADO
+        e.ui_deleted = true;
+        e.ui_status_prev = e.ui_status || '';
+        e.ui_status = 'Deletado';
         renderEnvolvidos();
       });
 
+      // ===== ACTIONS =====
+      const actions = document.createElement('div');
+      actions.style.marginLeft = 'auto';
+      actions.style.display = 'flex';
+      actions.style.alignItems = 'center';
+      actions.style.gap = '8px';
+
+      if (statusPillEl) actions.appendChild(statusPillEl);
       actions.appendChild(edit);
-      actions.appendChild(del);
+      actions.appendChild(remove);
 
       c.appendChild(img);
       c.appendChild(info);
@@ -1417,165 +1564,306 @@ $payload = [
     }
   }
 
-  // ====== MODAL ENVOLVIDOS =====
-  const modalEnv = qs('#modalEnvolvidoBackdrop');
-  const openEnv  = qs('#openEnvolvidoModal');
-  const closeEnv = qs('#closeEnvolvidoModal');
-  const saveEnv  = qs('#saveEnvolvidoBtn');
-  const envModoExistente = qs('#envModoExistente');
-  const envModoNovo      = qs('#envModoNovo');
-  const envBoxExistente  = qs('#envBoxExistente');
-  const envBoxNovo       = qs('#envBoxNovo');
+    // ====== MODAL ENVOLVIDOS (padrão do cadastro_evento) =====
+  const modalEnvolvidoEventoBackdrop = qs('#modalEnvolvidoEventoBackdrop');
+  const openEnvolvidoEventoModal = qs('#openEnvolvidoModal'); // botão "+ Adicionar" da seção
+  const closeEnvolvidoEventoModal = qs('#closeEnvolvidoEventoModal');
+  const closeEnvolvidoEventoModal2 = qs('#closeEnvolvidoEventoModal2');
+  const addEnvolvidoEventoBtn = qs('#addEnvolvidoEventoBtn');
+  const addNovoEnvolvidoEventoBtn = qs('#addNovoEnvolvidoEventoBtn');
 
-  let envEditIndex = null;
+  const selectEnvolvidoProj = qs('#selectEnvolvidoProj');
+  const funcaoNoEvento = qs('#funcaoNoEvento');
+  const previewEnvolvidoSelecionado = qs('#previewEnvolvidoSelecionado');
 
-  function setEnvModo(){
-    const isNovo = !!envModoNovo?.checked;
-    if (envBoxExistente) envBoxExistente.style.display = isNovo ? 'none' : 'block';
-    if (envBoxNovo)      envBoxNovo.style.display      = isNovo ? 'block' : 'none';
+  const novoEnvFoto = qs('#novoEnvFoto');
+  const novoEnvNome = qs('#envNome');
+  const novoEnvTelefone = qs('#envTelefone');
+  const novoEnvEmail = qs('#envEmail');
+  const novoEnvFuncaoNovo = qs('#envFuncaoNovo');
+  const previewNovoEnvolvido = qs('#previewNovoEnvolvido');
+
+  const modoExistente = qs('#modoExistenteEnvolvido');
+  const modoNovo = qs('#modoNovoEnvolvido');
+  const radiosModo = document.querySelectorAll('input[name="modoEnvolvido"]');
+
+  let envEditIndex = null; // índice real em "envolvidos" (ou null)
+  let envEditTipo  = null; // 'existente' | 'novo' | null
+
+  function setModoEnvolvido(modo) {
+    if (!modoExistente || !modoNovo) return;
+    if (modo === 'novo') {
+      modoExistente.style.display = 'none';
+      modoNovo.style.display = 'block';
+    } else {
+      modoExistente.style.display = 'block';
+      modoNovo.style.display = 'none';
+    }
   }
-  if (envModoExistente) envModoExistente.addEventListener('change', setEnvModo);
-  if (envModoNovo)      envModoNovo.addEventListener('change', setEnvModo);
 
-  function limparModalEnvolvido(){
-    qs('#envModalTitle').textContent = 'Adicionar Envolvido';
-    qs('#envFuncaoEvento').value = '';
-    qs('#envSelect').value = '';
-    qs('#envNome').value = '';
-    qs('#envTelefone').value = '';
-    qs('#envEmail').value = '';
-    qs('#envFoto').value = '';
-    qs('#envFuncaoProjeto').value = 'PARTICIPANTE';
-    envModoExistente.checked = true;
-    envModoNovo.checked = false;
-    envEditIndex = null;
-    setEnvModo();
+  radiosModo.forEach(r => {
+    r.onchange = () => setModoEnvolvido(r.value);
+  });
+
+  function preencherSelectEnvolvidosProj() {
+    if (!selectEnvolvidoProj) return;
+    selectEnvolvidoProj.innerHTML = '<option value="">Selecione...</option>';
+    (envolvidosProjeto || []).forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.id;
+      opt.textContent = (e.label ? e.label : (e.nome || ''));
+      selectEnvolvidoProj.appendChild(opt);
+    });
+  }
+
+  function getEnvolvidoProjById(id) {
+    return (envolvidosProjeto || []).find(x => String(x.id) === String(id)) || null;
+  }
+
+  function renderPreviewEnvolvidoSelecionado() {
+    if (!previewEnvolvidoSelecionado || !selectEnvolvidoProj) return;
+
+    previewEnvolvidoSelecionado.innerHTML = '';
+
+    const id = selectEnvolvidoProj.value;
+    if (!id) return;
+
+    const e = getEnvolvidoProjById(id);
+    if (!e) return;
+
+    const img = document.createElement('img');
+    img.src = e.foto
+      ? e.foto
+      : 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="140" height="80"><rect width="100%" height="100%" fill="%23eee"/></svg>';
+    previewEnvolvidoSelecionado.appendChild(img);
+  }
+
+  if (selectEnvolvidoProj) selectEnvolvidoProj.onchange = renderPreviewEnvolvidoSelecionado;
+
+  async function updatePreviewNovoEnvolvido() {
+    if (!previewNovoEnvolvido || !novoEnvFoto) return;
+    previewNovoEnvolvido.innerHTML = '';
+    const f = novoEnvFoto.files?.[0] || null;
+    if (!f) return;
+
+    const src = await readFileAsDataURL(f);
+    const img = document.createElement('img');
+    img.src = src;
+    previewNovoEnvolvido.appendChild(img);
+  }
+  if (novoEnvFoto) novoEnvFoto.onchange = updatePreviewNovoEnvolvido;
+
+  function limparNovoEnvolvidoCampos() {
+    if (novoEnvFoto) novoEnvFoto.value = '';
+    if (novoEnvNome) novoEnvNome.value = '';
+    if (novoEnvTelefone) novoEnvTelefone.value = '';
+    if (novoEnvEmail) novoEnvEmail.value = '';
+    if (novoEnvFuncaoNovo) novoEnvFuncaoNovo.value = '';
+    if (previewNovoEnvolvido) previewNovoEnvolvido.innerHTML = '';
+  }
+
+  function limparExistenteEnvolvidoCampos() {
+    if (selectEnvolvidoProj) { selectEnvolvidoProj.value = ''; selectEnvolvidoProj.disabled = false; }
+    if (funcaoNoEvento) funcaoNoEvento.value = '';
+    if (previewEnvolvidoSelecionado) previewEnvolvidoSelecionado.innerHTML = '';
   }
 
   function abrirModalEnvolvidoAdicionar(){
-    limparModalEnvolvido();
-    modalEnv.style.display = 'flex';
+    envEditIndex = null;
+    envEditTipo = null;
+                
+    if (tituloModalEnvolvido) tituloModalEnvolvido.textContent = 'Adicionar Envolvido';
+
+    if (addEnvolvidoEventoBtn) addEnvolvidoEventoBtn.textContent = 'Adicionar';
+    if (addNovoEnvolvidoEventoBtn) addNovoEnvolvidoEventoBtn.textContent = 'Adicionar';
+
+    preencherSelectEnvolvidosProj();
+    limparExistenteEnvolvidoCampos();
+    limparNovoEnvolvidoCampos();
+
+    // abre no modo "existente" por padrão (igual ao cadastro)
+    const rExist = document.querySelector('input[name="modoEnvolvido"][value="existente"]');
+    if (rExist) rExist.checked = true;
+    setModoEnvolvido('existente');
+
+    if (wrapModoEnvolvido) wrapModoEnvolvido.style.display = '';
+    if (modalEnvolvidoEventoBackdrop) modalEnvolvidoEventoBackdrop.style.display = 'flex';
   }
 
   function abrirModalEnvolvidoEditar(idx, item){
-    limparModalEnvolvido();
-    qs('#envModalTitle').textContent = 'Editar Envolvido';
-    qs('#envFuncaoEvento').value = item.funcao_evento || '';
+    // idx vem do render (índice na lista "ativos"), então usamos o próprio objeto "item"
+    if (wrapModoEnvolvido) wrapModoEnvolvido.style.display = 'none';
+    preencherSelectEnvolvidosProj();
+    limparExistenteEnvolvidoCampos();
+    limparNovoEnvolvidoCampos();
 
-    if (item.tipo === 'existente') {
-      envModoExistente.checked = true;
-      envModoNovo.checked = false;
-      setEnvModo();
-      qs('#envSelect').value = String(item.envolvidoId || '');
-      // trava seleção ao editar existente pra não virar outro sem querer
-      qs('#envSelect').disabled = true;
-    } else {
-      envModoExistente.checked = false;
-      envModoNovo.checked = true;
-      setEnvModo();
-      qs('#envNome').value = item.nome || '';
-      qs('#envTelefone').value = item.telefone || '';
-      qs('#envEmail').value = item.email || '';
-      qs('#envFuncaoProjeto').value = item.funcao_projeto || 'PARTICIPANTE';
-      qs('#envSelect').disabled = false;
-    }
+    if (tituloModalEnvolvido) tituloModalEnvolvido.textContent = 'Editar Envolvido';
+
+    if (addEnvolvidoEventoBtn) addEnvolvidoEventoBtn.textContent = 'Editar';
+    if (addNovoEnvolvidoEventoBtn) addNovoEnvolvidoEventoBtn.textContent = 'Editar';
 
     envEditIndex = envolvidos.indexOf(item);
-    modalEnv.style.display = 'flex';
+    envEditTipo  = item?.tipo || null;
+
+    if (item?.tipo === 'existente') {
+      const rExist = document.querySelector('input[name="modoEnvolvido"][value="existente"]');
+      if (rExist) rExist.checked = true;
+      setModoEnvolvido('existente');
+
+      if (selectEnvolvidoProj) {
+        selectEnvolvidoProj.value = String(item.envolvidoId || '');
+        selectEnvolvidoProj.disabled = true; // não troca a pessoa ao editar
+      }
+      if (funcaoNoEvento) funcaoNoEvento.value = String(item.funcao_evento || '');
+      renderPreviewEnvolvidoSelecionado();
+    } else {
+      const rNovo = document.querySelector('input[name="modoEnvolvido"][value="novo"]');
+      if (rNovo) rNovo.checked = true;
+      setModoEnvolvido('novo');
+
+      if (novoEnvNome) novoEnvNome.value = item.nome || '';
+      if (novoEnvTelefone) novoEnvTelefone.value = item.telefone || '';
+      if (novoEnvEmail) novoEnvEmail.value = item.email || '';
+      if (novoEnvFuncaoNovo) novoEnvFuncaoNovo.value = String(item.funcao_evento || item.funcao_projeto || '');
+
+      if (previewNovoEnvolvido) {
+        previewNovoEnvolvido.innerHTML = '';
+        const src = item.fotoPreview || item.fotoUrl || null;
+        if (src) {
+          const img = document.createElement('img');
+          img.src = src;
+          previewNovoEnvolvido.appendChild(img);
+        }
+      }
+    }
+
+    if (modalEnvolvidoEventoBackdrop) modalEnvolvidoEventoBackdrop.style.display = 'flex';
   }
 
-  if (openEnv) openEnv.addEventListener('click', (ev) => { ev.preventDefault(); abrirModalEnvolvidoAdicionar(); });
-  if (closeEnv) closeEnv.addEventListener('click', (ev) => { ev.preventDefault(); modalEnv.style.display='none'; });
-  if (modalEnv) modalEnv.addEventListener('click', (e) => { if (e.target === modalEnv) modalEnv.style.display='none'; });
-
-  if (saveEnv) saveEnv.addEventListener('click', (ev) => {
+  if (openEnvolvidoEventoModal) openEnvolvidoEventoModal.addEventListener('click', (ev) => {
     ev.preventDefault();
+    abrirModalEnvolvidoAdicionar();
+  });
 
-    const funcaoEvento = (qs('#envFuncaoEvento').value || '').trim();
-    if (!funcaoEvento) return alert('Informe a função no evento.');
+  function fecharModalEnvolvido(){
+    if (!modalEnvolvidoEventoBackdrop) return;
+    // reabilita select caso estivesse editando
+    if (selectEnvolvidoProj) selectEnvolvidoProj.disabled = false;
+    if (wrapModoEnvolvido) wrapModoEnvolvido.style.display = '';
+    modalEnvolvidoEventoBackdrop.style.display = 'none';
+  }
 
-    const isNovo = !!envModoNovo?.checked;
+  if (closeEnvolvidoEventoModal) closeEnvolvidoEventoModal.onclick = fecharModalEnvolvido;
+  if (closeEnvolvidoEventoModal2) closeEnvolvidoEventoModal2.onclick = fecharModalEnvolvido;
+  if (modalEnvolvidoEventoBackdrop) modalEnvolvidoEventoBackdrop.onclick = (e) => {
+    if (e.target === modalEnvolvidoEventoBackdrop) fecharModalEnvolvido();
+  };
 
-    if (!isNovo) {
-      const envId = qs('#envSelect').value;
-      if (!envId) return alert('Selecione um envolvido do projeto.');
-      const ref = envolvidosProjeto.find(x => String(x.id) === String(envId));
-      if (!ref) return alert('Envolvido selecionado inválido.');
+  function digits11(v){
+    return String(v || '').replace(/\D/g,'').slice(0,11);
+  }
 
-      // se está editando existente, só atualiza função
-      if (envEditIndex !== null && envolvidos[envEditIndex]) {
-        envolvidos[envEditIndex].funcao_evento = funcaoEvento;
-        // reabilita select
-        qs('#envSelect').disabled = false;
-        modalEnv.style.display='none';
-        renderEnvolvidos();
-        return;
-      }
+  if (addEnvolvidoEventoBtn) addEnvolvidoEventoBtn.onclick = () => {
+    const id = (selectEnvolvidoProj?.value || '').trim();
+    const funcao = (funcaoNoEvento?.value || '').trim();
 
-      // impede duplicar o mesmo envolvido
-      const ja = envolvidos.some(e => !e.ui_deleted && e.tipo==='existente' && String(e.envolvidoId) === String(envId));
-      if (ja) return alert('Esse envolvido já está vinculado ao evento.');
+    if (!id || !funcao) {
+      alert('Selecione o envolvido e a função no evento.');
+      return;
+    }
 
-      envolvidos.push({
-        tipo:'existente',
-        envolvidoId: Number(envId),
-        nome: ref.nome || '',
-        telefone: ref.telefone || '',
-        email: ref.email || '',
-        fotoUrl: ref.foto || null,
-        funcao_evento: funcaoEvento,
-        ui_deleted: false,
-      });
+    const ref = getEnvolvidoProjById(id);
+    if (!ref) {
+      alert('Envolvido inválido.');
+      return;
+    }
 
-      modalEnv.style.display='none';
+    // Editando um existente: só atualiza a função
+    if (envEditIndex !== null && envEditIndex >= 0 && envEditTipo === 'existente' && envolvidos[envEditIndex]) {
+      envolvidos[envEditIndex].funcao_evento = funcao;
+      if (selectEnvolvidoProj) selectEnvolvidoProj.disabled = false;
+      fecharModalEnvolvido();
       renderEnvolvidos();
       return;
     }
 
-    // novo
-    const nome = (qs('#envNome').value || '').trim();
-    if (!nome) return alert('Informe o nome do envolvido.');
-    const telefone = (qs('#envTelefone').value || '').trim();
-    const email = (qs('#envEmail').value || '').trim();
-    const funcaoProjeto = (qs('#envFuncaoProjeto').value || 'PARTICIPANTE').trim();
-    const fotoFile = qs('#envFoto')?.files?.[0] || null;
+    // evita duplicar
+    const ja = envolvidos.some(e => !e.ui_deleted && e.tipo === 'existente' && String(e.envolvidoId) === String(id));
+    if (ja) {
+      alert('Esse envolvido já está vinculado ao evento/oficina.');
+      return;
+    }
 
-    // editando novo
-    if (envEditIndex !== null && envolvidos[envEditIndex] && envolvidos[envEditIndex].tipo === 'novo') {
+    envolvidos.push({
+      tipo: 'existente',
+      envolvidoId: Number(id),
+      nome: ref.nome || '',
+      telefone: ref.telefone || '',
+      email: ref.email || '',
+      fotoUrl: ref.foto || null,
+      funcao_evento: funcao,
+      ui_deleted: false,
+    });
+
+    fecharModalEnvolvido();
+    renderEnvolvidos();
+  };
+
+  if (addNovoEnvolvidoEventoBtn) addNovoEnvolvidoEventoBtn.onclick = async () => {
+    const nome = (novoEnvNome?.value || '').trim();
+    const funcao = (novoEnvFuncaoNovo?.value || '').trim();
+    if (!nome || !funcao) {
+      alert('Preencha Nome e Função.');
+      return;
+    }
+
+    const telefone = digits11((novoEnvTelefone?.value || '').trim());
+    const email = (novoEnvEmail?.value || '').trim();
+
+    const fotoFile = novoEnvFoto?.files?.[0] || null;
+
+    // Editando um novo
+    if (envEditIndex !== null && envEditIndex >= 0 && envEditTipo === 'novo' && envolvidos[envEditIndex]) {
       const it = envolvidos[envEditIndex];
       it.nome = nome;
       it.telefone = telefone;
       it.email = email;
-      it.funcao_evento = funcaoEvento;
-      it.funcao_projeto = funcaoProjeto;
+      it.funcao_evento = funcao;
+      it.funcao_projeto = funcao; // mantém coerente com o cadastro
       if (fotoFile) {
         it.fotoFile = fotoFile;
         it.fotoPreview = URL.createObjectURL(fotoFile);
       }
-      modalEnv.style.display='none';
+      fecharModalEnvolvido();
       renderEnvolvidos();
       return;
     }
 
-    const item = {
-      tipo:'novo',
-      envolvidoId:null,
+    // evita duplicar um "novo" pelo mesmo nome
+    const ja = envolvidos.some(e => !e.ui_deleted && e.tipo === 'novo' && String(e.nome || '').toLowerCase() === nome.toLowerCase());
+    if (ja) {
+      alert('Esse envolvido (novo) já foi adicionado na lista.');
+      return;
+    }
+
+    envolvidos.push({
+      tipo: 'novo',
+      envolvidoId: null,
       nome,
       telefone,
       email,
-      funcao_evento: funcaoEvento,
-      funcao_projeto: funcaoProjeto,
+      funcao_evento: funcao,
+      funcao_projeto: funcao, // mesma função (padrão do cadastro_evento)
       fotoFile: fotoFile,
       fotoPreview: fotoFile ? URL.createObjectURL(fotoFile) : null,
-      ui_deleted:false,
-    };
-    envolvidos.push(item);
-    modalEnv.style.display='none';
-    renderEnvolvidos();
-  });
+      ui_deleted: false,
+    });
 
-  
-  // ====== MODAL ENDEREÇOS (padrão do cadastro_projeto) =====
+    fecharModalEnvolvido();
+    renderEnvolvidos();
+  };
+
+// ====== MODAL ENDEREÇOS (padrão do cadastro_projeto) =====
   const modalEnd = qs('#modalEnderecoBackdrop');
   const openEnd  = qs('#openEnderecoModal');
   const closeEnd = qs('#closeEnderecoModal');
@@ -1705,12 +1993,13 @@ $payload = [
     if (endPrincipal) endPrincipal.checked = !!item?.principal;
 
     // existente: seleciona e trava campos
-    if (item?.enderecoId){
+    const existingId = (item?.enderecoId ?? item?.endereco_id ?? null);
+    if (existingId){
       if (endSelect){
-        endSelect.value = String(item.enderecoId);
-        endSelect.disabled = true; // mantém vínculo durante edição
+        endSelect.value = String(existingId);
+        endSelect.disabled = false; // permite trocar o endereço existente durante edição
       }
-      const ref = getEnderecoById(item.enderecoId);
+      const ref = getEnderecoById(existingId);
       if (ref) preencherCamposComEndereco(ref);
       setCamposEnderecoDisabled(true);
     } else {
@@ -1924,10 +2213,8 @@ $payload = [
   async function loadGaleria(){
     const grid = qs('#galeriaGrid');
     if (!grid) return;
-    grid.innerHTML = '<div class="small muted">Carregando galeria…</div>';
 
     const projetoId = qs('#projetoId').value;
-    const destino = qs('#galeriaDestino').value || '';
     const qsParams = new URLSearchParams({ projeto_id: String(projetoId), evento_oficina_id: String(destino || '') });
     try {
       const r = await fetch('ajax_galeria_projeto.php?' + qsParams.toString(), { credentials:'same-origin' });
@@ -1993,7 +2280,6 @@ $payload = [
   }
 
   async function uploadGaleria(files){
-    const destino = qs('#galeriaDestino').value || '';
     const projetoId = qs('#projetoId').value;
     const fd = new FormData();
     fd.append('action', 'upload');
@@ -2005,8 +2291,6 @@ $payload = [
     if (!j || !j.success) throw new Error(j?.error || 'Falha no upload');
   }
 
-  const galeriaDestino = qs('#galeriaDestino');
-  if (galeriaDestino) galeriaDestino.addEventListener('change', () => { loadGaleria(); });
   const galeriaFiles = qs('#galeriaFiles');
   const btnGaleriaAdd = qs('#btnGaleriaAdd');
   if (btnGaleriaAdd && galeriaFiles) {
