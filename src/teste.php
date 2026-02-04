@@ -3,6 +3,22 @@ require_once 'conexao.php'; // precisa retornar $conn como mysqli
 
 $osc = $_GET['osc'] ?? null;
 
+if ($osc === null) {
+    $host = $_SERVER['HTTP_HOST'];
+
+    switch ($host) {
+        case 'osctech.com.br':
+        case 'www.osctech.com.br':
+            $osc = '1';
+            break;
+
+        case 'assocest.org.br':
+        case 'www.assocest.org.br':
+            $osc = '1';
+            break;
+    }
+}
+
 if (!$osc || !is_numeric($osc)) {
     echo "ID inválido";
     exit;
