@@ -408,53 +408,65 @@ if (!$oscIdVinculada) {
       </div>
 
       <div class="card-body" data-collapse-body>
+        
         <div class="grid cols-2">
           <div>
-            <div class="grid">
-              <div>
-                <label style="margin-top: 10px;" for="nomeOsc">Nome (*)</label>
-                <input id="nomeOsc" type="text" required />
-              </div>
-              <div>
-                <label for="sigla">Sigla (*)</label>
-                <input id="sigla" type="text" required />
-              </div>
-              <div>
-                <label for="anoFundacao">Ano de fundação</label>
-                <input id="anoFundacao" inputmode="numeric" type="text" />
-              </div>
-              <div>
-                <label for="instagram">Instagram</label>
-                <input id="instagram" type="text" />
-              </div>
-              <div>
-                <label for="historia">História</label>
-                <textarea id="historia" placeholder="Conte a história da OSC"></textarea>
-              </div>
-              <div>
-                <label for="missao">Missão</label>
-                <textarea id="missao" placeholder="Descreva a missão da OSC"></textarea>
-              </div>
-              <div>
-                <label for="visao">Visão</label>
-                <textarea id="visao" placeholder="Descreva a visão da OSC"></textarea>
-              </div>
-              <div>
-                <label for="valores">Valores</label>
-                <textarea id="valores" placeholder="Descreva os valores da OSC"></textarea>
-              </div>
-            </div>
+            <label style="margin-top: 10px;" for="nomeOsc">Nome (*)</label>
+            <input id="nomeOsc" type="text" required />
           </div>
-
           <div>
-            <div style="margin-top: 10px;" class="card">
-              <h2>Envolvidos</h2>
-              <div class="envolvidos-list" id="listaEnvolvidos"></div>
-              <div style="margin-top:10px">
-                <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">+ Adicionar</button>
-              </div>
-            </div>
+            <label style="margin-top: 10px;" for="sigla">Sigla (*)</label>
+            <input id="sigla" type="text" required />
           </div>
+          <div>
+            <label for="anoFundacao">Ano de fundação</label>
+            <input id="anoFundacao" inputmode="numeric" type="text" />
+          </div>
+          <div>
+            <label for="instagram">Instagram</label>
+            <input id="instagram" type="text" />
+          </div>
+        </div>
+
+        <div style="margin-top:12px" class="grid">
+          <div>
+            <label for="historia">História</label>
+            <textarea id="historia" rows="4" placeholder="Conte a história da OSC"></textarea>
+          </div>
+          <div>
+            <label for="missao">Missão</label>
+            <textarea id="missao" rows="4" placeholder="Descreva a missão da OSC"></textarea>
+          </div>
+          <div>
+            <label for="visao">Visão</label>
+            <textarea id="visao" rows="4" placeholder="Descreva a visão da OSC"></textarea>
+          </div>
+          <div>
+            <label for="valores">Valores</label>
+            <textarea id="valores" rows="4" placeholder="Descreva os valores da OSC"></textarea>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    
+
+    <!-- SEÇÃO 1.1: ENVOLVIDOS -->
+    <div style="margin-top:16px" class="card card-collapse is-open" data-collapse-id="envolvidos-osc">
+      <div class="card-head" data-collapse-head>
+        <h2>Envolvidos</h2>
+
+        <button type="button" class="card-toggle" data-collapse-btn>
+          <span class="label">Fechar</span>
+          <span class="chev">▾</span>
+        </button>
+      </div>
+
+      <div class="card-body" data-collapse-body>
+        <div class="envolvidos-list" id="listaEnvolvidos"></div>
+        <div style="margin-top:10px">
+          <button type="button" class="btn btn-ghost" id="openEnvolvidoModal">+ Adicionar</button>
         </div>
       </div>
     </div>
