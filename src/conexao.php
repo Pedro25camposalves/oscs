@@ -12,7 +12,7 @@ $pass = $config['DB_PASS'];
 $name = $config['DB_NAME'];
 
 // Conecta ao MySQL com mysqli
-$conn = mysqli_connect($host, $user, $pass, $name);
+$conn = mysqli_connect($host, $user, $pass, $name, 3306);
 
 // Verifica a conexão
 if (!$conn) {

@@ -186,6 +186,36 @@
             border-top: 1px solid #eee;
         }
 
+        .equipe-desenvolvimento {
+            background-color: white;
+            padding: 60px 0;
+        }
+
+        .card-equipe {
+            padding: 0px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05)
+        }
+
+        .imagem-equipe {
+            width: 100%;
+            height: 200px;       
+            object-fit: cover;
+        }
+
+        .card-equipe:hover{
+            transform: translateY(-10px);
+            box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+        }
+
+        a {
+            text-decoration: none;   /* tira a linha */
+            color: inherit;          /* usa a cor do elemento pai */
+        }
+
+        a:visited {
+            color: inherit;          /* não muda depois do clique */
+        }
+
         footer {
             background-color: var(--cor-destaque);
             color: white;
@@ -237,7 +267,9 @@
     <section class="sobre-projeto">
         <div class="container text-center">
             <h2 style="color: var(--cor-primaria); font-weight: 700;">Sobre o Nosso Projeto</h2>
-            <hr style="width: 60px; height: 3px; background-color: var(--cor-destaque); margin: 20px auto; opacity: 1;">
+        <hr style="width: 60px; height: 3px; background-color: var(--cor-destaque); margin: 20px auto; opacity: 1; border: 0px; -webkit-box-shadow: 0px 17px 40px -8px rgba(66, 68, 90, 1);
+-moz-box-shadow: 0px 17px 40px -8px rgba(66, 68, 90, 1);
+box-shadow: 0px 17px 40px -8px rgba(66, 68, 90, 1);">
             <div class="row justify-content-center">
                 <div class="col-md-8">
                     <p class="text-muted">
@@ -246,6 +278,111 @@
                 </div>
             </div>
         </div>
+    </section>
+
+    <section class="equipe-desenvolvimento">
+        <div class="container text-center">
+            <h2 style="color: var(--cor-primaria); font-weight: 700;">Nossa Equipe</h2>
+            <hr style="width: 60px; height: 3px; background-color: var(--cor-destaque); margin: 20px auto; opacity: 1; border: 0px; -webkit-box-shadow: 0px 17px 40px -8px rgba(66, 68, 90, 1); -moz-box-shadow: 0px 17px 40px -8px rgba(66, 68, 90, 1); box-shadow: 0px 17px 40px -8px rgba(66, 68, 90, 1);">
+
+            <div class="row justify-content-center" style="display:flex; gap:20px">
+                <div class="col-6 col-md-3 col-lg-2 card-equipe" style="transition: transform 0.5s ease;">
+                    <a href="https://github.com/luizotavionazar" target="_blank"> 
+                    <div class="card border-0 shadow-sm text-center h-100">
+                        <img 
+                            src="assets/imagens/equipe/Luiz.jpeg" 
+                            class="card-img-top rounded-top imagem-equipe"
+                            alt="Foto do Luiz Otávio"
+                        >
+                        <div class="card-body">
+                            <h5 class="card-title mb-1">Luiz Otávio</h5>
+                        </div>
+                    </div>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3 col-lg-2 card-equipe" style="transition: transform 0.5s ease;">
+                    <div class="card border-0 shadow-sm text-center h-100">
+                        <img 
+                            src="assets/imagens/equipe/Joice.jpeg" 
+                            class="card-img-top rounded-top imagem-equipe"
+                            alt="Foto da Joice Olíveira"
+                            style="width=220px"
+                        >
+                        <div class="card-body">
+                            <h5 class="card-title mb-1">Joice Olíveira</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg-2 card-equipe" style="transition: transform 0.5s ease;">
+                    <div class="card border-0 shadow-sm text-center h-100">
+                        <img 
+                            src="assets/imagens/equipe/Jhonnie.jpeg" 
+                            class="card-img-top rounded-top imagem-equipe"
+                            alt="Foto de Jhonnie Gabriel"
+                            style="width=220px"
+                        >
+                        <div class="card-body">
+                            <h5 class="card-title mb-1">Jhonnie Gabriel</h5>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-6 col-md-3 col-lg-2 card-equipe" style="transition: transform 0.5s ease;">
+                    <div class="card border-0 shadow-sm text-center h-100">
+                        <img 
+                            src="assets/imagens/equipe/Alan.jpeg" 
+                            class="card-img-top rounded-top imagem-equipe"
+                            alt="Foto de Alan Souza"
+                            style="width=220px"
+                        >
+                        <div class="card-body">
+                            <h5 class="card-title mb-1">Alan Souza</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3 col-lg-2 card-equipe" style="transition: transform 0.5s ease;">
+                    <div class="card border-0 shadow-sm text-center h-100">
+                        <img 
+                            src="assets/imagens/usuario_default.png" 
+                            class="card-img-top rounded-top imagem-equipe"
+                            alt="Foto de Breno Matayoshi"
+                            style="width=220px"
+                        >
+                        <div class="card-body">
+                            <h5 class="card-title mb-1">Breno Matayoshi</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3 col-lg-2 card-equipe" style="transition: transform 0.5s ease;">
+                    <div class="card border-0 shadow-sm text-center h-100">
+                        <img 
+                            src="assets/imagens/usuario_default.png" 
+                            class="card-img-top rounded-top imagem-equipe"
+                            alt="Foto de Pedro"
+                            style="width=220px"
+                        >
+                        <div class="card-body">
+                            <h5 class="card-title mb-1">Pedro</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg-2 card-equipe" style="transition: transform 0.5s ease;">
+                    <div class="card border-0 shadow-sm text-center h-100">
+                        <img 
+                            src="assets/imagens/usuario_default.png" 
+                            class="card-img-top rounded-top imagem-equipe"
+                            alt="Foto de Jackeline"
+                            style="width=220px"
+                        >
+                        <div class="card-body">
+                            <h5 class="card-title mb-1">Jackeline</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> 
     </section>
 
     <footer>
