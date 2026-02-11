@@ -321,7 +321,6 @@ $buscaEndereco = trim(
         }
         
         .nav-tabs-custom .nav-link:hover {
-            
             /*border-bottom-color: #cce5ff;*/
             filter: brightness(0.9) !important;
         }
@@ -926,6 +925,13 @@ $buscaEndereco = trim(
       text-decoration: underline;
     }
 
+    @media (max-width: 768px){
+      .mb-3-main{
+        text-align: center;
+        padding-left: 0;     /* remove aquele padding grande */
+        padding-right: 0;
+      }
+    }
   </style>
 
   <script>
