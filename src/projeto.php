@@ -137,7 +137,7 @@ $stmtFotos->bind_param("i", $projeto);
 $stmtFotos->execute();
 $fotosProjeto = $stmtFotos->get_result()->fetch_all(MYSQLI_ASSOC);
 
-$stmtEndereco = $conn->prepare("SELECT endereco.*, endereco_projeto.* FROM endereco LEFT JOIN endereco_projeto ON endereco_projeto.endereco_id = endereco.id WHERE endereco_projeto.projeto_id = ? AND endereco_projeto.principal = 0;");
+$stmtEndereco = $conn->prepare("SELECT endereco.*, endereco_projeto.* FROM endereco LEFT JOIN endereco_projeto ON endereco_projeto.endereco_id = endereco.id WHERE endereco_projeto.projeto_id = ?");
 $stmtEndereco->bind_param("i", $projeto);
 $stmtEndereco->execute();
 $resultEndereco = $stmtEndereco->get_result();
@@ -218,7 +218,6 @@ $statusProjeto = $proj["status"] ?? '';
             color: <?php echo $cor1; ?>;
         }
 
-     
 
         footer {
             background-color: <?php echo $cor3; ?>;
@@ -249,10 +248,15 @@ $statusProjeto = $proj["status"] ?? '';
         /* Regra separada para Focus (Quando foi clicado/selecionado) */
         .btn:focus {
             /* Removemos o filter brightness para não ficar escuro preso */
-            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.2); /* Opcional: borda suave para indicar foco */
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.2);
             outline: none;
         }
 
+        .nav-link {
+            font-size: 1.2rem;
+            font-size: 18px;
+            color: <?php echo $cor1; ?>;
+        }
         /* Navbar de abas */
         .nav-tabs-custom {
             padding: 1rem 0;
@@ -261,26 +265,103 @@ $statusProjeto = $proj["status"] ?? '';
 
         }
         
+        .header-nav{
+            flex: 0 0 auto;
+        }
+
+        .header-wrap{
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;       /* equivalente ao gap-4 mais ou menos */
+            flex-wrap: wrap;
+        }
+
+        .header-nav .nav-tabs{
+            flex-wrap: nowrap;
+            white-space: nowrap;
+        }
+
+            /* área de títulos: pode encolher */
+        .header-titles{
+            flex: 1 1 280px;
+            min-width: 0;
+        }
+
+        @media (min-width: 992px){
+            .header-wrap{
+                display: flex;
+                align-items: center;
+                gap: 1.5rem;
+                flex-wrap: nowrap;      /* <-- só no desktop trava em uma linha */
+            }
+
+            .header-nav{
+                flex: 0 0 auto;           /* menu não encolhe */
+            }
+
+            .header-nav .nav-tabs{
+                flex-wrap: nowrap;        /* menu 1 linha */
+                white-space: nowrap;
+            }
+
+            /* reserva espaço pro menu (faz o ... acontecer antes) */
+            .header-titles{
+                flex: 1 1 auto;
+                min-width: 0;
+                max-width: calc(100% - 600px);
+            }
+            #menuProjeto .nav{
+                flex-wrap: nowrap;
+                white-space: nowrap;
+            }
+        }
+
+        @media (max-width: 991px){
+            .header-wrap{
+                gap: 1rem;
+            }
+
+            #menuProjeto .nav{
+                flex-direction: column;   /* empilha */
+                align-items: flex-start;  /* alinha à esquerda */
+            }
+
+            #menuProjeto .nav-item{
+                width: 100%;
+            }
+
+            #menuProjeto .nav-link{
+                width: 100%;
+                padding: 0.75rem 1.5rem;
+                font-size: 18px;
+            }
+        }
+
+        .project-title{
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .nav-tabs-custom .nav-link {
             font-weight: 500;
             border: none;
-            color: <?php echo $cor1; ?> !important;
+            color: <?php echo $cor1; ?>;
             transition: all 0.3s ease;
             cursor: pointer;
             padding: 0.75rem 1.5rem;
         }
         
-        .nav-tabs-custom .nav-link:hover {
-            color: <?php echo $cor1; ?>;
+        .nav-tabs-custom .nav-link:hover, #menuProjeto .nav-link:hover {
             /*border-bottom-color: #cce5ff;*/
+            filter: brightness(0.9) !important;
         }
         
-        .nav-tabs-custom .nav-link.active {
-            animation: fadeIn 0.5s ease;
-
-            
+        .nav-tabs-custom .nav-link.active, #menuProjeto .nav-link.active {  
+            filter: brightness(0.7) !important;
             border-bottom-color: <?php echo $cor1; ?>;
             background-color: transparent;
+            color: <?php echo $cor1; ?>;
         }
         
         /* Cards das oficinas */
@@ -654,37 +735,44 @@ $statusProjeto = $proj["status"] ?? '';
     
     <!-- Header -->
 <header class="py-4 cor-text" style="background-color:  <?php echo $cor2; ?>">
-    <div class="container d-flex align-items-center gap-4">
-        
-        <!-- LOGO -->
-        <div style="width: 70px; height: 70px; overflow: hidden; border-radius: 8px;">
-            <img src="<?php echo $logo?>" 
-                 alt="Logo" 
-                 class="img-fluid w-100 h-100" 
-                 style="object-fit: cover;">
-        </div>
+    <nav class="navbar navbar-expand-lg navbar-light p-0" style="background-color: transparent;">
+        <div class="container header-wrap">
+            
+            <!-- LOGO -->
+            <div style="width: 80px; height: 80px; overflow: hidden; border-radius: 8px; flex: 0 0 auto;">
+                <img src="<?php echo $logo?>" 
+                    alt="Logo" 
+                    class="img-fluid w-100 h-100" 
+                    style="object-fit: cover;">
+            </div>
 
-        <!-- TÍTULOS -->
-        <div>
-            <h1 class="mb-0"><?php echo $nome ?></h1>
-            <p class="mb-0 mt-2">Acompanhamento e Transparência de Projetos Sociais</p>
-        </div>
-        
-        <!-- Navegação por Abas -->
-        <nav class="nav-tabs-custom">
-            <div class="container">
-                <ul class="nav nav-tabs border-0">
-                    <li class="nav-item"><a class="nav-link active" onclick="showTab('oficinas')"><i class="bi bi-calendar-event me-2"></i>Oficinas e Eventos</a></li>
-                    <li class="nav-item"><a class="nav-link" onclick="showTab('descricao')"><i class="bi bi-file-text me-2"></i>Sobre o Projeto</a></li>
-                    <li class="nav-item"><a class="nav-link" onclick="showTab('transparencia')"><i class="bi bi-eye me-2"></i>Transparência</a></li>
-                    <li class="nav-item"><a class="nav-link" onclick="showTab('galeria')"><i class="bi bi-images me-2"></i>Galeria</a></li>
+            <!-- TÍTULOS -->
+            <div class="header-titles">
+                <h1 class="mb-0 project-title"><?php echo $nome ?></h1>
+                <p class="mb-0 mt-2">Acompanhamento e Transparência de Projetos Sociais</p>
+            </div>
+
+            <button class="navbar-toggler ms-auto"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#menuProjeto"
+                aria-controls="menuProjeto"
+                aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <!-- Navegação por Abas -->
+            <div class="collapse navbar-collapse justify-content-end" id="menuProjeto">
+                <ul class="nav nav-tabs border-0 nav-tabs-custom">
+                    <li class="nav-item"><a class="nav-link active" onclick="showTab(event,'oficinas')"><i class="bi bi-calendar-event me-2"></i>Oficinas e Eventos</a></li>
+                    <li class="nav-item"><a class="nav-link" onclick="showTab(event,'descricao')"><i class="bi bi-file-text me-2"></i>Sobre o Projeto</a></li>
+                    <li class="nav-item"><a class="nav-link" onclick="showTab(event,'transparencia')"><i class="bi bi-eye me-2"></i>Transparência</a></li>
+                    <li class="nav-item"><a class="nav-link" onclick="showTab(event,'galeria')"><i class="bi bi-images me-2"></i>Galeria</a></li>
                 </ul>
             </div> 
-        </nav>
-    </div>
-</header>
-    
-   
+        </div>
+    </nav>
+</header> 
     
     <!-- Conteúdo Principal -->
     <main class="container pb-5">
@@ -1149,7 +1237,7 @@ $statusProjeto = $proj["status"] ?? '';
     <!-- JavaScript para controle das abas -->
     <script>
         // Função para alternar entre abas
-        function showTab(tabId) {
+        function showTab(ev, tabId) {
             // Remove a classe 'active' de todas as seções
             const sections = document.querySelectorAll('.content-section');
             sections.forEach(section => {
