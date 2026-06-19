@@ -38,7 +38,7 @@ foreach ($documentos as $doc) {
     $subtipo = strtolower($doc['subtipo']);
 
     $docsPorSubtipo[$subtipo][] = [
-        'caminho' => '/oscs/src/' . ltrim($doc['documento'], '/'),
+        'caminho' => '/' . ltrim($doc['documento'], '/'),
         'nome'    => basename($doc['documento']),
         'ano'     => $doc['ano_referencia']
     ];
@@ -122,7 +122,7 @@ $stmtProj = $conn->prepare("
   SELECT id, nome, descricao, logo, status
   FROM projeto
   WHERE osc_id = ?
-  ORDER BY id DESC
+  ORDER BY id ASC
 ");
 $stmtProj->bind_param("i", $osc);
 $stmtProj->execute();
@@ -1159,7 +1159,7 @@ $buscaEndereco = trim(
                   $imgSrc = $img ?: 'alt="Evento 4';
                   $data = dataBR($n['data_evento'] ?? null);
                   // Link do evento pelo ID
-                  $link = "/oscs/src/projeto.php?osc={$osc}&projeto={$projetoId}";
+                  $link = "/projeto.php?osc={$osc}&projeto={$projetoId}";
                 ?>
                   <div class="col-12 col-md-6 col-xl-3 card-news">
                     <a href="<?= h($link) ?>" class="news-link">
@@ -1261,7 +1261,7 @@ $buscaEndereco = trim(
                 <div class="col-md-3 col-sm-6 mb-4">
                   <div class="card border-0 shadow-sm text-center h-100">
                     <img 
-                      src="<?= !empty($env['foto']) ? '/oscs/src/' . ltrim($env['foto'], '/') : '/oscs/src/assets/imagens/usuario_default.png' ?>" 
+                      src="<?= !empty($env['foto']) ? '/' . ltrim($env['foto'], '/') : '/assets/imagens/usuario_default.png' ?>" 
                       class="card-img-top rounded-top"
                       alt="Foto de <?= htmlspecialchars($env['nome']) ?>"
                     >
@@ -1580,11 +1580,11 @@ $buscaEndereco = trim(
             // imagem (fallback)
             $img = $p['logo'] ?? '';
             $imgSrc = !empty($img)
-              ? '/oscs/src/' . ltrim($img, '/')
+              ? '/' . ltrim($img, '/')
               : '/assets/images/projeto_placeholder.png';
 
             // links (ajuste pro seu cenário)
-            $linkProjeto = "/oscs/src/projeto.php?osc={$osc}&projeto={$id}";
+            $linkProjeto = "/projeto.php?osc={$osc}&projeto={$id}";
 
             // alterna layout (imagem esquerda/direita)
             $invert = ($i % 2 === 1) ? 'flex-md-row-reverse' : '';

@@ -43,7 +43,7 @@ foreach ($documentos as $doc) {
     if ($subtipo === 'outro') $subtipo = 'outros';
 
     $docsPorSubtipo[$subtipo][] = [
-        'caminho' => '/oscs/src/' . ltrim($doc['documento'], '/'),
+        'caminho' => '/' . ltrim($doc['documento'], '/'),
         'nome'    => basename($doc['documento']),
         'ano'     => $doc['ano_referencia'] ?? '',
         'descricao' => $doc['descricao'] ?? ''
@@ -786,7 +786,7 @@ $statusProjeto = $proj["status"] ?? '';
                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                 <?php foreach ($oficinas as $o): 
                     $img = $o['img_capa'] ?? '';
-                    $imgSrc = $img ? '/oscs/src/' . ltrim($img, '/') : '/assets/images/projeto_placeholder.png';
+                    $imgSrc = $img ? '/' . ltrim($img, '/') : '/assets/images/projeto_placeholder.png';
                     [$badgeClass, $badgeText] = badgeStatus($o['status'] ?? '');
                 ?>
                     <div class="col">
@@ -816,7 +816,7 @@ $statusProjeto = $proj["status"] ?? '';
                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                 <?php foreach ($eventos as $e): 
                     $img = $e['img_capa'] ?? '';
-                    $imgSrc = $img ? '/oscs/src/' . ltrim($img, '/') : '/assets/images/projeto_placeholder.png';
+                    $imgSrc = $img ? '/' . ltrim($img, '/') : '/assets/images/projeto_placeholder.png';
                     [$badgeClass, $badgeText] = badgeStatus($e['status'] ?? '');
                 ?>
                     <div class="col">
@@ -932,8 +932,8 @@ $statusProjeto = $proj["status"] ?? '';
                                         <div class="card-body text-center">
                                             <img
                                             src="<?= $env['foto']
-                                                ? '/oscs/src/' . ltrim($env['foto'], '/')
-                                                : '/oscs/src/assets/imagens/usuario_default.png'
+                                                ? '/' . ltrim($env['foto'], '/')
+                                                : '/assets/imagens/usuario_default.png'
                                             ?>"
                                             class="rounded-circle mb-3 env-avatar"
                                             alt="<?= h($env['nome']) ?>"
@@ -1206,7 +1206,7 @@ $statusProjeto = $proj["status"] ?? '';
                 <div class="gallery-grid">
                 <?php foreach (($fotosProjeto ?? []) as $i => $foto): 
                     // Ajuste aqui conforme seu banco (ex: $foto['caminho'])
-                    $src = '/oscs/src/' . ltrim($foto['caminho'] ?? $foto, '/');
+                    $src = '/' . ltrim($foto['caminho'] ?? $foto, '/');
                 ?>
                     <button
                     type="button"
@@ -1288,7 +1288,7 @@ $statusProjeto = $proj["status"] ?? '';
     <script>
         // Monte este array com PHP (logo abaixo)
         const galleryPhotos = <?= json_encode(
-            array_map(fn($f) => '/oscs/src/' . ltrim(($f['caminho'] ?? $f), '/'), $fotosProjeto ?? []),
+            array_map(fn($f) => '/' . ltrim(($f['caminho'] ?? $f), '/'), $fotosProjeto ?? []),
             JSON_UNESCAPED_SLASHES
         ) ?>;
 
